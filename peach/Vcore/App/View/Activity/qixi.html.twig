@@ -1,0 +1,238 @@
+{% extends "VideoProjectBundle::layout.html.twig" %}
+{% block title %}蜜桃儿七夕告白{% endblock %}
+
+{% block head %}
+	<style type="text/css">
+		.ad-container{
+			padding: 0px;
+			width: 1200px;
+			margin: 0px auto;
+			position: relative;
+		}
+		.ad-content{
+			padding-bottom: 100px;
+		}
+		.ad-wrapper{
+			background-color: #F62962;
+		}
+		.ad-main{
+
+		}
+		
+		.ad-banner{
+			background-position: center center;
+			background-repeat: no-repeat;
+		}
+		.ad-banner-1{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/qixi/qixi01.jpg);
+			height: 812px;
+			position: relative;
+		}
+		.ad-banner-2{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/qixi/qixi02.jpg);
+			height: 329px;
+			position: relative;
+		}
+
+		.ad-title{
+			background-position: center center;
+			background-repeat: no-repeat;
+		}
+
+		.ad-title-1{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/qixi/qixi03.jpg);
+			height: 779px;
+		}
+
+		.ad-title-2{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/qixi/qixi04.jpg);
+			height: 551px;
+		}
+		.ad-title-3{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/qixi/qixi05.jpg);
+			height: 518px;
+		}
+		.ad-title-4{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/qixi/qixi06.jpg);
+			height: 619px;
+		}
+		
+		.ad-table{
+			font-size: 14px;
+			color: #e083c5;
+			margin: 10px 0px 40px 130px;
+		}
+		.ad-table th{
+			font-weight: normal;
+			width: 73px;
+			padding: 5px 0px;
+			vertical-align: top;
+			line-height: 1.5em;
+		}
+		.ad-table td{
+			padding: 5px 0px;
+			line-height: 1.5em;
+		}
+
+		.reg-btn{
+			width: 286px;
+			height: 116px;
+			display: block;
+			cursor: pointer;
+			position: absolute;
+			right: 50px;
+		 	top: 0;
+			/*background-color: #ccc;*/
+		}
+
+		.ad-des{
+			width: 440px;
+			position: absolute;
+			right: 170px;
+			top: 100px;
+		}
+
+		.ad-des-top{
+			right: 364px !important;
+			top: 135px !important;
+		}
+
+		.ad-des-top .em{
+			color: #f3f625;
+		}
+
+		.ad-des p{
+			font-size: 18px;
+			color: #fff;
+			margin: 30px 0px;
+		}
+
+		.ad-charge-show{
+			width: 1080px;
+  			position: absolute;
+			left: 126px;
+			top: 317px;
+  			color: #000;
+		}
+		.ad-charge-show ol{
+  			float: left;
+ 			width: 200px;
+			height: 370px;
+			margin-left: 80px;
+			margin-right: 223px;
+		}
+		.ad-charge-show span{
+			font-size: 13px;
+			display: inline-block;
+		}
+		.ad-charge-show li{
+			height: 36px;
+		}
+		.ad-charge-show span.no{
+			color: #333;
+            width: 15px;
+		}
+
+		.ad-charge-show span.name{
+			margin: 0px 12px;
+		}
+
+		.ad-charge-show span.points{
+			float: right;
+		}
+
+		ol .show-li-1{
+			color: #f62962;
+			font-weight: bold;
+		}
+		ol .show-li-2{
+			color: #f46990;
+			font-weight: bold;
+		}
+		ol .show-li-3{
+			color: #eb8812;
+			font-weight: bold;
+		}
+	</style>
+
+
+{% endblock %}
+
+{% block content %}
+    <!-- 页面内容 -->
+    <div class="inx-section">
+		<div class="ad-wrapper">
+			<div class="ad-main">
+				<div class="ad-banner ad-banner-1"></div>
+				<div class="ad-banner ad-banner-2"></div>
+			</div>
+
+			<div class="ad-content">
+				<div class="ad-title ad-title-1">
+					<div class="ad-container">
+						<div class="ad-charge-show">
+							<ol id="charmlist"></ol>
+							<ol id="starlist" style="top:-5px; position:relative"></ol>
+						</div>
+					</div>
+				</div>
+				<div class="ad-title ad-title-2"></div>
+				<div class="ad-title ad-title-3"></div>
+				<div class="ad-title ad-title-4"></div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        app.importFile("pageCommonJs", "js");
+    </script>
+<script type="text/javascript">
+
+$(function(){
+
+	var clearBox = function(){
+		$("#charmlist").html("");
+		$("#starlist").html("");
+	}
+
+	var getData = function(){
+		$.ajax({
+			url: "/CharmStar",
+			dataType: "json",
+			type: "GET",
+			success: function(res){
+
+				for(var key in res){
+					if (key.indexOf("star") > -1 || key.indexOf("charmlist") > -1) {
+						var tmp = "";
+						$.each(res[key], function(i, n){
+
+							var itemTmp = '<li class="show-li-' + (i + 1) + '">' +
+                                        '<span class="no">' + n.no + '</span>' +
+                                        '<span class="name">' + n.nickname + '</span>' +
+                                        '<span class="points">' + n.points +'</span>' +
+                            		'</li>';
+                           	tmp = tmp + itemTmp;
+							
+						});
+						$("#" + key).append(tmp);
+					};
+				};
+
+			}
+		});
+	};
+
+
+	getData();
+	setInterval(function(){
+		clearBox();
+		getData();
+	}, 60000);
+
+});
+
+</script>
+{% endblock %}

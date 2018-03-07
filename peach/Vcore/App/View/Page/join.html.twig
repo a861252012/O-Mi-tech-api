@@ -1,0 +1,23 @@
+{% extends "layout.html.twig" %}
+
+{% block title "主播申请入驻" %}
+
+{% block head %}
+    <style>
+        .inx-section{
+            background: #5e058f;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="inx-section">
+        <img src="{{ STATIC_PATH }}{{ PIC_PATH }}join.jpg" alt="" class="bc" border="0" />
+    </div>
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        cross.importFile("pageCommonJs", "js");
+    </script>
+{% endblock %}

@@ -1,0 +1,458 @@
+{% extends "layout.html.twig" %}
+{% block title %}帮助中心{% endblock %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("aboutCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+<!-- 页面内容 -->
+<div class="inx-section">
+    <div class="doc-wrapper">
+        <div class="doc container">
+            <h1 class="doc-title">帮助中心</h1>
+            <div class="doc-content">
+                <div class="help m-well">
+                    <div class="help-side">
+                        <h2 class="help-title help-title_anchor">主播疑惑解答</h2>
+                        <h2 class="help-title help-title_user">用户疑惑解答</h2>
+                        <h2 class="help-title help-title_join"><a href="/join">我要做主播</a></h2>
+                        <h2 class="help-title help-title_ext">我要扩建</h2>
+                        <h2 class="help-title help-title_sug">投诉和建议</h2>
+
+                    </div>
+                    
+                    <div class="help-content">
+                    <div class="help-item clearfix">
+                        <h2 class="help-head">主播疑惑解答</h2>
+                        <div class="help-item-content">
+                            <ul class="help-qa">
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                            <i class="i-q"></i>
+                                            <h4 class="help-q">什么是主播等级？</h4>
+                                            <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                            <p>主播等级是由获得的礼物兑换成钻石的数量决定。</p>
+                                            <table class="table table-s help-table">
+                                                <tr>
+                                                        <th>等级</th>
+                                                        <th>称号</th>
+                                                        <th>累积经验</th>
+                                                        <th>升级到下一级所需经验</th>
+                                                </tr>
+                                                <tr>
+                                                        <td>1</td>
+                                                        <td>1星</td>
+                                                        <td>0</td>
+                                                        <td>10000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>2</td>
+                                                        <td>2星</td>
+                                                        <td>10000</td>
+                                                        <td>20000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>3</td>
+                                                        <td>3星</td>
+                                                        <td>30000</td>
+                                                        <td>30000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>4</td>
+                                                        <td>4星</td>
+                                                        <td>60000</td>
+                                                        <td>40000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>5</td>
+                                                        <td>5星</td>
+                                                        <td>100000</td>
+                                                        <td>50000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>6</td>
+                                                        <td>1钻</td>
+                                                        <td>150000</td>
+                                                        <td>100000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>7</td>
+                                                        <td>2钻</td>
+                                                        <td>250000</td>
+                                                        <td>150000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>8</td>
+                                                        <td>3钻</td>
+                                                        <td>400000</td>
+                                                        <td>200000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>9</td>
+                                                        <td>4钻</td>
+                                                        <td>600000</td>
+                                                        <td>250000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>10</td>
+                                                        <td>5钻</td>
+                                                        <td>850000</td>
+                                                        <td>300000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>11</td>
+                                                        <td>1皇冠</td>
+                                                        <td>1150000</td>
+                                                        <td>400000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>12</td>
+                                                        <td>2皇冠</td>
+                                                        <td>1550000</td>
+                                                        <td>500000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>13</td>
+                                                        <td>3皇冠</td>
+                                                        <td>2050000</td>
+                                                        <td>600000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>14</td>
+                                                        <td>4皇冠</td>
+                                                        <td>2650000</td>
+                                                        <td>700000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>15</td>
+                                                        <td>5皇冠</td>
+                                                        <td>3350000</td>
+                                                        <td>900000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>16</td>
+                                                        <td>6皇冠</td>
+                                                        <td>4250000</td>
+                                                        <td>1200000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>17</td>
+                                                        <td>7皇冠</td>
+                                                        <td>5450000</td>
+                                                        <td>1600000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>18</td>
+                                                        <td>8皇冠</td>
+                                                        <td>7050000</td>
+                                                        <td>2100000</td>
+                                                </tr>
+                                                <tr>
+                                                        <td>19</td>
+                                                        <td>9皇冠</td>
+                                                        <td>9150000</td>
+                                                        <td></td>
+                                                </tr>
+                                            </table>
+                                    </div>
+                                </li>
+
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                            <i class="i-q"></i>
+                                            <h4 class="help-q">如何申请成为入驻主播？</h4>
+                                            <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        您可以点击首页下方的“代理招募”，在弹出页面中即可找到主播招募人员”运营小七“的QQ。
+                                    </div>
+                                </li>
+
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                            <i class="i-q"></i>
+                                            <h4 class="help-q">如何观看主播表演？</h4>
+                                            <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                    打开蜜桃首页，在主播列表中选择状态标签为“直播”的主播海报，点击即可进入直播间观看主播表演。
+                                    </div>
+                                </li>
+                                
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                            <i class="i-q"></i>
+                                            <h4 class="help-q">如何进行直播？</h4>
+                                            <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        第一步：成为签约主播。申请方法请查看帮助中心“如何申请成为入驻主播”。<br/>
+                                        第二步：将摄像头正确连上电脑并测试成功。<br/>
+                                        第三步：登陆蜜桃儿首页，点击“个人中心”下拉选项“我要直播”按钮进入您的直播间。<br/>
+                                        第四步：选择好视频和音频设备，进入直播间拍摄清晰海报并上传成功之后，便可开始您的直播。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                            <i class="i-q"></i>
+                                            <h4 class="help-q">如何查看直播数据和礼物</h4>
+                                            <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        登录您的蜜桃账号，在首页点击右上角个人中心，在弹出页面左侧栏点击“礼物统计”即可查询到收到的礼物和送出的礼物，也可按照具体日期进行查看。
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="help-item clearfix">
+                        <h2 class="help-head">用户疑惑解答</h2>
+                        <div class="help-item-content">
+                            <ul class="help-qa">
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                        <i class="i-q"></i>
+                                        <h4 class="help-q">钻石是什么？有什么用？</h4>
+                                        <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        钻石是蜜桃儿增值服务的结算货币。用户可以通过充值或参加活动来获得钻石。<br/>
+                                        温馨提示：1元人民币等于10个钻石。充值购买的钻石永久有效。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                        <i class="i-q"></i>
+                                        <h4 class="help-q">如何修改昵称？</h4>
+                                        <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                    登录您的账号后，在首页右上角点击——个人中心——基本信息——编辑，出现个人资料编辑界面，就可以更改您的昵称以及其他个人信息了。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                            <i class="i-q"></i>
+                                            <h4 class="help-q">如何赠送礼物？</h4>
+                                            <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                    在直播间视频下方礼物框内选择礼物，双击要送出的礼物，然后输入或者选择要赠送的礼物数量，即可为主播快捷赠送该礼物。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                            <i class="i-q"></i>
+                                            <h4 class="help-q">如何公聊？</h4>
+                                            <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                    在直播间右侧，聊天区域的最下方即是文字输入区。点击输入框，即可输入信息，在公聊区和大家进行聊天，聊天分为公聊和私聊两种！
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                            <i class="i-q"></i>
+                                            <h4 class="help-q">如何与某人私聊？</h4>
+                                            <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        在直播间公共聊天区域，鼠标滑至用户昵称，鼠标变成“小手”状态后点击左键，选择私聊，或者在直播间
+                                        左侧边栏点击小人图标，出现房间内用户列表后选中用户昵称并点击，出现浮框后选择“发送私聊”。此时在打字框
+                                        内输入文字，即可在私聊区显示你对他说的内容。<br/>
+                                        需要回到公聊状态，则点击输入框上方下拉选项，选择“所有人”。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                        <i class="i-q"></i>
+                                        <h4 class="help-q">如何获得钻石？</h4>
+                                        <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        获得钻石方式有两种：参与站内活动获得官方赠钻、在线充值、代理充值。<br/>
+                                        点击网站首页“充值”按钮即可开始充值。
+
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                        <i class="i-q"></i>
+                                        <h4 class="help-q">如何充值？</h4>
+                                        <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        点击主页上方“充值”按钮即可开始充值，还可以联系在线代充主播进行充值。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                        <i class="i-q"></i>
+                                        <h4 class="help-q">网上银行不能使用怎么办？</h4>
+                                        <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        部分银行支付系统仅IE浏览器。如果您收到“浏览器不兼容”的相关提示，请将浏览器更换为IE（或者其他除谷歌以外的浏览器），在蜜桃“个人中心”>“充值记录”页面找到未支付的订单，点击“去支付”即可继续支付步骤。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                        <i class="i-q"></i>
+                                        <h4 class="help-q">支付为什么会需要先登入网银？会不会被骗钱？</h4>
+                                        <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        网银作为蜜桃的增值服务的在线支付工具，在用户选择任何支付工具进行支付时都需要先接入网银进行跳转，这样才能确保交易成功与资金安全。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                        <i class="i-q"></i>
+                                        <h4 class="help-q">为什么已完成付款，订单仍然显示未付款？</h4>
+                                        <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        一般来说，网上支付是即时到帐的。但有时因为网络原因能会有延迟，稍后重新刷新页面即可。<br/>
+                                        如果在您支付完成后4小时仍未显示购买成功，请至在线客服处提供您的用户ID及订单号，我们会尽快查询并帮您处理。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                        <i class="i-q"></i>
+                                        <h4 class="help-q">订单为什么会提示已过期？订单过期了怎么处理?</h4>
+                                        <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        在您充值的过程中，如果生成了订单但并未及时支付，系统会帮您保存订单72小时，72小时之后订单就
+                                        会自动过期。如果您想要继续支付，就需要重新开始充值或购买服务流程。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                        <i class="i-q"></i>
+                                        <h4 class="help-q">订单为什么会提示无效？该怎么处理？</h4>
+                                        <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        每个订单都有唯一的交易号，如果交易号错误或者是该订单不是您正在登录的帐户创建的，为了保证您的
+                                        资金安全都会提示不能支付。如果想要继续，请到“充值记录”页面查找订单重新支付。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                        <i class="i-q"></i>
+                                        <h4 class="help-q">蜜桃儿服务到期时间如何计算？</h4>
+                                        <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        具体计算方式按照每个月30天，每年365天计算。<br/>
+                                        1、到期时间精确到分钟。如：2014年1月1日15点31分购买某服务，为期一个月，则该服务到期时间为
+                                            2014年1月31日15点31分。具体服务有效期可在“我的道具”页面中进行查询。<br/>
+                                        2、商品有效期内，购买同样商品，有效期在原有基础上累加；其他情况，有效期从购买时开始计算。用
+                                            户可在“我的道具”页面切换正在使用的道具。<br/>
+                                        如：用户于2014年1月1日15点31分购买为期一个月的座驾A，此时用户正在使用一个有效期剩余10天的
+                                            座驾A，则座驾A到期时间为2014年2月10日15点31分。<br/>
+                                        若用户于2014年1月1日15点31分购买为期一个月的座驾A，而此时用户拥有一个有效期剩余10天的座驾B，则座驾A到期时间为2014年1月31日15点31分；座驾B有效期不变。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                            <i class="i-q"></i>
+                                            <h4 class="help-q">如何获得座驾？</h4>
+                                            <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        在商城中点击您想购买的座驾，点击“购买”，购买成功后进入“个人中心”>“我的道具”里找到座驾，点击“未
+                                        装备”，当道具状态显示“已装备”时即可在进入直播间时显示座驾的酷炫特效。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                            <i class="i-q"></i>
+                                            <h4 class="help-q">如何切换座驾？</h4>
+                                            <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        通过个人中心，找到我的道具，在已拥有的座驾中点击“未装备”， 当道具状态显示“已装备”时，则用户座
+                                        驾自动更换为“已装备”状态的座驾。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                            <i class="i-q"></i>
+                                            <h4 class="help-q">如何发送飞屏？</h4>
+                                            <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        在公共聊天区下方的文字输入框中填写您要发送的话，点击飞屏按键，您想说的话即可在直播间产生飞屏（弹幕）效果。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                        <i class="i-q"></i>
+                                        <h4 class="help-q">如何抢沙发？</h4>
+                                        <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        沙发区为主播视频直播区下方设置的5个特殊座位，每人可以同时抢占多个沙发。<br/>
+                                        鼠标滑过沙发区域即可看到沙发价格，点击后输入竞价金额即可抢到沙发。如果您是第一个坐上沙发的
+                                        人，最少20钻石即可落座；如果某沙发已有人落座，鼠标滑过时会显示该用户信息，以及该用户落座时所花费金额
+                                        。想要抢到已经有人落座的沙发，您需要给出更高的沙发竞价。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                        <i class="i-q"></i>
+                                        <h4 class="help-q">权限说明？</h4>
+                                        <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        发言权限：游客在直播间无发言权限。<br/>
+                                        管理权限：主要指禁止房间内用户发言（简称“禁言”）和将用户踢出房间（简称“踢人”）的权限。房主、
+                                        房间管理员，均可具备管理权限。房主除了管理权限外，还可布房间公告、更改直播海报、装饰直播间直播界面、
+                                        开始或者结束直播，并可以增加或者删除管理。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                        <i class="i-q"></i>
+                                        <h4 class="help-q">为何网站视频观看不顺畅？</h4>
+                                        <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        由于网站的浏览量较大，对用户的网络环境要求必然较高。请您在观看主播表演时关闭其他应用程序，并
+                                        使用谷歌浏览器登陆咱们网页，以保证您的观看体验。
+                                    </div>
+                                </li>
+                                <li class="help-qa-item">
+                                    <div class="help-qa-question">
+                                        <i class="i-q"></i>
+                                        <h4 class="help-q">如何成为代理合作商？</h4>
+                                        <i class="i-a"></i>
+                                    </div>
+                                    <div class="help-qa-answer">
+                                        请您在登陆账号后点击首页下方的“代理招募”，在弹出的页面即可找到我们招商部门的QQ。感谢您对我
+                                        们网站的支持。
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block javascript %}
+    <script type="text/javascript">
+        cross.importFile("aboutJs", "js");
+    </script>
+{% endblock %}

@@ -1,0 +1,113 @@
+$path :../../../../www/;
+
+.wrapper{
+    height: 60px;
+    position: relative;
+    width: 332px;
+}
+
+.normalBg{
+
+}
+
+.luxuryBg{
+    background-image: url($(path)images/gift-combo.png);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-left: -193px;
+    margin-top: -89px;
+    width: 386px;
+    height: 179px;
+    z-index: 5;
+    background-position: 0px -133px;
+}
+
+@define-extend comboContainer{
+    width: 332px;
+    height: 60px;
+    background-image: url($(path)images/gift-combo.png);
+    position: relative;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.normalContainer{
+@extend comboContainer;
+    background-position: 0px 0px;
+}
+
+.luxuryContainer{
+@extend comboContainer;
+    background-position: 0px -64px;
+}
+
+.comboIcon{
+    margin: 5px 0px 0px 10px;
+    float: left;
+}
+
+@define-extend info{
+    float: left;
+    margin: 10px 0px 0px 10px;
+}
+
+.normalInfo{
+@extend info;
+    color: #b57e1a;
+}
+
+.luxuryInfo{
+@extend info;
+    color: #fff;
+}
+
+.userName{
+    font-size: 14px;
+    font-weight: bold;
+}
+.iconName{
+    font-size: 13px;
+}
+
+.numberBox{
+    float: right;
+    position: relative;
+    margin: 18px 18px 0px 0px;
+}
+
+@define-extend iconX{
+    background-image: url($(path)images/gift-combo.png);
+    width: 19px;
+    height: 19px;
+    left: -25px;
+    position: absolute;
+    bottom: -4px;
+}
+
+.normalIconX{
+@extend iconX;
+    background-position: -333px 0px;
+}
+
+.luxuryIconX{
+@extend iconX;
+    background-position: -333px -64px;
+}
+
+@define-extend number{
+    font-weight: bold;
+    font-size: 35px;
+}
+
+.normalNumber{
+@extend number;
+    color: #fff9ef;
+    text-shadow: #b57e1a 2px 2px 1px;
+}
+
+.luxuryNumber{
+@extend number;
+    color: #ffadca;
+    text-shadow: #c51c48 2px 2px 1px;
+}

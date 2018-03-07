@@ -1,0 +1,44 @@
+/*
+ * variable less file, this file is module for button
+ * Author: Young
+ * important module for the project, if u would like to modify the file, pls contact Young
+ * mail: young@kingjoy.co
+ */
+
+@boc:#d6d6d6;
+
+@bg: #e9ebed;
+@black: #2b2c2d;
+@white: #fff;
+@whiteHover: #d4d2d3;
+@lightGray: #eee;
+@gray: #ccc;
+@font: #333;
+@red: #fa2461;
+@redLight: #f95181;
+@redDark: #cd2456;
+@originRed: #ff0000;
+@orange:#ff2700;
+@orangeLight: #ff4e00;
+@orangeDark: #ff0100;
+@pink:#f95181;
+@pinkLight: #ff6699;
+@green:#0acc0e;
+@blueDark: #247DDA;
+
+@radius: 8px;
+@radiusS: 4px;
+@radiusL: 15px;
+
+
+.horizontal(@start-color: #555; @end-color: #333; @start-percent: 0%; @end-percent: 100%) {
+    background-image: -webkit-linear-gradient(left, color-stop(@start-color @start-percent), color-stop(@end-color @end-percent)); // Safari 5.1-6, Chrome 10+
+    background-image:  linear-gradient(to right, @start-color @start-percent, @end-color @end-percent); // Standard, IE10, Firefox 16+, Opera 12.10+, Safari 7+, Chrome 26+
+    background-repeat: repeat-x;
+}
+
+.vertical(@start-color: #555; @end-color: #333; @start-percent: 0%; @end-percent: 100%) {
+    background-image: -webkit-linear-gradient(top, @start-color @start-percent, @end-color @end-percent);  // Safari 5.1-6, Chrome 10+
+    background-image: linear-gradient(to bottom, @start-color @start-percent, @end-color @end-percent); // Standard, IE10, Firefox 16+, Opera 12.10+, Safari 7+, Chrome 26+
+    background-repeat: repeat-x;
+}

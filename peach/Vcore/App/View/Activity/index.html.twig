@@ -1,0 +1,62 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}排行榜{% endblock %}
+{% block head %}
+    <style type="text/css">
+        .ac-item{
+            margin: 0px 0px 40px 0px;
+        }
+        
+        .ac-item a{
+            width: 1200px;
+            height: 300px;
+            display: block;
+        }
+
+        .ac-item .ac-img{
+            width: 1200px;
+            height: 300px;
+            display: block;
+            border-radius: 5px;
+            border: 3px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        .ac-date{
+            font-size: 16px;
+            color: #666;
+            text-align: right;
+            margin-top: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- 页面内容 -->
+    <div class="inx-section">
+        <div class="doc-wrapper">
+            <div class="doc container">
+                {#<div class="doc-title">热门活动</div>#}
+                <div class="doc-content ">
+
+                {% for item in list %}
+                <div class="ac-item">
+                    <a href="{{ item.url|default('nac/'~item.img_text_id) }}">
+                        <img class="ac-img" src="{{ IMG_PATH }}/{{ item.temp_name }}" title="{{ item.img_text_id }}">
+                    </a>
+                    <div class="ac-date">发布时间：{{ item.init_time|date('Y-m-d') }}</div>
+                </div>
+                {% endfor %}
+                
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascript %}
+<script type="text/javascript">
+    cross.importFile("pageCommonJs", "js");
+</script>
+{% endblock %}

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="eveyday">本日贡献</string>
+    <string name="giftP">礼物清单</string>
+    <string name="weekP">周贡献榜</string>
+
+    <string name="guizhu">贵宾席</string>
+    <string name="openguizhu">开通贵族</string>
+
+
+    <string name="btn_login">登录</string>
+    <string name="btn_chongzhi">充值</string>
+    <string name="btn_register">注册</string>
+    <string name="btn_lobby">大厅</string>
+    <string name="btn_shop">商城</string>
+    <string name="btn_guest">客服</string>
+    <string name="btn_message">消息</string>
+    <string name="btn_online">在线</string>
+    <string name="btn_getGift">领奖</string>
+    <string name="btn_game1">跑马</string>
+    <string name="btn_game2">猜拳</string>
+
+    <string name="btn_yuyue">预约</string>
+    <string name="btn_changeLine">换线</string>
+    <string name="btn_transUser">换线</string>
+    <string name="btn_closeTeXiao">关闭特效</string>
+    <string name="btn_gonggao">公告</string>
+    <string name="btn_share">分享</string>
+    <string name="btn_clearGit">关闭特效</string>
+
+
+    <string name="btn_back">返回大厅</string>
+    <string name="btn_send">赠送</string>
+
+    <string name="btn_chat">发言</string>
+    <string name="btn_flyChat">飞屏</string>
+    <string name="btn_sendRadio">发布广播</string>
+
+</resources>

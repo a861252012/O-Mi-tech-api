@@ -1,0 +1,30 @@
+{% extends "layout.html.twig" %}
+{% block title %}贵族{% endblock %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("nobleCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+
+<div class="inx-section">
+    <div class="doc-wrapper">
+        <div class="doc container">
+            <div class="noble">
+                <img class="noble-banner" src="{{ STATIC_PATH }}{{ PIC_PATH }}noble/noble-banner.png" alt=""  />
+                <img class="noble-sub-banner" src="{{ STATIC_PATH }}{{ PIC_PATH }}noble/noble-main.png" alt=""  />
+                <table class="noble-table">
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block javascript %}
+    <script type="text/javascript">
+        cross.importFile("nobleJs", "js");
+    </script>
+{% endblock %}

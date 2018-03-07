@@ -1,0 +1,66 @@
+{% extends "layout.html.twig" %}
+{% block title %}排行榜{% endblock %}
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("rankCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+    <!-- 页面内容 -->
+    <div class="inx-section">
+        <div class="doc-wrapper">
+            <div class="doc container">
+                {#<div class="doc-title">排行榜</div>#}
+                <div class="doc-content ">
+
+                    <div class="rank-block rank-banner">
+                        <div class="rank-title-tip"></div>
+                        <div class="rank-list-show J-tab  rank-col clearfix" id="rank_appoint_month">
+                        </div>
+                    </div>
+                    <div class="rank-block rank-order-show">
+                        <div class="rank-list-rich J-tab">
+                            <div class="rank-head">
+                                <h2 class="rank-title"><span class="rich-title">富豪</span>排行榜</h2>
+                                <ul class="rank-tab J-tab-menu">
+                                    <li class="active">日榜</li>
+                                    <li>周榜</li>
+                                    <li>月榜</li>
+                                    <li>总榜</li>
+                                </ul>
+                                <div id="rank_rich_day" class="rank-menu_item J-tab-main active clearfix"></div>
+                                <div id="rank_rich_week" class="rank-menu_item J-tab-main clearfix"></div>
+                                <div id="rank_rich_month" class="rank-menu_item J-tab-main clearfix"></div>
+                                <div id="rank_rich_his" class="rank-menu_item J-tab-main clearfix"></div>
+                            </div>
+                        </div>
+                        <div class="rank-list-anchor J-tab">
+                            <div class="rank-head">
+                                <h2 class="rank-title"><span class="anchor-title">主播</span>排行榜</h2>
+                                <ul class="rank-tab J-tab-menu">
+                                    <li class="active">日榜</li>
+                                    <li>周榜</li>
+                                    <li>月榜</li>
+                                    <li>总榜</li>
+                                </ul>
+                                <div id="rank_exp_day" class="rank-menu_item J-tab-main active clearfix"></div>
+                                <div id="rank_exp_week" class="rank-menu_item J-tab-main clearfix"></div>
+                                <div id="rank_exp_month" class="rank-menu_item J-tab-main clearfix"></div>
+                                <div id="rank_exp_his" class="rank-menu_item J-tab-main clearfix"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        cross.importFile("rankJs", "js");
+    </script>
+{% endblock %}

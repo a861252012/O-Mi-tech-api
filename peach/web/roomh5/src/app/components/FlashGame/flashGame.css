@@ -1,0 +1,62 @@
+
+/* 直播大厅的样式*/
+.liveList{
+    margin-left:35px;
+}
+
+.liveItem{
+    position: relative;
+    float: left;
+    width:168px;
+    height:160px;
+    font-size: 12px;
+    border:1px solid #EFEFEF;
+    margin-right: 10px;
+    margin-bottom: 20px;
+}
+
+.liveItemInto{
+    display: block;
+}
+.liveItemImg img{
+    width:168px;
+    height:132px;
+}
+.liveItemChange,.liveItemChangeWhite{
+    width:48px;
+    height:20px;
+    border-radius: 5px;
+    color:#CAFC69;
+    position: absolute;
+    top:-5px;
+    right:-3px;
+}
+.liveItemChange{
+    background: #FC0983;
+}
+.liveItemChangeWhite{
+    background: #000;
+}
+
+.liveItemUser{
+    text-align: left;
+    font-weight: bold;
+    margin-top: -3px;
+.liveItemUserName{
+    display: inline-block;
+    margin-left:10px;
+    width: 100px;
+    vertical-align: middle;
+}
+.liveItemUserLevel{
+    margin-left: 45px;
+    vertical-align: middle;
+    margin-bottom: 3px;
+}
+}
+
+.arrayRightStyle,.arrayLeftStyle{
+    background-color: #000;
+    padding:20px 10px;
+    opacity: 0.7;
+}

@@ -1,0 +1,42 @@
+{% extends "layout.html.twig" %}
+{% block title %}关于我们{% endblock %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("aboutCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+    <!-- 页面内容 -->
+<div class="inx-section about">
+    <div class="doc-wrapper">
+
+	    <div class="doc container">
+	        
+	        <div class="doc-content">
+        
+                <div class="about-img"></div>
+                <div class="about-p">
+                    <h1 class="doc-title">蜜桃儿简介</h1>
+                    <p>蜜桃是面向全球提供精品视频才艺直播服务的专业平台。</p>
+
+                    <p>我们通过自主研发的实时视频交互技术，让全球各地热爱视频直播的表演爱好者得以能够实时、自由、尽情地向不
+                    同地区、不同文化背景、不同兴趣爱好的用户展示自己的才艺，为其带来精彩纷呈的视听娱乐体验。
+                    蜜桃提供多元化的直播表演类型，包括但不限于唱歌、演奏、舞蹈、功夫、脱口秀、竞猜等才艺展示及互动娱乐形式。
+                    他们表演风格多样，尺度大胆，用户可以欣赏甚至参与表演。</p>
+
+                    <p>蜜桃还会在线上线下组织超级派对、才艺比拼、明星互动等主题活动，为用户提供全方位、多元化的资讯、娱乐及增值服务。</p>
+                </div>
+                
+	        </div>
+	    </div>
+
+    </div>
+</div> 
+{% endblock %}
+{% block javascript %}
+    <script type="text/javascript">
+        cross.importFile("pageCommonJs", "js");
+    </script>
+{% endblock %}

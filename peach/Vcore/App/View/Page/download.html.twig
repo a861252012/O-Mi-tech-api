@@ -1,0 +1,231 @@
+{% extends "layout.html.twig" %}
+{% block title %}下载{% endblock %}
+
+{% block head %}
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+
+        .download-img {
+            display: block;
+            width: 100%;
+        }
+
+        .download-title {
+            margin: 0 auto;
+            font-weight: 500;
+            text-align: center;
+            font-size: 24px;
+            color: #000;
+            line-height: 60px;
+        }
+
+        .download-icon_item {
+            width: 33%;
+            text-align: center;
+            font-size: 16px;
+            float: left;
+        }
+
+        .download-icon {
+            height: 170px;
+            margin-bottom: 40px;
+        }
+
+        .download-icon_link {
+            display: block;
+            width: 120px;
+            height: 120px;
+            padding: 25px;
+            margin: 0 auto;
+            cursor: pointer;
+        }
+
+        .download-icon_link:hover {
+            border-radius: 50%;
+            background: #fa2461;
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .download-icon_bg {
+            display: block;
+            width: 120px;
+            height: 96px;
+            background-size: cover;
+            background-image: url("{{ STATIC_PATH }}/public/src/img/download/download_pc.png");
+            background-repeat: no-repeat;
+            margin-bottom: 10px;
+        }
+
+        .download-icon_link:hover .download-icon_pc {
+            background-image: url("{{ STATIC_PATH }}/public/src/img/download/download_pc01.png");
+        }
+
+        .download-icon_iphone {
+            background-image: url("{{ STATIC_PATH }}/public/src/img/download/download_iphone.png");
+        }
+
+        .download-icon_link:hover .download-icon_iphone {
+            background-image: url("{{ STATIC_PATH }}/public/src/img/download/download_iphone01.png");
+        }
+
+        .download-icon_android {
+            background-image: url("{{ STATIC_PATH }}/public/src/img/download/download_android.png");
+        }
+
+        .download-icon_link:hover .download-icon_android {
+            background-image: url("{{ STATIC_PATH }}/public/src/img/download/download_android01.png");
+        }
+
+        .download-img_qrcode {
+            position: absolute;
+            top: 29%;
+            left: 30.5%;
+        }
+
+        .download-img_qrcode img {
+            width: 170px;
+            height: 170px;
+        }
+
+        @media (max-width: 1200px ) {
+            .container {
+                width: 100%;
+            }
+
+        }
+
+        @media (max-width: 1080px) {
+            .inx-header {
+                display: none;
+            }
+
+            .d-wrapper {
+                min-width: 25%;
+            }
+
+            .d-dialog {
+                margin-left: -184px;
+            }
+
+            .inx-section {
+                padding-top: 0px;
+            }
+
+            .download-img_qrcode {
+                display: block;
+                position: inherit;
+                top: 10px;
+                left: 0px;
+                margin: 0 auto;
+            }
+
+            .download-img_qrcode img,
+            .download-img_qrcode a {
+                width: 180px;
+                height: 180px;
+                margin: 0px auto;
+                display: block;
+            }
+
+            .download-title {
+                font-size: 18px;
+            }
+
+        }
+
+        @media (max-width: 480px ) {
+            .container{
+                padding: 0;
+            }
+            .navbar,.inx-footer-content {
+                display: none;
+            }
+
+            .inx-footer-info {
+                margin-top: 10px;
+            }
+
+            .lim_float_icon {
+                display: none;
+            }
+
+            .download-icon_link {
+                width: 60px;
+                height: 60px;
+                padding: 15px;
+            }
+
+            .download-icon_bg {
+                display: block;
+                width: 50px;
+                height: 40px;
+                background-size: contain;
+                background-repeat: no-repeat;
+                margin: 0px auto 5px auto;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="inx-section">
+        <div class="container">
+            <img class="download-img" src="{{ STATIC_PATH }}/public/src/img/download/download_banner.jpg"/>
+            <div class="download-img_qrcode"></div>
+            <h1 class="download-title">下载客户端, 随时随地看直播!</h1>
+            <div class="download-icon">
+                <div class="download-icon_item">
+                    <a class="download-icon_link download-icon_link_pc">
+                        <span class="download-icon_bg download-icon_pc"></span>
+                        <span class="download-icon_text">PC</span>
+                    </a>
+                </div>
+
+                <div class="download-icon_item">
+                    <a class="download-icon_link download-icon_link_iphone">
+                        <span class="download-icon_bg download-icon_iphone"></span>
+                        <span class="download-icon_text">iPhone</span>
+                    </a>
+                </div>
+
+                <div class="download-icon_item">
+                    <a class="download-icon_link download-icon_link_android">
+                        <span class="download-icon_bg download-icon_android"></span>
+                        <span class="download-icon_text">Android</span>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block javascript %}
+    <script type="text/javascript" src="{{ STATIC_PATH }}/public/dest/{{ publish_version }}/cross.js"></script>
+    <script>
+        $(function () {
+            User.handleAfterGetUserInfo = function () {
+                var url = JSON.parse(window.User.DOWNLOADAPPURL);
+                var img_url = window.User.IMG_URL;
+                var qrcode_img = JSON.parse(window.User.QRCODE_IMG);
+                $(".download-icon_link_pc").attr("href", url.PC == '' ? 'javascript:void(0);' : url.PC);
+                $(".download-img_qrcode").html('<div class="gg-center"><img src="' + img_url + '/' + qrcode_img[0].temp_name + '"><p style="text-align: center;">扫码下载蜜桃APP</p></div>');
+                $(".download-icon_link_android").attr("href", url.ANDROID == '' ? 'javascript:void(0);' : url.ANDROID);
+                $(".download-icon_link_iphone").click(
+                    function () {
+                        $.dialog({
+                            title: "",
+                            content: "<p>IOS用户请按以下操作进行下载：</p><p>1. 通过手机截屏保存二维码图片到本地相册<br/>2. 打开微信选择扫码，再选择保存图片</p>",
+                            okValue: "立即截屏",
+                            ok: function () {
+                            }
+                        }).show();
+                    }
+                )
+            }
+        });
+    </script>
+{% endblock %}

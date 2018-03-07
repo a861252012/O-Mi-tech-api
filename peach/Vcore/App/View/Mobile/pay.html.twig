@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>trans</title>
+    {% include 'google-analytics.html.twig' %}
+</head>
+<body>
+{% if remoteUrl is defined  %}
+<form action="{{ remoteUrl }}" method="POST" id="transForm">
+    <input type="hidden" name="postDatas" value="{{ postdata }}"/>
+    transfer data...
+</form>
+
+<script type="text/javascript">
+// window.onload = function(){
+	document.getElementById("transForm").submit();
+// }
+</script>
+{%  else %}
+    {{ L('CHARGE.PAY.PAY.PAGE_EXIRED.0') }}，<a href="/charge/order">{{ L('CHARGE.PAY.PAY.PAGE_EXIRED.1') }}</a>
+{% endif %}
+</body>
+</html>

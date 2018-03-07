@@ -1,0 +1,116 @@
+/* 聊天通知公共样式  包括通知气泡样式 */
+@define-mixin messageBubble{
+      font-size: 14px;
+      line-height: 27px;
+      word-break: break-all;
+      a{
+            text-decoration: none;
+            color:#f8065d;
+      }
+}
+
+/*span标签基本样式*/
+.basicInline{
+      display: inline-block;
+      vertical-align: middle;
+}
+
+/*公告通知气泡*/
+.notice{
+      @mixin messageBubble;
+      a{
+            color: white;
+      }
+}
+
+/*系统通知气泡*/
+.systemNotice{
+      margin-top: 10px;
+      font-size: 13px;
+      color: #ffbe0d;
+      word-break: break-all;
+
+}
+.shortTitle{
+      margin-right: 0;
+}
+
+/*贵族聊天信息 特殊样式*/
+.vipContent{
+      color: #e6beff;
+      display: inline-block;
+      vertical-align: middle;
+}
+
+/*AB模板样式*/
+.defaultMsg{
+     @mixin messageBubble;
+      margin: 5px 0;
+      line-height: 17px;
+}
+
+.mt5px{
+      margin:0 5px;
+}
+
+.mtr5px{
+      margin-right:5px;
+}
+
+/**
+   通知短标题 所属样式
+*/
+.shortTitle{
+      margin-right: 5px;
+}
+/**
+   动作标题 所属样式 如 "XXX  送给 XXX"
+*/
+.actionName{
+      margin:0 5px;
+}
+
+.commonGift{
+      width: 30px;
+      height:auto;
+      margin:2px;
+}
+
+.userChat{
+      color: #ccc;
+}
+
+.vipChat1101{
+      text-shadow: 0px 0px 2px rgba(255, 255, 255, 0.5);
+      color: #eee;
+}
+
+.vipChat1102{
+      text-shadow: 0px 0px 2px rgba(255, 255, 255, 0.5);
+      color: #50fcff;
+}
+
+.vipChat1103{
+      text-shadow: 0px 0px 2px rgba(255, 255, 255, 0.5);
+      color: #50ff68;
+}
+
+.vipChat1104{
+      text-shadow: 0px 0px 2px rgba(255, 255, 255, 0.5);
+      color: #50d4ff;
+}
+
+.vipChat1105{
+      text-shadow: 0px 0px 2px rgba(255, 255, 255, 0.5);
+      color: #5083ff;
+}
+
+.vipChat1106{
+      text-shadow: 0px 0px 2px rgba(255, 255, 255, 0.5);
+      color: #ff5050;
+}
+
+.vipChat1107{
+      text-shadow: 0px 0px 2px rgba(255, 255, 255, 0.5);
+      color: #fffc50
+}

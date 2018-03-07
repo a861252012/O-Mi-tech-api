@@ -1,0 +1,49 @@
+{% extends "Member/layout.html.twig" %}
+
+{% block title %}会员中心{% endblock %}
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("attentionCss", "css");
+    </script>
+{% endblock %}
+{% block right %}
+<div class="perCenter">
+
+    <div class="perCenter-item clearfix">
+        <span class="perCenter-title">我的关注（<strong id="piccount">{{ pagination.count }}</strong>）</span>
+    </div>
+
+    <div class="hotList-content clearfix watch-content">
+        <ul class="watch-main clearfix" id="personMenuTab">
+            {% for item in attenlist  %}
+            
+            <div class="l-list" data-rel="{{ item.uid }}" data-fid="{{ item.fid }}">
+                <a href="{{ REMOTE_JS_URL }}/{{ item.uid }}" class="l-block">
+                    <img src="{{ item.headimg }}" alt="{{ item.nickname }}"/>
+                    <div class="play">
+                        <div class="title">
+                            <span class="name">{{ item.nickname }}</span>
+                        </div>
+                    </div>
+                </a>
+                <div class="watch-tool">
+                    <div class="watch-btn">取消关注</div>
+                </div>
+            </div>
+        
+            {% endfor %}
+        </ul>
+        {% if pagination.count > 0 %}
+            {#{% include 'page.html.twig' %}#}
+        {% endif %}
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block subjavascript %}
+    <script type="text/javascript">
+        cross.importFile("attentionJs", "js");
+    </script>
+{% endblock %}

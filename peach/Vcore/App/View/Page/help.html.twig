@@ -1,0 +1,78 @@
+{% extends "layout.html.twig" %}
+{% block title %}帮助中心{% endblock %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("aboutCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+<!-- 页面内容 -->
+<div class="inx-section">
+    <div class="doc-wrapper">
+        <div class="doc container">
+            <h1 class="doc-title">帮助中心</h1>
+            <div class="doc-content">
+                <div class="help m-well">
+                    <div class="help-side">
+                        <h2 class="help-title help-title_anchor">主播疑惑解答</h2>
+                        <h2 class="help-title help-title_user">用户疑惑解答</h2>
+                        <h2 class="help-title help-title_join"><a href="/join">我要做主播</a></h2>
+                        <h2 class="help-title help-title_ext">我要扩建</h2>
+                        <h2 class="help-title help-title_sug">投诉和建议</h2>
+
+                    </div>
+                    
+                    <div class="help-content">
+                    <div class="help-item clearfix">
+                        <h2 class="help-head">主播疑惑解答</h2>
+                        <div class="help-item-content">
+                            <ul class="help-qa">
+                                {% for faq in data.1 %}
+                                    <li class="help-qa-item">
+                                        <div class="help-qa-question">
+                                            <i class="i-q"></i>
+                                            <h4 class="help-q">{{ faq.q }}</h4>
+                                            <i class="i-a"></i>
+                                        </div>
+                                        <div class="help-qa-answer">
+                                            {{ faq.a|raw }}
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="help-item clearfix">
+                        <h2 class="help-head">用户疑惑解答</h2>
+                        <div class="help-item-content">
+                            <ul class="help-qa">
+                                {% for faq in data.2 %}
+                                    <li class="help-qa-item">
+                                        <div class="help-qa-question">
+                                            <i class="i-q"></i>
+                                            <h4 class="help-q">{{ faq.q }}</h4>
+                                            <i class="i-a"></i>
+                                        </div>
+                                        <div class="help-qa-answer">
+                                            {{ faq.a|raw }}
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block javascript %}
+    <script type="text/javascript">
+        cross.importFile("aboutJs", "js");
+    </script>
+{% endblock %}

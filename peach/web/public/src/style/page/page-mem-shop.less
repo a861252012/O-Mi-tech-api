@@ -1,0 +1,285 @@
+/**
+ * 商城页面
+ * @author Young
+ * @contacts young@kingjoy.co
+ */
+@import "../module/variable.less";
+
+/* 商城页面 */
+
+.shop-content-btnTool {
+
+  float: right;
+
+  .btn {
+    display: block;
+    float: right;
+    margin-left: 10px;
+  }
+}
+.shop-contents{
+  padding: 0;
+  padding-bottom: 20px;
+  background: #fff;
+  .shop-content, .shop-header, .shop-content{
+    padding: 0;
+  }
+  .shop-content{
+
+  }
+  .doc-content{
+    margin-top: 0;
+    padding: 0 20px 20px;
+  }
+}
+
+.shop-header {
+  background: #fff;
+  height: 80px;
+  border-bottom: 1px solid #d4dbe3;
+  .tab-title {
+    width: 440px;
+    margin: auto;
+    border: none;
+    background: none;
+    .tab-item {
+      position: relative;
+      b{
+        display: none;
+        width: 56px;
+        border-bottom: 1px solid #ff5186;
+        position: absolute;
+        bottom: 0;
+        left: 40px;
+      }
+      &.active{
+        background: none;
+        color: #ff5186;
+        h3{
+          color: #ff5186;
+        }
+        b {
+          display: block;
+        }
+      }
+    }
+  }
+
+  .car {
+    background: url('@{imgPath}icon/car.svg') no-repeat center;
+    background-size: cover;
+    width: 50px;
+    height: 33px;
+    margin-left: 42px;
+  }
+  .noble {
+    background: url('@{imgPath}icon/airplane.svg') no-repeat center;
+    background-size: cover;
+    width: 50px;
+    height: 33px;
+    margin-left: 42px;
+  }
+  .open-nobility {
+    background: url('@{imgPath}icon/royalty-crown.svg') no-repeat center;
+    background-size: cover;
+    width: 42px;
+    height: 33px;
+    margin-left: 44px;
+  }
+}
+
+.shop-item {
+  width: 137px;
+  margin: 10px 14px;
+  li {
+    font-size: 14px;
+    text-align: center;
+    line-height: 24px;
+    //height: 22px;
+    position: relative;
+    img {
+      vertical-align: middle;
+      margin: 0 5px;
+    }
+
+    .payNew {
+      background-image: url('@{imgPath}new.gif');
+      width: 23px;
+      height: 12px;
+      position: absolute;
+      right: 20px;
+      top: 0px;
+    }
+  }
+  button {
+    //margin: 5px auto 0px auto;
+    display: block;
+    width: 90px;
+    height: 30px;
+    line-height: 28px;
+    font-size: 12px;
+    border: 2px solid #ff5186;
+    color: #ff5186;
+    margin: auto;
+    padding: 0;
+    background: none;
+    border-radius: 0;
+    &:hover {
+      background: #ff5186;
+      color: #fff;
+    }
+  }
+}
+
+.shop-vip{
+  border-left: 6px solid #fb483b;
+  height: 38px;
+  line-height: 38px;
+  padding-left: 10px;
+  margin: 20px 0;
+  font-size: 20px;
+  color: #fb483b;
+}
+.shop-main {
+  clear: both;
+  .shop-item {
+    float: left;
+    display: inline-block;
+    width: 283px;
+    height: 260px;
+    margin: 0 3px 3px 0;
+    background: #fff;
+    border: 2px solid #efefef;
+    transition: all .2s;
+    li {
+      font-size: 14px;
+      text-align: center;
+      line-height: 24px;
+      height: 22px;
+      position: relative;
+      &:nth-child(1) {
+        width: 210px;
+        height: 130px;
+        padding-top: 20px;
+        margin: auto;
+      }
+      &:nth-child(4) {
+        margin-top: 28px;
+      }
+      img {
+        vertical-align: middle;
+        margin: 0 5px;
+        margin-top: -20px;
+      }
+
+      .payNew {
+        background-image: url('@{imgPath}new.gif');
+        width: 23px;
+        height: 12px;
+        position: absolute;
+        right: 20px;
+        top: 0px;
+      }
+    }
+    button {
+      //margin: 5px auto 0px auto;
+      display: block;
+      width: 90px;
+      height: 30px;
+      line-height: 28px;
+      font-size: 12px;
+      border: 2px solid #ff5186;
+      color: #ff5186;
+      margin: auto;
+      padding: 0;
+      background: none;
+      border-radius: 0;
+      &:hover {
+        background: #ff5186;
+        color: #fff;
+      }
+    }
+    &:hover {
+      cursor: pointer;
+      border: 2px solid #ff3e69;
+      button {
+        background: #ff3e69;
+        color: #fff;
+      }
+    }
+  }
+}
+
+.payleft {
+  width: 167px;
+  float: left;
+  .payInfo {
+    border-bottom: 1px solid @boc;
+    padding-bottom: 5px;
+    float: none;
+  }
+  .payTips {
+    list-style-type: disc;
+
+    li {
+      color: #999;
+      margin: 8px 10px;
+      /* text-indent: 1em; */
+      line-height: 1.3em;
+    }
+  }
+}
+
+.payright {
+  width: 416px;
+  float: left;
+  margin-left: 30px;
+  background: #eee;
+  border-radius: 5px;
+  padding-bottom: 30px;
+  table {
+    margin: 10px 0px 0px 10px;
+    td {
+      .fred {
+        color: #ff0000;
+      }
+      .discount {
+        position: absolute;
+        left: 240px;
+      }
+
+      .btn {
+        display: inline-block;
+        margin-right: 15px;
+      }
+
+      input {
+        margin-right: 5px;
+        width: 100px !important;
+      }
+      .datePanel {
+        position: absolute;
+        z-index: 10;
+        background: #fff;
+        border: 1px solid @boc;
+        width: 156px;
+
+        li {
+          float: left;
+          width: 31px;
+          height: 30px;
+          line-height: 30px;
+          text-align: center;
+          cursor: pointer;
+          &:hover {
+            background: #eee;
+          }
+        }
+      }
+    }
+
+    .pay-tip {
+      display: none;
+    }
+  }
+}

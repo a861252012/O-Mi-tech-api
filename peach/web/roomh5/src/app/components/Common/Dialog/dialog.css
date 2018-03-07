@@ -1,0 +1,45 @@
+$path :../../../../www/;
+.dialogInitStyle{
+    position: absolute;
+    z-index: 100;
+    text-align: center;
+    border-radius:10px;
+    overflow: hidden;
+    padding: 15px;
+}
+.dialogWhiteTheme{
+    background: #fff;
+    color:#000;
+}
+.dialogPurpleTheme{
+    background: #370B5B;
+    color: #fff;
+    .dialogClose{
+        background: url('$(path)images/sider.png') no-repeat -56px 0;
+    }
+}
+.dialogRedTheme{
+    background:#7F2B65;
+    border-radius: 0;
+}
+.dialogHead{
+    padding-left: 70px;
+    padding-right:10px;
+    text-align: left;
+}
+.dialogTitle{
+    margin:15px 0;
+}
+.dialogTitleSmall{
+   color:#FA065D;
+   margin:10px 0;
+}
+.dialogClose{
+    cursor: pointer;
+    width:20px;
+    height:20px;
+    background: url('$(path)images/sider.png') no-repeat -34px 0;
+    position: absolute;
+    top: 10px;
+    right: 12px;
+}

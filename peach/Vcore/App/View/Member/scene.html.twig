@@ -1,0 +1,129 @@
+{% extends 'Member/layout.html.twig' %}
+{% block title %}我的道具{% endblock %}
+{% block head %}
+<script type="text/javascript">
+    cross.importFile("memberSceneCss", "css");
+</script>
+{% endblock %}
+
+{% block right %}
+<div class="perCenter">
+    <div class="perCenter-item clearfix">
+        <span class="perCenter-title">我的道具</span>
+    </div>
+    <div class="perCenter-item">
+        <span>当前余额：</span>
+        <span class="price">{{ user.points|default(0) }}</span>
+        <img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png" alt=""/>
+        <span class="em">（只能同时装备一个道具）</span>
+    </div>
+
+    <table class="perCenter-table table">
+        <tr>
+            <th>道具</th>
+            <th>说明</th>
+            <th>有效期</th>
+            <th>状态</th>
+            <th>操作</th>
+        </tr>
+        {% for item in data %}
+        <tr>
+            <td><img src="{{ flash_url }}/image/gift_material/{{ item.gid }}.png" height="40" alt="{{ item.name|default() }}" /> {{ item.mountGroup.name }}</td>
+            <td width="200px">{{ item.mountGroup.desc }}</td>
+            <td>
+                {% if item.mountGroup.unit_type == 2 %}
+                    {{ item.expires|date('Y-m-d H:i:s') }}
+                {% else %}
+                    {{ item.num }}
+                {% endif %}
+            </td>
+            <td>
+                {% if item.gid < 120001 or item.gid > 121000 %}
+                    不可装备
+                {% elseif item.expires < date().timestamp  %}
+                    已过期
+                {% else %}
+                    {% if item.gid in equip|keys %}
+                        <span class="state active">已装备</span>
+                    {% else %}
+                        <span class="state">未装备</span>
+                    {% endif %}
+                {% endif %}
+            </td>
+            <td>
+                {% if item.gid < 120001 or item.gid > 121000 %}
+                {% elseif item.expires < date().timestamp  %}<a href="{{ app.request.getSchemeAndHttpHost() }}/shop?gid={{ item.gid }}" class="btn-text" >【前去续费】</a>
+                {% else %}
+                    {% if item.gid in equip|keys %}
+                        <a class="btn-text btn-gray equipment" id="{{ item.gid }}" href="javascript:void(0);" data-equip="1">取消装备</a>
+                    {% else %}
+                        <a class="btn-text btn-blue equipment" id="{{ item.gid }}" href="javascript:void(0);" data-equip="0">立即装备</a>
+                    {% endif %}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% if data.total == 0 %}
+        <p class="perCenter-table-tip">您目前没有购买记录，<a href="/shop">立即购买&gt;&gt;</a></p>
+    {% endif %}
+
+</div>
+    {% autoescape false %}
+        <div  id="page" class="clearfix" style="float:right">{{ data.render }}</div>
+    {% endautoescape %}
+{% endblock %}
+
+
+
+{% block subjavascript %}
+
+    <script type="text/javascript">
+        cross.importFile("pageCommonJs", "js");
+    </script>
+    
+    <script type="text/javascript">
+    $(document).ready(function(){
+
+        //立即装备
+        $('.perCenter-table').on("click", ".equipment[data-equip='0']", function(){
+            var that = this;
+            $.ajax({
+                url: "/member/scene",
+                data: {"handle": "equip", "gid": $(this).attr('id')},
+                dataType: "json",
+                type: "GET",
+                success: function(res){
+                    if(res.status == 1){
+                        $.tips(res.messages, function(){
+                            location.reload();
+                        });
+                    }else{
+                        $.tips(res.messages);
+                    }
+                }
+            });
+        });
+
+        //取消装备
+        $('.perCenter-table').on("click", ".equipment[data-equip='1']", function(){
+            var that = this;
+            $.ajax({
+                url: "/member/cancelscene",
+                data: {},
+                dataType: "json",
+                type: "GET",
+                success: function(res){
+                    if(!res.ret){
+                        $.tips("取消成功", function(){
+                            location.reload();
+                        });
+                    }else{
+                        $.tips(res.info);
+                    }
+                }
+            });
+        });
+    });
+    </script>
+{% endblock %}

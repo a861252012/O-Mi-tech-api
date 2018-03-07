@@ -1,0 +1,202 @@
+<div class="mt-header mt-header-fixed">
+    <div class="mt-header-container">
+        <div class="mt-logo-bg">
+            <i class="header-annimate-element1"></i>
+            <i class="header-annimate-element2"></i>
+            <i class="header-annimate-element3"></i>
+            <i class="header-annimate-element4"></i>
+            <i class="header-annimate-element5"></i>
+            <i class="header-annimate-element6"></i>
+            <i class="header-annimate-element7">
+                <div class="icon icon1">
+                    <div class="planet">
+                        <div class="line line1"></div>
+                        <div class="line line2"></div>
+                        <div class="line line3"></div>
+                        <div class="line line4"></div>
+                        <div class="line line5"></div>
+                        <div class="line line6"></div>
+                        <div class="line line7"></div>
+                        <div class="line line8"></div>
+                        <div class="line line9"></div>
+                        <div class="line line10"></div>
+                    </div>
+                </div>
+            </i>
+            <i class="header-annimate-element8"></i>
+            <i class="header-annimate-element9"></i>
+            <i class="header-annimate-element10">
+                <div class="icon icon2">
+                    <div class="planet">
+                        <div class="line line1"></div>
+                        <div class="line line2"></div>
+                        <div class="line line3"></div>
+                        <div class="line line4"></div>
+                        <div class="line line5"></div>
+                    </div>
+                </div>
+            </i>
+            <i class="header-annimate-element11"></i>
+        </div>
+        <div class="mt-right-bg">
+            <div class="mt-right-bg__ie8"></div>
+            <i class="header-annimate-element12"></i>
+            <i class="header-annimate-element13">
+                <div class="icon icon3">
+                    <div class="planet">
+                        <div class="line line1"></div>
+                        <div class="line line2"></div>
+                        <div class="line line3"></div>
+                        <div class="line line4"></div>
+                        <div class="line line5"></div>
+                        <div class="line line6"></div>
+                        <div class="line line7"></div>
+                        <div class="line line8"></div>
+                        <div class="line line9"></div>
+                        <div class="line line10"></div>
+                    </div>
+                </div>
+            </i>
+            <i class="header-annimate-element14"></i>
+            <i class="header-annimate-element15"></i>
+        </div>
+        <div class="mt-box">
+            <div class="mt-logo">
+                <a href="/" title="" class="mt-logo-link"></a>
+            </div>
+            {% if user_login_asset is not defined or user_login_asset == true %}
+                <div class="sidebar">
+                    <ul id="menu">
+                        <li>
+                            <a href="/">首页</a>
+                        </li>
+                        <li>
+                            <a href="/ranking">
+                                <div class="nav-i-text">排行榜</div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/shop">
+                                <div class="nav-i-text">商城</div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/join">
+                                <div class="nav-i-text">招募</div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/act">
+                                <div class="nav-i-text">热门活动</div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/noble">
+                                <div class="nav-i-text">贵族</div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/download">
+                                <div class="nav-i-text">下载</div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            {% endif %}
+            <div class="search-content">
+                <input type="text" id="searchIpt" maxlength="12" placeholder="输入主播昵称/主播ID">
+                <button id="searchIptBtn">
+                    <i class="fa fa-search"></i>
+                </button>
+            </div>
+            <div class="mt-head-right">
+                {% if uid == "" %}
+                    <button class="button btn-open-login J-login">登录</button> |
+                    <button class="button btn-open-registered J-reg">注册</button>
+                {% else %}
+                    <span class="link points">{{points}}<img src="{{ STATIC_PATH }}/public/src/img/diamond.png?v={{ publish_version }}" style="margin-left: 5px;"></span>
+                    <div class="logged-menu">
+                        <div class="dash-profile shover">
+                            <a class="img-avatar active-user">
+                                {% if headimg == "0" or headimg == null %}
+                                    <img src="{{ STATIC_PATH }}{{ PIC_PATH }}head_80.png?w=80&h=80"/>
+                                {% else %}
+                                    <img src="{{ IMG_PATH }}/{{ headimg }}?w=80&h=80"/>
+                                {% endif %}
+
+                            </a>
+                            <span class="link nickname" title="{{nickname}}">{{nickname}}</span>
+                            {% if vip > 0 %}
+                                <span class="hotListImg basicLevel{{vip}}"></span>
+                            {% endif %}
+                            <ul class="profile-nav">
+                                <li>
+                                    <a target="_blank" href="/member/index">
+                                        基本信息
+                                    </a>
+                                </li>
+                                {% if roled == 3 %}
+                                    <li>
+                                        <a target="_blank" href="/{{ uid }}/h5">
+                                            我要直播
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                <li>
+                                    <a target="_blank" href="/member/attention">
+                                        我的关注
+                                    </a>
+                                </li>
+                                <li>
+                                    <a target="_blank" href="/member/scene">
+                                        我的道具
+                                    </a>
+                                </li>
+                                <li>
+                                    <a target="_blank" href="/member/consumerd">
+                                        消费记录
+                                    </a>
+                                </li>
+                                <li>
+                                    <a target="_blank" href="/member/password">
+                                        密码管理
+                                    </a>
+                                </li>
+                                <li>
+                                    <a target="_blank" href="/member/myReservation">
+                                        一对一约会
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/logout">
+                                        退出
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="menu-button">
+                        <a href="/member/msglist" target="_blank" class="link">消息</a>
+                        <a href="/charge/order" target="_blank" class="link">充值</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var PAGE_HIGHT_MAPPING = {'index': 0, 'ranking': 1, 'shop': 2, 'join': 3, 'act': 4, 'noble': 5, 'download': 6},
+        currentUrl = location.href.split('/');
+
+    if (!!currentUrl[3] && currentUrl[3] != '/') {
+        //考虑带?, #的情况
+        currentUrl = currentUrl[3].replace(/[?#](.*)/g, '');
+    } else {
+        currentUrl = 'index';
+    }
+
+    if (PAGE_HIGHT_MAPPING[currentUrl] != null) {
+        document.getElementById('menu').getElementsByTagName('a')[PAGE_HIGHT_MAPPING[currentUrl]].className += 'active';
+    }
+
+</script>

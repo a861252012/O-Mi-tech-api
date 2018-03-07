@@ -1,0 +1,131 @@
+{% extends "VideoProjectBundle::layout.html.twig" %}
+{% block title %}公告{% endblock %}
+
+{% block head %}
+	<style type="text/css">
+		.ad-container{
+			padding: 0px;
+			width: 1000px;
+			margin: 0px auto;
+			position: relative;
+		}
+		.ad-content{
+		}
+		.ad-wrapper{
+			background-color: #fff;
+		}
+		.ad-main{
+
+		}
+		
+		.ad-banner{
+			background-position: center center;
+			background-repeat: no-repeat;
+		}
+		.ad-banner-1{
+			background-image: url({{ STATIC_PATH }}/css/i/ad/link/link_banner.jpg);
+			height: 229px;
+			position: relative;
+		}
+		.ad-title{
+			background-position: center center;
+			background-repeat: no-repeat;
+		}
+
+		.ad-title-1{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/link/link_con.jpg);
+			height: 384px;
+		}
+		.ad-table{
+			font-size: 14px;
+			color: #e083c5;
+			margin: 10px 0px 40px 130px;
+		}
+		.ad-table th{
+			font-weight: normal;
+			width: 73px;
+			padding: 5px 0px;
+			vertical-align: top;
+			line-height: 1.5em;
+		}
+		.ad-table td{
+			padding: 5px 0px;
+			line-height: 1.5em;
+		}
+
+		.charge-btn{
+			width: 150px;
+			height: 53px;
+			display: block;
+			cursor: pointer;
+			position: absolute;
+			left: 425px;
+			top: 325px;
+		}
+
+		.ad-des{
+			color: #333;
+		}
+
+		.ad-des p{
+			font-size: 14px;
+			margin: 30px 0px;
+		}
+
+		.ad-des .ad-des-point{
+			vertical-align: middle;
+			display: inline-block;
+			height: 10px;
+			width: 10px;
+			border-radius: 10px;
+			background-color: #f5008f;
+			margin-right: 10px;
+		}
+
+		.ad-des .ad-des-content{
+			display: inline-block;
+			vertical-align: middle;
+		}
+
+	</style>
+
+
+{% endblock %}
+
+{% block content %}
+<div class="inx-section">
+	<div class="container">
+		<div class="ad-main">
+			<div class="ad-banner ad-banner-1">
+				<div class="ad-container">
+					<a class="charge-btn"></a>
+				</div>
+			</div>
+		</div>
+		<div class="ad-des">
+			<p style="text-indent: 2em;">即日起，只要点击“个人中心” > “推广链接” > “复制链接”，并粘贴至其他网站、平台，分享给您的朋友，吸引他们来蜜桃儿为主播刷花，就有丰厚现
+金大礼等你拿！</p>
+		</div>
+		<div class="ad-content">
+			<div class="ad-title ad-title-1"></div>
+			<div class="ad-des" style="margin-left: 80px;">
+				<p><span class="ad-des-point"></span><span class="ad-des-content">如果您想要参加，请务必先联系客服，并提供您的蜜桃儿ID以及验证邮箱进行报名；</span><br/>
+					<span class="ad-des-point"></span><span class="ad-des-content">
+					报名后，我们会为您提供专属链接，扩散、分享此链接即可参与活动；</span><br/>
+					<span class="ad-des-point"></span><span class="ad-des-content">您分享的链接，只要吸引其他玩家在我站注册并充值，我站便会赠送您丰厚钻石作为奖励；</span><br/>
+					<span class="ad-des-point"></span><span class="ad-des-content">您当月合计引流50000元以下充值，下月您将获得相当于您所引流的充值总量10%的钻石奖励；</span><br/>
+					<span class="ad-des-point"></span><span class="ad-des-content">您当月合计引流50000元以上充值，下月您将获得相当于您所引流的充值总量15%的钻石奖励；</span><br/>
+					<span class="ad-des-point"></span><span class="ad-des-content">所有玩家分享的链接，吸引注册、充值量按月结算，并于第二个月初返还奖励。</span></p>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        app.importFile("pageCommonJs", "js");
+    </script>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends "layout.html.twig" %}
+{% block title %}玩儿转蜜桃儿{% endblock %}
+
+{% block head %}
+	<style type="text/css">
+		.ad-container{
+			padding: 0px;
+			width: 1200px;
+			margin: 0px auto;
+			position: relative;
+		}
+
+		.ad-wrapper{
+			background-color: #000;
+		}
+
+		.ad-banner{
+			background-position: center center;
+			background-repeat: no-repeat;
+		}
+		.ad-banner-1{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/guide/guide01.jpg);
+			height: 556px;
+			position: relative;
+		}
+        .ad-banner-2 {
+            background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/guide/guide02.jpg);
+            height: 761px;
+        }
+        .ad-banner-3 {
+            background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/guide/guide03.jpg);
+            height: 704px;
+        }
+        .ad-banner-4 {
+            background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/guide/guide04.jpg);
+            height: 714px;
+        }
+        .ad-banner-5 {
+            background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/guide/guide05.jpg);
+            height: 995px;
+        }
+        
+        #listCE, #listHY {
+            width: 350px;
+            position: absolute;
+        }
+
+        #listCE {
+		    left: 121px;
+		    top: 240px;
+        }
+        #listHY {
+		    left: 595px;
+		    top: 240px;
+        }
+        .ad-wrapper,.ad-banner,.ad-content,.ad-title{
+            display: block !important;
+            visibility: visible !important;
+        }
+	</style>
+
+
+{% endblock %}
+
+{% block content %}
+    <!-- 页面内容 -->
+    <div class="inx-section">
+		<div class="ad-wrapper">
+			<div class="ad-main">
+				<div class="ad-banner ad-banner-1"></div>
+				<div class="ad-banner ad-banner-2"></div>
+				<div class="ad-banner ad-banner-3"></div>
+				<div class="ad-banner ad-banner-4"></div>
+			</div>
+
+
+		</div>
+	</div>
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        app.importFile("pageCommonJs", "js");
+    </script>
+<script type="text/javascript">
+
+$(function(){
+
+	var clearBox = function(){
+		$("#charmlist").html("");
+		$("#starlist").html("");
+	}
+
+	var getData = function(){
+		$.ajax({
+			url: "/CharmStar",
+			dataType: "json",
+			type: "GET",
+			success: function(res){
+                //console.log(res)
+				for(var key in res){
+					if (key.indexOf("star") > -1 || key.indexOf("charmlist") > -1) {
+						var tmp = "";
+						$.each(res[key], function(i, n){
+
+							var itemTmp = '<li>' +
+                                        '<span class="no">' + n.no + '.</span>' +
+                                        '<span class="name">' + n.nickname + '</span>' +
+                                        '<span class="icon"></span><span class="points">' + n.points +'</span>' +
+                            		'</li>';
+                           	tmp = tmp + itemTmp;
+							
+						});
+						$("#" + key).append(tmp);
+					};
+				};
+
+			}
+		});
+	};
+
+
+	getData();
+	setInterval(function(){
+		clearBox();
+		getData();
+	}, 60000);
+
+});
+
+</script>
+{% endblock %}

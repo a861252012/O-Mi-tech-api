@@ -1,0 +1,51 @@
+{% extends "Member/layout.html.twig" %}
+
+{% block title %}系统消息{% endblock %}
+
+{% block head %}
+<script type="text/javascript">
+    cross.importFile("memberMsgCss", "css");
+</script>
+{% endblock %}
+
+{% block right %}
+
+<div class="perCenter">
+    <div class="perCenter-item clearfix">
+        <span class="perCenter-title">系统消息</span>
+    </div>
+    <div class="J-tab-main top-line active">
+        <ul class="msg-list" id="sysMsg">
+            {% for item in data %}
+                <li class="msg-item clearfix" data-store='{"tid":{{ item.rec_uid }}, "fid":{{ item.send_uid }}, "id":{{ item.id }}}'>
+                    
+                    <div class="msg-por">
+                        <img class="msg-por_img" src="{{ STATIC_PATH }}{{ PIC_PATH }}msg-por.png" alt="">
+                        <div class="msg-por_name">系统消息</div>
+                    </div>
+                    
+                    <div class="msg-content {% if item.status == 0%}active{% endif %}">
+                        <div class="msg-content_tri"></div>
+                        <div class="msg-content_in">
+                            <div class="msg-date">{{ item.created | date('Y-m-d H:i') }}</div>
+                            <div class="msg-p">{{ item.content }}</div>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+        {% autoescape false %}
+            <div  id="page" class="clearfix" style="float:right">{{ data.render }}</div>
+        {% endautoescape %}
+    </div>
+    
+</div>
+
+
+{% endblock %}
+
+{% block subjavascript %}
+    <script type="text/javascript">
+        cross.importFile("memberMsgJs", "js");
+    </script>
+{% endblock %}

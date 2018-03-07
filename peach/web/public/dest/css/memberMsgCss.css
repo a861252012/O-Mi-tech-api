@@ -1,0 +1,64 @@
+/**
+ * 消息页面
+ * @author Young
+ * @contacts young@moonjoy.co
+ */
+/*
+ * variable less file, this file is module for button
+ * Author: Young
+ * important module for the project, if u would like to modify the file, pls contact Young
+ * mail: young@kingjoy.co
+ */
+.msg-item {
+  margin-bottom: 15px;
+}
+.msg-por {
+  float: left;
+  width: 50px;
+  margin-right: 10px;
+}
+.msg-por_img {
+  height: 40px;
+  width: 40px;
+  display: block;
+  margin: 0px auto;
+}
+.msg-por_name {
+  text-align: ceter;
+  color: #2b2c2d;
+  margin-top: 5px;
+}
+.msg-content {
+  position: relative;
+}
+.msg-content.active .msg-content_tri {
+  border-color: #fff #ffebf1 #fff #fff;
+}
+.msg-content.active .msg-content_in {
+  background-color: #ffebf1;
+}
+.msg-content_tri {
+  position: absolute;
+  top: 10px;
+  left: 55px;
+  width: 0;
+  height: 0;
+  border-width: 7px 10px;
+  border-style: solid;
+  border-color: #fff #eee #fff #fff;
+}
+.msg-content_in {
+  padding: 10px 15px;
+  border-radius: 8px;
+  background-color: #eee;
+  margin-left: 75px;
+}
+.msg-date {
+  color: #247DDA;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.msg-p {
+  font-size: 14px;
+  color: #2b2c2d;
+}

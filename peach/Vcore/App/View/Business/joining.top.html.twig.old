@@ -1,0 +1,12 @@
+<div class="secondNav">
+	<div class="container">
+		<dl>
+			<dt>
+				<p class="dt-title">主播入驻流程</p>
+			</dt>
+			<dd class="active"><div class="stepBox"><div class="step">step <span class="step-big">01</span></div><span class="step-text">身份验证</span></div></dd>
+			<dd><div class="stepBox"><div class="step">step <span class="step-big">02</span></div><span class="step-text">基本资料</span></div></dd>
+			<dd><div class="stepBox"><div class="step">step <span class="step-big">03</span></div><span class="step-text">能力验证</span></div></dd>
+		</dl>
+	</div>
+</div>

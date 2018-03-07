@@ -1,0 +1,65 @@
+.selectPanel{
+    background:#fff ;
+    border: 1px solid #ff0066;
+    border-radius: 10px;
+    color: #000;
+    font-size: 14px;
+    position: relative;
+    overflow:hidden;
+}
+.panelTitle  span{
+    vertical-align: middle;
+    font-weight: bold;
+}
+.panelTitleIcon{
+    display: inline-block;
+    width: 50px;
+    height: 22px;
+    background: url("../../../../www/images/gift_vip.png") no-repeat 0px -207px;
+
+}
+.selectItemImg{
+    display: inline-block;
+    width:50px;
+    height: 22px;
+    vertical-align: middle;
+    background: url("../../../../www/images/gift_vip.png") no-repeat ;
+}
+.selectItemImg0{
+    background-position:-46px -92px;
+}
+.selectItemImg1{
+    background-position:0px -45px;
+}
+.selectItemImg2{
+    background-position:0px -26px;
+}
+.selectItemImg3{
+    background-position:-50px -23px;
+}
+.selectItemImg4{
+    background-position:0px -70px;
+}
+.selectItemImg5{
+    background-position:-50px -70px;
+}
+.selectItemImg6{
+    background-position:0px -162px;
+}
+.selectItemName{
+    margin-right: 10px;
+    text-align: left;
+    width: 60px;
+    display: inline-block;
+}
+.selectItemNum{
+    text-align: right;
+    display: block;
+}
+.vipSelectPanel {
+    position: absolute;
+    bottom:0px;
+    left:212px;
+    width: 195px;
+    z-index: 100;
+}

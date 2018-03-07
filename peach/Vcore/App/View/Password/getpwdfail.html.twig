@@ -1,0 +1,37 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}密码找回失败{% endblock %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("mailCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="inx-section">
+    <div class="container">
+        <div class="mail">
+            <div class="mail-head">密码找回失败</div>
+            <form action="" class="m-form" onSubmit="return false">
+                <div class="m-form-item clearfix">
+                    <div class="mail-icon mail-icon-fail"></div>
+                    <div class="mail-content">
+                        <p>{{ error }}</p>
+                    </div>
+                </div>
+
+                <div class="m-form-item mail-btn-box">
+                    <a onclick="history.back();" class="btn btn-orange">返 回</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        cross.importFile("mailJs", "js");
+    </script>
+{% endblock %}

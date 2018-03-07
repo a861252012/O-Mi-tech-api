@@ -1,0 +1,33 @@
+:global .video-container {
+    height: 480px;
+    width: 640px;
+    position: absolute;
+    top: 0px;
+    background: #1e0524;
+    font-size: 18px;
+    .shockwave{
+        text-align: center;
+        padding: 100px 0;
+    }
+    h1{
+        font-size: 14px;
+    }
+    img{
+        width: 112px;
+        height: 33px;
+    }
+}
+
+.title{
+    font-size: 16px;
+    margin: 10px 0px;
+}
+
+.tips{
+    font-size: 14px;
+    padding: 10px;
+}
+
+.em{
+    color:#247dda
+}

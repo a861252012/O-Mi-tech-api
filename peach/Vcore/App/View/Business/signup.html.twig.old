@@ -1,0 +1,97 @@
+{% extends "layout.html.twig" %}
+{% block title "主播申请" %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("busCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+
+	<!-- 页面内容 -->
+<div class="inx-section">
+	{% include "Business/joining.top.html.twig" %}
+	<div class="container">
+		<div class="step-content">
+			<div class="step-Display clearfix">
+				<div class="stepDisplay-tip">
+					<div class="stepDisplay-tip-Now">
+						填写基本资料
+						<div>
+							<p class="active"></p>
+						</div>
+					</div>
+					<div class="stepDisplay-tip-normal">申请通过</div>
+					<div class="stepDisplay-tip-feature">
+						申请审批期
+						<div>
+							<p></p>
+						</div>
+					</div>
+				</div>
+				<div class="stepDisplay-line"></div>
+			</div>
+	        <form id="singup" name="singup" method="POST" onsubmit="return false">
+				<table class="stepFrom">
+					<tr>
+						<th>申请入驻账号：</th>
+						<td>{{ user.username|default('') }}</td>
+					</tr>
+					<tr>
+						<th>真实姓名：</th>
+						<td><input type="text" name="realname" class="txt" value="" id="realName"/></td>
+					</tr>
+					<tr>
+						<th>性别：</th>
+						<td>
+	                        <label for="sSexMale"><input type="radio" id="sSexMale" class="radio" name="sex" value="1" {% if user.sex == 1 %}checked{% endif %} />男</label>
+	                        <label for="sSexFemale"><input type="radio" id="sSexFemale" class="radio" name="sex" value="0" {% if user.sex == 0 %}checked{% endif %} />女</label>
+	                    </td>
+					</tr>
+					<tr>
+						<th>出生日期：</th>
+						<td><input class="Wdate txt" id="bDay" type="text" name="birthday" onClick="WdatePicker({% if user.birthday is defined %}{startDate:'{{ user.birthday }}'}{% endif %})"></td>
+					</tr>
+					<tr>
+						<th>手机号码：</th>
+						<td><input type="text" class="txt" name="phone" id="phoneNum"/></td>
+					</tr>
+					<tr>
+						<th>QQ号码：</th>
+						<td><input type="text" class="txt" name="qq" id="qqNum"/></td>
+					</tr>
+					<tr>
+						<th>银行卡卡号：</th>
+						<td><input type="text" class="txt" name="banknum" id="bankNum"/></td>
+					</tr>
+					<tr>
+						<th>银行卡开户名：</th>
+						<td><input type="text" class="txt" name="bankname" id="bankName"/></td>
+					</tr>
+					<tr>
+						<th>银行卡开户地址：</th>
+						<td><input type="text" class="txt" name="bankaddr" id="bankAddr"/></td>
+					</tr>
+					<tr>
+						<th></th>
+						<td><span id="valTip" class="fred"></span></td>
+					</tr>
+					<tr>
+						<th><input type="hidden" name="handle" value="signin"></th>
+						<td><button class="btn" id="stepFrom">提交申请</button></td>
+					</tr>
+				</table>
+	        </form>
+		</div>
+	</div>
+
+</div>
+
+{% endblock %}
+{% block javascript %}
+	<script type="text/javascript" src="{{ STATIC_PATH }}/js/widget/My97DatePicker/WdatePicker.js"></script>
+	<script type="text/javascript">
+	    cross.importFile("signupJs", "js");
+	</script>
+{% endblock %}

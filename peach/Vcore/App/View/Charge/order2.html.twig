@@ -1,0 +1,242 @@
+{% extends "layout.html.twig" %}
+{% block title %}钻石充值{% endblock %}
+{% block head %}
+    <!-- Mobile Device Meta -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <script type="text/javascript">
+        cross.importFile("payCss", "css");
+    </script>
+    <script src="{{ STATIC_PATH }}/public/src/js/core/vue.js?v={{ publish_version }}"></script>
+    <script src="{{ STATIC_PATH }}/public/src/js/core/vue-resource.js?v={{ publish_version }}"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="inx-section" id="pay">
+        <pay-wrapper></pay-wrapper>
+    </div>
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/x-template" id="pay-wrapper">
+        <div class="pay">
+            <div class="pay-guard-box">
+                <a href="{{ ad.url }}">
+                    <img src="{{ IMG_PATH }}/{{ ad.temp_name }}" width="1200px;" height="250px;">
+                </a>
+            </div>
+            <div class="pay-guard-content pay-guard">
+                <p class="tip hide">
+                    您的余额： <span class="unit">%%points%%</span> <img src="{{ STATIC_PATH }}/public/src/img/diamond.png?v={{ publish_version }}">
+                </p>
+                <p class="tip hide">
+                    充值账号： <span class="nickname">%%userInfo%%</span>
+                </p>
+                <div class="control pay-guard-horizontal">
+                    <div class="control-label">
+                        <label class="label lable-tab">
+                            <div class="border"></div>
+                            充值金额：
+                        </label>
+                    </div>
+                    <div class="control is-grouped">
+                        <p class="control is-expanded2">
+                        <ul class="guard-month">
+                            <li v-for="(item, index) in payAmount"
+                                :class="[activeIndex === index ? currentClass : '']"
+                                @click="amountSwitch(index)">
+                                <span class="points">%%item.points%%钻石</span>
+                                <span class="rmb">￥%%item.rmb%%</span>
+                                <i class="icon-corner-checked"></i>
+                                <i :class="item.fee > 0 ? 'icon-discount-checked': ''">%%item.fee > 0 ? item.fee + '钻' : ''%%</i>
+                            </li>
+                        </ul>
+                        </p>
+                    </div>
+                </div>
+                <div class="control pay-guard-horizontal">
+                    <div class="control-label">
+                        <label class="label lable-tab">
+                            <div class="border"></div>
+                            充值方式：
+                        </label>
+                    </div>
+                    <div class="control is-grouped">
+                        <p class="control is-expanded1">
+                        <ul v-if="payChannels == true" class="guard-month">
+                            <li v-for="(item, index) in tabPayTypes"
+                                :class="[typeIndex === index ? currentClass : '', item.name]"
+                                @click="paySwitch(index)">
+                                %%item.channel%%
+                                <i class="icon-corner-checked"></i>
+                            </li>
+                        </ul>
+                        <span v-else class="tip">暂时没有充值渠道，请联系客服充值。</span>
+                        </p>
+                    </div>
+                </div>
+                <div v-if="show == true" class="control pay-guard-horizontal">
+                    <div class="control-label">
+                        <label class="label lable-tab">
+                            <div class="border"></div>
+                            充值姓名：
+                        </label>
+                    </div>
+                    <div class="control is-grouped">
+                        <p class="control is-expanded1">
+                            <input type="text" v-model="remark"  maxlength="4" minlength="2">
+                        </p>
+                    </div>
+                </div>
+                <p class="tip lable-tab">
+                    到账钻石： <span class="unit">%%diamond%% <i v-if="giveDiamond != 0">(含充值赠送的%%giveDiamond%%钻石)</i></span>
+                </p>
+                <div class="control pay-guard-horizontal">
+                    <div class="control-label hide">
+                        <label class="label"></label>
+                    </div>
+                    <div class="control">
+                        <form method="POST" action="/charge/pay2">
+                            <input type="hidden" name="oid" :value="oid">
+                            <input type="hidden" name="cid" :value="cid">
+                            <input type="hidden" name="origin" :value="origin">
+                            <input type="hidden" name="remark" :value="remark">
+                            {% if jwt %}
+                                <input type="hidden" name="jwt" value="{{ jwt }}">
+                            {% endif %}
+                            <button :class="[disabled === true ? 'button-disabled' : '','button', 'is-primary']"
+                                    :disabled="disabled" class="button is-primary">立即支付</button>
+                        </form>
+                    </div>
+                </div>
+                <p class="tip hide">
+                    温馨提示：
+                </p>
+                <p class="tip hide">
+                <ol class="hide">
+                    <li>支付完毕之后请一定等待"自动跳转回商家"页面，以避免到帐延迟。</li>
+                    <li>如有问题请联系官方客服。</li>
+                    <li>如果选择网银充值方式，请使用IE浏览器。</li>
+                </ol>
+                </p>
+            </div>
+        </div>
+    </script>
+    <script type="text/javascript">
+        Vue.component('payWrapper', {
+            delimiters: ['%%', '%%'],
+            template: '#pay-wrapper',
+            data: function data() {
+                return {
+                    activeIndex: 0,
+                    typeIndex: 0,
+                    giveDiamond: 0,
+                    diamond: 1,
+                    payAmount: {{ options | json_encode | raw }},
+                    tabPayTypes: [],
+                    payType: {{ payConfig | json_encode | raw }},
+                    payClass: [
+                        {
+                            name: 'alipay',
+                            text: '支付宝'
+                        },
+                        {
+                            name: 'wechat',
+                            text: '微信'
+                        },
+                        {
+                            name: 'bankpay',
+                            text: '网银支付'
+                        },
+                        {
+                            name: 'transfer',
+                            text: '人工转账'
+                        },
+                        {
+                            name: 'qqpay',
+                            text: 'QQ钱包'
+                        }
+                    ],
+                    PaymentRatio: 1,
+                    currentClass: 'current',
+                    userInfo: '{{ user.nickname }}',
+                    points: '{{ user.points }}',
+                    oid: '',
+                    cid: '',
+                    payChannels: false,
+                    origin: {{ origin }},
+                    remark: '',
+                    disabled: false,
+                    show: false
+                }
+            },
+            methods: {
+                initPay() {
+                    this.addPayClass();
+                    this.amountSwitch(0);
+                },
+                addPayClass() {
+                    const addPayClass = this.payClass;
+                    const payType = this.payType;
+
+                    addPayClass.forEach((value, key) => {
+                        payType.forEach((obj, iterator) => {
+                            if (addPayClass[key].text == payType[iterator].channel) {
+                                payType[iterator].name = addPayClass[key].name;
+                            }
+                        });
+                    });
+                },
+                amountSwitch(index) {
+                    const payment = this.PaymentRatio;
+                    const channels = this.payAmount[index].channels;
+                    const payType = this.payType;
+
+                    this.tabPayTypes.length = 0;
+                    this.typeIndex = 0;
+                    this.remark = '';
+                    this.show = false;
+                    this.giveDiamond = this.payAmount[index].fee;
+                    this.activeIndex = index;
+                    this.diamond = this.payAmount[index].points * payment + this.payAmount[index].fee;
+
+                    //筛选支付方式
+                    channels.forEach((value, key) => {
+                        let filterPayType = payType.filter((type) => {
+                            return type.cid == channels[key].cid;
+                        })
+
+                        if(filterPayType.length != 0)  {
+                            this.tabPayTypes.push(filterPayType[0]);
+                        }
+                    })
+
+                    this.payChannels = (this.tabPayTypes.length != 0 ? true : false);
+                    this.disabled = (this.tabPayTypes.length != 0 ? false : true);
+
+                    if(this.payAmount[index].channels.length != 0 ) {
+                        this.oid = this.payAmount[index].channels[0].option_id;
+                    }
+
+                    if(this.tabPayTypes.length != 0 ) {
+                        this.cid = this.tabPayTypes[0].cid;
+                    }
+                },
+                paySwitch(index) {
+                    this.typeIndex = index;
+                    this.remark = '';
+                    this.show = this.tabPayTypes[index].name == 'transfer' ? true : false;
+                    this.cid = this.tabPayTypes[index].cid;
+                }
+            },
+            mounted() {
+                this.diamond = this.payAmount[0].points * this.PaymentRatio;
+                this.payAmount[0].fee;
+                this.initPay();
+            }
+        })
+
+        var pay = new Vue({
+            el: '#pay'
+        })
+    </script>
+{% endblock %}

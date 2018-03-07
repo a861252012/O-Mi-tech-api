@@ -1,0 +1,11 @@
+{
+  "presets": [
+    ["es2015", { "module": false }],
+    "stage-2",
+    "react"
+  ],
+  "plugins": [
+    "react-hot-loader/babel"
+    // Enables React code to work with HMR.
+  ]
+}

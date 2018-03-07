@@ -1,0 +1,134 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}商城{% endblock %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("shopCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+
+    <!-- 页面内容 -->
+    <div class="inx-section">
+        <div class="doc-wrapper">
+            <div class="doc container shop-contents">
+                {#<div class="doc-title">道具商城</div>#}
+                <img class="noble-banner" src="{{ STATIC_PATH }}/public/src/img/shop-banner.jpg" alt="" width="1200px" height="250px">
+                <div class="doc-content">
+                    <div class="clearfix J-tab">
+
+                        <div class="shop-header">
+                            <ul class="shop-title tab-title J-tab-menu">
+                                <li class="tab-item active">
+                                    <div class="car">
+                                    </div>
+                                    <h3>普通坐骑</h3>
+                                    <b></b>
+                                </li>
+
+                                <li class="tab-item">
+                                    <div class="noble">
+                                    </div>
+                                    <h3>贵族专属</h3>
+                                    <b></b>
+                                </li>
+
+                                <li class="tab-item" id="tabNoble">
+                                    <div class="open-nobility">
+                                    </div>
+                                    <h3>开通贵族</h3>
+                                    <b></b>
+                                </li>
+
+                                {#<li class="shop-content-btnTool">#}
+                                    {#<input type="button" class="btn" id="cChargeBtn" value="充值" />#}
+                                    {#{% if userInfo %}#}
+                                        {#<a href="/member/scene" target="_blank" class="btn">我的道具</a>#}
+                                    {#{% endif %}#}
+                                {#</li>#}
+                            </ul>
+                        </div>
+                        <h3 class="shop-vip">贵族专属</h3>
+                        <div class="J-tab-main shop-main active">
+                            <div class="shop-content clearfix" id="goods-list">
+                                {% for item in lists %}
+                                <ul class="shop-item" data-price="{{ item.price }}" data-gid="{{ item.gid }}" data-ctime="{{ item.createTime|date("Y-m-d")}}">
+                                    <li class="goods-item-imgBlock">
+                                        <img class="payImg" src="{{ flash_url }}/image/gift_material/{{ item.gid }}.png" alt="" />
+                                        
+                                    </li>
+                                    <li>{{ item.name }}</li>
+                                    <li><span class="forange">{{ item.price }}</span><img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png" alt="" />/月</li>
+                                    <li><button class="btn btn-around payBtn">购买</button></li>
+                                </ul>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="J-tab-main shop-main">
+                            <div class="shop-content clearfix" id="nobleMountList">
+                                {% for item in vipmount %}
+                                <ul class="shop-item" data-gid="{{ item.gid }}" data-groupid="{{ item.mountGroup.gid }}" data-ctime="{{ item.createTime|date('Y-m-d')}}" data-title="{{ item.name }}" data-desc="{{ item.desc }}" data-lvtitle="{{ item.mountGroup.level_name}}">
+                                    <li class="goods-item-imgBlock">
+                                        <img class="payImg" src="{{ flash_url }}/image/gift_material/{{ item.gid }}.png" alt="" />
+                                    </li>
+                                    <li class="forange">{{ item.name }}</li>
+                                    <li>{{ item.mountGroup.level_name}}坐骑</li>
+                                    <li><button class="btn btn-around J-noble-prop">领取</button></li>
+                                </ul>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="J-tab-main shop-main">
+                            <div class="shop-content clearfix" id="groupList">
+                                {% for item in group %}
+                                <ul class="shop-item" data-groupid="{{ item.gid }}" data-ctime="{{ item.createTime|date("Y-m-d")}}">
+                                    <li class="goods-item-imgBlock">
+                                        <img class="payImg" src="{{ flash_url }}/image/patrician_l/{{ item.level_id }}.png" alt="" />
+                                    </li>
+                                    <li class="forange">{{ item.level_name }}</li>
+                                    <li>
+                                        <div>首次开通价格:</div>
+                                        <div>{{ item.system.open_money }}<img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png" alt="" />/月</div>
+                                    </li>
+                                    <li><button class="btn btn-around J-noble-charge" data-groupid="{{ item.gid }}">开通</button></li>
+                                </ul>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        cross.importFile("shopJs", "js");
+    </script>
+    
+    <script type="text/javascript">
+
+        //新道具图标显示，从服务器获取数据
+        var curSerDate = '{{ curSerDate }}';
+        
+        $(function(){
+            var nowDate = (new Date(curSerDate)).getTime();
+            $("#goods-list").find("ul").each(function(i, e){
+                var proDate = new Date($(e).data("ctime")).getTime();
+                //7天
+                if(nowDate - proDate <= 604800000){
+                    $(this).find(".goods-item-imgBlock").append('<span class="payNew"></span>');
+                }
+            });
+        });
+    </script>
+{% endblock %}

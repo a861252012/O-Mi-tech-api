@@ -1,0 +1,81 @@
+$path :../../../www/;
+.container{
+    position: absolute;
+    right: 0px;
+    bottom: 14%;
+    z-index: 10;
+
+    .dialog{
+        color:#fff;
+        left:0;
+        top:0;
+    }
+}
+.parkingBtn{
+    display: inline-block;
+    background: #491423;
+    width:42px;
+    height: 80px;
+    border:2px solid #A65469;
+    border-radius: 42px 0 0 42px;
+    text-align: center;
+    font-weight: bold;
+    border-right: 0;
+    cursor: pointer;
+    vertical-align: bottom;
+    margin-bottom: 30px;
+    line-height: 80px;
+}
+.parkingBtnArrow{
+    display: inline-block;
+    width: 6px;
+    height: 10px;
+    background: url($(path)images/sider.png) no-repeat -34px -67px;
+    vertical-align: middle;
+}
+.parkingNum{
+    /*display: inline-block;*/
+    /*height: 80px;*/
+    margin-left: 5px;
+    vertical-align: middle;
+}
+.parkingContainer{
+    display: inline-block;
+    border:1px solid #7F2B65;
+    background: #2F111D;
+    position: relative;
+    font-weight: 500;
+    margin-top: -15px;
+}
+.parkingBuyCar{
+    position: absolute;
+    background: #f8065d;
+    width: 80px;
+    height: 24px;
+    text-align: center;
+    line-height: 24px;
+    border: 1px solid #642B75;
+    top: -27px;
+    left:-1px;
+    cursor: pointer;
+}
+.parkCarListContainer{
+    width:892px;
+    height: 130px;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+.parkCarList {
+    width: 1780px;
+    /*height: 142px;*/
+}
+.parkingCar{
+    width: 130px;
+    margin-top: 8px;
+    box-sizing: border-box;
+    text-align: center;
+    border-right:1px solid #8C3E53;
+    padding:10px 0;
+    float: left;
+}
+

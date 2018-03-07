@@ -1,0 +1,23 @@
+/*@purple-bottom-color:#ed3c8a;*/
+$path :../../../www/;
+.container {
+    height: 50%;
+    width: 253px;
+    font-size: 18px;
+    text-align: center;
+    box-sizing: border-box;
+    background-image: url($(path)images/black-bg.png);
+    position: relative;
+    overflow: hidden;
+}
+
+.rankContainer{
+    height: 302px;
+}
+
+.buttonWrapper{
+    position: relative;
+    margin-top: -50px;
+    height: 50px;
+    clear: both;
+}

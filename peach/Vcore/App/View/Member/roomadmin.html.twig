@@ -1,0 +1,150 @@
+{% extends 'Member/layout.html.twig' %}
+{% block title %}管理员设置{% endblock %}
+{% block right %}
+
+<div class="perCenter">
+    <div class="tab-title J-tab-menu clearfix">
+        <a class="tab-item" href="/member/roomset">
+            <h3>房间设置</h3>
+        </a>
+        <a class="tab-item active" href="/member/roomadmin">
+            <h3>管理员设置</h3>
+        </a>
+    </div>
+
+    <div class="J-tab-main mt30 active">
+
+        <div class="perCenter-item clearfix">
+            <div class="perCenter-content-ilb">
+                <span class="perCenter-content-ilb_li">
+                    <span>管理员数量：</span>
+                    <span class="price">{{roomadmin.total}}</span>
+                </span>
+                <span class="perCenter-content-ilb_li">
+                    <span>最大数量：</span>
+                    <span class="price">40</span>
+                </span>
+            </div>
+        </div>
+
+        <table class="table" id="adminSetList">
+            <tr>
+                <th>管理员昵称</th>
+                <th>管理员等级</th>
+                <th>最后登录时间</th>
+                <th>操作</th>
+            </tr>
+            {% if roomadmin is defined %}
+            {% for r in roomadmin %}
+            <tr>
+                <td>{{r.user.nickname}}</td>
+                <td>{{r.user.lv_exp}}</td>
+                <td>{{r.user.logined}}</td>
+                <td>
+                    <button class="btn-text btn-adminset-delete" data-uid="{{ r.uid }}" data-name="{{ r.user.nickname }}" >删除</button>
+                </td>
+            </tr>
+            {% endfor %}
+            {% endif %}
+        </table>
+
+
+    </div>
+
+</div>
+        {% autoescape false %}
+            <div  id="page" class="clearfix" style="float:right">{{ roomadmin.render }}</div>
+        {% endautoescape %}
+{% endblock %}
+{% block subjavascript %}
+    <script type="text/javascript" src="{{ STATIC_PATH }}{{ JS_PATH }}widget/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript">
+        cross.importFile("roomsetJs", "js");
+    </script>
+
+    <script type="text/javascript">
+
+    $(function(){
+        bindDeleteEvents();
+    });
+
+    /**
+     * 绑定删除按钮事件
+     * @return {[type]} [null]
+     */
+    var bindDeleteEvents = function(){
+
+        //以事件委托的方式绑定
+        $("#adminSetList").on("click", ".btn-adminset-delete", function(){
+
+            var $that = $(this);
+
+            //创建删除确认弹窗
+            var deleteDialog = $.dialog({
+
+                title: "提示",
+                content: "确定删除管理员：" + $that.data("name"),
+                ok: function(){
+
+                    //获取按钮上的用户id
+                    var uid = $that.data("uid");
+
+                    //删除
+                    actionDelete(uid);
+
+                },
+
+                okValue: "确定",
+
+                cancel: function(){
+
+                },
+
+                cancelValue: "取消"
+
+            }).show();
+
+        });
+    }
+
+    /**
+     * ajax删除管理员
+     * @param  {[type]} uid [用户id]
+     * @return {[type]}     [null]
+     */
+    
+    var actionDelete = function(uid){
+
+        $.ajax({
+            url: "/member/roomadmin",
+            //type： 类型，uid： 用户id
+            data: { type: "delete", "uid": uid },
+            type: "POST",
+            dataType: "JSON",
+            success: function(json){
+                //status: 0失败， 1成功
+                if(!json.status){
+                    //删除失败
+                    $.tips(json.message);
+
+                }else{
+                    //删除成功
+                    window.location.reload();
+
+                }
+
+            },
+
+            error: function(){
+
+            }
+        });
+
+    }
+
+
+
+
+
+    </script>
+{% endblock %}

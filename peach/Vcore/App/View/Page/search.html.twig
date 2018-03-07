@@ -1,0 +1,102 @@
+{% extends "layout.html.twig" %}
+{% block title %}搜索{% endblock %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("indexCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+<!-- 页面内容 -->
+<div class="inx-section">
+    <div class="doc-wrapper">
+
+        <div class="doc container">
+            <div class="doc-content">
+
+                <div class="m-head">
+                    <span>搜索结果<span>
+                    {#<span class="search-block">#}
+                        {#<input id="searchIpt" class="txt" type="text" placeholder="主播昵称/主播ID" maxlength="16"/>#}
+                        {#<a id="searchIptBtn" class="btn" href="#">搜索</a>#}
+                    {#</span>#}
+                </div>
+
+                <div id="searchList">
+                    <div class="search-result" style="margin-bottom: 20px;">为您搜索到 <span class="search-result-em">0</span> 个相关结果。 <a href="/">返回首页</a></div>
+                    <div class="search-list clearfix">
+
+                    </div>
+                </div>
+
+                <div id="recommendList">
+                    <p class="search-result">抱歉，没有找到 <span class="search-result-em"></span> 的相关视频。<a href="/">返回首页</a><br/>为您推荐如下主播：</p>
+                    <div class="recommend-list clearfix">
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block javascript %}
+
+<script type="text/javascript">
+    cross.importFile("indexJs", "js");
+</script>
+      
+<script type="text/javascript">
+    $(function(){
+        var keyword = getLocation("nickname");
+
+        $.ajax({
+            url: "/find",
+            data: { "nickname": keyword, "pageStart": 1},
+            dataType: "json",
+            type: "GET",
+            success: function(res){
+                //渲染列表
+                var tmp = renderItem(res.data);
+                $(".search-list").append(tmp);
+
+                //结果数目
+                var len = res.data.length;
+                $(".search-result-em").text(len);
+
+                if(len == 0){
+                    $("#searchList").hide();
+                    getIndexData("all", function(data){
+                        if(data.rooms.length > 5){
+                            data.rooms = data.rooms.slice(0, 6);
+                        }
+                        var tmp = renderItem(data.rooms);
+                        $(".recommend-list").append(tmp);
+                        $(".search-result-em").text(keyword);
+                        $("#recommendList").show();
+                    }, function(){
+                        console.log("接口获取失败，请联系管理员");
+                    });
+
+                } else {
+                    $("#searchList").show();
+                    $("#recommendList").hide();
+                }
+
+            },
+            error: function(res, resText){
+                if (window.console) {
+                    console.log(resText);
+                };
+            }
+        });
+
+        searchHandle();
+        $("#searchIpt").val(keyword);
+    });
+</script>
+
+{% endblock %}

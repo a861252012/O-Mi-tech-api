@@ -1,0 +1,1 @@
+/*! cross - v0.1.2 - 2018-02-05 */$(function(){var a=new User;a.bindLoginEvent(),$(".forget-pw").on("click",function(){$.tips("请联系客服！")})});

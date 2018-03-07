@@ -1,0 +1,206 @@
+{% extends "Member/layout.html.twig" %}
+
+{% block title %}礼物统计{% endblock %}
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("anchorCss", "css");
+    </script>
+{% endblock %}
+{% block right %}
+{% set yesterday = "-1 days"|date('Y-m-d') %}
+{% set today = "now"|date('Y-m-d') %}
+<div class="perCenter J-tab">
+
+    <div class="perCenter-item clearfix">
+        {% if userInfo.roled == 3 %}
+            <span class="perCenter-title">收入统计</span>
+        {% else %}
+            <span class="perCenter-title">消费统计</span>
+        {% endif %}
+    </div>
+    
+    <ul class="tab-title J-tab-menu clearfix" style="list-style: none;">
+
+        <a class="tab-item {% if type == 'send' %}active{% endif %}" id="" href="/member/count?type=send">
+            <h3>送出的礼物</h3>
+        </a>
+        {% if userInfo.roled == 3 %}
+            <a class="tab-item {% if type =='receive' %}active{% endif %}" id="" href="/member/count?type=receive">
+                <h3>收到的礼物</h3>
+            </a>
+            <a class="tab-item {% if type =='counttime' %}active{% endif %}" id="" href="/member/count?type=counttime">
+                <h3>时长房间</h3>
+            </a>
+        {% else %}
+            <a class="tab-item {% if type =='counttime' %}active{% endif %}" id="" href="/member/count?type=counttime">
+                <h3>时长房间统计</h3>
+            </a>
+        {% endif %}
+
+    </ul>
+
+    {% if type == 'receive' %}
+
+        <div class="J-tab-main mt30 active">
+            <form method="GET" action="" id="giftGetForm">
+            <div class="perCenter-item clearfix">
+                <input type="hidden" name="type" value="{{ type }}" />
+                <span class="title">收到的礼物：</span>
+                <span>查询时间</span>
+                <input name="mintime" class="txt txt-s J-start" type="text" onclick="WdatePicker()" value="{{ mintime}}">
+                <span>至</span>
+                <input name="maxtime" class="txt txt-s J-end" type="text" onclick="WdatePicker()" value="{{ maxtime }}">
+                <button type="button" class="btn btn-s" onclick="timeComparing('giftGetForm')" >查询</button>
+            </div>
+            </form>
+            <table class="table">
+                <tr>
+                    <th>礼物名称</th>
+                    <th>礼物单价（钻石数）<img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png" alt=""/></th>
+                    <th>礼物数量</th>
+                    <th>礼物总额</th>
+                    <th>收礼时间</th>
+                    <th>送礼人</th>
+                </tr>
+                {% for d in data %}
+                <tr>
+                    <td>{{ getGoods(d.gid) }}</td>
+                    <td>{{ d.points/d.gnum }}</td>
+                    <td>{{ d.gnum }}</td>
+                    <td>{{ d.points }}</td>
+                    <td>{{ d.created|date('Y-m-d H:i') }}</td>
+                    <td>{{ getUserName(d.send_uid)|default() }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <div class="f14 fred mt10">共收到{{ sum_Gift_mun }}个礼物，礼物总计：{{ sum_Points_mun }}颗钻石</div>
+        </div>
+        {% autoescape false %}
+        <div  id="page" class="clearfix" style="float:right">{{ data.render }}</div>
+        {% endautoescape %}
+
+    {% elseif type == 'send' %}
+
+        <div class="J-tab-main mt30 active">
+            <form method="GET" id="giftSendForm">
+                <div class="perCenter-item clearfix">
+                    <input type="hidden" name="type" value="{{ type }}" />
+                    <span class="title">送出的礼物：</span>
+                    <span>查询时间</span>
+                    <input name="mintime" class="txt txt-s J-start" type="text" onclick="WdatePicker()" value="{{ mintime}}">
+                    <span>至</span>
+                    <input name="maxtime" class="txt txt-s J-end" type="text" onclick="WdatePicker()" value="{{ maxtime}}">
+                    <button type="button" class="btn btn-s" onclick="timeComparing('giftSendForm')">查询</button>
+                </div>
+            </form>
+            <table class="table">
+                <tr>
+                    <th>礼物名称</th>
+                    <th>礼物单价（钻石数）<img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png" alt=""/></th>
+                    <th>礼物数量</th>
+                    <th>礼物总额</th>
+                    <th>消费时间</th>
+                    <th>消费房间</th>
+                    <th>收礼人</th>
+                </tr>
+                {% for d in data %}
+                    <tr>
+                        <td>{% if d.gid==4 %}预约房间{% else %}{{ getGoods(d.gid) }}{% endif %}</td>
+                        <td>{{ d.points/d.gnum }}</td>
+                        <td>{{ d.gnum }}</td>
+                        <td>{{ d.points }}</td>
+                        <td>{{ d.created|date('Y-m-d H:i') }}</td>
+                        <td>{{ d.rid }}</td>
+                        <td>{{ getUserName(d.rec_uid)|default() }}</td>
+                    </tr>
+                {% endfor %}
+
+            </table>
+            <div class="f14 fred mt10">
+                共送出{{ sum_Gift_mun }}个礼物，礼物总计：{{ sum_Points_mun }}颗钻石
+            </div>
+        </div>
+        {% autoescape false %}
+        <div  id="page" class="clearfix" style="float:right">{{ data.render }}</div>
+        {% endautoescape %}
+    {% elseif type == 'counttime' %}
+
+        <div class="J-tab-main mt30 active">
+            <form method="GET" action="" id="giftGetForm">
+                <div class="perCenter-item clearfix">
+                    <input type="hidden" name="type" value="{{ type }}" />
+                    <span class="title">按时间查询：</span>
+                    <input name="mintime" class="txt txt-s J-start" type="text" onclick="WdatePicker()" value="{{ mintime}}">
+                    <span>至</span>
+                    <input name="maxtime" class="txt txt-s J-end" type="text" onclick="WdatePicker()" value="{{ maxtime }}">
+                    <button type="button" class="btn btn-s" onclick="timeComparing('giftGetForm')" >查询</button>
+                </div>
+            </form>
+
+            {% if userInfo.roled == 3 %}
+
+            <table class="table">
+                <tr>
+                    <th>开始时间</th>
+                    <th>结束时间</th>
+                    <th>消费时长</th>
+                    <th>时长单价</th>
+                    <th>消费总额</th>
+                    <th>消费用户</th>
+                </tr>
+                {% for d in data %}
+                    <tr>
+                        <td>{{ d.start_time|date('Y-m-d H:i') }}</td>
+                        <td>{{ d.end_time|date('Y-m-d H:i') }}</td>
+                        <td>{{ d.duration }}</td>
+                        <td>{{ d.points }}</td>
+                        <td>{{ d.sum_points }}</td>
+                        <td>{{ getUserName(d.send_uid)|default() }}</td>
+                    </tr>
+                {% endfor %}
+
+            </table>
+                <div class="f14 fred mt10">消费人数总计：{{ sum_Gift_mun }}人，钻石总计：{{ sum_Points_mun }}颗钻石</div>
+            {% else %}
+
+                <table class="table">
+                    <tr>
+                        <th>开始时间</th>
+                        <th>结束时间</th>
+                        <th>消费时长</th>
+                        <th>时长单价</th>
+                        <th>消费总额</th>
+                        <th>主播昵称</th>
+                    </tr>
+                    {% for d in data %}
+                        <tr>
+                            <td>{{ d.start_time|date('Y-m-d H:i') }}</td>
+                            <td>{{ d.end_time|date('Y-m-d H:i') }}</td>
+                            <td>{{ d.duration }}</td>
+                            <td>{{ d.points }}</td>
+                            <td>{{ d.sum_points }}</td>
+                            <td>{{ getUserName(d.rec_uid)|default() }}</td>
+                        </tr>
+                    {% endfor %}
+
+                </table>
+                <div class="f14 fred mt10">消费钻石总计：{{ sum_Points_mun }}颗钻石</div>
+            {% endif %}
+            
+        </div>
+        {% autoescape false %}
+            <div  id="page" class="clearfix" style="float:right">{{ data.render }}</div>
+        {% endautoescape %}
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block subjavascript %}
+    <script type="text/javascript" src="{{ STATIC_PATH }}{{ JS_PATH }}widget/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript">
+        cross.importFile("pageCommonJs", "js");
+    </script>
+{% endblock %}

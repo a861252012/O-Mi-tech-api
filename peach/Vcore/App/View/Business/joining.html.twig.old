@@ -1,0 +1,25 @@
+{% extends "layout.html.twig" %}
+
+{% block title "主播申请入驻" %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("busCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div class="inx-section">
+        {% include "Business/joining.top.html.twig" %}
+        <img src="{{ STATIC_PATH }}{{ PIC_PATH }}zn-main.jpg" alt="" usemap="#Map" class="bc" border="0" />
+        <map name="Map" id="Map">
+            <area shape="rect" coords="345,396,618,481" href="/business/agreement" />
+        </map>
+    </div>
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        cross.importFile("pageCommonJs", "js");
+    </script>
+{% endblock %}

@@ -1,0 +1,217 @@
+{% extends "VideoProjectBundle::layout.html.twig" %}
+{% block title %}注册送VIP{% endblock %}
+
+{% block head %}
+	<style type="text/css">
+		body{
+			margin: 0px;
+		}
+		.ad-container{
+			padding: 0px;
+			width: 1000px;
+			margin: 0px auto;
+			position: relative;
+		}
+		.ad-content{
+			padding-bottom: 100px;
+		}
+		.ad-wrapper{
+			background-color: #fff;
+		}
+		.ad-main{
+
+		}
+		
+		.ad-banner{
+			background-position: center center;
+			background-repeat: no-repeat;
+		}
+
+		.ad-banner-1{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/getvip/get-vip-1.jpg);
+			height: 424px;
+			position: relative;
+		}
+		.ad-banner-2{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/getvip/get-vip-2.jpg);
+			height: 307px;
+			position: relative;
+		}
+
+		.ad-title{
+			background-position: center center;
+			background-repeat: no-repeat;
+		}
+
+		.ad-title-1{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/getvip/get-vip-3.jpg);
+			height: 307px;
+		}
+		.ad-title-2{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/getvip/get-vip-4.jpg);
+			height: 334px;
+		}
+		.ad-title-3{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/getvip/get-vip-5.jpg);
+			height: 302px;
+		}
+		.ad-title-4{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/getvip/get-vip-6.jpg);
+			height: 316px;
+		}
+
+		.ad-table{
+			font-size: 14px;
+			color: #e083c5;
+			margin: 10px 0px 40px 130px;
+		}
+		.ad-table th{
+			font-weight: normal;
+			width: 73px;
+			padding: 5px 0px;
+			vertical-align: top;
+			line-height: 1.5em;
+		}
+		.ad-table td{
+			padding: 5px 0px;
+			line-height: 1.5em;
+		}
+
+		.contact-btn{
+			width: 144px;
+			height: 46px;
+			display: block;
+			cursor: pointer;
+			position: absolute;
+			left: 714px;
+			top: 292px;
+		}
+		.contact-btn-2{
+			left: 714px !important;
+			top: 229px !important;
+		}
+
+		.lottery-btn{
+			width: 144px;
+			height: 46px;
+			display: block;
+			cursor: pointer;
+			position: absolute;
+			left: 714px;
+			top: 254px;
+		}
+		.ad-des{
+			width: 330px;
+			position: absolute;
+			left: 170px;
+			top: 100px;
+		}
+
+		.ad-charge-show{
+  			overflow: hidden;
+  			height: 164px;
+  			width: 415px;
+  			position: absolute;
+  			left: 156px;
+  			top: 135px;
+		}
+
+		.ad-charge-show span{
+			font-size: 14px;
+			display: inline-block;
+			width: 120px;
+		}
+		.ad-charge-show li{
+			height: 28px;
+		}
+		.ad-charge-show span.time{
+			color: #333;
+		}
+
+		.ad-charge-show span.name{
+			color: #e61a55;
+			margin-left: 29px;
+		}
+
+		.ad-charge-show span.type{
+			color: #c56507;
+		}
+
+		.ad-charge-btn{
+			width: 139px;
+			height: 49px;
+			display: block;
+			position: absolute;
+			left: 340px;
+
+		}
+
+		.ad-charge-btn-1{
+			top: -69px;
+		}
+
+		.ad-charge-btn-2{
+			top: 112px;
+		}
+
+		.ad-charge-btn-3{
+			top: 293px;
+		}
+	</style>
+
+
+{% endblock %}
+
+{% block content %}
+<div class="inx-section">
+	<div class="ad-wrapper">
+		<div class="ad-main">
+			<div class="ad-banner ad-banner-1">
+			</div>
+			<div class="ad-banner ad-banner-2">
+				<div class="ad-container">
+					<a class="contact-btn" href="javascript:window.open('http://njmm.livechatvalue.com/chat/chatClient/chatbox.jsp?companyID=410769&configID=40837&jid=6811847595')" target="_blank"></a>
+				</div>
+			</div>
+		</div>
+
+		<div class="ad-content">
+			<div class="ad-title ad-title-1">
+				<div class="ad-container">
+					<a href="/activity/lottery" class="lottery-btn"></a>
+				</div>
+			</div>
+			<div class="ad-title ad-title-2">
+
+			</div>
+			<div class="ad-title ad-title-3">
+				<div class="ad-container">
+					<a class="contact-btn contact-btn-2" href="javascript:window.open('http://njmm.livechatvalue.com/chat/chatClient/chatbox.jsp?companyID=410769&configID=40837&jid=6811847595')" target="_blank"></a>
+				</div>
+			</div>
+			<div class="ad-title ad-title-4"></div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        app.importFile("pageCommonJs", "js");
+    </script>
+<script type="text/javascript">
+
+$(function(){
+
+	$(".charge-btn").on("click", function(){
+		if (!!$.cookie("webuid")) {
+			location.href = "/charge/order";
+		}else{
+			$(".login").trigger("click");
+		}
+	});
+
+});
+
+</script>
+{% endblock %}

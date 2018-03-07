@@ -1,0 +1,46 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}找回密码{% endblock %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("mailCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="inx-section">
+    <div class="container" id="pagePwdChange">
+        <div class="mail">
+            <div class="mail-head">密码重置</div>
+            <form action="#" class="m-form" method="POST" id="pwdChangeForm">
+                <div class="m-form-item clearfix">
+                    <div class="mail-content">
+                        <h2>创建您的新密码</h2>
+                    </div>
+                </div>
+                <div class="m-form-item">
+                    <label for="newPwd">新密码：</label>
+                    <input name="password1" type="password" class="txt" id="newPwd" tabIndex="1" placeholder="请输入新密码" />
+                    <span class="pwd-ipt-tips"></span>
+                </div>
+                <div class="m-form-item">
+                    <label for="newPwdAgain">确认新密码：</label>
+                    <input name="password2" type="password" class="txt" id="newPwdAgain" tabIndex="2" placeholder="请再次输入新密码" />
+                    <span class="pwdagain-ipt-tips"></span>
+                </div>
+                <div class="m-form-item btn-box-inline">
+                    <button type="button" id="pwdChangeBtn" class="btn btn-orange">确 定</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        cross.importFile("mailJs", "js");
+    </script>
+{% endblock %}

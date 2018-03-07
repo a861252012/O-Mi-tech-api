@@ -1,0 +1,84 @@
+{% extends 'Member/layout.html.twig' %}
+{% block title %}主播中心{% endblock %}
+{% block head %}
+    <link type="text/css" rel="stylesheet" href="{{ STATIC_PATH }}/src/js/widget/prettyPhoto/css/prettyPhoto.css" />
+    <script type="text/javascript">
+        cross.importFile("anchorCss", "css");
+    </script>
+{% endblock %}
+{% block right %}
+
+<div class="perCenter">
+    <div class="perCenter-item clearfix">
+        <span class="perCenter-title">主播中心</span>
+    </div>
+
+    <div class="hostDetails clearfix">
+
+        <img src="{{ userinfo.headimg|default('{{ PICTURE_CDN_PATH }}{{ PIC_PATH }}head_180.png') }}" alt="" width="130" height="130" />
+        <div class="upload-box">
+            <button id="Uploadx" class="upload">+上传照片</button>
+        </div>
+
+    </div>
+
+    <div class="perCenter-item clearfix">
+        我的相片<span>（<i id="piccount">{{ totals }}</i>）</span>
+    </div>
+
+    <div id="gallerylist" class="selectPic">
+        {% for img in gallery %}
+            <dl id="{{ img.id }}" class="picGrp clearfix">
+                <dt class="clearfix">
+                    <a href="{{ IMG_PATH }}/{{ IMGHOST ~ img.file }}" title="{{ img.name }} {{ img.summary|default(img.jointime|date('Y-m-d H:i:s')) }}" rel="prettyPhoto[gallery]">
+                        <img class="img" src="{{ IMG_PATH }}/{{ IMGHOST ~ img.file }}?w=200&h=200" width="200" height="200" />
+                    </a>
+                </dt>
+                <dd class="clearfix">
+                    <span class="toolDate">{{ img.name|default(img.jointime|date('d/m/y H:i'))[:14] }}</span>
+                    <div class="toolGrp">
+                        <a href="javascript:void(0);" class="editAction">
+                            <span class="edtIco"></span>
+                            编辑
+                        </a>
+                        <a class="delAction" href="javascript:void(0);">
+                            <span class="delIco"></span>
+                            删除
+                        </a>
+                    </div>
+                </dd>
+            </dl>
+        {% endfor %}
+    </div>
+
+    <div id="" class="imgbox none">
+        <dl class="picGrp clearfix">
+            <dt class="clearfix">
+                <a href="#" title="<b></b><p></p>" class="picGrpWrapper"><img class="img" src="{{ STATIC_PATH }}{{ PIC_PATH }}head_180.png" width="200" height="200" /></a>
+            </dt>
+            <dd class="clearfix">
+                <span>25/11/14 23:22</span>
+                <div class="toolGrp">
+                    <a href="#" class="editAction"><span class="edtIco"></span>编辑</a>
+                    <a id="isdel" class="delAction" href="#"><span class="delIco"></span>删除</a>
+                </div>
+            </dd>
+        </dl>
+    </div>
+</div>
+
+
+    {% autoescape false %}
+        <div  id="page" class="clearfix" style="float:right">{{ data.render }}</div>
+    {% endautoescape %}
+
+{% endblock %}
+
+{% block subjavascript %}
+    <script type="text/javascript">
+        cross.importFile("anchorJs", "js");
+    </script>
+    <script src="{{ STATIC_PATH }}{{ JS_PATH }}widget/prettyPhoto/js/jquery.prettyPhoto.js" type="text/javascript"></script>
+    <script src="{{ STATIC_PATH }}{{ JS_PATH }}widget/uploadify/jquery.uploadify.js?r={{ random() }}" type="text/javascript"></script>
+
+{% endblock %}

@@ -1,0 +1,24 @@
+/*! cross 2017-11-08 */
+/**
+ * 个人中心首页
+ * @author Young
+ * @contacts young@kingjoy.co
+ */
+/*
+ * variable less file, this file is module for button
+ * Author: Young
+ * important module for the project, if u would like to modify the file, pls contact Young
+ * mail: young@kingjoy.co
+ */
+.perEditDetails td button {
+  vertical-align: top;
+  display: inline;
+}
+.member-index-safemail {
+  margin-top: 12px;
+  display: inline-block;
+}
+.member-index-safemail a {
+  margin-left: 20px;
+  color: #fa2461;
+}

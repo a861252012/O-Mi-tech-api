@@ -1,0 +1,37 @@
+{% extends "layout.html.twig" %}
+{% block title %}免责条款{% endblock %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("aboutCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="inx-section">
+    <div class="doc-wrapper">
+
+	    <div class="doc container">
+	        <h1 class="doc-title">免责条款</h1>
+	        <div class="doc-content">
+	        	<ul class="state">
+	        		<li>1. 注册用户符合18岁以上的年龄要求，且所在国家和居住地区法律法规允许拥有成人性爱等相关性质媒体。</li>
+					<li>2. 注册用户对在网站/电脑中传输及阅览成人內容的所有行为，负完全的责任。</li>
+					<li>3. 用户注册成功后，该用户的帐号和密码由用户负责保管;用户应当对该帐号进行的所有言论和行为负责。</li>
+					<li>4. 由于用户将个人密码告知他人或与他人共享注册帐户，由此导致的任何个人资料泄露及财产损失，本网站不负任何责任。</li>
+					<li>5. 本网站如因系统维护或升级而需暂停服务时，将事先公告。若因线路及非本公司控制范围外的硬件故障或其它不可抗力而导致暂停服务，于暂停服务期间造成的一切不便与损失，本网站不负任何责任。</li>
+					<li>6. 任何由于黑客攻击、计算机病毒侵入或发作、因政府管制而造成的暂时性关闭等影响网络正常经营的不可抗力而造成的个人资料泄露、丢失、被盗用或被窜改等，本网站均得免责。</li>
+					<li class="last">7. 用户不得将其注册账号进行贩卖、租用、借用、转让、赠与等行为，如有此类行为，由此带来的损失，网站不承担任何责任。</li>
+	        	</ul>
+	        </div>
+	    </div>
+
+    </div>
+</div>
+
+{% endblock %}
+{% block javascript %}
+    <script type="text/javascript">
+        cross.importFile("aboutJs", "js");
+    </script>
+{% endblock %}

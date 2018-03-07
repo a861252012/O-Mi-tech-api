@@ -1,0 +1,59 @@
+{% extends 'Member/layout.html.twig' %}
+{% block title %}消费记录{% endblock %}
+{% block right %}
+
+<div class="perCenter">
+
+    <div class="perCenter-item clearfix">
+        <span class="perCenter-title">消费记录</span>
+    </div>
+    <div class="perCenter-item clearfix">
+        <div class="perCenter-content-ilb">
+            <span>当前余额：</span>
+            <span class="price">{{ user.points|default(0) }}</span>
+            <img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png" alt=""/>
+            <a class="btn btn-s" href="/charge/order" target="_blank">我要充值</a>
+        </div>
+    </div>
+    <table class="table">
+        <tr>
+            <th>消费项目</th>
+            <th>数量</th>
+            <th>价格（钻石）</th>
+            <th>消费时间</th>
+        </tr>
+        {% for item in data %}
+        {% if item.gid == 4  %}
+            <tr>
+                <td>预约房间</td>
+                <td>{{ item.gnum }}</td>
+                <td>{{ item.points }} <img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png"></td>
+                <td>{{ item.created|date('Y-m-d H:i:s') }}</td>
+            </tr>
+
+        {% else %}
+            <tr>
+                <td><img src="{{ flash_url }}/image/gift_material/{{ item.gid }}.png" height="40" alt="{{ item.goods.name }}" /> {{ item.goods.name }}</td>
+                <td>{{ item.gnum }}</td>
+                <td>{{ item.points }} <img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png"></td>
+                <td>{{ item.created|date('Y-m-d H:i:s') }}</td>
+            </tr>
+        {% endif %}
+        {% endfor %}
+    </table>
+    {% if data.total == 0 %}
+    <p class="perCenter-table-tip">您目前没有购买记录，<a href="/shop">立即购买&gt;&gt;</a></p>
+    {% endif %}
+    {% autoescape false %}
+        <div  id="page" class="clearfix" style="float:right">{{ data.render }}</div>
+    {% endautoescape %}
+</div>
+
+{% endblock %}
+
+
+{% block subjavascript %}
+    <script type="text/javascript">
+        cross.importFile("pageCommonJs", "js");
+    </script>
+{% endblock %}

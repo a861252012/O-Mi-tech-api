@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>extend</title>
+</head>
+<body>
+    transfer data...
+<!--<script type="text/javascript" src="http://cdn.staticfile.org/jquery/1.11.1-rc2/jquery.min.js"></script>-->
+<script type="text/javascript">
+    var flags = '{{ extendUrl }}';
+    if(flags != '/'){
+         location.href="{{ extendUrl }}";
+    }else{
+        location.href="{{ extendUrl }}";
+    }
+</script>
+</body>
+</html>

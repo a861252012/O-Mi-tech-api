@@ -1,0 +1,76 @@
+{% extends "layout.html.twig" %}
+
+{# 程序自定义标题 #}
+{% block title %}注册送VIP{% endblock %}
+{# ############## #}
+
+{% block head %}
+	<style type="text/css">
+		body{
+			margin: 0px;
+		}
+		.ad-container{
+			padding: 0px;
+			width: 1000px;
+			margin: 0px auto;
+			position: relative;
+		}
+		.ad-content{
+			padding-bottom: 100px;
+		}
+
+		/* 由程序自定义颜色，如果未定义则为#fff */
+		.ad-wrapper{
+			background-color: #fff;
+		}
+		/**************************************/
+
+		.ad-main{
+
+		}
+		
+		.ad-bg{
+			background-position: center center;
+			background-repeat: no-repeat;
+			height: 300px;
+			position: relative;
+		}
+		
+		/* 由程序自定义loop模板 */
+		.ad-bg-0{ background-image: url({{ STATIC_PATH }}/public/src/img/activity/test/test_0.jpg); }
+		.ad-bg-1{ background-image: url({{ STATIC_PATH }}/public/src/img/activity/test/test_1.jpg); }
+		.ad-bg-2{ background-image: url({{ STATIC_PATH }}/public/src/img/activity/test/test_2.jpg); }
+		.ad-bg-3{ background-image: url({{ STATIC_PATH }}/public/src/img/activity/test/test_3.jpg); }
+		.ad-bg-4{ background-image: url({{ STATIC_PATH }}/public/src/img/activity/test/test_4.jpg); }
+		.ad-bg-5{ background-image: url({{ STATIC_PATH }}/public/src/img/activity/test/test_5.jpg); }
+		/**************************************/
+
+	</style>
+
+
+{% endblock %}
+
+{% block content %}
+<div class="inx-section">
+	<div class="ad-wrapper">
+		<div class="ad-main">
+
+			<!-- 程序自定义图片背景loop模板 -->
+			<div class="ad-bg ad-bg-0"></div>
+			<div class="ad-bg ad-bg-1"></div>
+			<div class="ad-bg ad-bg-2"></div>
+			<div class="ad-bg ad-bg-3"></div>
+			<div class="ad-bg ad-bg-4"></div>
+			<div class="ad-bg ad-bg-5"></div>
+			<!-- 程序自定义图片背景模板 -->
+
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script type="text/javascript">
+	cross.importFile("pageCommonJs", "js");
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+/*! cross 2017-11-08 */
+/**
+ * 关注页面
+ * @author Young
+ * @contacts young@moonjoy.co
+ */
+.watch-content {
+  border: none;
+  min-height: 500px;
+}
+.watch-btn {
+  background-image: url('../../../src/img/common.png');
+  background-position: 0px -216px;
+  border: 0px;
+  width: 30px;
+  height: 30px;
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  z-index: 100;
+  cursor: pointer;
+  text-indent: -9999px;
+}
