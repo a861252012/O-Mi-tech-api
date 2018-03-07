@@ -1,0 +1,52 @@
+imports:
+    - { resource: config.yml }
+framework:
+    router:
+        resource: "%kernel.root_dir%/config/routing.yml"
+        strict_requirements: true
+    profiler: false
+    session:
+        handler_id: ~
+#framework:
+#    validation:
+#        cache: apc
+
+#doctrine:
+#    orm:
+#        metadata_cache_driver: apc
+#        result_cache_driver: apc
+#        query_cache_driver: apc
+assetic:
+    use_controller: "%use_assetic_controller%"
+twig:
+    globals:
+        #JS_PATH: %REMOTE_JS_URL%
+        IMG_PATH: %REMOTE_PIC_URL%
+        STATIC_PATH: %WEB_CDN_STATIC%
+        PICTURE_CDN_PATH: %PIC_CDN_STATIC%
+#snc_redis:
+#    clients:
+#        default:
+#            type: predis
+#            alias: default
+#            dsn:
+#              - redis://%REDIS_CLI_IP_PORT%/1
+#            logging: false
+#        cache:
+#            type: predis
+#            alias: cache
+#            dsn: redis://%REDIS_CLI_IP_PORT%/1
+#            logging: false
+#    doctrine:
+#        metadata_cache:
+#            client: cache
+#            entity_manager: default
+#            document_manager: default
+        #result_cache:
+         #  client: cache
+         #  entity_manager: [default, read]
+         #  document_manager: [default]
+         #  namespace: "dcrc:"
+        #query_cache:
+         #   client: cache
+         #   entity_manager: default

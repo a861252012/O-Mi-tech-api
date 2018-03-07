@@ -1,0 +1,64 @@
+{% extends "Member/layout.html.twig" %}
+
+{% block title %}佣金统计{% endblock %}
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("anchorCss", "css");
+    </script>
+{% endblock %}
+{% block right %}
+    <div class="perCenter">
+    
+    <div class="perCenter-item clearfix">
+        <span class="perCenter-title">佣金统计</span>
+    </div>
+        <div class="perCenter-item clearfix">
+            <div class="perCenter-content-ilb">
+                <div class="perCenter-content-ilb_li">
+                    <span>共计：</span>
+                    <span class="price">{{ total_points }}</span>
+                    <span>元</span>
+                </div>
+                
+                <div class="perCenter-content-ilb_li">
+                <form action="/member/commission" method="get" name="search" id="commissionTime">
+                    <span>查询时间</span>
+                    <input class="txt txt-s J-start" type="text" name="mintime" onclick="WdatePicker()" value="{{ mintime }}">
+                    <span>至</span>
+                    <input class="txt txt-s J-end" type="text" name="maxtime" onclick="WdatePicker()" value="{{ maxtime }}">
+                    <button type="button" name="search" class="btn btn-s" onclick="timeComparing('commissionTime')" >查询</button>
+                </form>
+                </div>
+            </div>
+        </div>
+
+        <table class="table charge-table">
+            <tr>
+                <th>时间</th>
+                <th>用户昵称</th>
+                <th>开通贵族等级</th>
+                <th>佣金提成(元)</th>
+            </tr>
+
+            {% for item in data %}
+                <tr>
+                    <td>{{item.create_at}}</td>
+                    <td>{{item.user.nickname}}</td>
+                    <td>{{item.userGroup.level_name}}</td>
+                    <td>{{ item.points/10 }}</td>
+                </tr>
+            {% endfor %}
+
+        </table>
+        {% autoescape false %}
+            <div  id="page" class="clearfix" style="float:right">{{ data.render }}</div>
+        {% endautoescape %}
+    </div>
+
+{% endblock %}
+{% block subjavascript %}
+    <script type="text/javascript" src="{{ STATIC_PATH }}{{ JS_PATH }}widget/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript">
+        cross.importFile("pageCommonJs", "js");
+    </script>
+{% endblock %}

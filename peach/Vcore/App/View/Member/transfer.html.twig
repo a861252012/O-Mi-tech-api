@@ -1,0 +1,338 @@
+{% extends 'Member/layout.html.twig' %}
+
+{% block title %}转账{% endblock %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block right %}
+
+    {% set mintime = mintime ? mintime|date('Y-m-d') : '' %}
+    {% set maxtime = maxtime ? maxtime|date('Y-m-d') : '' %}
+
+<div class="perCenter">
+    <div class="perCenter-item clearfix">
+        <span class="perCenter-title">转账</span>
+    </div>
+    <div class="top-line active">
+
+        <div class="perCenter-item clearfix">
+            <div class="perCenter-content-ilb">
+                
+                <div class="perCenter-content-ilb_li">
+                    <span>当前余额：</span>
+                    <span class="price">{{user.points}}</span>
+                    <img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png" alt=""/>
+                    <button class="btn btn-s J-d-transfer" >转账</button>
+                </div>
+                
+                <div class="perCenter-content-ilb_li">
+                    <form method="GET" action="" id="giftGetForm">
+                        <span>查询时间</span>
+                        <input name="mintime" class="txt txt-s J-start" type="text" onclick="WdatePicker()" value="{{ mintime }}">
+                        <span>至</span>
+                        <input name="maxtime" class="txt txt-s J-end" type="text" onclick="WdatePicker()" value="{{ maxtime }}">
+                        <button type="button" class="btn btn-s" onclick="timeComparing('giftGetForm')" >查询</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <table class="table">
+            <tr>
+                <th>转账单号</th>
+                <th>时间</th>
+                <th>转账人账号</th>
+                <th>收款人账号</th>
+                <th>金额</th>
+                <th>备注</th>
+            </tr>
+
+            {% if transfers is defined %}
+            {% for d in transfers %}
+            <tr>
+                <td>{{"%09d"|format(d.auto_id)}}</td>
+                <td>{{d.datetime}}</td>
+                <td>{{d.by_nickname}}</td>
+                <td>{{d.to_nickname}}</td>
+                <td>{{d.points}}</td>
+                <td>{{d.content}}</td>
+            </tr>
+            {% endfor %}
+            {% endif %}
+        </table>
+
+
+
+    </div>
+        {% autoescape false %}
+            <div  id="page" class="clearfix" style="float:right">{{ transfers.render }}</div>
+        {% endautoescape %}
+</div>
+{% endblock %}
+
+{% block subjavascript %}
+    <script type="text/javascript" src="{{ STATIC_PATH }}{{ JS_PATH }}widget/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript">
+        cross.importFile("pageCommonJs", "js");
+    </script>
+    <script type="text/javascript">
+    $(function(){
+
+        var tmpTransfer = ['<div class="m-form m-form-l">',
+
+            '<div class="m-form-item">',
+                '<label for="payee">转到帐号：</label>',
+                '<input type="text" class="txt txt-s" id="payee" placeholder="" autocomplete="off"/>',
+                '<span class="m-form-tip">*</span>',
+            '</div>',
+
+            '<div class="m-form-item">',
+                '<label for="repayee">确认帐号：</label>',
+                '<input type="text" class="txt txt-s" id="repayee" placeholder="" autocomplete="off"/>',
+                '<span class="m-form-tip">*</span>',
+            '</div>',
+
+            '<div class="m-form-item">',
+                '<label for="amount">转账金额：</label>',
+                '<input type="text" class="txt txt-s txt-short" id="amount" placeholder=""/>',
+                '<span class="">x 100钻石</span><span class="m-form-tip">*</span>',
+            '</div>',
+
+            '<div class="m-form-item">',
+                '<label for="mark">备注：</label>',
+                '<input type="text" class="txt txt-s" id="mark" placeholder=""/>',
+            '</div>',
+
+            '<div class="m-form-item">',
+                '<label for="mark">转账金额：</label>',
+                '<span class="m-form-tip J-d-diamond" data-diamond="">0钻</span>',
+            '</div>',
+
+            '<div class="m-form-item">',
+                '<span class="m-form-tip J-d-tip">*为必填项</span>',
+            '</div>',
+
+            '<div class="m-form-item">',
+                '<div class="m-form-btnbox">',
+                    '<button class="btn btn-center J-btn-transfer">转账</button>',
+                '</div>',
+            '</div>',
+
+        '</div>'].join("");
+
+        var dialogTransfer = $.dialog({
+
+            title: "转账",
+            content: tmpTransfer,
+
+            onshow: function(){
+
+                var that = this;
+
+                var $payee = $("#payee");
+                var $repayee = $("#repayee");
+                var $amount = $("#amount");
+                var $mark = $("#mark");
+                var $diamond = $(".J-d-diamond");
+
+                var $tips = $('.J-d-tip');
+
+                var amountCheck = function($money){
+                    return !(/^\d+$/.test($money.val()) && $money.val() > 0 && $money.val() <=10000);
+                }
+
+                $(".J-btn-transfer").on("click", function(){
+
+                    $tips.html("*为必填项");
+
+                    //验证收款人账号是否填写
+                    if ($payee.val().length == 0 || $repayee.val().length == 0) {
+                        $tips.html("提示：请填写收款人");
+                        return;
+                    };
+
+                    //验证收款人账号是否一致
+                    if ($payee.val() != $repayee.val()) {
+                        $tips.html("提示：收款人账号不一致");
+                        return;
+                    };
+
+                    //验证转账金额是否填写
+                    if ($amount.val().length == 0) {
+                        $tips.html("提示：请填写转账金额");
+                        return;
+                    };
+
+                    if (amountCheck($amount)){
+                        $tips.html("提示：转账金额请输入1-10000之间的数字");
+                        return;
+                    }
+
+                    that.remove();
+
+                    ensureDialog.setData({
+                        name: $payee.val(),
+                        amount: $diamond.data("diamond"),
+                        mark: $mark.val()
+
+                    }).show();
+
+                });
+
+                $("#amount").on("keyup", function(){
+
+                    if (amountCheck($amount)){
+                        $tips.html("提示：转账金额请输入1-10000之间的整数");
+                        $diamond.text("0钻");
+                    }else{
+                        $tips.html("*为必填项");
+                        var count = parseInt($amount.val(), 10) * 100;
+                        $diamond.text(count + "钻");
+                        $diamond.attr("data-diamond", count);
+                    }
+
+                });
+
+            }
+
+        });
+
+
+        var tmpEnsure = ['<div class="m-form m-form-l">',
+
+            '<div class="m-form-item">',
+                '<label for="ensurePayee">收款人账号：</label>',
+                '<span id="ensurePayee"></span>',
+            '</div>',
+
+            '<div class="m-form-item">',
+                '<label for="ensureAmount">转账金额：</label>',
+                '<span id="ensureAmount" class="m-form-tip"></span>',
+            '</div>',
+
+            '<div class="m-form-item">',
+                '<label for="ensureMark">备注：</label>',
+                '<span id="ensureMark"></span>',
+            '</div>',
+
+            '<div class="m-form-item">',
+                '<label for="rsCodeIpt">验证码：</label>',
+                '<input type="text" class="txt txt-short" id="codeIpt" placeholder="不区分大小写"/>',
+                '<img src="" alt="验证码" id="codeImg" class="s-code-img" />',
+                '<a href="javascript:void(0);" class="m-form-tip J-change-scode">换一换</a>',
+            '</div>',
+
+            '<div class="m-form-item">',
+                '<div class="m-form-btnbox">',
+                    '<button class="btn btn-center J-btn-ensuretransfer">确认</button>',
+                '</div>',
+            '</div>',
+
+        '</div>'].join("");
+
+        var ensureDialog = $.dialog({
+
+            title: "确认转账",
+            content: tmpEnsure,
+            onshow: function(){
+
+                var that = this;
+
+                var $ensurePayee = $("#ensurePayee");
+                var $ensureAmount = $("#ensureAmount");
+                var $ensureMark = $("#ensureMark");
+                var $ensureCode = $("#codeIpt");
+
+                $ensurePayee.text(this.data.name);
+                $ensureAmount.text(this.data.amount + "钻");
+                $ensureMark.text(this.data.mark);
+
+                //清空验证码
+                $ensureCode.val("");
+
+                /**
+                 * @todo Young说以后要改的
+                 * @description 刷新验证码
+                 * @author Young
+                 * @param: null
+                 */
+                var flashCaptcha = function($img){
+                    var date = (new Date()).valueOf();
+                    $img.attr("src", "/captcha?t=" + date);
+                }
+
+
+                /**
+                 * @todo Young说以后要改的
+                 * @description 绑定按钮刷新验证码
+                 * @author Young
+                 * @param: null
+                 */
+                var changeSCaptcha = function(){
+                    $(".J-change-scode").on("click", function(){
+                        var $img = $(this).siblings(".s-code-img");
+                        flashCaptcha($img);
+                    });
+                }
+
+                //初始化图片
+                flashCaptcha($("#codeImg"));
+
+                //初始化更换验证码按钮
+                changeSCaptcha();
+
+                //绑定提交按钮
+                $(".J-btn-ensuretransfer").on("click", function(e){
+                    $(this).prop('disabled', true);
+                    var btn = this;
+                    $.ajax({
+
+                        url: "/member/transfer",
+                        data: {
+                            username: that.data.name,
+                            points: that.data.amount,
+                            content: that.data.mark,
+                            code: $ensureCode.val()
+                        },
+                        dataType: "json",
+                        type: "POST",
+                        success: function(json){
+                            if (json.status) {
+                                //转账成功
+                                ensureDialog.remove();
+
+                                $.tips(json.message, function(){
+                                    //转账成功后刷新页面
+                                    window.location.reload();
+                                });
+                            }else{
+                                $(btn).prop('disabled', false);
+                                $.tips(json.message, function(){
+
+                                    //转账失败的时候刷新验证码
+                                    flashCaptcha($("#codeImg"));
+                                });
+                            };
+                        },
+                        error: function(){
+                            Utility.log("post data error(500)。");
+                        }
+
+                    });
+
+                });
+            }
+
+        });
+
+        $(".J-d-transfer").on("click", function(){
+            dialogTransfer.show();
+        });
+
+
+    });
+
+
+    </script>
+{% endblock %}

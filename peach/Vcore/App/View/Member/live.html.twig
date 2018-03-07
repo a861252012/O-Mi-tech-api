@@ -1,0 +1,66 @@
+{% extends "Member/layout.html.twig" %}
+
+{% block title %}直播记录{% endblock %}
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("anchorCss", "css");
+    </script>
+{% endblock %}
+{% block right %}
+<div class="perCenter">
+    <div class="perCenter-item clearfix">
+        <span class="perCenter-title">直播记录</span>
+    </div>
+    <form action="live" method="post" name="search" id="liveTime">
+        <div class="perCenter-item clearfix">
+            <span>查询时间</span>
+            <input class="txt txt-s J-start" type="text" name="start" onclick="WdatePicker()" value="{{ start }}">
+            <span>至</span>
+            <input class="txt txt-s J-end" type="text" name="end" onclick="WdatePicker()" value="{{ end }}">
+            <button type="button" name="search" class="btn btn-s" onclick="timeComparing('liveTime')" >查询</button>
+        </div>
+    </form>
+<!--<div class="live-count">
+        <span class="lc-title">查询结果：</span>
+        <span class="lc-sub-title">查询天数：</span>
+        <span class="lc-sub-content">10天</span>
+        <span class="lc-sub-title">直播时长：</span>
+        <span class="lc-sub-content">4小时10分钟</span>
+        <span class="lc-sub-title">有效天数：</span>
+        <span class="lc-sub-content">2天</span>
+        <span class="lc-sub-title">直播收入：</span>
+        <span class="lc-sub-content">1500钻</span>
+    </div>-->
+    <table class="table charge-table">
+        <tr>
+            <th>日期</th>
+            <th>开始时间</th>
+            <th>结束时间</th>
+            <th>直播时长</th>
+        </tr>
+
+        {% for item in data %}
+        <tr>
+            <td>{{ item.created|date('Y-m-d') }}</td>
+            <td>{{ item.startTime|date('Y-m-d H:i:s') }}</td>
+            <td>{{ item.endTime|date('Y-m-d H:i:s') }}</td>
+            <td>{{ item.duration }}</td>
+        </tr>
+        {% endfor %}
+
+    </table>
+    <div class="f14 fred mt10"> 您{{ start|date('Y年m月d日') }}到{{ end|date('Y年m月d日') }}的直播时长总计为{{ totalTime }}</div>
+</div>
+
+    {% autoescape false %}
+        <div  id="page" class="clearfix" style="float:right">{{ data.render }}</div>
+    {% endautoescape %}
+
+{% endblock %}
+
+{% block subjavascript %}
+    <script type="text/javascript" src="{{ STATIC_PATH }}{{ JS_PATH }}widget/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript">
+        cross.importFile("pageCommonJs", "js");
+    </script>
+{% endblock %}

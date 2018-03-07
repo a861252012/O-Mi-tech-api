@@ -1,0 +1,154 @@
+@import "../../../../www/style/common.css";
+$path :../../../../www/;
+
+:global .giftBoard-container{
+    width: 400px;
+    margin-right: 20px;
+    float: left;
+}
+:global .giftBoard-giftTabs{
+    width: 350px;
+    margin: 10px 35px;
+    background: none;
+    border: 0px;
+}
+
+:global .giftBoard-giftTab{
+    font-size: 14px;
+    display: inline-block;
+    margin: 0px 21px 0px 1px !important;
+    border-radius: 22px;
+    background-color: transparent;
+    padding: 3px 10px;
+    cursor: pointer;
+    border: 0 !important;
+    height: auto !important;
+}
+
+.giftTabActive{
+    background-color: #f8065d;
+}
+
+.giftTabTitle{
+    margin: 0px !important;
+}
+
+
+.giftPanelInner{
+
+}
+
+.giftListContainer{
+    margin-right: -20px;
+    @extend .clearfix;
+}
+
+:global .giftBoard-giftItem{
+    width: 50px;
+    height: 50px;
+    margin-right: 20px;
+    margin-bottom: 10px;
+    display: block;
+    float: left;
+    position: relative;
+    background-color: rgba(0,0,0, 0.6);
+    border-radius: 6px;
+}
+
+:global .giftBoard-giftIcon{
+    width: 50px;
+    height: 50px;
+}
+
+.giftItemActive{
+    background-image: url($(path)images/gift-board-active.png);
+    background-size: cover;
+}
+
+:global .giftBoard-giftItem:hover{
+    background-image: url($(path)images/gift-board-active.png);
+    background-size: cover;
+}
+
+:global .giftBoard-giftItem:hover{
+    .giftBoard-giftItemPanel{
+        display: block;
+        opacity: 1;
+    }
+}
+
+:global .giftBoard-giftItemPanel{
+    font-size: 12px;
+    text-align: center;
+    position: absolute;
+    left: 0px;
+    bottom: -20px;
+    background-color: #bb235a;
+    color: #ffeef4;
+    border-radius: 3px;
+    width: 100%;
+    display: none;
+    opacity: 0;
+    transition: 0.2s opacity ease-in;
+    z-index: 1;
+}
+
+.giftItemLucky{
+    font-size: 12px;
+    color: #fff;
+    background-color: #f8065d;
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    line-height: 18px;
+    padding: 0px 3px;
+    border-radius: 5px;
+    transform: scale(0.8);
+}
+
+/*.giftBoardSliderRootStyle{*/
+    /*height: 120px;*/
+/*}*/
+
+/*@media (min-height: 800px){*/
+    /*.giftBoard-container{*/
+        /*float: none;*/
+        /*width: auto;*/
+    /*}*/
+
+    /*.giftBoard-giftItem{*/
+        /*width: 60px;*/
+        /*height: 60px;*/
+        /*margin-left: 15px;*/
+        /*margin-right: 15px;*/
+    /*}*/
+
+    /*.giftBoard-giftIcon{*/
+        /*margin: 5px auto;*/
+    /*}*/
+
+    /*.giftBoard-giftTabs{*/
+        /*margin: 10px auto;*/
+    /*}*/
+
+    /*.giftBoard-giftBoardSliderRootStyle{*/
+        /*width: 520px;*/
+        /*margin: 10px auto 10px auto;*/
+    /*}*/
+/*}*/
+
+/*@media (min-height: 840px){*/
+    /*.giftBoard-giftItem{*/
+        /*margin-bottom: 30px;*/
+    /*}*/
+
+    /*.giftBoard-giftItemPanel{*/
+        /*opacity: 1 !important;*/
+        /*display: block;*/
+    /*}*/
+
+    /*.giftBoard-giftBoardSliderRootStyle{*/
+        /*width: 520px;*/
+        /*margin: 10px auto 0px auto;*/
+    /*}*/
+/*}*/

@@ -1,0 +1,223 @@
+{% extends 'Member/layout.html.twig' %}
+{% block title %}房间设置{% endblock %}
+{% block right %}
+
+<div class="perCenter">
+    <div class="tab-title J-tab-menu clearfix">
+        <a class="tab-item active" href="/member/roomset">
+            <h3>房间设置</h3>
+        </a>
+        <a class="tab-item" href="/member/roomadmin">
+            <h3>管理员设置</h3>
+        </a>
+    </div>
+
+    <div class="J-tab-main active mb30 mt30">
+        <div class="perCenter-item clearfix">
+            <span class="perCenter-title">房间设置</span>
+        </div>
+
+            {% if roomStatus.tid == 6 %}
+
+                <div class="perCenter-item clearfix">
+                    <div class="perCenter-sub-title">时长房间</div>
+                    <div class="perCenter-content-ilb">
+                        <form id="setTimeCount" autocomplete="off">
+                            <label>
+                                <span>每分钟花费：</span>
+                                <span>
+                                    <input disabled type="text" class="txt txt-s" name="timecount" autocomplete="off" id="timeCount" value="{{ roomStatus.timecost }}"/>钻
+                                    <span class="fred" id="rTimeCountTips"></span>
+                                </span>
+                            </label>
+                            <input type="hidden" value="{{ data.tid }}" name="tid">
+                            {#<button type="button" id="btnTimeCount" class="btn btn-right btn-around">确定</button>#}
+                        </form>
+                    </div>
+
+                </div>
+            {% endif %}
+
+            {% for data in types %}
+
+            {% if data.tid == 7 %}
+                <form method="GET" action="/member/roomOneToMore">
+                    <div class="perCenter-item clearfix">
+                        <div class="perCenter-sub-title">{{ L('MEMBER.ROOMSET.ONE2MANY') }}</div>
+                        <div class="perCenter-content-ilb">
+                            <label>
+                                <input type="hidden" name="type" value="" />
+                                <span>{{ L('MEMBER.ROOMSET.START_DATE') }}</span>
+                                <input name="mintime" class="Wdate txt txt-s" type="text" onclick="WdatePicker()" value="">
+                            </label>
+                            <label>
+                                <span>{{ L('MEMBER.ROOMSET.START_TIME') }}</span>
+                                <select name="hour"></select>:
+                                <select name="minute"></select>
+                            </label>
+                            <label>
+                                <span>{{ L('MEMBER.ROOMSET.DURATION') }}</span>
+                                <select name="duration"></select>
+                            </label>
+                        </div>
+                        <div class="perCenter-content-ilb">
+                            <span class="bold">{{ L('MEMBER.ROOMSET.POINTS') }}</span>
+                            <label class="reserveLabel" for="radioSelectPoints">
+                                <!-- <span>选项</span>
+                                <input type="radio" name="radio-point" id="radioSelectPoints" checked/>
+                                <select name="select-points" id="selectPoints"></select> -->
+                                <span>{{ data.timecost }}</span>
+                            </label>
+                            <!-- <label class="reserveLabel" for="radioInputPoints">
+                                <span>手动输入</span>
+                                <input type="radio" name="radio-point" id="radioInputPoints"/>
+                                <input type="text" name="input-points"
+                                id="inputPoints" class="txt txt-s"/>
+                            </label> -->
+                            <input type="hidden" name="tid" value="4">
+                            <button type="button" class="btn btn-right" id="btnReservation_stticket">{{ L('MEMBER.ROOMSET.OK') }}</button>
+                        </div>
+                    </div>
+                </form>
+            {% endif %}
+            {% if data.tid == 4 %}
+                <form method="GET" action="/member/roomSetDuration">
+                    <div class="perCenter-item clearfix">
+                        <div class="perCenter-sub-title">预约房间（一对一）</div>
+                        <div class="perCenter-content-ilb">
+                            <label>
+                                <input type="hidden" name="type" value="" />
+                                <span>开播日期：</span>
+                                <input name="mintime" class="txt txt-s" type="text" onclick="WdatePicker()" value="">
+                            </label>
+                            <label>
+                                <span>开播时间：</span>
+                                <select name="hour" class="select-s"></select>:
+                                <select name="minute" class="select-s"></select>
+                            </label>
+                            <label>
+                                <span>时长：</span>
+                                <select name="duration" class="select-s"></select>
+                            </label>
+                        </div>
+                        <div class="perCenter-content-ilb">
+                            <span class="bold">钻石数：</span>
+                            <label class="reserveLabel" for="radioSelectPoints">
+                                <span>选项</span>
+                                <input type="radio" name="radio-point" id="radioSelectPoints" checked/>
+                                <select name="select-points" id="selectPoints" class="select-s"></select>
+                            </label>
+                            <label class="reserveLabel" for="radioInputPoints">
+                                <span>手动输入</span>
+                                <input type="radio" name="radio-point" id="radioInputPoints"/>
+                                <input type="text" name="input-points" 
+                                id="inputPoints" class="txt txt-s"/>
+                            </label>
+                            <input type="hidden" name="tid" value="4">
+                            <button type="button" class="btn btn-right btn-around" id="btnReservation">确定</button>
+                        </div>
+                    </div>
+                </form>
+            {% endif %}
+            {% if data.tid == 2 %}
+            <div class="perCenter-item clearfix">
+                <div class="perCenter-sub-title">密码房间</div>
+                <div class="perCenter-content-ilb">
+                    <form id="setPassword" autocomplete="off">
+                        {% if data.pwd=='' %}
+                        <label>
+                            <span>使用密码：</span>
+                            <span>
+                                <label for="rPwdRadioOpen"><input type="radio" name="room-radio" id="rPwdRadioOpen" value="true"><span>开启</span></label>
+                                    <label for="rPwdRadioClose"><input type="radio" name="room-radio" id="rPwdRadioClose" value="false" checked><span>关闭</span></label>
+                            </span>
+                        </label>
+                        <label class="J-pwd-form none">
+                            <span>现在的密码：</span>
+                            <span>
+                                <input type="text" class="txt txt-s" name="password" autocomplete="off" id="rPwd" value="{{ data.pwd }}"/>
+                                <span class="fred" id="rPwdTips"></span>
+                            </span>
+                        </label>
+                        {% else %}
+
+                        <label>
+                            <span>使用密码：</span>
+                            <span>
+                                <label for="rPwdRadioOpen"><input type="radio" name="room-radio" id="rPwdRadioOpen" checked value="true"><span>开启</span></label>
+                                <label for="rPwdRadioClose"><input type="radio" name="room-radio" id="rPwdRadioClose" value="false"><span>关闭</span></label>
+                            </span>
+                        </label>
+
+                        <label class="J-pwd-form">
+                            <span>现在的密码：</span>
+                            <span>
+                                <input type="text" class="txt txt-s" name="password" autocomplete="off" id="rPwd" value="{{ data.pwd }}"/>
+                                <span class="fred" id="rPwdTips"></span>
+                            </span>
+                        </label>
+                        {% endif %}
+                        <input type="hidden" value="{{ data.tid }}" name="tid"> <button type="button" id="btnChangePW" class="btn btn-right btn-around">确定</button>
+                    </form>
+                </div>
+
+            </div>
+            {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+    <div>
+        <div class="perCenter-item clearfix">
+            <span class="perCenter-title">房间类型列表</span>
+        </div>
+        <table class="table" id="roomSetList">
+            <tr>
+                <th>开播房间</th>
+                <th>开播时间</th>
+                <th>时长</th>
+                <th>费用</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            {% for item in roomlist %}
+                <tr>
+                    <td>预约房间</td>
+                    <td>{{ item.starttime|date('Y-m-d H:i:s')  }}</td>
+                    <td>{{ item.duration/60 }}</td>
+                    <td>{{ item.points }}</td>
+                    <td>
+                        {% if item.reuid ==0 %}
+                            房间未被预约
+                        {% else %}
+                            房间已预约
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.reuid == 0 and date(item.starttime)>date() %}
+                            <button class="btn-text btn-blue btn-reserve-modify" data-roomid="{{ item.id }}">修改</button>
+                            <button class="btn-text btn-reserve-delete" data-roomid="{{ item.id }}">删除</button>
+                        {% else %}
+                            <a class="btn-text btn-disabled" disabled>修改</a>
+                            <a class="btn-text btn-disabled" disabled>删除</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    {% autoescape false %}
+        <div  id="page" class="clearfix" style="float:right">{{ roomlist.render }}</div>
+    {% endautoescape %}
+</div>
+
+
+{% endblock %}
+{% block subjavascript %}
+    <script type="text/javascript" src="{{ STATIC_PATH }}{{ JS_PATH }}widget/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript">
+        cross.importFile("roomsetJs", "js");
+    </script>
+{% endblock %}

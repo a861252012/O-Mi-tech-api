@@ -1,0 +1,302 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>{{ room.user.nickname }}的直播间- 在线视频|海量直播|美女秀场</title>
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="cache-control" content="no-cache">
+<meta http-equiv="expires" content="0">
+
+<style type="text/css">
+
+    #o2m{
+        background-color: #eaeaea;
+        overflow: hidden;
+        background-image: url("{{ PICTURE_CDN_PATH }}/public/src/img/one2more_bg.jpg");
+        background-size: cover;
+    }
+
+    .ordDialog img {
+        width: 270px
+    }
+
+    .ordDialog .ordDialogContent h4 {
+        font-size: 16px;
+        margin: 10px 0
+    }
+
+    .ordDialog .ordDialogContent p {
+        margin: 10px 0 0
+    }
+
+    .o2mTip{
+        margin: 20px auto;
+        font-size: 18px;
+        text-align: center;
+        font-weight: bold;
+        border-bottom: 1px solid #fff;
+        line-height: 40px;
+        color: #fff;
+    }
+
+    .ordDialogBottom{
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .exchangeDialogBottom{
+        margin-top: 30px;
+        text-align: center;
+    }
+
+    .d-shadow{
+        display: none !important;
+    }
+
+    .o2mBox{
+        line-height: 40px;
+        font-size: 14px;
+        margin: 0px 20px;
+        color: #fff;
+    }
+
+    #exchangePoints{
+        width: 130px;
+    }
+
+    #chargeBtn{
+        margin-left: 10px;
+    }
+
+    #exchangeTips{
+        color: red;
+    }
+
+    .exchangeHandle{
+        margin: 10px 0px;
+    }
+
+    .exchangePointsDiamondBox{
+        display: none;
+    }
+</style>
+      <script type="text/javascript">
+        window.PUBLISH_VERSION = "{{ publish_version }}";
+      </script>
+    <script type="text/javascript" src="{{ STATIC_PATH }}/public/dest/{{ publish_version }}/cross.js"></script>
+
+    <script type="text/javascript">
+      cross.importFile("commonCss", "css");
+    </script>
+</head>
+<body id="o2m">
+<p class="o2mTip">
+    当前房间正在进行一对多, 请补票进入
+</p>
+<div class="o2mBox">
+    <div>用户昵称: {{ user.nickname }}</div>
+    <div>蜜桃账户余额: {{ user.points }}钻石<button class="btn btn-s" id="chargeBtn">充值</button> (充值成功后再兑换成钻石即可显示)</div>
+    <div><span id="o2mPrefix"></span>账户余额: <span id="o2mMoney"></span><span id="o2mMoneyName"></span> = <span id="o2mDiamond"></span>钻石 <button class="btn btn-s" id="exchangeBtn">兑换</button></div>
+</div>
+<script  type="text/javascript" >
+  //头像图片服务器
+  window.IMG_PATH = "{{ IMG_PATH }}";
+
+  //load lib
+  cross.importFile("libJs", "js");
+  cross.importFile("commonJs", "js");
+  cross.importFile("platJs", "js");
+</script>
+
+<script>
+    //var site_domain = document.domain;
+    //function scrollSendRedirect(){
+    //    clearInterval(aInt);
+    //    top.location.href="http://"+site_domain+"?handle={{ handle }}";
+    //}
+    //window.scrollSendRedirect=scrollSendRedirect;
+    //var aInt=setInterval("scrollSendRedirect()",1500);
+
+    //一对多房间初始化
+    window.roomTicket = new RoomTicket();
+    var oneToManyData = JSON.parse(base64.decode('{{ data }}'));
+    var platInfo = {{ hplat_info | raw }};
+    var platUser = {{ hplat_user | raw }};
+
+    //平台跳转接口
+    window.OpenAPI = {};
+
+    //link: 跳转链接
+    window.OpenAPI.link = {{ plat_url|raw }};
+
+    //一对多房间弹窗信息
+    //if(handle == "room_one_to_many"){
+    //var oneToManyData = JSON.parse(base64.decode(getLocation("data")));
+    window.roomTicket.showBuyTicketDialog({
+        ordTitle: oneToManyData.username,
+        ordDuration: oneToManyData.duration,
+        ordPoints: oneToManyData.points,
+        ordStartTime: oneToManyData['start_time'],
+        ordEndTime: oneToManyData["end_time"],
+        ordRoomId: oneToManyData["rid"],
+        ordOneToManyId: oneToManyData["id"]
+    });
+
+    var one2more = {
+      dom: {
+        btnCharge: $("#chargeBtn"),
+        btnExchange: $("#exchangeBtn")
+      },
+
+      //余额不足dialog
+      dialogCharge: $.dialog({
+        title: "温馨提示",
+        content: "余额不足, 立即充值!",
+        ok: function(){
+          window.open(window.OpenAPI.link.pay);
+        },
+        cancel: function(){
+          history.go(-1);
+        },
+        okValue: "立即充值",
+        cancelValue: "狠心离开",
+        closeButtonDisplay: false
+      }),
+
+      //直播币兑换框
+      dialogExchange: $.dialog({
+        title: '兑换',
+        content: '<div>' +
+        '<p>亲爱的用户:<br/>您可以将您的' + platInfo.money_name + '兑换成蜜桃钻石, 这样您就可以给您喜欢的主播送礼了.<br/>当前兑换比例是: <span style="color:red;">'+ platInfo.rate + platInfo.money_name + ' = 1蜜桃钻石.</span><br/>请输入您想兑换的金额:</p>' +
+        '<div class="exchangeHandle">' +
+        '<input type="text" placeholder="" class="txt txt-s" id="exchangePoints"/>'+ platInfo.money_name +' = <input class="txt txt-s" disabled id="exchangePointsDiamond"/>蜜桃钻石.' +
+        '<span id="exchangeTips"></span>' +
+        '</div>' +
+        '<p>'+ platInfo.money_name +'余额:<span class="exchangeMoneyLeft">'+ platUser.money +'</span>, 实时到账.</p>' +
+        '<div class="exchangeDialogBottom">'+
+        '<button type="button" class="btn" id="btnExDialog">兑换</button>' +
+        '<button type="button" class="btn btn-white" id="btnExChargeDialog">充值</button>' +
+//        '<button type="button" class="btn btn-leave" id="btnExLeaveDialog">狠心离开!</button>' +
+        '</div>'+
+        '</div>',
+        closeButtonDisplay: false,
+      }),
+
+      //购买确认框
+      dialogMakeSure: $.dialog({
+        title: '提示',
+        content: '客服小妹帮你处理中，请稍后。。。',
+        cancel: function () {
+        },
+        cancelDisplay: false,
+        closeButtonDisplay: false
+      }),
+
+      init: function(){
+
+        var that = this;
+
+        //跳转充值页面
+        that.dom.btnCharge.on("click", function(){
+          window.open(window.OpenAPI.link.pay);
+        });
+
+        //触发兑换窗口
+        that.dom.btnExchange.on("click", function(){
+          that.dialogExchange.show();
+        });
+
+        //兑换窗口中的兑换按钮事件处理
+        $(document).on("click", "#btnExDialog", function(){
+
+          if($("#exchangeTips").text().length > 0 || $("#exchangePoints").val() == ""){
+            return;
+          }
+
+          that.dialogMakeSure.show();
+
+          $.ajax({
+            url: '/api/plat_exchange',
+            data: {
+              money: $("#exchangePoints").val(),
+              rid: oneToManyData.rid
+            },
+            type: "POST",
+            success: function(ret){
+
+              that.dialogMakeSure.remove();
+
+              if(ret.status){
+                $.dialog({
+                  title: "提示",
+                  content: "兑换成功",
+                  closeButtonDisplay: false,
+                  okValue: "关闭",
+                  ok: function(){
+                    location.reload();
+                  }
+                }).show();
+              }else{
+                if(ret.cmd == 'topupTip'){
+                  that.dialogCharge.show();
+                }else{
+                  $.tips(ret.msg);
+                }
+              }
+            }
+          });
+        });
+
+        //兑换窗口中的兑换按钮充值处理
+        $(document).on("click", "#btnExChargeDialog", function () {
+          window.open(window.OpenAPI.link.pay);
+        });
+
+        //兑换窗口中的兑换按钮离开处理
+        $(document).on("click", "#btnExLeaveDialog", function () {
+          that.dialogExchange.close();
+        });
+
+        //兑换输入框逻辑判断
+        $(document).on("keyup", '#exchangePoints', function(){
+          var val = parseInt($(this).val());
+
+          var dom = {
+            dialogExchangeTips: $("#exchangeTips"),
+            //dialogExchangeDiamondBox: $(".exchangePointsDiamondBox"),
+            dialogExchangePointDiamond: $("#exchangePointsDiamond"),
+            dialogExchangePointLeft: $(".exchangeMoneyLeft")
+          }
+
+          if(val%platInfo.rate != 0 || val <= 0 || val == NaN){
+            dom.dialogExchangeTips.html("请填写" + platInfo.rate + "的整数倍数值");
+            dom.dialogExchangePointDiamond.val("");
+            dom.dialogExchangePointLeft.html(parseInt(platUser.money));
+          }else if(val > platUser.money){
+            dom.dialogExchangeTips.html("兑换数量已经超过您的余额了");
+            dom.dialogExchangePointDiamond.val("");
+            dom.dialogExchangePointLeft.html(parseInt(platUser.money));
+          }else{
+            dom.dialogExchangeTips.html("");
+            dom.dialogExchangePointLeft.html(parseInt(platUser.money) - val);
+            dom.dialogExchangePointDiamond.val(parseInt($(this).val())/platInfo.rate);
+          }
+
+        });
+
+        //数据回填
+        $("#o2mMoney").html(platUser.money);
+        $("#o2mDiamond").html(parseInt(platUser.money/platInfo.rate));
+        $("#o2mPrefix").html(platInfo.prefix);
+        $("#o2mMoneyName").html(platInfo.money_name);
+        $("#exchangePoints").attr("placeholder", "请输入" + platInfo.money_name + "数量");
+
+      }
+    }
+
+    one2more.init();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,144 @@
+{% extends "Member/layout.html.twig" %}
+
+{% block title %}提现{% endblock %}
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("anchorCss", "css");
+    </script>
+{% endblock %}
+{% block right %}
+
+<div class="perCenter">
+    <div class="perCenter-item clearfix">
+        <span class="perCenter-title">提现</span>
+    </div>
+    <div class="perCenter-item clearfix">
+        <div class="perCenter-content-ilb">
+            <div class="perCenter-content-ilb_li">
+                <span>可申请提款钻石：</span>
+                <span class="price">{{ sum_points }}</span>
+                <img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png" alt=""/>
+            </div>
+            
+            <div class="perCenter-content-ilb_li">
+                <span>可申请提款余额：</span>
+                <span class="price">{{ Available_points }}</span>
+                <span>元</span>
+                <span class="em">（10 <img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png" alt=""/> =1元）</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="perCenter-item clearfix">
+        <div class="perCenter-content-ilb">
+            <span>提现金额：</span>
+            <input name="withdrawnum" id="applyWithdrawIpt" class="txt txt-s" type="text" value="">
+            <button type="button" id="applyWithdrawBtn" class="btn btn-s">申请提取</button>
+            <div class="tip">温馨提示：主播每月至少要有一次提现，提款金额为50的整数倍，最低提现额度为200元。注意：每月25~31号可提交提款申请，申请款将与工资一同发放！</div>
+        </div>
+    </div>
+
+    <form method="GET" action="" id="withdrawGetForm">
+        <div class="perCenter-item clearfix">
+            <div class="perCenter-content-ilb">
+
+                <input type="hidden" name="type" value="" />
+                <span>查询时间：</span>
+                <input name="mintime" class="Wdate txt txt-s J-start" type="text" onclick="WdatePicker()" value="{{ mintime }}">
+                <span>至</span>
+                <input name="maxtime" class="Wdate txt txt-s J-end" type="text" onclick="WdatePicker()" value="{{ maxtime }}">
+
+                <span>申请状态：</span>
+                <select name="status" class="select-s">
+                    <option value="0">待审核</option>
+                    <option value="1">已审核</option>
+                    <option value="2">已拒绝</option>
+                </select>
+                <button type="button" class="btn btn-s"  onclick="timeComparing('withdrawGetForm')">查询</button>
+            </div>
+        </div>
+    </form>
+    <table class="table">
+        <tr>
+            <th>申请流水号</th>
+            <th>申请提款时间</th>
+            <th>提款金额</th>
+            <th>审批状态</th>
+            <th>提款时间</th>
+        </tr>
+
+        {% for item in data %}
+            <tr>
+                <td>{{ item.withdrawalnu }}</td>
+                <td>{{ item.created|date('Y-m-d H:i:s') }}</td>
+                <td>{{ item.money }}</td>
+                <td>{{ item.status }}</td>
+                <td>{{ item.withdrawaltime }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% autoescape false %}
+        <div  id="page" class="clearfix" style="float:right">{{ data.render }}</div>
+    {% endautoescape %}
+</div>
+
+
+
+{% endblock %}
+
+{% block subjavascript %}
+    <script type="text/javascript" src="{{ STATIC_PATH }}{{ JS_PATH }}widget/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript">
+        cross.importFile("pageCommonJs", "js");
+    </script>
+    <script>
+        $(function(){
+            var $ipt = $("#applyWithdrawIpt");
+            var $btn = $("#applyWithdrawBtn");
+
+            $btn.on("click", function(){
+
+                var iptVal = Number($ipt.val());
+                var iptIntVal = parseInt(iptVal, 10);
+
+                var withdrawDialog = $.dialog({
+                    title: "申请提款",
+                    content: "<p>您的提款金额为<span class='fgreen f18'> "+ iptVal +" </span>元</p><p class='fred'>是否确认申请提款？</p>",
+                    okValue:"确认申请",
+                    ok: function(){
+                        $.ajax({
+                            url: "/member/addwithdraw",
+                            dataType: "json",
+                            type: "POST",
+                            data: { withdrawnum: iptIntVal },
+                            success: function(json){
+                                if(!json.code){
+                                    //sucess
+                                    $.tips(json.msg, function(){
+                                        location.href = "/member/withdraw";
+                                    });
+                                }else{
+                                    $.tips(json.msg);
+                                }
+                            },
+                            error: function(){
+                                alert("server error!");
+                            }
+                        });
+                    },
+                    cancelValue: "取消",
+                    cancel: function(){
+
+                    }
+                });
+
+                if (Validation.isPositiveInteger(iptVal) && iptVal >= 200 && iptVal%50 == 0) {
+                    withdrawDialog.show();
+                }else{
+                    $.tips("请输入正确的数值，提款金额为<span class='fgreen f18'> 50 </span>的整数倍，且最低提现额度为<span class='fgreen f18'> 200 </span>元");
+                };
+                
+            });
+        });
+    </script>
+{% endblock %}

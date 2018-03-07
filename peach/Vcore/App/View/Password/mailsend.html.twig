@@ -1,0 +1,49 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}验证邮件已发送{% endblock %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("mailCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="inx-section">
+    <div class="container">
+		<div class="mail" id="pageMailSend">
+            <div class="mail-head">安全邮箱验证</div>
+                <div class="m-form-item clearfix">
+                    <div class="mail-icon"></div>
+                    <div class="mail-content">
+                        <h2>验证邮件已经发送到您的邮箱，请查收！</h2>
+                        <p>如未收到邮件请在<span class="c-blue">“垃圾邮件箱”</span>查找或重新发送验证邮件。<br/>
+                        如果安全邮箱验证已经完成，可<a id="return_index"> 返回首页 >></a>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="m-form-item">
+                    <div>
+                        <label for="sMailComfirm">安全邮箱：</label>
+                        <input name="mail" type="text" class="txt sMail_2" id="sMail" tabIndex="1" disabled/>
+                        <span class="mail-resend-tips"></span>
+                    </div>
+                    <div class="c-blue c-span mail-ipt-tips" id="emailRemind"><span class="c-remind"></span>1分钟后可再次修改</div>
+
+                </div>
+
+                <div class="m-form-item mail-btn-box">
+                	<button class="btn btn-disabled" disabled id="resendMail" style="">重新发送验证邮件<span class="mail-btn-tips-time"></span></button>
+            	</div>
+		</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        window.verifyMailStep={{ step }}
+        cross.importFile("mailJs", "js");
+    </script>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "Member/layout.html.twig" %}
+
+{% block title %}推广链接{% endblock %}
+{% block head %}
+<script type="text/javascript">
+    cross.importFile("memberLinkCss", "css");
+</script>
+{% endblock %}
+{% block right %}
+<div class="perCenter">
+    <div class="perCenter-item clearfix">
+        <span class="perCenter-title">推广链接</span>
+    </div>
+    <div class="link-content">
+        <img class="link-main-img" src="{{ STATIC_PATH }}{{ PIC_PATH }}mem-link.jpg">
+        <div class="link-copy">
+            <input class="link-copy-ipt txt" disabled type="text" id="copyIpt" value="{{ inviteurl }}" autocomplete="off" />
+            <button class="link-copy-btn btn" id="copyBtn" data-clipboard-target="copyIpt">复制链接</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block subjavascript %}
+    <script type="text/javascript" src="{{ STATIC_PATH }}{{ JS_PATH }}widget/clipboard/ZeroClipboard.js"></script>
+    <script type="text/javascript">
+        cross.importFile("memberLinkJs", "js");
+    </script>
+    
+{% endblock %}

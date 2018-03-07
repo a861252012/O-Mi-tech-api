@@ -1,0 +1,138 @@
+$path :../../../../www/;
+.spanContainer{
+      display: inline-block;
+      vertical-align: middle;
+      width: 30px;
+      height: 30px;
+      background-size: cover;
+}
+
+.a01{
+      background-image: url($(path)images/expression/a01.png);
+}
+.a02{
+      background-image: url($(path)images/expression/a02.png);
+}
+.a03{
+      background-image: url($(path)images/expression/a03.png);
+}
+.a04{
+      background-image: url($(path)images/expression/a04.png);
+}
+.a05{
+      background-image: url($(path)images/expression/a05.png);
+}
+.a06{
+      background-image: url($(path)images/expression/a06.png);
+}
+.a07{
+      background-image: url($(path)images/expression/a07.png);
+}
+.a08{
+      background-image: url($(path)images/expression/a08.png);
+}
+.a09{
+      background-image: url($(path)images/expression/a09.png);
+}
+.a10{
+      background-image: url($(path)images/expression/a10.png);
+}
+.a11{
+      background-image: url($(path)images/expression/a11.png);
+}
+.a12{
+      background-image: url($(path)images/expression/a12.png);
+}
+.a13{
+      background-image: url($(path)images/expression/a13.png);
+}
+.a14{
+      background-image: url($(path)images/expression/a14.png);
+}
+.a15{
+      background-image: url($(path)images/expression/a15.png);
+}
+.a16{
+      background-image: url($(path)images/expression/a16.png);
+}
+.a17{
+      background-image: url($(path)images/expression/a17.png);
+}
+.a18{
+      background-image: url($(path)images/expression/a18.png);
+}
+.a19{
+      background-image: url($(path)images/expression/a19.png);
+}
+.a20{
+      background-image: url($(path)images/expression/a20.png);
+}
+.a21{
+      background-image: url($(path)images/expression/a21.png);
+}
+.a22{
+      background-image: url($(path)images/expression/a22.png);
+}
+.a23{
+      background-image: url($(path)images/expression/a23.png);
+}
+.a24{
+      background-image: url($(path)images/expression/a24.png);
+}
+.a25{
+      background-image: url($(path)images/expression/a25.png);
+}
+.a26{
+      background-image: url($(path)images/expression/a26.png);
+}
+.a27{
+      background-image: url($(path)images/expression/a27.png);
+}
+.a28{
+      background-image: url($(path)images/expression/a28.png);
+}
+.a29{
+      background-image: url($(path)images/expression/a29.png);
+}
+.a30{
+      background-image: url($(path)images/expression/a30.png);
+}
+.a31{
+      background-image: url($(path)images/expression/a31.png);
+}
+.a32{
+      background-image: url($(path)images/expression/a32.png);
+}
+.a33{
+      background-image: url($(path)images/expression/a33.png);
+}
+.a34{
+      background-image: url($(path)images/expression/a34.png);
+}
+.a35{
+      background-image: url($(path)images/expression/a35.png);
+}
+.a36{
+      background-image: url($(path)images/expression/a36.png);
+}
+.a37{
+      background-image: url($(path)images/expression/a37.png);
+}
+.a38{
+      background-image: url($(path)images/expression/a38.png);
+}
+.a39{
+      background-image: url($(path)images/expression/a39.png);
+}
+.a40{
+      background-image: url($(path)images/expression/a40.png);
+}
+.a41{
+      background-image: url($(path)images/expression/a41.png);
+}
+.a42{
+      background-image: url($(path)images/expression/a42.png);
+}
+.none{
+      zoom: 1;
+}

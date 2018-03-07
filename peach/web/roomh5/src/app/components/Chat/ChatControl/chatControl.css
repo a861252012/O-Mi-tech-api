@@ -1,0 +1,91 @@
+$path :../../../../www/;
+
+@define-mixin sprite $x,$y {
+      background-image: url($(path)images/chat-sprite.png);
+      background-position:$x $y;
+}
+
+.chatControl{
+      width: 100%;
+      background-image: url($(path)images/chat-control.png);
+      background-repeat: repeat;
+      height: 40px;
+      box-sizing: border-box;
+      position: relative;
+}
+
+.smeil{
+      width: 29px;
+      height: 28px;
+      cursor: pointer;
+      position: absolute;
+      z-index: 10;
+      top: 5px;
+      left: 5px;
+      @mixin sprite -0,-0;
+}
+
+.chatInput{
+      position:relative;
+}
+
+.chatInputControl{
+      vertical-align: middle;
+      box-sizing: border-box;
+      background-color: white;
+      margin: 0px 50px 0px 0px;
+      user-select:none;
+      position: relative;
+}
+
+.chatInputText{
+      width: 100%;
+      height: 40px;
+      padding-right: 85px;
+      padding-left: 40px;
+      font-size: 14px;
+      border: 0;
+      box-sizing: border-box;
+      display: block;
+      border: 1px solid #ad9ba3;
+      outline: none;
+      position: absolute;
+      &:focus{
+             border: 1px solid #f8065d;
+      }
+}
+
+.planeBtn{
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      cursor: pointer;
+      border: 1px solid #f8065d;
+      border-radius: 5px;
+      height: 28px;
+      padding: 3px;
+}
+.planeIcon{
+      width: 32px;
+      height: 21px;
+      display: inline-block;
+      @mixin sprite -30px,0;
+}
+.planeText{
+      width: 40px;
+      display: inline-block;
+      font-size: 12px;
+      text-align: center;
+      color: #f8065d;
+      line-height: 14px;
+}
+
+.sendButton{
+      margin: 0px;
+      padding-left: 12px;
+      padding-right: 12px;
+      position: absolute;
+      right: 0px;
+      top: 0px;
+      border-radius: 0px;
+}

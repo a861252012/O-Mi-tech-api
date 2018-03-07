@@ -1,0 +1,44 @@
+{
+  rooms: [
+    {
+      "rid": 2650007,
+      "lv_type": 0,
+      "lv_exp": 1,
+      "live_status": 0,
+      "total": 3,
+      "uid": 2650007,
+      "tid": 1,
+      "username": "呃呃鹅鹅鹅鹅鹅鹅",
+      "headimg": "",
+      "live_time": "未开播",
+      "attens": "1",
+      "new_user": 0,
+      "enterRoomlimit": 0,
+      "timecost_live_status": 0,
+      "timecost": 0,
+      "top": 0,
+      "one_to_many_status": 0,
+      "origin": 11
+    },
+    {
+      "rid": 2653792,
+      "lv_type": 1,
+      "lv_exp": 1,
+      "live_status": 0,
+      "total": 0,
+      "uid": 2653792,
+      "tid": 1,
+      "username": "一对多主播3",
+      "headimg": "",
+      "live_time": "开播",
+      "attens": "0",
+      "new_user": 0,
+      "enterRoomlimit": 0,
+      "timecost_live_status": 0,
+      "timecost": 20,
+      "top": 1,
+      "one_to_many_status": 0,
+      "origin": 11
+    }
+  ]
+}

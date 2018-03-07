@@ -1,0 +1,11 @@
+.container{
+      margin: 5px 0 0 0;
+      font-size: 14px;
+      color: #89cc25 !important;
+}
+
+.NoticeBorder{
+      display: block;
+      height: 1px;
+      background-color: #331d47;
+}

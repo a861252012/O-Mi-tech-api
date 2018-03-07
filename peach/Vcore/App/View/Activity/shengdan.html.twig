@@ -1,0 +1,214 @@
+{% extends "layout.html.twig" %}
+{% block title %}圣诞狂欢秀{% endblock %}
+
+{% block head %}
+	<style type="text/css">
+		.ad-container{
+			padding: 0px;
+			width: 1200px;
+			margin: 0px auto;
+			position: relative;
+		}
+
+        
+		.ad-wrapper{
+			background-color: #e9ebed;
+		}
+
+		.ad-banner{
+			background-position: center center;
+			background-repeat: no-repeat;
+		}
+		.ad-banner-1{
+			background-image: url({{ STATIC_PATH }}/src/img/ad/shengdan/shengdan_01.jpg);
+			height: 742px;
+			position: relative;
+		}
+        .ad-banner-2 {
+            background-image: url({{ STATIC_PATH }}/src/img/ad/shengdan/shengdan_02.jpg);
+            height: 767px;
+            position: relative;
+        }
+        .ad-banner-3 {
+            background-image: url({{ STATIC_PATH }}/src/img/ad/shengdan/shengdan_03.jpg);
+            height: 502px;
+            position: relative;
+        }
+        .ad-banner-4 {
+            background-image: url({{ STATIC_PATH }}/src/img/ad/shengdan/shengdan_04.jpg);
+            height: 667px;
+            position: relative;
+        }
+		.ad-banner-5 {
+			background-image: url({{ STATIC_PATH }}/src/img/ad/shengdan/shengdan_05.jpg);
+			height: 322px;
+			position: relative;
+		}
+		.ad-charge-show{
+
+		}
+        #listCE, #listHY {
+            width: 380px;
+            position: absolute;
+        }
+
+        #listCE {
+			left: 165px;
+			top: 108px;
+        }
+        #listHY {
+			left: 750px;
+			top: 108px;
+        }
+		.ad-charge-show ol{
+  			float: left;
+			height: 370px;
+            width: 100%;
+		}
+		.ad-charge-show span{
+			font-size: 14px;
+			display: inline-block;
+		}
+		.ad-charge-show li{
+			height: 60px;
+			color: #fff;
+		}
+        .ad-charge-show span{
+            line-height: 38px;
+        }
+		.ad-charge-show span.no{
+            width: 25px;
+		}
+
+		.ad-charge-show span.name{
+			margin: 0px 12px;
+		}
+
+		.ad-charge-show span.points{
+            width: 150px;
+            float: right;
+            text-align: right;
+		}
+        .ad-charge-show span.icon{
+            width: 60px;
+            height: 38px;
+            vertical-align:middle;
+            float: right;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-image: url({{ STATIC_PATH }}/css/i/ad/shengdan/shengdan.jpg);
+        }
+
+        .ad-wrapper,.ad-banner,.ad-content,.ad-title{
+            display: block !important;
+            visibility: visible !important;
+        }
+	</style>
+
+
+{% endblock %}
+
+{% block content %}
+    <!-- 页面内容 -->
+    <div class="inx-section">
+		<div class="ad-wrapper">
+			<div class="ad-main">
+				<div class="ad-banner ad-banner-1"></div>
+				<div class="ad-banner ad-banner-2">
+					<div class="ad-container">
+						<div class="ad-charge-show" id="listCE">
+							<ol id="charmlist">
+								{#<li>#}
+									{#<span class="no">1.</span>#}
+									{#<span class="name">打开看后打开环境好</span>#}
+									{#<span class="icon"></span>#}
+									{#<span class="points">111111</span>#}
+								{#</li>#}
+							</ol>
+						</div>
+					</div>
+
+					<div class="ad-container">
+						<div class="ad-charge-show" id="listHY">
+							<ol id="starlist"></ol>
+						</div>
+					</div>
+
+				</div>
+				<div class="ad-banner ad-banner-3"></div>
+				<div class="ad-banner ad-banner-4"></div>
+				<div class="ad-banner ad-banner-5"></div>
+			</div>
+
+
+		</div>
+	</div>
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+		cross.importFile("pageCommonJs", "js");
+    </script>
+<script type="text/javascript">
+
+$(function(){
+
+	var clearBox = function(){
+		$("#charmlist").html("");
+		$("#starlist").html("");
+	}
+
+	var getData = function(){
+		$.ajax({
+			url: "/CharmStar",
+			dataType: "json",
+			type: "GET",
+			success: function(res){
+                //console.log(res)
+				for(var key in res){
+					if (key.indexOf("star") > -1) {
+						var tmp = "";
+						$.each(res[key], function(i, n){
+
+							var itemTmp = '<li>' +
+                                        //'<span class="no">' + n.no + '.</span>' +
+                                        '<span class="name">' + n.nickname + '</span>' +
+                                        '<span class="icon"></span><span class="points">送礼 ' + n.points +' 个</span>' +
+                            		'</li>';
+                           	tmp = tmp + itemTmp;
+							
+						});
+						$("#" + key).append(tmp);
+					};
+
+					if (key.indexOf("charm") > -1) {
+						var tmp = "";
+						$.each(res[key], function(i, n){
+
+							var itemTmp = '<li>' +
+										//'<span class="no">' + n.no + '.</span>' +
+									'<span class="name">' + n.nickname + '</span>' +
+									'<span class="icon"></span><span class="points">收礼 ' + n.points +' 个</span>' +
+									'</li>';
+							tmp = tmp + itemTmp;
+
+						});
+						$("#" + key).append(tmp);
+					};
+				};
+
+			}
+		});
+	};
+
+
+	getData();
+	setInterval(function(){
+		clearBox();
+		getData();
+	}, 60000);
+
+});
+
+</script>
+{% endblock %}

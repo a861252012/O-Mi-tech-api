@@ -1,0 +1,415 @@
+{% extends "layout.html.twig" %}
+
+{# 程序自定义标题 #}
+{% block title %}{{ title }}{% endblock %}
+{# ############## #}
+
+{% block head %}
+	<style type="text/css">
+		body{
+			margin: 0px;
+		}
+
+		.act-rank{
+			width: 1200px;
+			margin: 0px auto;
+			position: relative;
+		}
+		
+		.act-rank-inner{
+			position: absolute;
+		}
+
+		.act-container{
+			padding: 0px;
+			position: relative;
+			float: left;
+			width: 330px;
+			font-size: 18px;
+			line-height: 18px;
+		}
+
+		.act-container li{
+			height: 60px;
+		}
+
+		.act-container .no{
+			float: left;
+			margin-right: 5px;
+		}
+
+		.act-container .name{
+			float: left;
+		}
+
+		.act-container .icon{
+			float: right;
+			margin-right: 10px;
+			font-size: 14px;
+		}
+
+		.act-container .points{
+			float: right;
+		}
+
+		.act-rank-anchor{
+			margin-right: 285px;
+		}
+		.act-content{
+			padding-bottom: 100px;
+		}
+
+		/* 由程序自定义颜色，如果未定义则为#fff */
+		.act-wrapper{
+			background-color: #fff;
+		}
+		/**************************************/
+
+		.act-main{
+
+		}
+		
+		.act-bg{
+			background-position: center center;
+			background-repeat: no-repeat;
+			position: relative;
+		}
+		
+		/* 由程序自定义loop模板 */
+		.act-bg-0{ height: 470px }
+		.act-bg-1{ height: 900px }
+		.act-bg-2{ height: 900px }
+		.act-bg-3{ height: 440px }
+		.act-bg-4{ height: 690px }
+		{% set bgs =  img |split(',') %}
+		{% for bg in bgs %}
+			.act-bg-{{ loop.index - 1 }}{ background-image: url({{ IMG_PATH }}/{{ bg }}); }
+		{% endfor %}
+		/**************************************/
+
+	</style>
+
+
+{% endblock %}
+
+{% block content %}
+<div class="inx-section">
+	<div class="act-wrapper">
+		<div class="act-main">
+
+			<!-- 程序自定义图片背景loop模板 -->
+			<div class="act-bg act-bg-0"></div>
+			<div class="act-bg act-bg-1">
+				{% set rankxs = rankx | split(',') %}
+				{% set rankys = ranky | split(',') %}
+				{% if rank_open == 1 %}
+				<div class="act-rank">
+					<div class="act-rank-inner" style="left:{{ rankxs[0] }}px; top:{{ rankys[0] }}px; color: {{ rank_color }}">
+						<div class="act-container act-rank-anchor">
+							<ol id="charmlist">
+									{#<li>
+										<span class="name">打</span>
+										<span class="icon">收礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开</span>
+										<span class="icon">收礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看</span>
+										<span class="icon">收礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后</span>
+										<span class="icon">收礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后打</span>
+										<span class="icon">收礼</span>
+										<span class="points">111111个</span>
+									</li>
+									 <li>
+										<span class="name">打开看后打开</span>
+										<span class="icon">收礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后打开环</span>
+										<span class="icon">收礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后打开环境</span>
+										<span class="icon">收礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后打开环境好</span>
+										<span class="icon">收礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后打开环境好</span>
+										<span class="icon">收礼</span>
+										<span class="points">111111个</span>
+									</li>#}
+								</ol>
+						</div>
+
+						<div class="act-container act-rank-rich">
+							<ol id="starlist">
+									{#<li>
+										<span class="name">打开看后打开环境好</span>
+										<span class="icon">送礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后打开环境好</span>
+										<span class="icon">送礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后打开环境好</span>
+										<span class="icon">送礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后打开环境好</span>
+										<span class="icon">送礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后打开环境好</span>
+										<span class="icon">送礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后打开环境好</span>
+										<span class="icon">送礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后打开环境好</span>
+										<span class="icon">送礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后打开环境好</span>
+										<span class="icon">送礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后打开环境好</span>
+										<span class="icon">送礼</span>
+										<span class="points">111111个</span>
+									</li>
+									<li>
+										<span class="name">打开看后打开环境好</span>
+										<span class="icon">送礼</span>
+										<span class="points">111111个</span>
+									</li>#}
+								</ol>
+						</div>
+					</div>
+				</div>
+				{% endif %}
+			</div>
+			<div class="act-bg act-bg-2">
+                {% set rankxs = rankx | split(',') %}
+                {% set rankys = ranky | split(',') %}
+                {% if rank_open == 1 %}
+					<div class="act-rank">
+						<div class="act-rank-inner" style="left:{{ rankxs[0] }}px; top:{{ rankys[0] }}px; color: {{ rank_color }}">
+							<div class="act-container act-rank-anchor">
+								<ol id="charmlist">
+                                    {#<li>
+                                        <span class="name">打</span>
+                                        <span class="icon">收礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开</span>
+                                        <span class="icon">收礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看</span>
+                                        <span class="icon">收礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后</span>
+                                        <span class="icon">收礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后打</span>
+                                        <span class="icon">收礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                     <li>
+                                        <span class="name">打开看后打开</span>
+                                        <span class="icon">收礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后打开环</span>
+                                        <span class="icon">收礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后打开环境</span>
+                                        <span class="icon">收礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后打开环境好</span>
+                                        <span class="icon">收礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后打开环境好</span>
+                                        <span class="icon">收礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>#}
+								</ol>
+							</div>
+
+							<div class="act-container act-rank-rich">
+								<ol id="starlist">
+                                    {#<li>
+                                        <span class="name">打开看后打开环境好</span>
+                                        <span class="icon">送礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后打开环境好</span>
+                                        <span class="icon">送礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后打开环境好</span>
+                                        <span class="icon">送礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后打开环境好</span>
+                                        <span class="icon">送礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后打开环境好</span>
+                                        <span class="icon">送礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后打开环境好</span>
+                                        <span class="icon">送礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后打开环境好</span>
+                                        <span class="icon">送礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后打开环境好</span>
+                                        <span class="icon">送礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后打开环境好</span>
+                                        <span class="icon">送礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>
+                                    <li>
+                                        <span class="name">打开看后打开环境好</span>
+                                        <span class="icon">送礼</span>
+                                        <span class="points">111111个</span>
+                                    </li>#}
+								</ol>
+							</div>
+						</div>
+					</div>
+                {% endif %}
+			</div>
+			<div class="act-bg act-bg-3"></div>
+			<div class="act-bg act-bg-4"></div>
+			<!-- 程序自定义图片背景模板 -->
+
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script type="text/javascript">
+	cross.importFile("pageCommonJs", "js");
+</script>
+<script type="text/javascript">
+
+	$(function(){
+
+		var clearBox = function(){
+			$("#charmlist").html("");
+			$("#starlist").html("");
+		}
+
+		var getData = function(){
+			$.ajax({
+				url: "/CharmStar",
+				dataType: "json",
+				type: "GET",
+				success: function(res){
+					//console.log(res)
+					clearBox();
+
+					for(var key in res){
+						if (key.indexOf("star") > -1) {
+							var tmp = "";
+							$.each(res[key], function(i, n){
+
+								var itemTmp = '<li>' +
+										'<span class="no">' + n.no + '.</span>' +
+										'<span class="points">' + n.points +' 个</span><span class="icon">送礼</span>' +
+										'<span class="name">' + n.nickname + '</span>' +
+										'</li>';
+								tmp = tmp + itemTmp;
+
+							});
+							$("#" + key).append(tmp);
+						};
+
+						if (key.indexOf("charm") > -1) {
+							var tmp = "";
+							$.each(res[key], function(i, n){
+
+								var itemTmp = '<li>' +
+										'<span class="no">' + n.no + '.</span>' +
+										'<span class="points"> ' + n.points +' 个</span><span class="icon">收礼</span>' +
+										'<span class="name">' + n.nickname + '</span>' +
+										'</li>';
+								tmp = tmp + itemTmp;
+
+							});
+							$("#" + key).append(tmp);
+						};
+					};
+
+				}
+			});
+		};
+
+		getData();
+		setInterval(function(){
+			getData();
+		}, 60000);
+
+	});
+
+</script>
+{% endblock %}

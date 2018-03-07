@@ -1,0 +1,45 @@
+{% extends 'Member/layout.html.twig' %}
+{% block title %}房间游戏{% endblock %}
+{% block right %}
+
+<div class="perCenter">
+    <div class="perCenter-item clearfix">
+        <span class="perCenter-title">房间游戏</span>
+    </div>
+    <div class="tab-title J-tab-menu clearfix" style="list-style: none;">
+        <a class="tab-item " href="{{ U('member_gamelist',{'type':1}) }}">
+            <h3>我玩的</h3>
+        </a>
+        <a class="tab-item active" href="{{ U('member_gamelist',{'type':2}) }}">
+            <h3>我做庄</h3>
+        </a>
+    </div>
+    <table class="table mt30" id="roomSetList">
+        <tr>
+            <th>游戏内容</th>
+            <th>押注</th>
+            <th>获得钻石</th>
+            <th>消费房间</th>
+            <th>消费时间</th>
+        </tr>
+        {% for item in data %}
+            <tr>
+                <td>跑马会</td>
+                <td>{{ item.totalpoints }}</td>
+                <td>{{ item.win }}</td>
+                <td>{{ item.gameRoomUser.nickname }}</td>
+                <td>{{ item.init_time|date("Y-m-d H:i:s") }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% autoescape false %}
+        <div  id="page" class="clearfix" style="float:right">{{ data.render }}</div>
+    {% endautoescape %}
+</div>
+{% endblock %}
+{% block subjavascript %}
+    <script type="text/javascript" src="{{ STATIC_PATH }}{{ JS_PATH }}widget/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript">
+        cross.importFile("roomsetJs", "js");
+    </script>
+{% endblock %}

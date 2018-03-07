@@ -1,0 +1,106 @@
+{% extends 'Member/layout.html.twig' %}
+{% block title %}预约管理{% endblock %}
+{% block head %}
+<script type="text/javascript">
+    cross.importFile("roomsetCss", "css");
+</script>
+{% endblock %}
+
+{% block right %}
+<div class="perCenter">
+    <div class="mb30 clearfix">
+        <div class="perCenter-item clearfix">
+            <span class="perCenter-title">我的预约列表</span>
+        </div>
+
+        <div class="tab-title clearfix" style="list-style: none;">
+
+            <a class="tab-item {{ type == 1 ? 'active' : '' }}" href="/member/myReservation?type=1" >
+                <h3>一对一</h3>
+            </a>
+            <a class="tab-item {{ type == 2 ? 'active' : '' }}" href="/member/myReservation?type=2" >
+                <h3>一对多</h3>
+            </a>
+
+        </div>
+        <div class="mt30 active">
+            <table class="table">
+                <tr>
+                    <th>房间类型</th>
+                    <th>开播时间</th>
+                    <th>时长</th>
+                    <th>费用</th>
+                    <th>主播</th>
+                    <th>状态</th>
+
+                </tr>
+                {% for myroom in data %}
+                    <tr>
+                        <td>预约房间</td>
+                        <td>{{ myroom.starttime|date('Y-m-d H:i:s') }}</td>
+                        <td>{{ myroom.duration }}分钟</td>
+                        <td>{{ myroom.points }}</td>
+                        <td>{{ myroom.nickname }} </td>
+                        <td>
+                            <a class="btn btn-s btn-left" href="{{ myroom.url }}/h5" target="_blank">进入房间</a>
+                        </td>
+
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% autoescape false %}
+            <div  id="page" class="clearfix" style="float:right">{{ data.render }}</div>
+        {% endautoescape %}
+    </div>
+
+    <div class="mb30 clearfix">
+        <div class="perCenter-item clearfix">
+            <span class="perCenter-title">推荐主播</span>
+        </div>
+
+        <div class="res-list clearfix">
+        {% for item in room %}
+            <div class="res-item">
+                <div class="res-item-inner clearfix">
+                    <div class="res-imgBlock">
+                        {% if(item.cover) %}
+                            <img class="res-img" src="{{ item.cover }}" alt />
+                        {% elseif(item.headimg!=0) %}
+                            <img class="res-img" src="{{ IMG_PATH }}/{{ item.headimg }}?w=80&h=80" alt />
+                        {% else %}
+                            <img class="res-img" src="{{ STATIC_PATH }}{{ PIC_PATH }}head_80.png" alt />
+                        {% endif %}
+                        {% if item.video_status == 1 %}
+                            <div class="status live">直播</div>
+                        {% endif %}
+                        <div class="res-points">费用: <span class="forange">{{ item.points }}钻</span></div>
+                    </div>
+                    <div class="res-contentBlock">
+                        <h4>{{ item.nickname }}</h4>
+                        <p>
+                            开播时间：{{ item.starttime }}</br>
+                            直播时长：{{ item.duration }}分钟
+                        </p>
+                        <button class="btn btn-s btn-reserve" data-roomid="{{ item.roomid  }}">立即约会</button>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block subjavascript %}
+    <script type="text/javascript">
+        cross.importFile("roomsetJs", "js");
+    </script>
+    <script type="text/javascript">
+        $(function(){
+            $(".btn-reserve").on("click", function(){
+                reserveRoom($(this).data("roomid"));
+            });
+        });
+    </script>
+{% endblock %}

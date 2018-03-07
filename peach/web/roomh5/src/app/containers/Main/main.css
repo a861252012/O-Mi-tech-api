@@ -1,0 +1,47 @@
+:global .main-contentCenter {
+    width: 640px;
+    height: 100%;
+    float: left;
+    margin-right: 1px;
+    position: relative;
+}
+
+.container {
+    height: 100%;
+    font-weight:200 !important;
+    color: white !important;
+    font-size: 13px !important;
+    line-height: 20px;
+
+}
+.content {
+    min-width: 1200px;
+    min-height: 570px;
+    margin-left: 56px;
+    margin-right: 56px;
+    position: relative;
+    height: calc(100vh - 40px - 40px);
+    max-height: 820px;
+}
+
+.contentInfo {
+    position: absolute;
+    top:0px;
+    right: 0px;
+    height: 100%;
+}
+
+@media (min-width: 1540px) {
+    .content {
+        margin-left: 100px;
+        margin-right: 100px;
+    }
+}
+
+@media (min-width: 1680px) {
+    .content {
+        margin-left: 150px;
+        margin-right: 150px;
+    }
+}
+

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!--# include virtual="ssi/meta-cache.html" -->
+
+    <title>免费大秀-美女直播-华人视频第一站</title>
+    <script type="text/javascript" src="{{ STATIC_PATH }}/dist/v20160225/ued.import.js"></script>
+	<style type="text/css">
+		html, body, .inx-section, .ad-wrapper{
+			height: 100%;
+		}
+		body{
+			margin: 0px;
+			font-family: "微软雅黑";
+		}
+		.ad-container{
+			padding: 0px;
+			width: 1000px;
+			margin: 0px auto;
+			position: relative;
+		}
+		.ad-content{
+			padding-bottom: 100px;
+		}
+		.ad-wrapper{
+			background-color: #EEECDF;
+		}
+		.ad-main{
+
+		}
+		
+		.ad-banner{
+			background-position: center center;
+			background-repeat: no-repeat;
+		}
+
+		.ad-banner-1{
+			background-image: url({{ PICTURE_CDN_PATH }}/dist/v20160225/i/ad/loading/ad-reg1.jpg);
+			height: 700px;
+			position: relative;
+		}
+		
+		.login-btn{
+			width: 244px;
+			height: 38px;
+			display: block;
+			cursor: pointer;
+			position: absolute;
+			left: 184px;
+			top: 237px;
+		}
+
+		.reg-btn{
+			width: 119px;
+			height: 38px;
+			display: block;
+			cursor: pointer;
+			position: absolute;
+			left: 114px;
+			top: 237px;
+			/*background-color: #ccc;*/
+		}
+
+		.ad-chat{
+			position: absolute;
+  			left: 389px;
+  			top: 74px;
+  			width: 192px;
+  			height: 214px;
+		}
+
+		.ad-des{
+			width: 330px;
+			position: absolute;
+			left: 170px;
+			top: 100px;
+		}
+
+		.ad-des-top{
+			left: 605px !important;
+			top: 99px !important;
+		}
+
+		.ad-des-top .em{
+			color: #f3f625;
+		}
+
+		.ad-des p{
+			font-size: 12px;
+			line-height: 18px;
+			color: #fff;
+			margin: 10px 0px;
+		}
+		
+		.m-form-wrapper{
+			width: 340px;
+			height: 219px;
+			position: absolute;
+			top: 395px;
+			left: 520px;
+		}
+
+		.m-form-wrapper .m-form{
+			margin: 40px 0 0 75px;
+			position: relative;
+		}
+
+		.m-form-wrapper .m-form .m-form-item{
+			margin: 15px 0px;
+		}
+
+		.m-form-item label{
+			font-size: 14px;
+			color: #fff;
+		}
+		
+		.m-form-item input{
+			width: 160px;
+			background-color: #6f6268;
+			border: 1px solid #fff;
+			padding: 2px 5px;
+			color: #eee;
+			border-radius: 3px;
+			box-shadow: 0px 0px 3px #ddd;
+		}
+
+		.m-form-item input.sCode{
+			width: 80px !important;
+		}
+
+		.m-form-item .s-code-img{
+			width: 60px;
+			vertical-align: middle;
+		}
+
+		.m-form-item .change-scode{
+			color: #fff;
+			font-size: 12px;
+		}
+
+		.reg-form .m-form-item{
+			margin: 4px 0px !important;
+		}
+
+		.rButton{
+			width: 148px;
+			height: 34px;
+			display: block;
+			cursor: pointer;
+			position: absolute;
+			left: 85px;
+			top: 164px;
+		}
+
+		.rTip{
+			font-size: 12px;
+			line-height: 16px;
+			width: 130px;
+			display: block;
+			color: #ff9292 !important;
+		}
+		
+		.none{
+			display: none !important;
+		}
+		.ad-focus{
+			display: block;
+		}
+	</style>
+</head>
+
+<body>
+<div class="inx-section">
+	<div class="ad-wrapper">
+		<div class="ad-main">
+			<div class="ad-banner ad-banner-1">
+				<div class="ad-container">
+
+					<div class="m-form-wrapper reg-form">
+						<form action="" class="rForm m-form" onsubmit="return false">
+							<div class="m-form-item">
+								<label for="rName">登录邮箱：</label>
+								<input type="text" id="rName" placeholder="填写您的邮箱地址">
+							</div>
+							<div class="m-form-item">
+								<label for="rNickname">您的昵称：</label>
+								<input type="text" maxlength="16" id="rNickname" placeholder="2-8位汉字、数字或字母">
+							</div>
+							<div class="m-form-item">
+								<label for="rPassword">登录密码：</label>
+								<input type="password" id="rPassword" autocomplete="off" placeholder="6-22个字母和数字组成">
+							</div>
+							<div class="m-form-item">
+								<label for="rAPassword">确认密码：</label>
+								<input type="password" id="rAPassword" autocomplete="off">
+							</div>
+							<div class="m-form-item">
+								<label for="rsCodeIpt">验证码：</label>
+								<input type="text" class="txt sCode" id="rsCodeIpt"  placeholder="不区分大小写">
+								<img src="" alt="验证码" id="rsCodeImg" class="s-code-img">
+								<a href="javascript:void(0);" class="change-scode">换一换</a>
+							</div>
+							<span class="rTip"></span>
+							<a class="btn rButton btn-left"></a>
+						</form>
+					</div>
+					<div class="ad-chat"></div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+</div>
+
+<script type="text/javascript">
+	app.libImportJs();
+	app.importFile("commonJs", "js");
+    app.importFile("pageCommonJs", "js");
+
+</script>
+
+<script type="text/javascript">
+    $(function(){
+
+    	//验证码
+    	var cap = new Captcha();
+    	
+    	//用户
+    	var user = new User();
+	    
+	    //邀请人记录
+	    var uAgent = getLocation("agent");
+	    
+	    if(uAgent){
+	        $.cookie("agent", uAgent, { 
+	            expires: 1/48, 
+	            domain: document.domain.replace(/^www/, ""),
+	            path: "/"
+	        });
+	    }
+
+		//绑定更换验证码功能
+		cap.bindChangeCaptcha();
+
+		//注册
+		cap.flashCaptcha($("#rsCodeImg"));
+	    $('#rName').accountInput(".rTip");
+	    $('#rNickname').isNickname('.rTip');
+	    $('#rPassword').passwordInput('.rTip');
+	    $("#rsCodeIpt").sCodeInput(".rTip");
+
+	    user.submitR('.rButton', function(){
+	    	window.location.href = "/";
+	    });
+
+	    //focus
+	    $(".ad-chat, .ad-focus").on("click", function(){
+	    	$("#rName").focus();
+	    });
+
+    	//进入页面后统计点击量
+	    $.ajax({
+	    	url: "/clickadd",
+	    	dataType: "json",
+	    	type: "GET",
+	    	success: function(){
+	    		if (window.console) {
+	    			console.log("record..");
+	    		};
+	    	},
+	    	error: function(){
+	    		if (window.console) {
+	    			console.log("record fail..");
+	    		};
+	    	}
+	    });
+    });
+</script>
+
+<!--# include virtual="ssi/google-analytics.html" -->
+
+</body>
+</html>

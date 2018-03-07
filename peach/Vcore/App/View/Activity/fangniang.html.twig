@@ -1,0 +1,96 @@
+{% extends "VideoProjectBundle::layout.html.twig" %}
+{% block title %}小坊娘{% endblock %}
+
+{% block head %}
+	<style type="text/css">
+		.ad-container{
+			padding: 0px;
+			width: 1200px;
+			margin: 0px auto;
+			position: relative;
+		}
+
+        
+		.ad-wrapper{
+			background-color: #000;
+		}
+
+		.ad-banner{
+			background-position: center center;
+			background-repeat: no-repeat;
+		}
+		.ad-banner-1{
+			background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/fangniang/fangniang0.jpg);
+			height: 518px;
+			position: relative;
+		}
+        .ad-banner-2 {
+            background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/fangniang/fangniang1.jpg);
+            height: 203px;
+            position: relative;
+        }
+        .ad-banner-3 {
+            background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/fangniang/fangniang2.jpg);
+            height: 253px;
+            position: relative;
+        }
+        .ad-banner-4 {
+            background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/fangniang/fangniang3.jpg);
+            height: 418px;
+            position: relative;
+        }
+        .ad-banner-5 {
+            background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/fangniang/fangniang4.jpg);
+            height: 425px;
+            position: relative;
+        }
+        .ad-banner-6 {
+            background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/fangniang/fangniang5.jpg);
+            height: 450px;
+            position: relative;
+        }
+        .ad-banner-7 {
+            background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/fangniang/fangniang6.jpg);
+            height: 735px;
+            position: relative;
+        }
+        .ad-banner-8 {
+            background-image: url({{ PICTURE_CDN_PATH }}/css/i/ad/fangniang/fangniang7.jpg);
+            height: 285px;
+            position: relative;
+        }
+		.ad-charge-show{
+
+		}
+        .ad-wrapper,.ad-banner,.ad-content,.ad-title{
+            display: block !important;
+            visibility: visible !important;
+        }
+	</style>
+
+
+{% endblock %}
+
+{% block content %}
+    <!-- 页面内容 -->
+    <div class="inx-section">
+		<div class="ad-wrapper">
+			<div class="ad-main">
+				<div class="ad-banner ad-banner-1"></div>
+				<div class="ad-banner ad-banner-2"></div>
+				<div class="ad-banner ad-banner-3"></div>
+				<div class="ad-banner ad-banner-4"></div>
+				<div class="ad-banner ad-banner-5"></div>
+				<div class="ad-banner ad-banner-6"></div>
+				<div class="ad-banner ad-banner-7"></div>
+				<div class="ad-banner ad-banner-8"></div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        app.importFile("pageCommonJs", "js");
+    </script>
+{% endblock %}

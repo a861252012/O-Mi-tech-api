@@ -1,0 +1,68 @@
+{% extends 'Member/layout.html.twig' %}
+{% block title %}贵族体系{% endblock %}
+{% block head %}
+<script type="text/javascript">
+    cross.importFile("memberSceneCss", "css");
+</script>
+{% endblock %}
+
+{% block right %}
+<div class="perCenter">
+    <div class="perCenter-item clearfix">
+        <span class="perCenter-title">贵族体系</span>
+    </div>
+    <table class="table">
+        <tr>
+            <th>贵族头衔</th>
+            {#<th>操作类型</th>#}
+            <th>开通时间</th>
+            <th>房间号</th>
+            <th>有效期</th>
+            <th>状态</th>
+            <th>保级条件(钻）</th>
+            <th>已充值（钻）</th>
+            <th>操作</th>
+        </tr>
+        {% if item %}
+        <tr>
+            <td>{{ item.group.level_name }}</td>
+            {#<td>开通</td>#}
+            <td>{{ item.create_at|date("Y-m-d") }}</td>
+            <td>{% if item.rid %}{{ item.rid }}{% endif %}</td>
+            <td>{{ item.end_time|date("Y-m-d") }}</td>
+            <td>
+                {% if item.group.level_id != userInfo.vip %}
+                {% elseif item.end_time < date().timestamp|date("Y-m-d H:i:s") %}
+                    已过期
+                {% elseif  item.end_time > date().timestamp|date("Y-m-d H:i:s") and item.group.level_id == userInfo.vip%}
+                    正常
+                {% endif %}
+            </td>
+            <td><img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png" alt=""/>{{ item.keep_level }}</td>
+            <td><img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png" alt=""/>{{ item.charge }}</td>
+            <td>
+                {% if item.keep_level <= item.charge %}
+                    保级成功
+                {% elseif item.keep_level >item.charge %}
+                    <a href="/charge/order" class="btn btn-xs">充值</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endif %}
+    </table>
+    {% if item %}
+
+    {% else %}
+        <p class="perCenter-table-tip">您目前没有开通过贵族的记录，<a href="/shop">立即购买&gt;&gt;</a></p>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block subjavascript %}
+
+    <script type="text/javascript">
+        cross.importFile("pageCommonJs", "js");
+    </script>
+
+{% endblock %}

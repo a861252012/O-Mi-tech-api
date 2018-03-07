@@ -1,0 +1,9 @@
+services:
+    session.redis:
+        class: Redis
+        calls:
+             - [ connect, [ %session_redis_host%, %session_redis_port% ]]
+    session.handler.redis:
+        class: Snc\RedisBundle\Session\Storage\Handler\RedisSessionHandler
+        arguments: [ "@session.redis", { cookie_lifetime: %session_redis_expire%, }, %session_redis_prefix% ]
+        #arguments: [ "@session.redis",%session_redis_expire%, { key_prefix: %session_redis_prefix%, } ]

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<head>
+    <!--# include virtual="ssi/meta-cache.html" -->
+    <title>中转中...</title>
+    <style type="text/css">
+        
+    </style>
+    <script type="text/javascript" src="http://s.1room1.co/public/dest/v2017090701/ued.import.js"></script>
+    <script type="text/javascript">
+        app.importFile("commonCss", "css");
+        app.importFile("aboutCss", "css");
+    </script>
+</head>
+<body>
+<!-- 页面头部 -->
+<!--# include virtual="ssi/header.html" -->
+<!-- 页面Banner -->
+<div class="inx-wrapper">
+
+<div class="head-line"></div>
+<div class="inx-section">
+    <div class="container">
+        <div class="page-tip-img">
+            <div class="tip-seconds-wrap"><span id="tip-seconds">5</span>秒后自动跳转...</div>
+            <a href="/" class="btn">回到首页</a>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- 页面底部 -->
+<!--#include virtual="ssi/footer.html"-->
+<!-- 隐藏窗口 -->
+
+<script type="text/javascript">
+    window.IMG_PATH = "http://s.1room1.co:9869";
+</script>
+
+<script type="text/javascript">
+    app.libImportJs();
+    app.importFile("commonJs", "js");
+    app.importFile("pageCommonJs", "js");
+</script>
+
+<script type="text/javascript">
+    $(function(){
+        //如果已经登录，立即跳转页面
+        if ($.cookie("webuid")) {
+            location.href = "/";
+        };
+
+        //如果未登录，5秒后自动跳转
+        var count = 5;
+        setInterval(function(){
+            if (count <= 0) { location.href = "/" };
+            document.getElementById("tip-seconds").innerHTML = count;
+            count--;
+        }, 1000);
+    });
+</script>
+
+<!--#include virtual="ssi/google-analytics.html"-->
+
+</body>
+</html>

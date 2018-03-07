@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% include 'meta.html.twig' %}
+
+    <title>{% block title %}{% endblock %}</title>
+    <meta name="keywords"
+          content="蜜桃儿,app，apk，约炮神器，蜜桃儿手机客户端，蜜桃儿华人视频直播平台是首屈一指的私密美女视频直播秀场、私家秀.最具诱惑的免费秀场,高清流畅福利直播,最流畅的美女直播秀私家夜蒲">
+    <meta name="description" content="第一坊二站,mitao,蜜桃,FC2,直播,MFC,直播,网红美女,福利直播,大秀门户,YY大秀,免费美女直播,互动直播,性感直播视频,全球领先福利直播平台">
+
+    {% include 'cdn.html.twig' %}
+    <script type="text/javascript" src="{{ STATIC_PATH }}/public/dest/{{ publish_version }}/cross.js"></script>
+    <script src="{{ STATIC_PATH }}/public/src/js/core/polyfill.min.js?v={{ publish_version }}"></script>
+    <script type="text/javascript">
+        window.PUBLISH_VERSION = "{{ publish_version }}";
+    </script>
+    <script type="text/javascript">
+        cross.importFile("commonCss", "css");
+        var os = function() {
+            var ua = navigator.userAgent,
+                isWindowsPhone = /(?:Windows Phone)/.test(ua),
+                isSymbian = /(?:SymbianOS)/.test(ua) || isWindowsPhone,
+                isAndroid = /(?:Android)/.test(ua),
+                isFireFox = /(?:Firefox)/.test(ua),
+                isChrome = /(?:Chrome|CriOS)/.test(ua),
+                isTablet = /(?:iPad|PlayBook)/.test(ua) || (isAndroid && !/(?:Mobile)/.test(ua)) || (isFireFox && /(?:Tablet)/.test(ua)),
+                isPhone = /(?:iPhone)/.test(ua) && !isTablet,
+                isPc = !isPhone && !isAndroid && !isSymbian;
+                return {
+                    isTablet: isTablet,
+                    isPhone: isPhone,
+                    isAndroid : isAndroid,
+                    isPc : isPc
+                };
+        }();
+
+        if(os.isAndroid || os.isPhone){
+            // window.location.href = '/live/dist/index.html';
+        }
+    </script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+{% block contenthead %}{% endblock %}
+
+<!-- 首页 -->
+<div class="wrapper">
+    {% include 'header.html.twig' %}
+    <div class="inx-wrapper">
+        {% block content %}{% endblock %}
+    </div>
+    {% include 'footer.html.twig' %}
+</div>
+<!-- 绝对底部构建 -->
+{#{% include 'footer.html.twig' %}#}
+
+<!-- 隐藏窗口 -->
+{% block divhide %}{% endblock %}
+<script type="text/javascript">
+    //头像图片服务器
+    window.IMG_PATH = "{{ IMG_PATH }}";
+
+    //load lib
+    cross.importFile("libJs", "js");
+    cross.importFile("commonJs", "js");
+</script>
+{% block javascript %}{% endblock %}
+
+{% include 'google-analytics.html.twig' %}
+</body>
+</html>

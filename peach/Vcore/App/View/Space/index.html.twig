@@ -1,0 +1,195 @@
+{% extends "layout.html.twig" %}
+{% block title %}{{ user.nickname?:user.username }} - 个人空间{% endblock %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("spaceCss", "css");
+    </script>
+    <link type="text/css" rel="stylesheet" href="{{ STATIC_PATH }}{{ JS_PATH }}/widget/prettyPhoto/css/prettyPhoto.css" />
+{% endblock %}
+
+{% block content %}
+    <!-- 页面内容 -->
+    <div class="inx-section">
+        
+        <div class="doc-wrapper">
+            <div class="doc container">
+                
+                <div class="doc-content">
+                    <div class="per-main">
+                        <div class="menu-title clearfix">
+                            <span class="phot"></span>
+                            相册
+                        </div>
+
+                        <div class="perSpace">
+                            <div class="perSpace-top">
+                                <div class="perSpace-top-per">
+                                    <img src="{{ user.headimg }}" alt="" />
+                                </div>
+                                <div class="content">
+                                    <div class="name-block">
+                                        <span class="name">{{ user.nickname ? : user.username }}</span>
+                                        <span class="leverIco"></span>
+                                        <span class="uid">（主播ID：{{ user.uid }}）</span>
+                                    </div>
+                                    <div class="discript">
+                                        <div class="ico"></div>
+                                        {{ liveStatus?'我正在直播中，亲！快进入我房间吧~':'我正在休息中，暂未直播，但是请继续支持和关注我哦！' }}
+                                    </div>
+                                </div>
+                                <button class="btn" onclick="javascript:location.href='{{ room }}';">进入房间</button>
+                            </div>
+                            <div class="perSpace-bottom clearfix">
+                                <table>
+                                    <tr>
+                                        <th>昵称：</th>
+                                        <td>{{ user.nickname?:user.username }}</td>
+                                        <th>性别：</th>
+                                        <td>{{ user.sex?'男':'女' }}</td>
+                                        <th>星座：</th>
+                                        <td>{{ user.star|default('保密') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>所在地：</th>
+                                        <td>{{ user.address|default('火星') }}</td>
+                                        <th>签名：</th>
+                                        <td colspan="3">{{ user.description|default('主人犯懒，什么都没写!') }}</td>
+                                    </tr>
+                                </table>
+                                <div class="tool">
+                                    <div class="tool-handle attendtion">
+                                        <div id="attencount" class="num">{{ attenCount|default('无') }}</div>
+                                        <div class="button"><a id="focus" href="javascript:void(0);" rel="1" style="color: #ff0099">+关注</a></div>
+                                    </div>
+                                    <div class="tool-handle photo">
+                                        <div class="num">{{ result.total }}</div>
+                                        <div>照片</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="perSpace-photo clearfix">
+                            <div class="perSpace-photo-title">
+                                <span class="fl">{{ user.nickname ? : user.username }}的照片墙</span>
+                                <span class="fr">Ta共分享了{{ pagination.count }}张照片</span>
+                            </div>
+                            <div id="container" class="perSpace-photo-content portfolio-content portfolio-area clearfix">
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        cross.importFile("pageCommonJs", "js");
+    </script>
+
+    <script src="{{ STATIC_PATH }}{{ JS_PATH }}/widget/prettyPhoto/js/jquery.prettyPhoto.js" type="text/javascript"></script>
+    <script src="{{ STATIC_PATH }}{{ JS_PATH }}/widget/waterfall.min.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        $(function(){
+
+            //favorite state setting
+            $.ajax({
+                url: '/focus',
+                data: { pid: {{ user.uid }} , ret: 0},
+                dataType: "json",
+                type: "GET",
+                success: function(json){
+                    if(json.status == 1){
+                        $('#focus').attr('rel',2);
+                        $('#focus').css('color','#000');
+                        $('#focus').html('取消关注');
+                    }
+                },
+                error:function(json){
+                    if (console) {console.log("get favorite state error")};
+                }
+            });
+
+            //关注按钮点击效果
+            $('#focus').on("click", function(){
+                var rel = $(this).attr('rel');
+                $.ajax({
+                    url: '/focus',
+                    data: { pid:{{ user.uid }}, ret:rel },
+                    dataType: "json",
+                    type: "GET",
+                    success: function(json){
+                        if(json.status == 1){
+                            var num = parseInt($('#attencount').text(), 10);
+                            if( rel == 1){
+                                $('#focus').attr('rel',2);
+                                $('#focus').css('color','#000');
+                                $('#focus').html('取消关注');
+                                $('#attencount').text( num + 1);
+                            }else{
+                                $('#focus').attr('rel',1);
+                                $('#focus').css('color','#ff0099');
+                                $('#focus').html('+关注');
+                                if (!num) {
+                                    return;
+                                };
+                                $('#attencount').text( num - 1);
+                            }
+                        }
+                        $.tips(json.msg);
+                    },
+                    error: function(){
+                        if (console) {console.log("get favorite state error")};
+                    }
+                });
+
+            });
+            
+            //瀑布流初始化
+            setTimeout(function(){
+                $('#container').waterfall({
+                    itemCls: 'box',
+                    colWidth: 300,
+                    gutterWidth: 30,
+                    gutterHeight: 15,
+                    isFadeIn:true,
+                    isAnimated:true,
+                    checkImagesLoaded: false,
+                    dataType: 'html',
+                    callbacks: {
+                        renderData: function (data, dataType) {
+                            var totals = '{{ result.total }}';
+                            if ( data < 20) {
+                                $('#container').waterfall('pause', function() {
+                                    $('#waterfall-message').html('<p style="color:#666;"></p>')
+                                });
+                            }
+                            $("a[rel^='prettyPhoto']").prettyPhoto({social_tools:"", gallery_markup: ""});
+                            if ( dataType === 'json' ||  dataType === 'jsonp'  ) {
+                                tpl = $('#waterfall-tpl').html();
+                                template = Handlebars.compile(tpl);
+
+                                return template(data);
+                            } else {
+                                return data;
+                            }
+                        }
+                    },
+                    path: function(page) {
+                        return '{{ app.request.getSchemeAndHttpHost ~ app.request.baseUrl ~ app.request.pathInfo }}?u={{ user.uid }}&handle=ajax&page=' + page;
+                    }
+                });
+            }, 100);
+
+        });
+
+    </script>
+
+{% endblock %}

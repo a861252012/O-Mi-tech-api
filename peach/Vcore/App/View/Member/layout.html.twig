@@ -1,0 +1,119 @@
+{% extends "layout.html.twig" %}
+{% block title %}会员中心{% endblock %}
+
+{% block content %}
+    <div class="inx-section clearfix">
+        <div class="doc-wrapper">
+            <div class="doc container">
+                <div class="doc-content">
+                    <div class="m-side-menu clearfix">
+                        <div class="m-side-title">个人中心</div>
+                        {% for item in menus_list %}
+                        <div class="m-side-item {% if item.action==curmenu %}active{% endif %}">
+                            <a href="/member/{{ item.action }}"> {{ item.name }}</a><b class="num"></b>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="m-ct">
+                        <div class="m-ct-info m-well">
+                            <img src="{{ userInfo.headimg }}" alt="" class="m-ct-pic" />
+                            
+                            <div class="m-ct-info_detail">
+                            
+                                <div class="m-ct-info_item">
+                                    <span class="m-ct-info_inline">昵称：{{ userInfo.nickname }}
+                                        {% if userInfo.roled == 3  %}
+                                            (主播ID：{{ userInfo.uid }})
+                                        {% endif %}
+                                    </span>
+                                    
+                                    <span class="m-ct-info_inline">
+                                        {% if userInfo.vip > 0  %}
+                                            <span class="hotListImg basicLevel{{ userInfo.vip }}"></span>
+                                        {% endif %}
+                                        {% if userInfo.roled == 3  %}
+                                            <span class="hotListImg AnchorLevel{{ userInfo.lv_exp }}"></span>
+                                        {% endif %}
+                                        {#{% if userInfo.lv_rich > 0  %}#}
+                                            {#<span class="hotListImg basicLevel{{ userInfo.lv_rich }}"></span>#}
+                                        {#{% endif %}#}
+                                        {% if userInfo.icon_id > 0  %}
+                                            <span class="badge badge{{ userInfo.icon_id }}"></span>
+                                        {% endif %}
+                                    </span>
+                                    
+                                    <span class="m-ct-info_inline">{% if userInfo.sex == 1  %}男{%  else %}女{% endif %} | {{ userInfo.age}} | {{ userInfo.starname }} | {{ userInfo.procity }}</span>
+                                </div>
+                                
+                                <div class="m-ct-info_item">
+                                    <span class="m-ct-info_inline">余额：<span class="m-ct-info_point">{{ points }}</span><img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png" alt=""/></span>
+                                    <span class="m-ct-info_inline">{{ userInfo.description }}</span>
+                                </div>
+                                
+                                <div class="m-ct-info_item m-ct-info_lv">
+                                    <div class="m-ct-info_inline">
+                                        {% if userInfo.roled == 3 %}
+                                            主播等级：
+                                            <div class="m-ct-lv_box">
+                                                <div class="hotListImg AnchorLevel{{ userInfo.lv_exp }}"></div>
+                                                <div>当前等级</div>
+                                            </div>
+                                            <div class="m-ct-lv_process">
+                                                <div class="m-ct-lv_line">
+                                                    <div class="m-ct-lv_lineinner" style="width:{{ userInfo.lv_percent }}%"></div>
+                                                </div>
+                                                <div class="m-ct-lv_text">{{ userInfo.lv_sub }}/{{ userInfo.lv_next_exp-userInfo.lv_current_exp }}</div>
+                                            </div>
+                                            <div class="m-ct-lv_box">
+                                                <div class="hotListImg AnchorLevel{{ userInfo.lv_exp+1 }}"></div>
+                                                <div>下一等级</div>
+                                            </div>
+                                        {#{% else %}#}
+                                            {#富豪等级：#}
+                                            {#<div class="m-ct-lv_box">#}
+                                                {#{% if userInfo.lv_rich == 1 %}#}
+                                                    {#<div class="m-ct-lv_text">0级</div>#}
+                                                {#{% else %}#}
+                                                {#<div class="m-ct-lv_text hotListImg basicLevel{{ userInfo.lv_rich }}"></div>#}
+                                                {#{% endif %}#}
+                                                {#<div>当前等级</div>#}
+                                            {#</div>#}
+                                            {#<div class="m-ct-lv_process">#}
+                                                {#<div class="m-ct-lv_line">#}
+                                                    {#<div class="m-ct-lv_lineinner" style="width:{{ userInfo.lv_percent }}%"></div>#}
+                                                {#</div>#}
+                                                {#<div class="m-ct-lv_text">{{ userInfo.lv_sub }}/{{ userInfo.lv_next_exp-userInfo.lv_current_exp }}</div>#}
+                                            {#</div>#}
+                                            {#<div class="m-ct-lv_box">#}
+                                                {#<div class="m-ct-lv_text hotListImg basicLevel{{ userInfo.lv_rich+1 }}"></div>#}
+                                                {#<div>下一等级</div>#}
+                                            {#</div>#}
+                                        {% endif %}
+                                    </div>
+                                    <!--<button class="btn btn-s J-edit">编 辑</button>-->
+                                </div>
+                                                
+                            </div>
+
+                        </div>
+                        
+                        <div class="m-ct-content m-well">
+                            {% block right %}{% endblock %}
+                        </div>
+                    </div>
+                    
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+{% endblock %}
+
+{% block javascript %}
+    {% block subjavascript %}{% endblock %}
+{% endblock %}

@@ -1,0 +1,53 @@
+# This file is auto-generated during the composer install
+parameters:
+    database_driver: pdo_mysql
+    database_host: 10.1.100.101
+    database_port: 3306
+    database_name: video
+    database_user: videousr
+    database_password: videopwd
+    mailer_transport: smtp
+    mailer_host: 192.168.10.244
+    mailer_user: null
+    mailer_password: null
+    locale: en
+    secret: kalaaAaaaKoop
+    debug_toolbar: true
+    debug_redirects: false
+    use_assetic_controller: true
+    #上传图片的路径和取图片的路径
+    REMOTE_PIC_URL: http://192.168.10.244:4869
+    #加密用户信息给flash的key
+    #内部服务器调用的签名,可以随意改，用于内部程序验证的token
+    VFPHP_SIGN: 0c9ec123b8d0bca68dcd4a82822317ec
+    DES_ENCRYT_KEY: iloveyvv
+    #redis端口
+   # REDIS_CLI_IP_PORT: 192.168.10.244:6379
+    REDIS_CLI_IP_PORT: 10.1.100.101:6379
+    #静态资源cdn
+    #WEB_CDN_STATIC: http://7u2i8o.com1.z0.glb.clouddn.com/public
+    WEB_CDN_STATIC: http://s.1room1.com/public
+    #图片CDN
+    PIC_CDN_STATIC: http://p1.1room1.co/public
+
+    #---------------发信相关设置----------------------------------
+    #安全邮箱验证发信email
+    VERIFY_FROM_MAIL: "verify@qq.com"
+    #重置密码发信验证email
+    REPASS_FROM_MAIL: "repass@qq.com"
+
+    #固定虚拟域名访问从局域网访问php服务
+    VFPHP_HOST_NAME: http://www.vphp.cn
+    #固定虚拟域名访问从局域网访问java服务
+    VFJAVA_HOST_NAME: http://v.vphp.cn
+    #请求充提中心的地址
+    #PAY_CALL_URL: http://192.168.10.155:8086/fc_iface/service/g2p
+    PAY_CALL_URL: http://www.vf.com/charge/moniCharge
+    #验证码
+    VERFRIY_CODE_STATUS: 1
+    #私钥
+    PAY_PRIVATEKEY: 32ousdjf9343djjomvsdf2233dskdlfb
+
+    REMOTE_PIC_URL: http://192.168.10.244:4869
+
+

@@ -1,0 +1,14 @@
+$path :../../../www/;
+:global .gift-container {
+    height: calc((100vh - 480px) - 80px);
+    width: 640px;
+    max-height: 340px;
+    min-height: 170px;
+    font-size: 18px;
+    background-image: url($(path)images/gift-bg.png);
+    box-sizing: border-box;
+    position: absolute;
+    left: -641px;
+    top: 0px;
+    margin-top: 480px;
+}
