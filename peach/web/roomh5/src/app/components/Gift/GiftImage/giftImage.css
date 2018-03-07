@@ -1,0 +1,50 @@
+.giftImage{
+    position: absolute;
+    width: 670px;
+    height: 0px;
+    top: 250px;
+    left: 10%;
+    z-index: 500;
+
+    img{
+        position: absolute;
+
+        width:70px;
+        height:70px;
+
+        top:0px;
+        right: 0px ;
+        opacity: 0;
+    }
+}
+
+:global(.moveRL-enter){
+    opacity: 0.01;
+}
+
+:global(.moveRL-enter.moveRL-enter-active){
+    -webkit-animation: moveRL 2s infinite; /* Safari 4.0 - 8.0 */
+    animation: moveRL 2s infinite;
+    animation-fill-mode: forwards;
+    -webkit-animation-fill-mode: forwards;/* Safari 4.0 - 8.0 */
+}
+
+@keyframes moveRL{
+    0% {
+        opacity: 0.01;
+        transform:translateX(0px);
+        -webkit-transform:translateX(0px);
+    }
+
+    10%{
+        opacity: 1;
+    }
+
+    60%{
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.01;
+        transform:translateX(-310px);
+    }
+}

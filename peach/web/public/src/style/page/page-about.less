@@ -1,0 +1,225 @@
+/**
+ * 关于我们及相关页面
+ * @author Young
+ * @contacts young@kingjoy.co
+ */
+
+@import "../module/variable.less";
+
+.help{
+	position: relative;
+	.help-item{
+		margin-bottom: 40px;
+		position: relative;
+	}
+}
+
+.help-side{
+    float: left;
+    
+	.help-title{
+		font-size: 18px;
+		width: 200px;
+		height: 40px;
+        margin-bottom: 10px;
+        text-indent: -9999px;
+        cursor: pointer;
+        a{
+            display: block;
+            text-indent: -9999px;
+            height: 40px;
+        }
+	}
+    
+    .help-title_join{
+        background-image: url('@{imgPath}page/help-join.png');
+    }
+    .help-title_ext{
+        background-image: url('@{imgPath}page/help-ext.png');
+    }
+    .help-title_sug{
+        background-image: url('@{imgPath}page/help-sug.png');
+    }
+    .help-title_anchor{
+        background-image: url('@{imgPath}page/help-anchor.png');
+    }
+    .help-title_user{
+        background-image: url('@{imgPath}page/help-user.png');
+    }
+}
+
+.help-content{
+    float: left;
+    margin-left: 40px;
+    width: 840px;
+}
+.help-head{
+    margin-bottom: 20px;
+}
+
+.displayStrenth{
+	background-image: url('@{imgPath}page/about-extend.png');
+	width: 651px;
+	height: 263px;
+	padding: 0px;
+}
+
+.displaySuggestion{
+	.display-item{
+		margin-bottom: 10px;
+		label{
+			margin-right: 20px;
+		}
+	}
+	.d-help-title{
+		margin-right: 10px;
+	}
+	.d-help-ta{
+		width: 450px !important;
+	}
+}
+
+.finishSuggestion{
+	width: 400px;
+	color: #3399cc;
+	line-height: 1.6em;
+	font-size: 14px;
+}
+
+.help-qa{
+	.help-qa-item{
+		padding: 10px 0px;
+		.help-qa-question{
+			margin-bottom: 5px;
+			color: #333;
+			.i-q{
+				display: inline-block;
+				vertical-align: middle;
+				background-image: url('@{imgPath}page/help-que.jpg');
+				width: 14px;
+				height: 14px;
+				margin-right: 5px;
+			}
+
+			.help-q{
+				display: inline-block;
+				vertical-align: middle;
+				font-size: 14px;
+				font-weight: normal;
+			}
+
+			.i-a{
+				display: inline-block;
+				vertical-align: middle;
+				background-image: url('@{imgPath}page/help-ans.jpg');
+				height: 18px;
+				width: 47px;
+				cursor: pointer;
+			}
+		}
+
+		.help-qa-answer{
+			color: #666;
+			line-height: 2em;
+			display: none;
+		}
+	}
+}
+
+//关于我们
+.about{
+    .doc{
+        margin-bottom: 0px;
+    }
+    .doc-content{
+        margin-top: 0px !important;
+    }
+    
+    .about-img{
+        background-image: url('@{imgPath}page/about.jpg');
+        width: 290px;
+        height: 835px;
+        float: left;
+
+    }
+
+    .about-p{
+        width: 860px;
+        float: right;
+        p{
+            font-size: 18px;
+            line-height: 1.5em;
+            margin-bottom: 20px;
+        }
+
+    }
+
+}
+
+//免责条款
+.state{
+	li{
+		font-size: 16px;
+		padding: 20px 0px;
+		border-bottom: 1px solid #ddd;
+		line-height: 1.8em;
+		&.last{
+			color: @orange;
+			border: none;
+		}
+	}
+}
+
+/** 中间页面 **/
+.page-tip-img{
+    background-image: url('@{imgPath}transfer.png');
+    width: 839px;
+    height: 360px;
+    display: block;
+    margin: 50px auto;
+    position: relative;
+    .btn{
+		position: absolute;
+		top: 240px;
+		left: 416px;
+    }
+
+    .tip-seconds-wrap{
+		position: absolute;
+		top: 250px;
+		left: 566px;
+		font-size: 16px;
+		font-weight: bold;
+    }
+}
+
+/*
+ * 500
+ */
+#page-500-wrap,
+#page-404-wrap{
+	background-color: #FF6F04;
+}
+#page-500,
+#page-404{
+	width: 1000px;
+	height: 676px;
+	display: block;
+}
+.page-500-btn{
+    display: block;
+    position: absolute;
+    top: 367px;
+    left: 646px;
+    width: 160px;
+    height: 40px;
+}
+.page-404-btn{
+    display: block;
+    position: absolute;
+	top: 415px;
+    left: 400px;
+    width: 160px;
+    height: 40px;
+}
+

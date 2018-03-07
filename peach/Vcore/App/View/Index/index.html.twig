@@ -1,0 +1,254 @@
+{% extends "layout.html.twig" %}
+{% block title %}蜜桃儿直播平台-华语美女才艺展示{% endblock %}
+{% block head %}
+    <link rel="stylesheet" href="{{ STATIC_PATH }}/public/src/style/widget/DPlayer.min.css?v={{ publish_version }}">
+    <script type="text/javascript">
+        cross.importFile("indexCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+
+    <div class="mail-check-wrap mail-remind-text-old">
+
+        <img src="/public/src/img/silk_desk_lamp.png">
+
+        <div class="mail-check-dialog">
+            <span class="mail-check-close">×</span>
+            <div class="mail-check-top"><span>验证邮箱</span></div>
+            <div class="mail-check-content">
+                <img src="/public/src/img/mail-dialog-content.jpg" class="mail-dialog-content">
+                <span class="mail-remind-text">完成邮箱验证，放纵玩，私密看</span>
+                <button onclick="window.location.href = '/mailverific'"><span class="mail-check-icon"></span>邮箱验证</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="mail-check-wrap mail-remind-text-new">
+        <img src="/public/src/img/silk_desk_lamp.png">
+        <div class="mail-check-dialog">
+            <span class="mail-check-close">×</span>
+            <div class="mail-check-top"><span>验证邮箱</span></div>
+            <div class="mail-check-content">
+                <img src="/public/src/img/mail-dialog-content2.jpg" class="mail-dialog-content">
+                <span class="mail-remind-text">最后一步：验证邮箱，安全访问完成邮箱验证，访问网站资源~</span>
+                <button onclick="window.location.href = '/mailverific'"><span class="mail-check-icon"></span>邮箱验证</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="doc-fast-entry J-box">
+        <div class="entry-icon pos-top-1">
+            <div class="text txt-qq">客服</div>
+            <a href="http://wpa.qq.com/msgrd?v=3&amp;uin=3347853430&amp;site=qq&amp;menu=yes" target="_blank">
+                <div class="icon-qq"></div>
+            </a>
+        </div>
+        <div class="entry-icon pos-top-2 js-download-pc">
+            <div class="text txt-download">
+                <img tilte="扫描下载APP">
+                <p>扫描下载APP</p>
+            </div>
+            <div class="text txt-downloads">下载</div>
+            <div class="icon-download"></div>
+        </div>
+        <div class="entry-icon pos-top-3 J-totop">
+            <div class="text txt-top">返回顶部</div>
+            <div class="icon-top"></div>
+        </div>
+    </div>
+    <div class="mt-live-zone">
+        <div class="content">
+            <div class="mt-live-left">
+                <div class="dplayer-container">
+                    <div id="dplayer-screen" class="dplayer"></div>
+                </div>
+                <div class="rank-list main-content">
+                    <div class="main-rank J-rank-anchor">
+
+                    </div>
+                    <section class="slider">
+                        <div class="bannerslider">
+                            <ul class="slides">
+                                {% for ad in ad_1 %}
+                                    <li><a href="{{ ad.url }}" target="_blank" title="" class="slide-bg">
+                                            <img src="{{ IMG_PATH }}/{{ ad.temp_name }}" width="506px" height="155px"
+                                                 class="slide-img{{ key }}">
+                                        </a></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="custom-navigation">
+                            <a href="javascript:void(0);" class="flex-prev"></a>
+                            <div class="custom-controls-container"></div>
+                            <a href="javascript:void(0);" class="flex-next"></a>
+                        </div>
+                    </section>
+                </div>
+                <div class="video-content">
+                    <div class="content">
+                        <div class="video-container">
+                            <div class="main-left J-tab">
+                                <ul class="main-nav tab-title J-tab-menu">
+                                    <li class="tab-item active" data-cat="all">
+                                        <div class="anchor1">
+                                            <span class="all"></span>
+                                            <i></i>
+                                        </div>
+                                        <h3>美女主播</h3>
+                                    </li>
+                                    {#<li class="tab-item" data-cat="timecost"><h3>时长房间</h3><p>Time Count</p></li>#}
+                                    <li class="tab-item" data-cat="one_many">
+                                        <div class="anchor2">
+                                            <span class="one_many"></span>
+                                            <i></i>
+                                        </div>
+                                        <h3>一对多房间</h3>
+                                    </li>
+                                    <li class="tab-item" data-cat="ord">
+                                        <div class="anchor3">
+                                            <span class="one_many"></span>
+                                            <i></i>
+                                        </div>
+                                        <h3>一对一房间</h3>
+                                    </li>
+                                    <li class="tab-item" id="inxFavBtn" data-cat="fav">
+                                        <div class="anchor4">
+                                            <span class="fav"></span>
+                                            <i></i>
+                                        </div>
+                                        <h3>我的关注</h3>
+                                    </li>
+                                    <li class="tab-item" id="inxResBtn" data-cat="res">
+                                        <div class="anchor5">
+                                            <span class="res"></span>
+                                            <i></i>
+                                        </div>
+                                        <h3>我的预约</h3>
+                                    </li>
+                                </ul>
+                                <div class="main-item J-tab-main active" >
+                                    <div class="main-content clearfix" id="all" ></div>
+                                    <div class='inx-more-btn'>点击按钮，加载更多</div>
+                                </div>
+
+                                {#<div class="main-item J-tab-main" >#}
+                                    {#<div class="main-content clearfix" id="timecost" ></div>#}
+                                    {#<div class='inx-more-btn'>点击按钮，加载更多</div>#}
+                                {#</div>#}
+
+                                <div class="main-item J-tab-main" >
+                                    <div class="main-content clearfix" id="one_many" ></div>
+                                    <div class='inx-more-btn'>点击按钮，加载更多</div>
+                                </div>
+
+                                <div class="main-item J-tab-main" >
+                                    <div class="main-content clearfix" id="ord" ></div>
+                                    <div class='inx-more-btn'>点击按钮，加载更多</div>
+                                </div>
+
+                                <div class="main-item J-tab-main" id="inxFavBox">
+                                    <div class="main-content clearfix" id="fav" ></div>
+                                    <div class='inx-more-btn'>点击按钮，加载更多</div>
+                                </div>
+
+                                <div class="main-item J-tab-main" id="inxResBox">
+                                    <div class="main-content clearfix" id="res" ></div>
+                                    <div class='inx-more-btn'>点击按钮，加载更多</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-live-right">
+                <div class="main-right">
+                    <div class="side-rank J-tab">
+                        <div class="rank-head">
+                            <h2 class="rank-title">富豪排行榜</h2>
+                            <ul class="rank-tab J-tab-menu">
+                                <li class="active">日</li>
+                                <li>周</li>
+                                <li>月</li>
+                                <li>总</li>
+                            </ul>
+                        </div>
+                        <div class="rank-content J-tab-main active" id="rank_rich_day">
+                        </div>
+                        <div class="rank-content J-tab-main" id="rank_rich_week"></div>
+                        <div class="rank-content J-tab-main" id="rank_rich_month"></div>
+                        <div class="rank-content J-tab-main" id="rank_rich_his"></div>
+                        <!--<div class="rank-more"></div>-->
+                    </div>
+                    <div class="side-rank J-tab">
+                        <div class="rank-head">
+                            <h2 class="rank-title">主播排行榜</h2>
+                            <ul class="rank-tab J-tab-menu">
+                                <li class="active">日</li>
+                                <li>周</li>
+                                <li>月</li>
+                                <li>总</li>
+                            </ul>
+                        </div>
+                        <div class="rank-content J-tab-main active" id="rank_exp_day"></div>
+                        <div class="rank-content J-tab-main" id="rank_exp_week"></div>
+                        <div class="rank-content J-tab-main" id="rank_exp_month"></div>
+                        <div class="rank-content J-tab-main" id="rank_exp_his"></div>
+                        <!--<div class="rank-more"></div>-->
+                    </div>
+                    {#<div class="side-rank J-tab">#}
+                    {#<div class="rank-head">#}
+                    {#<h2 class="rank-title">赌圣排行榜</h2>#}
+                    {#<ul class="rank-tab J-tab-menu">#}
+                    {#<li class="active">日</li>#}
+                    {#<li>周</li>#}
+                    {#<li>月</li>#}
+                    {#<li class="bn">总</li>#}
+                    {#</ul>#}
+                    {#</div>#}
+                    {#<div class="rank-content J-tab-main active" id="rank_game_day"></div>#}
+                    {#<div class="rank-content J-tab-main" id="rank_game_week"></div>#}
+                    {#<div class="rank-content J-tab-main" id="rank_game_month"></div>#}
+                    {#<div class="rank-content J-tab-main" id="rank_game_his"></div>#}
+                    {#<div class="rank-more"></div>#}
+                    {#</div>#}
+                    {% if ad_2 !='' %}
+                        <div class="side-block side-activity">
+                            {% for ac in ad_2 %}
+                                <a href="{{ ac.url }}" target="_blank" class="side-activity_block">
+                                    <img src="{{ IMG_PATH }}/{{ ac.temp_name }}" alt="">
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        cross.importFile("indexJs", "js");
+        $(function() {
+            var dplayerBox = document.getElementById('dplayer-screen');
+            if (dplayerBox == null) {
+                return
+            }
+            var mt = new DPlayer({
+                container: dplayerBox,
+                video: {
+                    url: '{{ video_url }}',
+                },
+                autoplay: true,
+                loop: true,
+                preload: 'auto',
+                lang: 'zh-cn',
+                volume: 0.8,
+                iconsColor: '#fff',
+                jumpUrl: '{{ jump_url }}'
+            });
+        })
+    </script>
+{% endblock %}

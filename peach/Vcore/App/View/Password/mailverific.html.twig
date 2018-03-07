@@ -1,0 +1,38 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}安全邮箱验证{% endblock %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("mailCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="inx-section">
+    <div class="container" id="pageMailVerific">
+		<div class="mail">
+			<div class="mail-head">安全邮箱验证</div>
+            {#<form action="/mailsend" class="m-form" method="POST" id="mailVerificForm">#}
+
+                <div class="m-form-item">
+                    <label for="sMail">安全邮箱：</label>
+                    <input name="mail" type="text" class="txt mail-ipt sMail_1" id="sMail" tabIndex="1" placeholder="请输入您的安全邮箱地址" autocomplete="off"/>
+                    <span class="mail-ipt-tips"></span>
+                </div>
+                <div class="m-form-item mail-warn"><span class="mail-warn-icon"></span>注意：保存并确认安全邮箱后，系统将会发送一封验证邮件到您的安全邮箱。点击验证邮件中的链接可完成安全邮箱验证，安全邮箱一旦完成验证，将不可再被修改。</div>
+                <div class="m-form-item mail-btn-box">
+                	<button class="btn btn-center" id="mailVerificBtn">确 定</button>
+            	</div>
+            {#</form>#}
+		</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        window.verifyMailStep={{ step }}
+        cross.importFile("mailJs", "js");
+    </script>
+{% endblock %}

@@ -1,0 +1,44 @@
+.modalContent{
+    width: 500px;
+    height: 120px;
+}
+.modalContentLeft,.modalContentRight{
+    float: left;
+    margin-right: 10px;
+    width: 240px;
+}
+.modalTitle{
+    line-height:50px;
+    margin-bottom:10px;
+    span{
+        color: red;
+    }
+}
+.modalOpenTips{
+    color: #F3505C;
+    margin-bottom: 20px;
+}
+.limitContainer{
+    width:240px;
+    margin:15px 0px;
+    td{
+        border:2px solid #888;
+        height: 35px;
+        font-weight: 500;
+    }
+
+
+}
+
+.limitEmailStatus{
+    color:#8ABB24
+}
+.limitMoneyNum{
+    span{
+        color:#8ABB24;
+    }
+}
+
+.limitUserMoney{
+    color:red;
+}

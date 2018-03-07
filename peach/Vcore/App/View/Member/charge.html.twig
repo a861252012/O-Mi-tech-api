@@ -1,0 +1,69 @@
+{% extends 'Member/layout.html.twig' %}
+{% block title %}充值记录{% endblock %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("chargeCss", "css");
+    </script>
+{% endblock %}
+
+{% block right %}
+
+<div class="perCenter">
+    <div class="perCenter-item clearfix">
+        <span class="perCenter-title">充值记录</span>
+    </div>
+    <div class="perCenter-item clearfix">
+        <div class="perCenter-content-ilb">
+            <span>当前余额：</span>
+            <span class="price">{{ user.points|default(0) }}</span>
+            <img src="{{ STATIC_PATH }}{{ PIC_PATH }}diamond.png" alt=""/>
+            <a class="btn btn-s" href="/charge/order" target="_blank">我要充值</a>
+        </div>
+    </div>
+    <table class="table charge-table">
+        <tr>
+            <th>订单号</th>
+            <th>下单时间</th>
+            <th>充值钻石数</th>
+            <th>支付金额（元）</th>
+            <th>交易状态</th>
+            <th>操作</th>
+        </tr>
+        {% if chargelist is defined %}
+        {% for scharge in chargelist %}
+        <tr>
+            <td>{{ scharge.order_id }}</td>
+            <td>{{ scharge.created }}</td>
+            <td><span class="charge-num">{{ scharge.points }}</span></td>
+            <td>{{ scharge.paymoney }}</td>
+            <td>{% if scharge.pay_status == 0 or scharge.pay_status == 1 or  scharge.pay_status == -1 %}
+                <a class="charge-unknown" data-tradeno="{{ scharge.order_id }}">未知</a>
+                {% elseif scharge.pay_status == 2 %}
+                <span class="charge-paid">付款成功</span>
+                {% elseif scharge.pay_status == 3 %}
+                <span class="charge-paid">付款失败</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if scharge.pay_status == 0 or scharge.pay_status == 1 or  scharge.pay_status == -1 %}
+                <a class="charge-pay btn-text btn-blue" href="/charge/order?radioprice={{ scharge.paymoney }}" target="_blank">付款</a>
+                <a class="charge-del btn-text btn-gray" href="javascript:;" data-id="{{ scharge.id }}">删除</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+    </table>
+    {% autoescape false %}
+        <div  id="page" class="clearfix" style="float:right">{{ chargelist.render }}</div>
+    {% endautoescape %}
+</div>
+
+{% endblock %}
+
+{% block subjavascript %}
+    <script type="text/javascript">
+        cross.importFile("chargeJs", "js");
+    </script>
+{% endblock %}

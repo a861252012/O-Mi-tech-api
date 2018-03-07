@@ -1,0 +1,4 @@
+video_project:
+   resource: "@VideoProjectBundle/Resources/config/routing.yml"
+   prefix:   /
+

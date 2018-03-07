@@ -1,0 +1,26 @@
+html {
+    font-family: 'microsoft yahei, sans-serif, Arial, Helvetica, YouYuan';
+    height: 100%;
+}
+body {
+    margin: 0px;
+    height: 100%;
+    /*background-repeat: repeat-x;*/
+    /*background-image: url(../images/body-bg.png) !important;*/
+    /*background-color: initial !important;*/
+    /*background-size: cover;*/
+    background-image: -webkit-linear-gradient(-180deg, #3c0d5c, #961455);
+    background-image: linear-gradient(-180deg,#3c0d5c,#961455);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#3c0d5c', endColorstr='#961455',GradientType=0);
+}
+ul{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+li{
+    display: inline-block;
+    list-style: none;
+}
+
+

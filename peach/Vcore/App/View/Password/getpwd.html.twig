@@ -1,0 +1,42 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}安全邮箱找回密码{% endblock %}
+
+{% block head %}
+    <script type="text/javascript">
+        cross.importFile("mailCss", "css");
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="inx-section">
+    <div class="container" id="pagePwdSend">
+        <div class="mail">
+            <div class="mail-head">安全邮箱找回密码</div>
+            <form action="/getpwdsuccess" class="m-form" method="POST" id="pwdSendForm">
+
+                <div class="m-form-item">
+                    <label for="getPwd">您的邮箱：</label>
+                    <input name="mail" type="text" class="txt mail-ipt" id="getPwd" tabIndex="1" placeholder="请输入安全邮箱地址" autocomplete="off"/>
+                    <span class="mail-ipt-tips"></span>
+                </div>
+
+                <div class="m-form-item mail-warn">注意：点击确认后，系统将会发送一封密码找回邮件到您的安全邮箱。点击邮件中的链接可完成密码找回。</div>
+
+                <div class="m-form-item mail-btn-box">
+                    <button type="button" class="btn btn-orange" id="pwdSendBtn">确 定</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        cross.importFile("mailJs", "js");
+    </script>
+{% endblock %}

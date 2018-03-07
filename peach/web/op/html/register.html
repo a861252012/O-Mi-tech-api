@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>注册</title>
+    <script type="text/javascript" src="http://s.howsp.com/public/dest/v2017090701/cross.js"></script>
+    <link rel="stylesheet" href="http://s.howsp.com/public/dest/v2017090701/css/commonCss-min.css">
+    <style>
+        body > .inx-wrapper{
+            height: 100%;
+        }
+        .inx-section-nohead{
+            padding-top: 0px;
+        }
+        .pass-container{
+            height: 100%;
+            padding-bottom: 0px;
+            margin-bottom: -191px;
+            min-height: 807px;
+            background: #fff;
+        }
+        .pass-left{
+            background-color: #ff749c;
+            width: 50%;
+            height: 100%;
+
+            display: inline-block;
+            *display: block;
+            *float:left;
+            vertical-align: top;
+        }
+
+        .pass-right{
+            width: 49%;
+            display: inline-block;
+            *display: block;
+            *float:left;
+            vertical-align: top;
+        }
+
+        .pass-right_form{
+            margin-top: 200px;
+            margin-left: 50px;
+            width: 450px;
+        }
+
+        .pass-right_form h2{
+            font-family: "Microsoft JhengHei", "SimHei", "Microsoft YaHei";
+            border-bottom: 1px dashed #ccc;
+            padding-bottom: 10px;
+            font-size: 26px;
+            color: #444;
+        }
+
+        .pass-right_form .txt{
+            background-color: #e9ebed;
+        }
+
+        .pass-right_form .m-form-item label{
+            min-width: auto;
+        }
+
+        .pass-left_img{
+            background-image: url(../public/src/img/passport.jpg);
+            background-position: top right;
+            background-repeat: no-repeat;
+            height: 616px;
+            width: 579px;
+            float: right;
+        }
+        .forget-pw{
+            float: none !important;
+        }
+
+        .rTip{
+            font-size: 14px;
+        }
+
+        .lButton{
+            width: 230px;
+            margin-left: 85px;
+            margin-bottom: 10px;
+        }
+
+        .pass-info{
+            font-size: 16px;
+            color: #0a8cd2;
+        }
+    </style>
+</head>
+<body>
+
+<div class="inx-wrapper">
+    <div class="inx-section inx-section-nohead pass-container" id="loginPage">
+        <div class="pass-left">
+            <div class="pass-left_img"></div>
+        </div>
+        <div class="pass-right">
+            <div class="pass-right_form">
+                <h2>用户注册</h2>
+                <form id="register" class="lForm m-form">
+                    <div class="m-form-item">
+                        <label for="rName">登录邮箱：</label>
+                        <input type="text" class="txt" id="rName" name="username" tabindex="1" placeholder="填写您的邮箱地址">
+                    </div>
+                    <div class="m-form-item">
+                        <label for="rNickname">您的昵称：</label>
+                        <input type="text" class="txt" id="rNickname" name="nickname" tabindex="2" placeholder="2-8位汉字、数字或字母组成">
+                    </div>
+                    <div class="m-form-item">
+                        <label for="rPassword">登录密码：</label>
+                        <input type="password" class="txt" id="rPassword" name="password1" tabindex="3" autocomplete="off" placeholder="6-22个字母和数字组成">
+                    </div>
+                    <div class="m-form-item">
+                        <label for="rAPassword">确认密码：</label>
+                        <input type="password" class="txt" id="rAPassword" name="password2" tabindex="4" autocomplete="off" placeholder="">
+                    </div>
+                    <!--<div class="m-form-item">-->
+                        <!--<label for="inviteCode">邀&nbsp;&nbsp;请&nbsp;&nbsp;码：</label>-->
+                        <!--<input type="text" class="txt" id="inviteCode" name="inviteCode" tabindex="5" autocomplete="off" placeholder="">必填-->
+                    <!--</div>-->
+                    <div class="m-form-item">
+                        <label for="lsCodeIpt">验&nbsp;&nbsp;证&nbsp;&nbsp;码：</label>
+                        <input type="text" class="txt txt-short" name="captcha" id="lsCodeIpt" tabindex="6" placeholder="不区分大小写">
+                        <img src="?op=captcha" alt="验证码" id="lsCodeImg" class="s-code-img">
+                        <a href="javascript:void(0);" class="m-form-tip J-change-scode">换一换</a>
+                    </div>
+                    <div class="rTip"></div>
+                    <div class="m-form-item clearfix">
+                        <button class="btn lButton btn-left" tabIndex="7">立 即 注 册</button>
+                        <button class="btn lButton btn-white" id="goLogin">已有账号，去登录</button>
+                    </div>
+                    <div class="m-form-item clearfix">
+                        <p class="pass-info">
+                            建议，合作，账号咨询，请联系此邮箱：mitao5201314@gmail.com
+                        </p>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="http://s.howsp.com/public/dest/v2017090701/js/libJs-min.js"></script>
+<script src="http://s.howsp.com/public/dest/v2017090701/js/commonJs-min.js"></script>
+<script>
+
+$(function(){
+
+    function setTipsText(text) {
+        $(".rTip").text(text);
+    }
+
+    function flashCaptcha(){
+        $("#lsCodeImg").attr("src", "?op=captcha");
+    }
+
+    function bindCaptchaAction() {
+        $(".J-change-scode").on("click", function(){
+           flashCaptcha();
+        });
+    }
+
+    //验证码
+    bindCaptchaAction();
+
+
+    //注册
+    $('#rName').accountInput(".rTip", false);
+    $('#rNickname').isNickname('.rTip', false);
+    $('#rPassword').regPasswordInput('.rTip');
+    $("#rsCodeIpt").sCodeInput(".rTip");
+    $('#rAPassword').passwordAgain('#rPassword','.rTip');
+
+    $("#goLogin").on("click",function () {
+        location.href= "/member/index";
+    })
+
+    $('#register').on('submit', function(){
+
+        var isBreak = false;
+
+        $.each($(".txt").not("#inviteCode"), function(i, e){
+            if($(e).val() == ''){
+                isBreak = true;
+                return false;
+            }
+        });
+
+        //空数据提示
+        if(isBreak){
+            $(".rTip").text('请输入完整的注册信息！').css({ color: '#29a2ff'});
+            return false;
+        }
+        //验证通过，清除提示
+        $(".rTip").text('');
+
+        $.post( "?op=register", $(this).serialize(), function( json ) {
+            json = JSON.parse(json);
+            if(json.status){
+
+                var direction = json.redirect;
+                var scriptSrc = json.synstr;
+
+                //success
+                var _success = function(){
+                    window.location.href = direction;
+                }
+
+                //error
+                var _error = function(){
+                    if(window.console){
+                        console.warn("problem in server 500");
+                    }
+                }
+
+                var script = document.createElement('script');
+                script.src = scriptSrc;
+                script.type = 'text/javascript';
+
+                //for FF chrome
+                script.onload = function(e){
+                    _success();
+                }
+
+                script.onerror = function(e){
+                    _error();
+                }
+
+                //for ie
+                script.onreadystatechange = function(e){
+                    if(this.readyState == 'complete'){
+                        _success();
+                    }else if(this.readyState == 'loaded'){
+                        _error();
+                    }
+                }
+
+                document.documentElement.firstChild.appendChild(script);
+
+            }else{
+                $.tips(json.msg);
+            }
+        });
+        return false;
+    });
+
+    //代理设置，如果url和cookie同时存在，优先取url
+    var agent = getLocation("agent");
+    if(agent != ""){
+        $.cookie("agent", agent);
+    }
+
+});
+
+</script>
+
+</body>
+</html>
