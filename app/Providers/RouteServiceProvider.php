@@ -35,9 +35,12 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function map()
     {
-        $this->mapApiRoutes();
+//        $this->mapApiRoutes();
 
-        $this->mapWebRoutes();
+//        $this->mapWebRoutes();
+
+        $this->mapMobileRoutes();
+        $this->mapPCRoutes();
 
         //
     }
@@ -69,5 +72,18 @@ class RouteServiceProvider extends ServiceProvider
              ->middleware('api')
              ->namespace($this->namespace)
              ->group(base_path('routes/api.php'));
+    }
+
+    protected function mapMobileRoutes()
+    {
+        Route::prefix('m')
+            ->namespace($this->namespace)
+            ->group(base_path('routes/mobile.php'));
+    }
+    protected function mapPCRoutes()
+    {
+        Route::middleware('web')
+            ->namespace($this->namespace)
+            ->group(base_path('routes/pc.php'));
     }
 }

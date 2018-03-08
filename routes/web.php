@@ -11,6 +11,6 @@
 |
 */
 
-Route::get('/api/', function () {
+Route::get('/', function () {
     return view('welcome');
 });
