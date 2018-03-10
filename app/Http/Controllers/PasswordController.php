@@ -1,5 +1,5 @@
 <?php
-namespace App\Controller;
+namespace App\Http\Controllers;
 
 
 use Core\Redis\RedisQueue;
@@ -15,7 +15,7 @@ use App\Models\Conf;
  * @package Video\ProjectBundle\Controller
  * @author D.C
  */
-class PasswordController extends BaseController
+class PasswordController extends Controller
 {
     /** 验证邮频率限制 */
     const THROTTLE_MAIL_REG_KEY='throttle:mail.reg:';

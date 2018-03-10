@@ -1,12 +1,12 @@
 <?php
 
 
-namespace App\Controller;
+namespace App\Http\Controllers;
 
 use App\Service\User\UserService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-class RankController extends BaseController
+class RankController extends Controller
 {
     /** 历史主播人气榜*/
     const ZRANK_POP_HISTORY = 'zrank_pop_history';

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Http\Controllers;
 
 use App\Models\ChargeList;
 use App\Models\GiftActivity;
@@ -22,7 +22,7 @@ use Symfony\Component\HttpFoundation\Response;
 //use Video\ProjectBundle\Entity\VideoUser;
 //use Video\ProjectBundle\Service\DataModel;
 
-class ChargeController extends BaseController
+class ChargeController extends Controller
 {
     /**
      * dm对象

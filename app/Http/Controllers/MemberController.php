@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Http\Controllers;
 
 use App\Models\AgentsPriv;
 use App\Models\AgentsRelationship;
@@ -33,7 +33,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 
-class MemberController extends BaseController
+class MemberController extends Controller
 {
     private $_menus = array(
         /**

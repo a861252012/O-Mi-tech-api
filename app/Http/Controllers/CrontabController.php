@@ -5,14 +5,14 @@
  * Date: 2016/3/17
  * Time: 15:42
  */
-namespace App\Controller;
+namespace App\Http\Controllers;
 
 use App\Models\Users;
 use App\Models\Messages;
 use App\Models\VideoPack;
 use DB;
 
-class CrontabController extends BaseController
+class CrontabController extends Controller
 {
     /**
      * @var $opCode 后台任务码对应不同任务执行

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Http\Controllers;
 
 use App\Models\Agents;
 use App\Models\Domain;
@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Core\Exceptions\NotFoundHttpException;
 use Illuminate\Support\Facades\DB;
 
-class BusinessController extends BaseController
+class BusinessController extends Controller
 {
     /**
      * 招募页面

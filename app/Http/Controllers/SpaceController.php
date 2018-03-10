@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\Controller;
+namespace App\Http\Controllers;
 
 
 use Symfony\Component\HttpFoundation\Response;
@@ -14,7 +14,7 @@ use App\Models\Anchor;
  * @author D.C
  *
  */
-class SpaceController extends BaseController{
+class SpaceController extends Controller{
 
 
     /**

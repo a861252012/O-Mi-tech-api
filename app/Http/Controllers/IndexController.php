@@ -1,5 +1,5 @@
 <?php
-namespace App\Controller;
+namespace App\Http\Controllers;
 
 use App\Models\RoomStatus;
 use App\Models\UserBuyOneToMore;
@@ -15,7 +15,7 @@ use App\Models\RoomDuration;
 use App\Models\Pack;
 use App\Models\Complaints;
 
-class IndexController extends BaseController
+class IndexController extends Controller
 {
 
     public function indexAction()

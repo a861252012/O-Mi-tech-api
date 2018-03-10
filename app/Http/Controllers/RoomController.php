@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\Controller;
+namespace App\Http\Controllers;
 
 
 use App\Service\Room\NoSocketChannelException;
@@ -11,7 +11,7 @@ use App\Service\Safe\RtmpService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
-class RoomController extends BaseController
+class RoomController extends Controller
 {
     /**
      * 直播间首页

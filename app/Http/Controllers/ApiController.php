@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Controller;
+namespace App\Http\Controllers;
 
+use App\Models\ActivityClick;
 use App\Models\Agents;
 use App\Models\AgentsRelationship;
+use App\Models\Conf;
 use App\Models\Domain;
 use App\Models\FlashCookie;
 use App\Models\GiftActivity;
@@ -11,26 +13,22 @@ use App\Models\GiftCategory;
 use App\Models\Goods;
 use App\Models\InviteCode;
 use App\Models\InviteCodes;
+use App\Models\LevelRich;
+use App\Models\Lottery;
 use App\Models\Messages;
-use App\Models\UserDomain;
+use App\Models\Pack;
 use App\Models\UserGroup;
 use App\Models\Users;
-use App\Models\VideoMail;
-use App\Models\LevelRich;
-use App\Models\Conf;
-use App\Models\Pack;
-use App\Models\Lottery;
-use App\Models\ActivityClick;
+use Core\Exceptions\NotFoundHttpException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Slb\Request\V20140515\AddListenerWhiteListItemRequest;
-use \Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\Config\Definition\Exception\Exception;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Core\Exceptions\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use App\Service\Room\RoomService;
 
 /**
  * Class ApiController
@@ -39,7 +37,7 @@ use App\Service\Room\RoomService;
  * @version 20151021
  * @description 各API对应接口控制器
  */
-class ApiController extends BaseController
+class ApiController extends Controller
 {
 
 
@@ -76,92 +74,93 @@ class ApiController extends BaseController
     /**
      * 注册接口
      */
-    public function reg(){
-        $skipCaptcha=$this->container->config['config.SKIP_CAPTCHA_REG'];
-        if(!$skipCaptcha && (strtolower($_POST['captcha']) != strtolower($_SESSION['CAPTCHA_KEY']))){
+    public function reg()
+    {
+        $skipCaptcha = $this->container->config['config.SKIP_CAPTCHA_REG'];
+        if (!$skipCaptcha && (strtolower($_POST['captcha']) != strtolower($_SESSION['CAPTCHA_KEY']))) {
             die(json_encode(array(
-                "status"=> 0,
+                "status" => 0,
                 "msg" => "验证码错误!"
             )));
         }
 
-        $username = isset($_REQUEST['username'])?trim($_REQUEST['username']):null;
-        if( !preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/',$username) || strlen($username) < 5 || strlen($username) > 30  ){
+        $username = isset($_REQUEST['username']) ? trim($_REQUEST['username']) : null;
+        if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $username) || strlen($username) < 5 || strlen($username) > 30) {
             die(json_encode(array(
-                "status"=> 0,
+                "status" => 0,
                 "msg" => "注册邮箱不符合格式！(5-30位的邮箱)"
             )));
         }
 
-        $nickname = isset($_REQUEST['nickname'])?trim($_REQUEST['nickname']):null;
-        $agent = isset($_COOKIE['agent'])?trim($_COOKIE['agent']):null;
+        $nickname = isset($_REQUEST['nickname']) ? trim($_REQUEST['nickname']) : null;
+        $agent = isset($_COOKIE['agent']) ? trim($_COOKIE['agent']) : null;
         $len = sizeof(preg_split("//u", $nickname, -1, PREG_SPLIT_NO_EMPTY));
 
         //昵称不能使用/:;\空格,换行等符号。
-        if( $len < 2 || $len > 8 || !preg_match("/^[^\s\/\:;]+$/",$nickname)  ){
+        if ($len < 2 || $len > 8 || !preg_match("/^[^\s\/\:;]+$/", $nickname)) {
             die(json_encode(array(
-                "status"=> 0,
+                "status" => 0,
                 "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)"
             )));
         }
 
-        if(trim($_POST['password1'] != trim($_POST['password2']))){
-            die( json_encode(array(
-                "status"=> 0,
+        if (trim($_POST['password1'] != trim($_POST['password2']))) {
+            die(json_encode(array(
+                "status" => 0,
                 "msg" => "两次密码输入不一致!"
             )));
         }
 
         $password = $this->decode($_POST['password1']);
-        if( strlen($password) < 6 ||  strlen($password) > 22 || preg_match('/^\d{6,22}$/',$password) || !preg_match('/^\w{6,22}$/',$password) ){
+        if (strlen($password) < 6 || strlen($password) > 22 || preg_match('/^\d{6,22}$/', $password) || !preg_match('/^\w{6,22}$/', $password)) {
             die(json_encode(array(
-                "status"=> 0,
+                "status" => 0,
                 "msg" => "注册密码不符合格式!"
             )));
         }
 
         $redis = $this->make('redis');
-        if($redis->hExists('husername_to_id', $username)){
+        if ($redis->hExists('husername_to_id', $username)) {
             die(json_encode(array(
-                "status"=> 0,
+                "status" => 0,
                 "msg" => "对不起, 该帐号不可用!"
             )));
         }
-        if($redis->hExists('hnickname_to_id', $nickname)){
+        if ($redis->hExists('hnickname_to_id', $nickname)) {
             die(json_encode(array(
-                "status"=> 0,
+                "status" => 0,
                 "msg" => "对不起, 该昵称已被使用!"
             )));
         }
 
         $newUser = array(
-            'username'=>$username,
-            'nickname'=>$nickname,
-            'password'=>md5($password),
-            'pic_total_size'=>524288000,
-            'pic_used_size'=>0,
-            'rich'=>64143000,
-            'lv_rich'=>28,
-            'origin'=>isset($_REQUEST['origin'])?$_REQUEST['origin']:12
+            'username' => $username,
+            'nickname' => $nickname,
+            'password' => md5($password),
+            'pic_total_size' => 524288000,
+            'pic_used_size' => 0,
+            'rich' => 64143000,
+            'lv_rich' => 28,
+            'origin' => isset($_REQUEST['origin']) ? $_REQUEST['origin'] : 12
         );
 
         //跳转过来的
         $newUser['aid'] = 0;
-        if($agent){
-            $domaid = Domain::where('url',$agent)->where('type',0)->where('status',0)->with("agent")->first();
+        if ($agent) {
+            $domaid = Domain::where('url', $agent)->where('type', 0)->where('status', 0)->with("agent")->first();
             $newUser['aid'] = $domaid->agent->id;
         }
-        $uid = $this->make("userServer")->register($newUser,[],$newUser['aid']);
+        $uid = $this->make("userServer")->register($newUser, [], $newUser['aid']);
         $this->userInfo = Users::find($uid)->toArray();
         // 此时调用的是单实例登录的session 验证
         $this->writeRedis($this->userInfo);
-        $return=[
+        $return = [
             'status' => 1,
             'msg' => '',
         ];
-        if (isset($_REQUEST['client']) && in_array(strtolower($_REQUEST['client']),['android','ios'])){
-            $jwt=$this->make('JWTAuth');
-            $token=$jwt->login([
+        if (isset($_REQUEST['client']) && in_array(strtolower($_REQUEST['client']), ['android', 'ios'])) {
+            $jwt = $this->make('JWTAuth');
+            $token = $jwt->login([
                 'username' => $username,
                 'password' => $password,
             ]);
@@ -183,7 +182,7 @@ class ApiController extends BaseController
 
         $redis = $this->make('redis');
         $logPath = BASEDIR . '/app/logs/' . date('Y-m') . '.log';
-        $this->logResult("user exchange:  user id:$uid  origin:$origin  money:$money ",$logPath);
+        $this->logResult("user exchange:  user id:$uid  origin:$origin  money:$money ", $logPath);
         /** 通知java获取*/
         $redis->publish('plat_exchange',
             json_encode([
@@ -199,39 +198,38 @@ class ApiController extends BaseController
             usleep(100);
         }
         $hplat_user = $redis->exists("hplat_user:$uid") ? $redis->hgetall("hplat_user:" . $uid) : [];
-        if ( isset($hplat_user['exchange']) &&$hplat_user['exchange'] == 1) return JsonResponse::create(['status' => 1, 'msg' => '兑换成功']);
+        if (isset($hplat_user['exchange']) && $hplat_user['exchange'] == 1) return JsonResponse::create(['status' => 1, 'msg' => '兑换成功']);
         return JsonResponse::create(['status' => 0, 'msg' => '兑换失败']);
     }
+
     /**
      * 注册接口api
      * @return JsonResponse
      */
-    public function register()
+    public function register(Request $request)
     {
-        $request = $this->make('request');
-
         $username = trim(urldecode($request->get('username')));
         $password = trim(urldecode($request->get('password')));
         $invite_code = trim(urldecode($request->get('invite_code')));
         $agent = trim($request->get('agent'));
 
-        if(!$username || !$password) {
-            return new JsonResponse(array('status'=>0, 'msg'=>'对不起！帐号密码不能为空！'));
+        if (!$username || !$password) {
+            return new JsonResponse(array('status' => 0, 'msg' => '对不起！帐号密码不能为空！'));
         }
 
         $token = $this->container->config['config.VFPHP_SIGN'];
 
-        $token = md5($username.$token.$password);
+        $token = md5($username . $token . $password);
 
-        $token = md5($token.$request->get('timestamp'));
+        $token = md5($token . $request->get('timestamp'));
 
-        if($request->get('token') != $token || $request->get('timestamp')+60 < time()){
-            return new JsonResponse(array('status'=>0, 'msg'=>'对不起！验证失败！'));
+        if ($request->get('token') != $token || $request->get('timestamp') + 60 < time()) {
+            return new JsonResponse(array('status' => 0, 'msg' => '对不起！验证失败！'));
         }
 
-        if( Users::where('username',$username)->exists() ) {
+        if (Users::where('username', $username)->exists()) {
 
-            return new JsonResponse(array('status'=>0, 'msg'=>'对不起！该用户已存在！'));
+            return new JsonResponse(array('status' => 0, 'msg' => '对不起！该用户已存在！'));
         }
 
         $user = $request->input();
@@ -246,45 +244,45 @@ class ApiController extends BaseController
         $user['lv_rich'] = 28;
 
         $user['created'] = date('Y-m-d H:i:s');
-        $newUser = Arr::only($user, array('did','username','password', 'nickname', 'roled', 'exp', 'pop', 'created', 'status','province','city','county','video_status','rich','lv_exp','lv_rich','pic_total_size','pic_used_size','lv_type','icon_id'));
+        $newUser = Arr::only($user, array('did', 'username', 'password', 'nickname', 'roled', 'exp', 'pop', 'created', 'status', 'province', 'city', 'county', 'video_status', 'rich', 'lv_exp', 'lv_rich', 'pic_total_size', 'pic_used_size', 'lv_type', 'icon_id'));
         $vip = Arr::get($user, 'vip', 0);
         $vip_days = $vip ? 30 : 0;
         $invite = $gid = $code = 0;
         //邀请码处理
-        if($invite_code){
+        if ($invite_code) {
             $code = substr($invite_code, -8);
             $gid = substr($invite_code, 0, -8);
-            $invite = InviteCodes::where('code', $code)->where('expiry','>',date('Y-m-d H:i:s'))->where('status', 0)->with('group')->first();
-            if($invite){
-                    $vip = $invite->group->vip;
-                    $vip_days = $invite->group->vip_days;
+            $invite = InviteCodes::where('code', $code)->where('expiry', '>', date('Y-m-d H:i:s'))->where('status', 0)->with('group')->first();
+            if ($invite) {
+                $vip = $invite->group->vip;
+                $vip_days = $invite->group->vip_days;
 //                if($vip>0 && $vip_days>0){
 //                    $user['vip'] = $vip;
 //                    $user['vip_end'] = date('Y-m-d H:i:s', time()+ (86400 * $vip_days));
 //                }
 
-                if($agents = $invite->group->agents){
+                if ($agents = $invite->group->agents) {
                     $user['aid'] = $agents;
                 }
 
-                if($points = $invite->group->points){
+                if ($points = $invite->group->points) {
                     $newUser['points'] = $points;
                 }
-            }else{
-                return new JsonResponse(array('status'=>0, 'msg'=>'无效邀请码'.$gid.'|'.$code.'|'.$invite_code));
+            } else {
+                return new JsonResponse(array('status' => 0, 'msg' => '无效邀请码' . $gid . '|' . $code . '|' . $invite_code));
             }
         }
         //跳转过来的
-        if($agent){
-            $domaid = Domain::where('url',$agent)->where('type',0)->where('status',0)->with("agent")->first();
+        if ($agent) {
+            $domaid = Domain::where('url', $agent)->where('type', 0)->where('status', 0)->with("agent")->first();
             $user['aid'] = $domaid->agent->id;
         }
 
         $create = Users::create($newUser);
 
-        if($uid = $create->uid) {
-            if(!Users::where('uid', $uid)->update(array('rid'=>$uid))){
-                return new JsonResponse(array('status'=>0, 'msg'=>'导入过程出现异常'));
+        if ($uid = $create->uid) {
+            if (!Users::where('uid', $uid)->update(array('rid' => $uid))) {
+                return new JsonResponse(array('status' => 0, 'msg' => '导入过程出现异常'));
             }
             $redis = $this->make('redis');
             $this->make('userServer')->getUserReset($uid);
@@ -292,22 +290,22 @@ class ApiController extends BaseController
             $redis->hset('hnickname_to_id', $user['nickname'], $uid);
 
             //更新邀请码
-            if($invite_code && $invite){
-                InviteCodes::where(array('gid' => $gid, 'status'=>0, 'code' => $code))->update(array('uid' => $uid, 'used_at'=>date('Y-m-d H:i:s'), 'status' => 1));
+            if ($invite_code && $invite) {
+                InviteCodes::where(array('gid' => $gid, 'status' => 0, 'code' => $code))->update(array('uid' => $uid, 'used_at' => date('Y-m-d H:i:s'), 'status' => 1));
             }
 
             //赠送贵族
-            if($vip && $vip_days){
+            if ($vip && $vip_days) {
                 $this->make('userServer')->updateUserOfVip($uid, $vip, 1, $vip_days);
             }
 
             //添加代理
 
-            $aid = isset($user['aid']) ? $user['aid']:0;
+            $aid = isset($user['aid']) ? $user['aid'] : 0;
 
-            if($aid){
-                if(!Agents::find($aid)){
-                    return new JsonResponse(array('status'=>1, 'msg'=>'注册成功！但该用户所属代理不存在,导入代理失败！'));
+            if ($aid) {
+                if (!Agents::find($aid)) {
+                    return new JsonResponse(array('status' => 1, 'msg' => '注册成功！但该用户所属代理不存在,导入代理失败！'));
                 }
                 $this->make('userServer')->setUserAgents($uid, $aid);
             }
@@ -326,27 +324,28 @@ class ApiController extends BaseController
                 'redirect' => 'http://' . $domainA,
             ));
         }
-        return new JsonResponse(array('status'=>0, 'msg'=>'注册失败'));
+        return new JsonResponse(array('status' => 0, 'msg' => '注册失败'));
     }
 
     /**
      * 获取打折数据
      */
-    public function getTimeCountRoomDiscountInfo(){
+    public function getTimeCountRoomDiscountInfo()
+    {
         $vip = intval($this->userInfo['vip']);
-        $userGroup = UserGroup::where('level_id',$vip)->with("permission")->first();
-        if(!$userGroup){
-            return new JsonResponse(array('code'=>1,'info'=>['vip'=>0,'vipName'=>'','discount'=>10], 'message'=>'非贵族'));
+        $userGroup = UserGroup::where('level_id', $vip)->with("permission")->first();
+        if (!$userGroup) {
+            return new JsonResponse(array('code' => 1, 'info' => ['vip' => 0, 'vipName' => '', 'discount' => 10], 'message' => '非贵族'));
         }
-        if(!$userGroup->permission){
-            return new JsonResponse(array('code'=>1,'info'=>['vip'=>$vip,'vipName'=>'','discount'=>10], 'message'=>'无权限组'));
+        if (!$userGroup->permission) {
+            return new JsonResponse(array('code' => 1, 'info' => ['vip' => $vip, 'vipName' => '', 'discount' => 10], 'message' => '无权限组'));
         }
         $info = [
-            'vip'=>$vip,
-            'vipName'=>$userGroup->level_name,
-            'discount'=>$userGroup->permission->discount
+            'vip' => $vip,
+            'vipName' => $userGroup->level_name,
+            'discount' => $userGroup->permission->discount
         ];
-        return new JsonResponse(array('code'=>1,'info'=>$info, 'message'=>''));
+        return new JsonResponse(array('code' => 1, 'info' => $info, 'message' => ''));
     }
 
     /**
@@ -357,43 +356,49 @@ class ApiController extends BaseController
     {
         $request = $this->make('request');
         $agents = $request->input();
-        if(sizeof(array_filter(array_values($agents)))<2){
-            return new JsonResponse(array('status'=>0, 'message'=>'参数不完整,请联系管理员修复同步代理'));
+        if (sizeof(array_filter(array_values($agents))) < 2) {
+            return new JsonResponse(array('status' => 0, 'message' => '参数不完整,请联系管理员修复同步代理'));
         }
 
-        $agents = Arr::only($agents, ['id','password','nickname','atype','rebate','agentname','withdrawalname','bank','bankaccount','testaccount','agentaccount']);
-        $agents = Agents::updateOrCreate(array('id'=>$agents['id']), $agents);
-        if($agents){
-            return new JsonResponse(array('status'=>1, 'message'=>'代理操作成功'));
+        $agents = Arr::only($agents, ['id', 'password', 'nickname', 'atype', 'rebate', 'agentname', 'withdrawalname', 'bank', 'bankaccount', 'testaccount', 'agentaccount']);
+        $agents = Agents::updateOrCreate(array('id' => $agents['id']), $agents);
+        if ($agents) {
+            return new JsonResponse(array('status' => 1, 'message' => '代理操作成功'));
         }
-        return new JsonResponse(array('status'=>0, 'message'=>'同步代理到蜜桃站失败,请联系管理员修复同步代理'));
+        return new JsonResponse(array('status' => 0, 'message' => '同步代理到蜜桃站失败,请联系管理员修复同步代理'));
     }
-    public function  getLog(){
+
+    public function getLog()
+    {
         $a = $this->request()->get('k');
         $f = $this->request()->get('f');
-        if($a!="omsi12wl4knd"){ return new Response(""); }
-        if(empty($f)){ return new Response(""); }
+        if ($a != "omsi12wl4knd") {
+            return new Response("");
+        }
+        if (empty($f)) {
+            return new Response("");
+        }
 //文件下载
         $arr = [
-            'log'=>'/app/logs/',
-            'error'=>'/Vcore/Cache/Logs/',
-            'pay_log'=>'/Vcore/App/Controller/Pay/Vcore/log/',
+            'log' => '/app/logs/',
+            'error' => '/Vcore/Cache/Logs/',
+            'pay_log' => '/Vcore/App/Controller/Pay/Vcore/log/',
         ];
         $filename = "";
-        foreach ($arr as $k=>$v){
-            $tmp = BASEDIR.$v.$f;
-            if(file_exists($tmp)){
+        foreach ($arr as $k => $v) {
+            $tmp = BASEDIR . $v . $f;
+            if (file_exists($tmp)) {
                 $filename = $tmp;
                 break;
             }
         }
-        if(empty($filename)) return new Response("");
+        if (empty($filename)) return new Response("");
 
-       // echo $filename; die;
+        // echo $filename; die;
         $fileinfo = pathinfo($filename);
-        header('Content-type: application/x-'.$fileinfo['extension']);
-        header('Content-Disposition: attachment; filename='.$fileinfo['basename']);
-        header('Content-Length: '.filesize($filename));
+        header('Content-type: application/x-' . $fileinfo['extension']);
+        header('Content-Disposition: attachment; filename=' . $fileinfo['basename']);
+        header('Content-Length: ' . filesize($filename));
         readfile($filename);
         return new Response("");
     }
@@ -403,106 +408,107 @@ class ApiController extends BaseController
      */
 //接收XO跳转过来的sskey,callback,sign 并验证sign是否正确防攻击
 //@RequestMapping("/recvSskey")
-public function dealSign(){
-    $sskey = $this->request()->get("sskey");
-    $callback = $this->request()->get("callback");
-    $sign = $this->request()->get("sign");
-    $httphost = $this->request()->get("httphost");
+    public function dealSign()
+    {
+        $sskey = $this->request()->get("sskey");
+        $callback = $this->request()->get("callback");
+        $sign = $this->request()->get("sign");
+        $httphost = $this->request()->get("httphost");
 
-    $open = $this->make("redis")->exists("hplatform:1") ? $this->make("redis")->hget("hplatform:1",'open') : 1 ;
-    if(!$open)  return new Response("XO接入已关闭");
-    if(empty($sskey)||empty($callback)||empty($sign)||empty($httphost)) return new Response("参数不对");
+        $open = $this->make("redis")->exists("hplatform:1") ? $this->make("redis")->hget("hplatform:1", 'open') : 1;
+        if (!$open) return new Response("XO接入已关闭");
+        if (empty($sskey) || empty($callback) || empty($sign) || empty($httphost)) return new Response("参数不对");
 
-    $hconf = $this->make("redis")->hgetall("hconf");
-    $key = $hconf['xo_key'];
-    $logPath = BASEDIR . '/app/logs/xo_' . date('Y-m-d') . '.log';
-    $this->make("systemServer")->logResult("XO项目 dealSign:sskey=$sskey, callback=$callback, sign=$sign, httphost=$httphost",$logPath);
-    $estimatedSign = MD5($sskey . $callback . $key);
-    if ($estimatedSign!=$sign)  return new Response("校验失败");
+        $hconf = $this->make("redis")->hgetall("hconf");
+        $key = $hconf['xo_key'];
+        $logPath = BASEDIR . '/app/logs/xo_' . date('Y-m-d') . '.log';
+        $this->make("systemServer")->logResult("XO项目 dealSign:sskey=$sskey, callback=$callback, sign=$sign, httphost=$httphost", $logPath);
+        $estimatedSign = MD5($sskey . $callback . $key);
+        if ($estimatedSign != $sign) return new Response("校验失败");
 //    $callback = 2650010;
-    $room = $callback;
-    if(!$this->make("userServer")->getUserByUid($room))  return new Response("房间不存在");
+        $room = $callback;
+        if (!$this->make("userServer")->getUserByUid($room)) return new Response("房间不存在");
 
-    //TODO PHP端 注册并登录用户 跳转到callback参数指定的直播间
-    //实现cure通讯报文
-    $url = $hconf['xo_live_checked'];
-    $data = "sskey=$sskey";
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);//$activityPostData已经是k1=v2&k2=v2的字符串
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-    $res= curl_exec($ch);
-    curl_close($ch);
+        //TODO PHP端 注册并登录用户 跳转到callback参数指定的直播间
+        //实现cure通讯报文
+        $url = $hconf['xo_live_checked'];
+        $data = "sskey=$sskey";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);//$activityPostData已经是k1=v2&k2=v2的字符串
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+        $res = curl_exec($ch);
+        curl_close($ch);
 
-    //return new Response($res);
-    $this->make("systemServer")->logResult("XO项目 /live/checked:$res",$logPath);
-    /*var request*/
-    $temp_data = json_decode($res,true);
+        //return new Response($res);
+        $this->make("systemServer")->logResult("XO项目 /live/checked:$res", $logPath);
+        /*var request*/
+        $temp_data = json_decode($res, true);
 
-    $data = $temp_data['data'];
-    if(empty($data))    return new Response("请先登录");
-    if(empty($data['uuid']))    return new Response("uuid不存在");
+        $data = $temp_data['data'];
+        if (empty($data)) return new Response("请先登录");
+        if (empty($data['uuid'])) return new Response("uuid不存在");
 
-    $users = Users::where('uuid',$data['uuid'])->first();
+        $users = Users::where('uuid', $data['uuid'])->first();
 
-    //注册
-    if(empty($users)){
-        //{"status":"000","message":"success","data":{"uuid":"140611","nickename":"raby","gender":"M","avatar":"http:\/\/10.1.100.141:8082\/user_head\/default_4_3.jpg",
-        //"token":"k8qjd100TYa42IduhfL1DZwy9r5JKLz1","failureTime":1494412231,"diamond":0,"email":"raby@qq.com"}}
-        $password_key = "asdfwe";
+        //注册
+        if (empty($users)) {
+            //{"status":"000","message":"success","data":{"uuid":"140611","nickename":"raby","gender":"M","avatar":"http:\/\/10.1.100.141:8082\/user_head\/default_4_3.jpg",
+            //"token":"k8qjd100TYa42IduhfL1DZwy9r5JKLz1","failureTime":1494412231,"diamond":0,"email":"raby@qq.com"}}
+            $password_key = "asdfwe";
 
-        $user = [
-            'username'=>"v2_".$data['nickename']."@xo.com",
-            'nickname'=>"v2_".$data['nickename'],
-            'sex'=>$data['gender']=='M' ? 1 :0,
-            //'points'=>$data['diamond'],
-            //'email'=>$data['gender'],
-            'uuid'=>$data['uuid'],
-            'rich' => 64143000,
-            'lv_rich' => 28,
-            'password'=>$data['nickename'].$password_key,
-            'xtoken'=>$data['token'],
-            'origin'=>51,
-        ];
-        $uid = $this->make("userServer")->register($user);
-        $this->make("systemServer")->logResult("XO项目 注册:".json_encode($user).'-'.(string)$uid,$logPath);
-        if(!$uid){
-            return new Response("用户不存在".json_encode($user).$uid.$res);
+            $user = [
+                'username' => "v2_" . $data['nickename'] . "@xo.com",
+                'nickname' => "v2_" . $data['nickename'],
+                'sex' => $data['gender'] == 'M' ? 1 : 0,
+                //'points'=>$data['diamond'],
+                //'email'=>$data['gender'],
+                'uuid' => $data['uuid'],
+                'rich' => 64143000,
+                'lv_rich' => 28,
+                'password' => $data['nickename'] . $password_key,
+                'xtoken' => $data['token'],
+                'origin' => 51,
+            ];
+            $uid = $this->make("userServer")->register($user);
+            $this->make("systemServer")->logResult("XO项目 注册:" . json_encode($user) . '-' . (string)$uid, $logPath);
+            if (!$uid) {
+                return new Response("用户不存在" . json_encode($user) . $uid . $res);
+            }
+
+            AgentsRelationship::create([
+                'uid' => $uid,
+                'aid' => $this->container->config['config.xo_agent'],
+            ]);
+
+            $this->userInfo = $this->make("userServer")->getUserByUid($uid);
+            if (empty($this->userInfo)) {
+                return new Response("获取用户信息失败" . json_encode($user) . $uid . $res);
+            }
+
+            //处理用户头像
+            if (($avatarResource = fopen($data['avatar'], 'r'))) {
+                $result = json_decode($this->make('systemServer')->upload($this->userInfo, $avatarResource), true);
+                if (!$result['ret']) return new JsonResponse($result);
+                //更新用户头像
+                Users::where('uid', $this->userInfo['uid'])->update(array('headimg' => $result['info']['md5']));
+                $this->userInfo['headimg'] = $result['info']['md5'];
+                $this->make('redis')->hset('huser_info:' . $uid, 'headimg', $result['info']['md5']);
+            }
+        } else {
+            $this->userInfo = $users->toArray();
         }
-
-        AgentsRelationship::create([
-            'uid'=>$uid,
-            'aid'=>$this->container->config['config.xo_agent'],
-        ]);
-
-        $this->userInfo=$this->make("userServer")->getUserByUid($uid);
-        if (empty($this->userInfo)){
-            return new Response("获取用户信息失败".json_encode($user).$uid.$res);
-        }
-
-        //处理用户头像
-        if (($avatarResource=fopen($data['avatar'],'r'))){
-            $result = json_decode($this->make('systemServer')->upload($this->userInfo,$avatarResource), true);
-            if (!$result['ret']) return new JsonResponse($result);
-            //更新用户头像
-            Users::where('uid',$this->userInfo['uid'])->update(array('headimg' => $result['info']['md5']));
-            $this->userInfo['headimg']=$result['info']['md5'];
-            $this->make('redis')->hset('huser_info:'.$uid,'headimg',$result['info']['md5']);
-        }
-    }else{
-        $this->userInfo=$users->toArray();
+        //登录
+        $huser_sid = $this->make('redis')->hget('huser_sid', $this->userInfo['uid']);
+        // 此时调用的是单实例登录的session 验证
+        $this->writeRedis($this->userInfo, $huser_sid);
+        //return new Response($res);
+        $_SESSION['xo_httphost'] = $httphost;
+        return RedirectResponse::create("/$room");
     }
-    //登录
-    $huser_sid = $this->make('redis')->hget('huser_sid', $this->userInfo['uid']);
-    // 此时调用的是单实例登录的session 验证
-    $this->writeRedis($this->userInfo, $huser_sid);
-    //return new Response($res);
-    $_SESSION['xo_httphost']=$httphost;
-    return RedirectResponse::create("/$room");
-}
 
 
 
@@ -512,25 +518,26 @@ public function dealSign(){
      */
 //接收XO跳转过来的sskey,callback,sign 并验证sign是否正确防攻击
 //@RequestMapping("/recvSskey")
-    public function dealLSign(){
+    public function dealLSign()
+    {
         $sskey = $this->request()->get("sskey");
         $callback = $this->request()->get("callback");
         $sign = $this->request()->get("sign");
         $httphost = $this->request()->get("httphost") ?: 0;
 
-        $open = $this->make("redis")->exists("hplatform:2") ? $this->make("redis")->hget("hplatform:2",'open') : 1 ;
-        if(!$open)  return new Response("L接入已关闭");
-        if(empty($sskey)||empty($callback)||empty($sign)) return new Response("参数不对");
+        $open = $this->make("redis")->exists("hplatform:2") ? $this->make("redis")->hget("hplatform:2", 'open') : 1;
+        if (!$open) return new Response("L接入已关闭");
+        if (empty($sskey) || empty($callback) || empty($sign)) return new Response("参数不对");
 
         $hconf = $this->make("redis")->hgetall("hconf");
         $key = $hconf['l_key'];
         $logPath = BASEDIR . '/app/logs/l_' . date('Y-m-d') . '.log';
-        $this->make("systemServer")->logResult("L项目 dealSign:sskey=$sskey, callback=$callback, sign=$sign, httphost=$httphost",$logPath);
+        $this->make("systemServer")->logResult("L项目 dealSign:sskey=$sskey, callback=$callback, sign=$sign, httphost=$httphost", $logPath);
         $estimatedSign = MD5($sskey . $callback . $key);
-        if ($estimatedSign!=$sign)  return new Response("校验失败");
+        if ($estimatedSign != $sign) return new Response("校验失败");
 //    $callback = 2650010;
         $room = $callback;
-        if(!$this->make("userServer")->getUserByUid($room))  return new Response("房间不存在");
+        if (!$this->make("userServer")->getUserByUid($room)) return new Response("房间不存在");
 
         //TODO PHP端 注册并登录用户 跳转到callback参数指定的直播间
         //实现cure通讯报文
@@ -544,56 +551,56 @@ public function dealSign(){
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
         curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-        $res= curl_exec($ch);
+        $res = curl_exec($ch);
         curl_close($ch);
 
         //return new Response($res);
-        $this->make("systemServer")->logResult("L项目 /live/checked:$res",$logPath);
+        $this->make("systemServer")->logResult("L项目 /live/checked:$res", $logPath);
         /*var request*/
-        $temp_data = json_decode($res,true);
+        $temp_data = json_decode($res, true);
 
         $data = $temp_data['data'];
-        if(empty($data))    return new Response("请先登录");
-        if(empty($data['uuid']))    return new Response("uuid不存在");
+        if (empty($data)) return new Response("请先登录");
+        if (empty($data['uuid'])) return new Response("uuid不存在");
 
-        $users = Users::where('uuid',$data['uuid'])->first();
+        $users = Users::where('uuid', $data['uuid'])->first();
 
         //注册
-        if(empty($users)){
+        if (empty($users)) {
             $password_key = "asdfwe";
             $user = [
-                'username'=>"杏吧_".$data['nickename']."@sex8.com",
-                'nickname'=>"杏吧_".$data['nickename'],
-                'sex'=>0,
-                'uuid'=>$data['uuid'],
+                'username' => "杏吧_" . $data['nickename'] . "@sex8.com",
+                'nickname' => "杏吧_" . $data['nickename'],
+                'sex' => 0,
+                'uuid' => $data['uuid'],
                 'rich' => 64143000,
                 'lv_rich' => 28,
-                'password'=>$data['nickename'].$password_key,
-                'xtoken'=>$data['token'],
-                'origin'=>61,
+                'password' => $data['nickename'] . $password_key,
+                'xtoken' => $data['token'],
+                'origin' => 61,
             ];
 
             $uid = $this->make("userServer")->register($user);
-            $this->make("systemServer")->logResult("L项目 注册:".json_encode($user).'-'.(string)$uid,$logPath);
-            if(!$uid){
-                return new Response("用户不存在".json_encode($user).$uid.$res);
+            $this->make("systemServer")->logResult("L项目 注册:" . json_encode($user) . '-' . (string)$uid, $logPath);
+            if (!$uid) {
+                return new Response("用户不存在" . json_encode($user) . $uid . $res);
             }
 
             AgentsRelationship::create([
-                'uid'=>$uid,
-                'aid'=>$this->container->config['config.l_agent'],
+                'uid' => $uid,
+                'aid' => $this->container->config['config.l_agent'],
             ]);
 
-            $this->userInfo=$this->make("userServer")->getUserByUid($uid);
-            if (empty($this->userInfo)){
-                return new Response("获取用户信息失败".json_encode($user).$uid.$res);
+            $this->userInfo = $this->make("userServer")->getUserByUid($uid);
+            if (empty($this->userInfo)) {
+                return new Response("获取用户信息失败" . json_encode($user) . $uid . $res);
             }
-        }else{
-            $this->userInfo=$users->toArray();
-            if($this->userInfo['xtoken']!=$data['token']){
-                Users::where('uid',$this->userInfo['uid'])->update([
-                    'xtoken'=>$data['token']
-                    ]);
+        } else {
+            $this->userInfo = $users->toArray();
+            if ($this->userInfo['xtoken'] != $data['token']) {
+                Users::where('uid', $this->userInfo['uid'])->update([
+                    'xtoken' => $data['token']
+                ]);
                 $this->userInfo['xtoken'] = $data['token'];
             }
         }
@@ -602,7 +609,7 @@ public function dealSign(){
         // 此时调用的是单实例登录的session 验证
         $this->writeRedis($this->userInfo, $huser_sid);
 
-        $_SESSION['httphost']=base64_decode($httphost);
+        $_SESSION['httphost'] = base64_decode($httphost);
         return RedirectResponse::create("/$room");
     }
 
@@ -614,7 +621,8 @@ public function dealSign(){
      */
 //接收XO跳转过来的sskey,callback,sign 并验证sign是否正确防攻击
 //@RequestMapping("/recvSskey")
-    public function platform(){
+    public function platform()
+    {
         $sskey = $this->request()->get("sskey");
         $callback = $this->request()->get("callback");
         $sign = $this->request()->get("sign");
@@ -622,27 +630,27 @@ public function dealSign(){
         $origin = $this->request()->get("origin") ?: 0;
         //$origin = 51;
         //$origin = 71;
-        if(!$this->make("redis")->exists("hplatforms:$origin")) return new Response("1001 接入方提供参数不对");
+        if (!$this->make("redis")->exists("hplatforms:$origin")) return new Response("1001 接入方提供参数不对");
 
         $platforms = $this->make("redis")->hgetall("hplatforms:$origin");
         $open = isset($platforms['open']) ? $platforms['open'] : 1;
         $plat_code = $platforms['code'];
-        if(!$open)  return new Response("接入已关闭");
-        if(empty($sskey)||empty($callback)||empty($sign)||empty($httphost)) return new Response("1002 接入方提供参数不对");
+        if (!$open) return new Response("接入已关闭");
+        if (empty($sskey) || empty($callback) || empty($sign) || empty($httphost)) return new Response("1002 接入方提供参数不对");
 
         $key = $platforms['key'];
         $logPath = BASEDIR . "/app/logs/{$plat_code}_" . date('Y-m-d') . '.log';
-        $this->make("systemServer")->logResult("L项目 dealSign:sskey=$sskey, callback=$callback, sign=$sign, httphost=$httphost",$logPath);
+        $this->make("systemServer")->logResult("L项目 dealSign:sskey=$sskey, callback=$callback, sign=$sign, httphost=$httphost", $logPath);
         $estimatedSign = MD5($sskey . $callback . $key);
-        if ($estimatedSign!=$sign)  return new Response("接入方校验失败");
+        if ($estimatedSign != $sign) return new Response("接入方校验失败");
 //    $callback = 2650010;
         $room = $callback;
-        if(!$this->make("userServer")->getUserByUid($room))  return new Response("房间不存在");
+        if (!$this->make("userServer")->getUserByUid($room)) return new Response("房间不存在");
 
         //TODO PHP端 注册并登录用户 跳转到callback参数指定的直播间
         //实现cure通讯报文
-        $access_url = json_decode($platforms['access_url'],true);
-        $url = $platforms['access_host'].$access_url['checked'];
+        $access_url = json_decode($platforms['access_url'], true);
+        $url = $platforms['access_host'] . $access_url['checked'];
         //$url = "http://discuz.shaw_dev.com/xolive.php?id=v_ad:live";
         $data = "sskey=$sskey&action=checked";
         $ch = curl_init();
@@ -653,72 +661,72 @@ public function dealSign(){
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
         curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-        $res= curl_exec($ch);
+        $res = curl_exec($ch);
         curl_close($ch);
 
         //return new Response($res);
-        $this->make("systemServer")->logResult("$url:$res",$logPath);
+        $this->make("systemServer")->logResult("$url:$res", $logPath);
         /*var request*/
-        $temp_data = json_decode($res,true);
+        $temp_data = json_decode($res, true);
 
-        $data = isset($temp_data['data'])?$temp_data['data']:0;
-        if(empty($data))    return new Response("接入方数据获取失败".$url." $data"."  返回：$res");
-        if(empty($data['uuid']))    return new Response("接入方uuid不存在");
+        $data = isset($temp_data['data']) ? $temp_data['data'] : 0;
+        if (empty($data)) return new Response("接入方数据获取失败" . $url . " $data" . "  返回：$res");
+        if (empty($data['uuid'])) return new Response("接入方uuid不存在");
 
-        $users = Users::where('origin',$origin)->where('uuid',$data['uuid'])->first();
+        $users = Users::where('origin', $origin)->where('uuid', $data['uuid'])->first();
 
         //注册
         $prefix = $platforms['prefix'];
-        if(empty($users)){
+        if (empty($users)) {
             $password_key = "asdfwe";
             $user = [
-                'username'=>$prefix.'_'.$data['nickename']."@platform.com",
-                'nickname'=>$prefix.'_'.$data['nickename'],
-                'sex'=>0,
-                'uuid'=>$data['uuid'],
+                'username' => $prefix . '_' . $data['nickename'] . "@platform.com",
+                'nickname' => $prefix . '_' . $data['nickename'],
+                'sex' => 0,
+                'uuid' => $data['uuid'],
                 'rich' => 64143000,
                 'lv_rich' => 28,
-                'password'=>$data['nickename'].$password_key,
-                'xtoken'=>$data['token'],
-                'origin'=>$origin,
+                'password' => $data['nickename'] . $password_key,
+                'xtoken' => $data['token'],
+                'origin' => $origin,
             ];
 
             $uid = $this->make("userServer")->register($user);
-            $this->make("systemServer")->logResult("$plat_code 项目 注册:".json_encode($user).'-'.(string)$uid,$logPath);
-            if(!$uid){
-                return new Response("用户不存在".json_encode($user).$uid.$res);
+            $this->make("systemServer")->logResult("$plat_code 项目 注册:" . json_encode($user) . '-' . (string)$uid, $logPath);
+            if (!$uid) {
+                return new Response("用户不存在" . json_encode($user) . $uid . $res);
             }
 
             AgentsRelationship::create([
-                'uid'=>$uid,
-                'aid'=>$platforms['aid'],
+                'uid' => $uid,
+                'aid' => $platforms['aid'],
             ]);
 
-            $this->userInfo=$this->make("userServer")->getUserByUid($uid);
-            if (empty($this->userInfo)){
-                return new Response("获取用户信息失败".json_encode($user).$uid.$res);
+            $this->userInfo = $this->make("userServer")->getUserByUid($uid);
+            if (empty($this->userInfo)) {
+                return new Response("获取用户信息失败" . json_encode($user) . $uid . $res);
             }
-        }else{
-            $this->userInfo=$users->toArray();
-            if($this->userInfo['xtoken']!=$data['token']){
-                Users::where('uid',$this->userInfo['uid'])->update([
-                    'xtoken'=>$data['token']
+        } else {
+            $this->userInfo = $users->toArray();
+            if ($this->userInfo['xtoken'] != $data['token']) {
+                Users::where('uid', $this->userInfo['uid'])->update([
+                    'xtoken' => $data['token']
                 ]);
                 $this->userInfo['xtoken'] = $data['token'];
             }
         }
         $time = date('Y-m-d H:i:s');
-        Users::where('uid',$this->userInfo['uid'])->update([
-            'logined'=>$time
+        Users::where('uid', $this->userInfo['uid'])->update([
+            'logined' => $time
         ]);
-        $this->userInfo['logined']=$time;
+        $this->userInfo['logined'] = $time;
 
         //登录
         $huser_sid = $this->make('redis')->hget('huser_sid', $this->userInfo['uid']);
         // 此时调用的是单实例登录的session 验证
         $this->writeRedis($this->userInfo, $huser_sid);
 
-        $_SESSION['httphost']=$httphost;
+        $_SESSION['httphost'] = $httphost;
 
         $h5 = $this->container->config['config.H5'] ? "/h5" : "";
         return RedirectResponse::create("/$room$h5");
@@ -727,12 +735,14 @@ public function dealSign(){
     /**
      *
      */
-    public function get_lcertificate(){
+    public function get_lcertificate()
+    {
         //get certificate
         $certificate = $this->make('safeService')->getLcertificate("socket");
-        if(!$certificate)  return  new JsonResponse(array('status' => 0, 'msg' => "票据用完或频率过快"));
-        return  new JsonResponse(array('status' => 1, 'msg' => $certificate));
+        if (!$certificate) return new JsonResponse(array('status' => 0, 'msg' => "票据用完或频率过快"));
+        return new JsonResponse(array('status' => 1, 'msg' => $certificate));
     }
+
     /**
      * 采集flashCookie记录api
      */
@@ -741,9 +751,9 @@ public function dealSign(){
         $request = $this->make('request');
 
         $create = array(
-            'uid'=>$request->get('uid'),
-            'sid'=>$request->get('sid'),
-            'ips'=>$request->getClientIp()
+            'uid' => $request->get('uid'),
+            'sid' => $request->get('sid'),
+            'ips' => $request->getClientIp()
         );
 
         FlashCookie::create($create);
@@ -791,9 +801,9 @@ public function dealSign(){
 
         if (!$pid) throw new NotFoundHttpException();
         //不能关注自己
-        if (($ret!=0)&&($uid == $pid)) return JsonResponse::create([
-            'status'=>0,
-            'msg'=>'请勿关注自己'
+        if (($ret != 0) && ($uid == $pid)) return JsonResponse::create([
+            'status' => 0,
+            'msg' => '请勿关注自己'
         ]);
         $userService = $this->make('userServer');
         $userInfo = $userService->getUserByUid($pid);
@@ -1474,7 +1484,7 @@ public function dealSign(){
             }
 
             /** 检查幸运礼物 */
-            $good['isLuck']=$this->isLuck($item['gid']);
+            $good['isLuck'] = $this->isLuck($item['gid']);
 
             $data[$item['category']]['items'][] = $good;
         }
@@ -1486,7 +1496,7 @@ public function dealSign(){
 
     protected function isLuck($gid)
     {
-        return $this->make('redis')->hget("hgoodluck:$gid:1",'bet')?1:0;
+        return $this->make('redis')->hget("hgoodluck:$gid:1", 'bet') ? 1 : 0;
     }
 
     /**
@@ -1684,11 +1694,11 @@ public function dealSign(){
 
     public function ajaxProxy()
     {
-        $get=$_GET;
+        $get = $_GET;
         unset($get['uri']);
         $requestURI = urldecode($_REQUEST['uri']);
 
-        $url = $requestURI.'?'.http_build_query($get);
+        $url = $requestURI . '?' . http_build_query($get);
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -1698,7 +1708,7 @@ public function dealSign(){
         curl_close($ch);
 
         $logPath = BASEDIR . '/app/logs/charge_' . date('Y-m-d') . '.log';
-        $tmp = "$url  rs:".$response.' error:'.$error;
+        $tmp = "$url  rs:" . $response . ' error:' . $error;
         $this->logResult($tmp, $logPath);
 
         if ($error) {
@@ -1708,6 +1718,7 @@ public function dealSign(){
 
         echo($response);
     }
+
     protected function getRequestHeaders()
     {
         $headers = array();

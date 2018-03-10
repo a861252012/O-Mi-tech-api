@@ -1,9 +1,9 @@
 <?php
 
 
-namespace App\Controller;
+namespace App\Http\Controllers;
 
-class MobileController extends BaseController
+class MobileController extends Controller
 {
     /**
      * 移动端首页

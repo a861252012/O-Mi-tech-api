@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Http\Controllers;
 
 use App\Models\Users;
 use App\Service\Task\TaskService;
@@ -8,7 +8,7 @@ use Core\Model;
 use Core\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-class TaskController extends BaseController
+class TaskController extends Controller
 {
 
     /**

@@ -1,12 +1,12 @@
 <?php
 
 
-namespace App\Controller;
+namespace App\Http\Controllers;
 
 use App\Models\Goods;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-class ShopController extends BaseController
+class ShopController extends Controller
 {
 
     /**

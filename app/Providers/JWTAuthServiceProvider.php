@@ -25,7 +25,7 @@ class JWTAuthServiceProvider extends ServiceProvider
     public function register()
     {
         //
-        $this->app->singleton(JWTAuthService::class, function ($app) {
+        $this->app->singleton('jwtAuth', function ($app) {
             return new JWTAuthService();
         });
     }

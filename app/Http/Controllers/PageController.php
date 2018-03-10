@@ -1,12 +1,12 @@
 <?php
 
 
-namespace App\Controller;
+namespace App\Http\Controllers;
 
 use App\Models\Faq;
 use Core\Exceptions\NotFoundHttpException;
 
-class PageController extends BaseController
+class PageController extends Controller
 {
 
     /**
