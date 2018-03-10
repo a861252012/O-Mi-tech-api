@@ -1,5 +1,5 @@
 <?php
-namespace App\Service\Auth;
+namespace App\Services;
 
 use Core\Request;
 use Core\Service;
@@ -15,7 +15,7 @@ use Lcobucci\JWT\ValidationData;
  * Date: 2016/9/22
  * Time: 9:44
  */
-class JWTAuthService extends Service
+class JWTAuthService
 {
     /** @var  $token Token */
     public $token;

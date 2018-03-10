@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\UserService;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
@@ -89,7 +88,7 @@ class Controller extends BaseController
 
                 break;
             case "userServer":
-                $service = app()->make(UserService::class);
+               // $service = app()->make(UserService::class);
                 break;
         }
         return $service;

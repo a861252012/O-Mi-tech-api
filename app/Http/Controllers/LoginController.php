@@ -14,6 +14,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Cookie;
 use DB;
 
+use App\Services\UserService;
+
 
 class LoginController extends Controller
 {
@@ -246,7 +248,7 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         echo \Config::get('constants.ADMIN_NAME');
-        $user = $this->make('userServer')->getUserByUid("10000");
+        $user = app()->make(UserService::class)->getUserByUid("10000");
         echo $user;
         die;
         //获取值

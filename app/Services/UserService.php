@@ -846,7 +846,7 @@ class UserService
         }
         /** jwt处理*/
         $request = $_curRequest;
-        $jwt = $this->make('JWTAuth');
+        $jwt = app(JWTAuthService::class); // $this->make('JWTAuth');
         $jwt->getTokenFromRequest($request);
         if ($jwt->token) {
             try {
