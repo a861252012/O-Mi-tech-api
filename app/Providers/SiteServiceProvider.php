@@ -2,10 +2,11 @@
 
 namespace App\Providers;
 
-use App\Services\UserService;
+use App\Services\SiteService;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
-class UserServiceProvider extends ServiceProvider
+class SiteServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap the application services.
@@ -24,9 +25,8 @@ class UserServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
-        $this->app->singleton(UserService::class, function () {
-            return new UserService();
+        $this->app->singleton('siteService', function () {
+            return new SiteService;
         });
     }
 }

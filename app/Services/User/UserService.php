@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\User;
+namespace App\Services\User;
 
 use App\Models\Agents;
 use App\Models\AgentsRelationship;
