@@ -3,6 +3,7 @@ namespace App\Services\Auth;
 
 use App\Models\Users;
 use App\Services\Service;
+use App\Services\User\UserService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Auth\UserProvider;
@@ -72,7 +73,9 @@ class WebAuthService implements Guard
     {
         return $this->attempt($credentials, false, false);
     }
+    public function check(){
 
+    }
     /**
      * Determine if the user matches the credentials.
      *
@@ -88,19 +91,24 @@ class WebAuthService implements Guard
     /**
      * Validate a user against the given credentials.
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
+     * @param  \Illuminaattemptte\Contracts\Auth\Authenticatable  $user
      * @param  array  $credentials
      * @return bool
      */
-    public function validateCredentials(Authenticatable $user, array $credentials)
+    public function validateCredentials( $user, array $credentials)
     {
         $plain = $credentials['password'];
         //具体验证密码有效性方法
-        return $user->password==md5($plain);
+        return $user['password']==md5($plain);
     }
 
     public function user()
     {
+        //echo self::SEVER_SESS_ID;
+        $uid = Session::get(self::SEVER_SESS_ID);
+        echo $uid.'asdfa'; die;
+        $user = app(UserService::class)->getUserByUid($uid);
+        $this->user = (new Users)->forceFill($user);
         return $this->user;
     }
 
@@ -111,9 +119,9 @@ class WebAuthService implements Guard
      * @return bool|Token|void
      * @throws LoginException
      */
-    public function login(Authenticatable $user, $remember = false)
+    public function login( $user, $remember = false)
     {
-        $this->updateSession($user->getAuthIdentifier());
+        $this->updateSession($user['uid']);
 
         /**
          * 7 天免登陆
@@ -124,11 +132,12 @@ class WebAuthService implements Guard
             Session::save();
         }
 
-        $this->setUser($user);
+        $this->setUser((new Users)->forceFill($user));
         /**
          * 清除计数 当用户输入正确的登录信息之后要清除掉原来输入错误的次数
          */
         Session::remove('hlogin_authcode');
+
 
     }
 
@@ -146,23 +155,28 @@ class WebAuthService implements Guard
             $this->_online = $userInfo['uid'];
             //设置新session
             session()->put(self::SEVER_SESS_ID,$userInfo['uid']);           //TODO 只根据session的webonline有无uid判断是否登录成功
-            setcookie(self::WEB_UID, $userInfo['uid'], 0, '/', $GLOBALS['CUR_DOMAIN']);//用于首页判断
-            $this->_sess_id = session_id();
+            setcookie(self::WEB_UID, $userInfo['uid'], 0, '/');//用于首页判断
 
-            if (empty($huser_sid)) { //说明以前没登陆过，没必要检查重复登录
-                app()->make('redis')->hset('huser_sid', $userInfo['uid'], $this->_sess_id);
-            } elseif ($huser_sid != $this->_sess_id) {//有可能重复登录了
-                //更新用户对应的sessid
-                app()->make('redis')->hset('huser_sid', $userInfo['uid'], $this->_sess_id);
-                //删除旧session，踢出用户在上一个浏览器的登录状态
+            $this->repeatLogin($huser_sid);
 
-                session()->getHandler()->destroy($huser_sid);
-            }
         } catch (\Exception $e) {
             session()->remove(self::SEVER_SESS_ID);
-            setcookie(self::WEB_UID, null, time() - 31536000, '/', $GLOBALS['CUR_DOMAIN']);
+            setcookie(self::WEB_UID, null, time() - 31536000, '/');
             $this->_online = false;
             \Log::info("用户登录写redis异常：".$e->getMessage());
+        }
+    }
+
+    public function repeatLogin(){
+        $this->_sess_id = session_id();
+        if (empty($huser_sid)) { //说明以前没登陆过，没必要检查重复登录
+            app()->make('redis')->hset('huser_sid', $userInfo['uid'], $this->_sess_id);
+        } elseif ($huser_sid != $this->_sess_id) {//有可能重复登录了
+            //更新用户对应的sessid
+            app()->make('redis')->hset('huser_sid', $userInfo['uid'], $this->_sess_id);
+
+            //删除旧session，踢出用户在上一个浏览器的登录状态
+            session()->getHandler()->destroy($huser_sid);
         }
     }
 
@@ -186,8 +200,8 @@ class WebAuthService implements Guard
     {
         $username = $credentials['username'];
         $password = $credentials['password'];
-        $user = app('UserService')->retrieveByCredentials($credentials);
-        if ($this->hasValidCredentials($user, $credentials)) {
+        $user = app(UserService::class)->retrieveByCredentials($credentials);
+        if ($this->hasValidCredentials($user, $credentials) && $user['status']) {
             if ($login) {
                 $this->login($user, $remember);
             }

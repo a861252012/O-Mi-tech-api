@@ -23,7 +23,9 @@ Route::get('/', function () {
 });
 
 Route::group(['middleware'=>['login_auth']],function (){
-    Route::match(['POST', 'GET'], '/onetomore', ['name' => 'login', 'uses' => 'LoginController@login']);
+    Route::match(['POST', 'GET'], '/onetomore', function(){
+        echo "aaa";
+    });
 });
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 

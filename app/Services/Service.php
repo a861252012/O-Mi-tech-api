@@ -18,7 +18,7 @@ class Service
      * @var
      */
     protected $container;
-    public function __construct(Container $container)
+    public function __construct()
     {
         $this->container = app();
     }
