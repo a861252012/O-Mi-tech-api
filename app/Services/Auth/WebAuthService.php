@@ -155,6 +155,8 @@ class WebAuthService implements Guard
             $this->_online = $userInfo['uid'];
             //设置新session
             session()->put(self::SEVER_SESS_ID,$userInfo['uid']);           //TODO 只根据session的webonline有无uid判断是否登录成功
+
+            echo 'write redis:'.session()->get(self::SEVER_SESS_ID); die;
             setcookie(self::WEB_UID, $userInfo['uid'], 0, '/');//用于首页判断
 
             $this->repeatLogin($huser_sid);
@@ -167,8 +169,11 @@ class WebAuthService implements Guard
         }
     }
 
-    public function repeatLogin(){
-        $this->_sess_id = session_id();
+    public function repeatLogin($huser_sid){
+        $this->_sess_id = Session::getId();
+        $userInfo['uid'] = Session::get(self::SEVER_SESS_ID);
+        //echo $userInfo['uid'];
+        echo $huser_sid.'  '.$this->_sess_id.'-----';
         if (empty($huser_sid)) { //说明以前没登陆过，没必要检查重复登录
             app()->make('redis')->hset('huser_sid', $userInfo['uid'], $this->_sess_id);
         } elseif ($huser_sid != $this->_sess_id) {//有可能重复登录了
@@ -187,6 +192,7 @@ class WebAuthService implements Guard
     {
         $userinfo['uid']= $id;
         $huser_sid = app()->make('redis')->hget('huser_sid', $userinfo['uid']);
+        echo $userinfo['uid'].' update session ';
         $this->writeRedis(['uid'=>$userinfo['uid']],$huser_sid);
     }
 

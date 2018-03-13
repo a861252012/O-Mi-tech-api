@@ -4,8 +4,11 @@
  */
 
 Route::get('/', function () {
-    echo 'pc index';
-});
+
+    dd(\Illuminate\Support\Facades\Session::getId());
+
+    echo 'pc index'; die;
+    echo Session::getId();
     echo session()->getHandler()->destroy(Session::getId());
     echo session()->getHandler()->destroy('Ys2ihkAy8SyKX23kigNlhzhpliCfFhuYU4kMW0Sf');
     $user = \App\Models\Users::find(10000);

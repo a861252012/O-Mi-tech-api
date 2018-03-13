@@ -37,8 +37,8 @@ class Handler extends ExceptionHandler
      */
     public function report(Exception $exception)
     {
-        \Log::debug($exception->getMessage());
-    //    parent::report($exception);
+    //    \Log::debug($exception->getMessage());
+        parent::report($exception);
     }
 
     /**
@@ -50,7 +50,7 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
-        return new JsonResponse($exception->getMessage());
-     //   return parent::render($request, $exception);
+    //    return new JsonResponse($exception->getMessage());
+        return parent::render($request, $exception);
     }
 }
