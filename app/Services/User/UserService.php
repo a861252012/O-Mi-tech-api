@@ -11,10 +11,10 @@ use App\Models\UserGroup;
 use App\Models\UserGroupPermission;
 use App\Models\UserModNickName;
 use App\Models\Users;
-use Core\Exceptions\ServiceException;
-use Core\Service;
+use App\Services\Service;
 use DB;
 use Illuminate\Support\Arr;
+use Mockery\Exception;
 
 class UserService extends Service
 {
@@ -25,13 +25,41 @@ class UserService extends Service
     public function setUser($user)
     {
         if (!$user instanceof Users) {
-            throw new ServiceException('Please make sure $user is a App\Models\Users object');
+            abort(404,'Please make sure $user is a App\Models\Users object');
         }
         $this->user = $user;
         return $this;
     }
 
+    /**
+     * @param $credentials
+     * @return array
+     */
+    public function retrieveByCredentials($credentials){
+        $username = $credentials['username'];
+        $uid = $this->make('redis')->hget('husername_to_id', $username);
+        if (!$uid) {
+            $userinfo = Users::query()->where('username', $username)->first()->toArray();
+            app('redis')->hset('husername_to_id', $username,$userinfo['uid']);
+            return $userinfo;
+        }
 
+        $userinfo = $this->make('redis')->hgetall('huser_info:' . $uid);
+        if (!$userinfo) {
+            $userinfo = Users::find($uid)->toArray();
+            app('redis')->hmset('huser_info:', $userinfo['uid'],$userinfo);
+        }
+        return $userinfo;
+    }
+
+
+    /**
+     * @param array $user
+     * @param array $gift
+     * @param int $agent
+     * @param int $invite_code
+     * @return bool|int
+     */
     public function register(array $user, $gift = array(), $agent = 0, $invite_code = 0)
     {
         $newUser = Arr::only($user, array('did','username','password', 'nickname', 'roled', 'exp', 'pop', 'created', 'status','province','city','county','video_status','rich','lv_exp','lv_rich','pic_total_size','pic_used_size','lv_type','icon_id','uuid','xtoken','origin','sex'));
@@ -146,7 +174,7 @@ class UserService extends Service
     {
         //if(!is_int(uid) || !$points || !in_array($operation, array('+','-'))) return false;
         if (!$uid || !is_numeric($uid)) {
-            throw new ServiceException('Please make sure $uid is a numeric');
+            throw new Exception('Please make sure $uid is a numeric');
         }
         if (intval($points) < 1) return true;
 
@@ -187,7 +215,7 @@ class UserService extends Service
     public function getUserByUid($uid)
     {
         if (!$uid || !is_numeric($uid)) {
-            throw new ServiceException('Please make sure $uid is a numeric');
+            throw new Exception('Please make sure $uid is a numeric');
         }
         $hashtable = 'huser_info:' . $uid;
 
@@ -221,7 +249,7 @@ class UserService extends Service
     public function getUserReset($uid)
     {
         if (!$uid || !is_numeric($uid)) {
-            throw new ServiceException('Please make sure $uid is a numeric');
+            throw new Exception('Please make sure $uid is a numeric');
         }
         $user = Users::find($uid);
         if (!$user) {
@@ -247,7 +275,7 @@ class UserService extends Service
     public function updateUserOfVip($uid, $level_id, $type, $days = 30, $fill_expires = false)
     {
         if (!$uid || !is_numeric($uid)) {
-            throw new ServiceException('Please make sure $uid is a numeric');
+            throw new Exception('Please make sure $uid is a numeric');
         }
         $user = $this->getUserByUid($uid);
         if (!$user) return false;
@@ -301,7 +329,7 @@ class UserService extends Service
         }
         //$this->make('redis')->del('huser_info:'.$uid);
         if (!$this->getUserReset($uid)) {
-            throw new ServiceException('updateUserOfVip getUserReset function for update user cache to redis was error');
+            throw new Exception('updateUserOfVip getUserReset function for update user cache to redis was error');
         }
         return true;
     }
@@ -317,7 +345,7 @@ class UserService extends Service
     public function checkUserVipStatus($uid)
     {
         if (!$uid || !is_numeric($uid)) {
-            throw new ServiceException('Please make sure $uid is a numeric');
+            throw new Exception('Please make sure $uid is a numeric');
         }
         $vip = Users::where('uid', $uid)->where('vip', '>', 0)->where('vip_end', '>', date('Y-m-d H:i:s'))->first();
 
@@ -351,7 +379,7 @@ class UserService extends Service
     public function getUserByUsername($username)
     {
         if (!$username) {
-            throw new ServiceException('Please make sure $username is a string');
+            throw new Exception('Please make sure $username is a string');
         }
         $user = Users::where('username', $username)->first();
 
@@ -375,7 +403,7 @@ class UserService extends Service
     public function getUserAttens($uid, $pageStart = 1, $fid = true, $pageLimit = 12)
     {
         if (!$uid || !is_numeric($uid)) {
-            throw new ServiceException('Please make sure $uid is a numeric');
+            throw new Exception('Please make sure $uid is a numeric');
         }
         $pageTotal = $this->getUserAttensCount($uid);
         if ($pageTotal == 0 || $pageTotal < $pageStart) {
@@ -440,7 +468,7 @@ class UserService extends Service
     public function getUserAttensCount($uid, $flag = true)
     {
         if (!$uid || !is_numeric($uid)) {
-            throw new ServiceException('Please make sure $uid is a numeric');
+            throw new Exception('Please make sure $uid is a numeric');
         }
 
         if ($flag) {
@@ -490,11 +518,11 @@ class UserService extends Service
     public function updateUser($data = [])
     {
         if (!is_array($data)) {
-            throw new ServiceException('Please make sure $data is a array');
+            throw new Exception('Please make sure $data is a array');
         }
         $res = $this->user->update($data);
         if ($res === false) {
-            throw new ServiceException('Mod $user is error');
+            throw new Exception('Mod $user is error');
         }
         return $res;
     }
@@ -528,7 +556,7 @@ class UserService extends Service
     public function modLvRich($lv_rich)
     {
         if (!$lv_rich) {
-            throw new ServiceException('Mod Lv_rich should input a int type');
+            throw new Exception('Mod Lv_rich should input a int type');
         }
 
         // 判断是否要提升到的等级是否小于本身用户的等级了，如果小于就不提升了
@@ -628,7 +656,7 @@ class UserService extends Service
     public function setFollow($uid, $pid)
     {
         if (!$uid || !is_numeric($uid) || !$pid || !is_numeric($pid)) {
-            throw new ServiceException('Please make sure $uid and  $pid is a numeric');
+            throw new Exception('Please make sure $uid and  $pid is a numeric');
         }
         //检查是否已被关注
         if ($this->checkFollow($uid, $pid)) return false;
@@ -673,7 +701,7 @@ class UserService extends Service
     {
 
         if (!$uid || !is_numeric($uid) || !$pid || !is_numeric($pid)) {
-            throw new ServiceException('Please make sure $uid and  $pid is a numeric');
+            throw new Exception('Please make sure $uid and  $pid is a numeric');
         }
         //检查是否已被关注
         //if(!$this->checkFollow($uid, $pid)) return false;
@@ -696,7 +724,7 @@ class UserService extends Service
     public function checkUserSmsLimit($uid, $limit, $table)
     {
         if (!$uid || !$table) {
-            throw new ServiceException('the [checkUserSmsLimit] function params was failure ');
+            throw new Exception('the [checkUserSmsLimit] function params was failure ');
         }
         $redis = $this->make('redis');
         $redisKey = 'h' . $table . date('Ymd');
@@ -763,6 +791,7 @@ class UserService extends Service
     }
 
     /**
+     * todo
      * @param $userinfo [用户信息,常为获取到的信息数组]
      * @param $des_key [加密密钥]
      * @return string [返回加密代码]
@@ -784,6 +813,7 @@ class UserService extends Service
     }
 
     /**
+     * todo
      * @param $data [经3des加密的密文]
      * @return string
      * @author dc
@@ -824,7 +854,7 @@ class UserService extends Service
     protected function checkUser()
     {
         if (!$this->user instanceof Users) {
-            throw new ServiceException('Please make sure $user is a App\Models\Users object');
+            throw new Exception('Please make sure $user is a App\Models\Users object');
         }
     }
 }

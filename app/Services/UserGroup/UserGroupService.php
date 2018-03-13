@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Service\UserGroup;
+namespace App\Services\UserGroup;
 
 use App\Models\Messages;
 use App\Models\UserGroup;
 use App\Models\Users;
-use Core\Service;
+use App\Services\Service;
 
-class UserGroupService extends Service
+class UserGroupServices extends Service
 {
 
     /**

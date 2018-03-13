@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Service\Lottery;
+namespace App\Services\Lottery;
 
-use Core\Service;
+use App\Services\Service;
 use App\Models;
 
 /**
  * 抽奖服务
  */
-class LotteryService extends Service
+class LotteryServices extends Service
 {
 
 

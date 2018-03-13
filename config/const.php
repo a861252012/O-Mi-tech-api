@@ -8,5 +8,5 @@
  */
 define('USER_ID',12345789);
 return [
-    'ADMIN_NAME' => 'administrator'
+    'ADMIN_NAME' => 'administrator',
 ];

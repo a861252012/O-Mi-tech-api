@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\Task\TaskScript;
+namespace App\Services\Task\TaskScript;
 
 
 interface ScriptInterface

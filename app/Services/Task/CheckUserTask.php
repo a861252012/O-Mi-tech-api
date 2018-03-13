@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Service\Task;
+namespace App\Services\Task;
 
-use App\Service\Task\TaskScript\ScriptBase;
+use App\Services\Task\TaskScript\ScriptBase;
 
 use App\Models\TaskUser;
 
@@ -70,8 +70,8 @@ class CheckUserTask
          * 进行检查和更新各个任务的状态 调用各任务脚本
          */
         $script = $task['script_name'];
-        $className = 'App\Service\Task\TaskScript\\' . ucfirst($this->script[$script]);
-        // 暂时做了doctrine($this->em)的手动注入 未走service
+        $className = 'App\Services\Task\TaskScript\\' . ucfirst($this->script[$script]);
+        // 暂时做了doctrine($this->em)的手动注入 未走Services
         $class = new $className($this->container);
         return $class->check($task, $uid);
     }

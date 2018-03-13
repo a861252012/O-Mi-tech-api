@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\Task\GiftScript;
+namespace App\Services\Task\GiftScript;
 
 use App\Models\UserIcon;
 

@@ -1,15 +1,13 @@
 <?php
 
-namespace App\Service\Safe;
+namespace App\Services\Safe;
 
-use Core\Exceptions\ServiceException;
-use Core\Redis\RedisService;
-use Core\Service;
+use App\Services\Service;
 use DB;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Redis;
 
-class SafeService extends Service
+class SafeServices extends Service
 {
     //
     public function auth($uid)
@@ -69,7 +67,7 @@ class SafeService extends Service
      */
     private function getSocketCertificate(){
         /**
-         * @var $redis RedisService
+         * @var $redis RedisServices
         */
         $redis = $this->make('redis')->connection('ceri');
 
