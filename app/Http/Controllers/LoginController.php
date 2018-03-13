@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Cookie;
 use DB;
 
-use App\Services\UserService;
+use App\Services\User\UserService;
 
 
 class LoginController extends Controller
@@ -247,14 +247,10 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
-        echo \Config::get('constants.ADMIN_NAME');
-        $user = app()->make(UserService::class)->getUserByUid("10000");
-        echo $user;
-        die;
         //获取值
        // $request = $this->make('request');
-        $user_name = $request->get('uname') ? $request->get('uname') : '';
-        $password = $request->get('password') ? $request->get('password') : '';
+        $user_name = $request->get('uname') ? : '';
+        $password = $request->get('password') ? : '';
         if (!isset($_REQUEST['_m'])) {
             //$password = $this->decode($password); // 密码传递解密
         }
@@ -404,53 +400,20 @@ class LoginController extends Controller
         }
 
         //取uid
-        //$userArr = explode("@", $username);
-        //$uid = $this->make('redis')->hget('husername_to_id', (count($userArr) == 2) ? $userArr[0] . "@" . strtolower($userArr[1]) : $username);
-        $uid = $this->make('redis')->hget('husername_to_id', $username);
-        if (!$uid) {
-            $userinfo = Users::where('username', $username)->first();
-            $uid = $userinfo['uid'];
-        } else {
-            $userinfo = $this->make('redis')->hgetall('huser_info:' . $uid);
-
-            if (!$userinfo) {
-                $userinfo = Users::find($uid);
-            } else {
-                $this->_isGetCache = true;
-            }
-        }
-        //如果获取不到用户信息，返回提示信息
-        if (!$userinfo) {
+        $auth = \Auth::guard('pc');
+        if(!$auth->attempt([
+            'username'=>$username,
+            'password'=>$password,
+        ])){
             return array(
                 'status' => 0,
-                'msg' => '帐号密码错误!'
+                'msg' => '您的账号登录失败，请联系客服！',
             );
-        }
-        /**
-         * 用于在设置cookies的方法中使用
-         */
-        //$this->login_user = $userinfo;
-        if (!$skipPassword && $userinfo['password'] != md5($password)) {
-            //计数
-            //$this->make('redis')->hset('hlogin_authcode', $userinfo['uid'], ++$times);
-            return array(
-                'status' => 0,
-                'msg' => '帐号密码错误!',
-                'failNums' => $times
-            );
-        }
-
-        //后台设置了是否登录
-        if ($userinfo['status'] != 1) {
-            return array(
-                'status' => 0,
-                'msg' => '您的账号已经被禁止登录，请联系客服！',
-            );
-        }
-        //echo phpinfo();die;
+        };
         /**
          * 记录最后的登录ip地址
          */
+        $uid = $auth->id();
         $login_ip = $this->request()->getClientIp();
         $user = Users::find($uid);
         $user->last_ip = $login_ip; // 最后登录ip TODO 大流量优化，目前没压力
@@ -458,38 +421,6 @@ class LoginController extends Controller
         $user->save();
         //记录登录日志
         $this->loginLog($uid,$login_ip,date('Y-m-d H:i:s'));
-
-        /**
-         * 获取在 a 域名上登录之后的session_id 然后写入相应的登录数据
-         * 调用的方法中并没有写入用户的数据huser_info
-         */
-        $huser_sid = $this->make('redis')->hget('huser_sid', $userinfo['uid']);
-
-        $userInfo = is_array($userinfo) ? $userinfo : $userinfo->toArray();
-        // 此时调用的是单实例登录的session 验证
-        $this->writeRedis($userInfo,$huser_sid);
-
-        /**
-         * 7 天免登陆
-         */
-        $domainA = $_SERVER['HTTP_HOST'];
-        $remember = isset($_REQUEST['v_remember']) ? intval($_REQUEST['v_remember']) : 0;
-        if ($remember == 1) {
-            //   $expireDay = 604800;//7*24*60*60
-            //记住我的功能，将uid,|,用户名，密钥 一起md5加密，验证的时候可以用|分割，增加A域名地址信息irwin
-            setcookie(
-                self::CLIENT_ENCRY_FIELD, $this->_online . '|' . $this->remypwdMd5($userinfo['username']) . '|' . $domainA,
-                time() + 604800, '/',
-                $GLOBALS['CUR_DOMAIN']
-            );
-            $day = date('Ymd');
-            $times = intval($this->make('redis')->hget('hlogin_remember', $day));
-            $this->make('redis')->hset('hlogin_remember', $day, ++$times);
-        }
-        /**
-         * 清除计数 当用户输入正确的登录信息之后要清除掉原来输入错误的次数
-         */
-        $this->make('redis')->hset('hlogin_authcode', $userinfo['uid'], 0);
         return array(
             'status' => 1,
             'msg' => '登录成功',

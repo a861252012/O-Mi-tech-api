@@ -6,7 +6,7 @@
  * Time: 17:14
  */
 
-namespace App\Service\Auth;
+namespace App\Services\Auth;
 
 
 use Exception;

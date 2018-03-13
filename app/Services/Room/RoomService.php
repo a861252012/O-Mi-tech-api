@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Service\Room;
+namespace App\Services\Room;
 
 use App\Models\Users;
 use Core\Request;
-use Core\Service;
+use App\Services\Service;
 use Illuminate\Container\Container;
 
 /**
  *  @desc 房间类
  */
-class RoomService extends Service
+class RoomServices extends Service
 {
 
     public $tid = null;
@@ -40,7 +40,7 @@ class RoomService extends Service
         $redis = $this->make('redis');
         $hktvKey = "hvediosKtv:$rid";
 
-        $channelInfo = $this->make('socketService')->getNextServerAvailable($uid);
+        $channelInfo = $this->make('socketServices')->getNextServerAvailable($uid);
         $redis->hset($hktvKey, "channel_id", $channelInfo['id']);
         $str = "===addRoom rid===" . $rid . "===uid===" . $uid . "===serverIds size===" . json_encode($channelInfo);
         $this->make('systemServer')->logResult($str, "addRoom.log");

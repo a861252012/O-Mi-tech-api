@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\Task\TaskScript;
+namespace App\Services\Task\TaskScript;
 
 use App\Models\UserCheckSign;
 use App\Models\TaskUser;

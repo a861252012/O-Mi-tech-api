@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Service\Room;
+namespace App\Services\Room;
 
-use Core\Service;
+use App\Services\Service;
 /**
  *
  */
-class GameService extends Service{
+class GameServices extends Service{
     public function getServer()
     {
 

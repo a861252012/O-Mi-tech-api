@@ -1,14 +1,13 @@
 <?php
-namespace App\Service\Task;
+namespace App\Services\Task;
 
 use App\Models\TaskConf;
 use App\Models\Task;
 use App\Models\Goods;
 
-use Core\Exceptions\ServiceException;
-use Core\Service;
+use App\Services\Service;
 
-class TaskService extends Service
+class TaskServices extends Service
 {
     protected $uid;
     protected $uR;
@@ -148,7 +147,7 @@ class TaskService extends Service
                     if ($goods) {
                         $v['name'] = $goods['name'];
                     } else {
-                        throw new ServiceException('Receive bonus failed! No record in goods, Pls contact with system admin!');
+                        throw new \Exception('Receive bonus failed! No record in goods, Pls contact with system admin!');
                     }
                 }
             }

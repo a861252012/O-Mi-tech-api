@@ -1,9 +1,11 @@
 <?php
-namespace App\Service\Auth;
+namespace App\Services\Auth;
 
-use Core\Request;
-use Core\Service;
+use Illuminate\Http\Request;
+use App\Services\Service;
 use Illuminate\Container\Container;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Guard;
 use Lcobucci\JWT\Builder as JWTBuilder;
 use Lcobucci\JWT\Parser as JWTParser;
 use Lcobucci\JWT\Token;
@@ -15,7 +17,7 @@ use Lcobucci\JWT\ValidationData;
  * Date: 2016/9/22
  * Time: 9:44
  */
-class JWTAuthService extends Service
+class JWTAuthService extends Service implements Guard
 {
     /** @var  $token Token */
     public $token;
@@ -27,9 +29,73 @@ class JWTAuthService extends Service
         parent::__construct($container);
         $this->_config = $this->container['config']['jwt'];
     }
-
-    public function login(array $credentials)
+    public function logout()
     {
+        // TODO: Implement logout() method.
+    }
+    public function viaRemember()
+    {
+        // TODO: Implement viaRemember() method.
+    }
+    public function guest()
+    {
+        // TODO: Implement guest() method.
+    }
+    public function basic($field = 'email')
+    {
+        // TODO: Implement basic() method.
+    }
+    public function loginUsingId($id, $remember = false)
+    {
+        // TODO: Implement loginUsingId() method.
+    }
+    public function once(array $credentials = array())
+    {
+        // TODO: Implement once() method.
+    }
+    public function onceBasic($field = 'email')
+    {
+        // TODO: Implement onceBasic() method.
+    }
+    public function validate(array $credentials = array())
+    {
+        // TODO: Implement validate() method.
+    }
+    public function id()
+    {
+        // TODO: Implement id() method.
+    }
+
+    /**
+     * @param Authenticatable $user
+     */
+    public function setUser(Authenticatable $user)
+    {
+        // TODO: Implement setUser() method.
+    }
+
+    public function user()
+    {
+        return $this->getUserFromToken($this->token);
+    }
+    public function check()
+    {
+        // TODO: Implement check() method.
+    }
+
+    /**
+     * @param Authenticatable $user
+     * @param bool $remember
+     * @return bool|Token|void
+     * @throws LoginException
+     */
+    public function login(Authenticatable $user, $remember = false)
+    {
+        //array $credentials
+        $credentials = [
+            'username' => $user->username,
+            'password' => $user->password,
+        ]
         $userInfo = $this->attempt($credentials);
         if (!$userInfo) return false;
         $this->createToken([
@@ -39,7 +105,7 @@ class JWTAuthService extends Service
         return $this->token;
     }
 
-    public function attempt(array $credentials)
+    public function attempt(array $credentials = array(), $remember = false, $login = true)
     {
 
 
@@ -84,7 +150,7 @@ class JWTAuthService extends Service
     /**
      * @param array $claims
      * @param array $headers
-     * @return JWTAuthService
+     * @return JWTAuthServices
      */
     public function createToken(array $claims, array $headers = [])
     {
@@ -119,10 +185,6 @@ class JWTAuthService extends Service
         return (new \ReflectionClass($this->config('alg_classes')[$this->config('alg')]))->newInstance();
     }
 
-    public function user()
-    {
-        return $this->getUserFromToken($this->token);
-    }
 
     public function getUserFromToken($token)
     {
@@ -136,7 +198,7 @@ class JWTAuthService extends Service
 
     /**
      * @param string $token
-     * @return JWTAuthService
+     * @return JWTAuthServices
      */
     public function parseToken($token)
     {

@@ -1,18 +1,16 @@
 <?php
 
-namespace App\Service\System;
+namespace App\Services\System;
 
-use Core\Service;
+use App\Services\Service;
 use Symfony\Component\HttpFoundation\Response;
-use Core\Exceptions\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * @package 系统支持服务
  * @author dc
  * @version 20151118
  */
-class SystemService extends Service
+class SystemServices extends Service
 {
 
 
@@ -119,7 +117,7 @@ class SystemService extends Service
     /**
      * [upload 文件上传组件]
      *
-     * @see 重构自原symfony中DataModel curlPostPic模块功能 Video\ProjectBundle\Service\DataModel.php
+     * @see 重构自原symfony中DataModel curlPostPic模块功能 Video\ProjectBundle\Services\DataModel.php
      * @param $user array [用户信息]
      * @param string $file string|resource [可以是二进制流|也可以是表单名]
      * @return mixed|string

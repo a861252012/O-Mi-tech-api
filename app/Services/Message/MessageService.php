@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Service\Message;
+namespace App\Services\Message;
 
 use App\Models\Messages;
-use Core\Exceptions\ServiceException;
-use Core\Service;
+use App\Services\Service;
 use DB;
 
-class MessageService extends Service
+class MessageServices extends Service
 {
 
     /**
@@ -35,7 +34,7 @@ class MessageService extends Service
          * 必须发送用户 内容不能为空
          */
         if (!isset($data['send_uid']) || !isset($data['rec_uid']) || !isset($data['content'])) {
-            throw new ServiceException('Content and rec_uid can not empty for send user message!');
+            throw new \Exception('Content and rec_uid can not empty for send user message!');
         }
         // 发送私人用户
         if (!isset($data)) {
@@ -55,7 +54,7 @@ class MessageService extends Service
     public function sendSystemToUsersMessage($data = [])
     {
         if (!isset($data['rec_uid']) || !isset($data['content'])) {
-            throw new ServiceException('Content and rec_uid can not empty for send system message!');
+            throw new \Exception('Content and rec_uid can not empty for send system message!');
         }
         // 系统默认用户0
         if (!isset($data['send_uid'])) {

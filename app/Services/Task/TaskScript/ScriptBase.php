@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Service\Task\TaskScript;
+namespace App\Services\Task\TaskScript;
 
-use App\Service\Task\GiftScript\Top;
-use App\Service\Task\GiftScript\Goods;
-use App\Service\Task\GiftScript\Icon;
-use App\Service\Task\GiftScript\Medals;
-use App\Service\Task\GiftScript\Points;
-use App\Service\Task\GiftScript\Level;
+use App\Services\Task\GiftScript\Top;
+use App\Services\Task\GiftScript\Goods;
+use App\Services\Task\GiftScript\Icon;
+use App\Services\Task\GiftScript\Medals;
+use App\Services\Task\GiftScript\Points;
+use App\Services\Task\GiftScript\Level;
 use Core\Model;
 use App\Models\TaskUser;
 use App\Models\Users;

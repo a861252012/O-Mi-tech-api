@@ -2,8 +2,9 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\UserService;
+use App\Services\User\UserService;
 use Closure;
+use Illuminate\Http\JsonResponse;
 
 class LoginAuth
 {
@@ -18,7 +19,8 @@ class LoginAuth
     {
         echo "Middleware";
         //$this->checkLogin();
-        var_dump(app()->make(UserService::class)->checkLogin());
+        var_dump(\Auth::guard('pc')->user());
+        if (!\Auth::guard('pc')->user()) return JsonResponse::create(['status'=>0,'未登录']);
         return $next($request);
     }
 

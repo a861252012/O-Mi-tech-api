@@ -6,7 +6,7 @@
  * Time: 17:02
  */
 
-namespace App\Service\Room;
+namespace App\Services\Room;
 
 
 class NoSocketChannelException extends \Exception

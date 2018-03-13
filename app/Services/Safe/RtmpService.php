@@ -1,13 +1,10 @@
 <?php
 
-namespace App\Service\Safe;
+namespace App\Services\Safe;
 
-use Core\Exceptions\ServiceException;
-use Core\Service;
-use DB;
-use Illuminate\Support\Arr;
+use App\Services\Service;
 
-class RtmpService extends Service
+class RtmpServices extends Service
 {
     /**
      * 加参后地址
