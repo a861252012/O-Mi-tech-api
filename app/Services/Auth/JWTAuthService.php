@@ -3,13 +3,13 @@ namespace App\Services\Auth;
 
 use Illuminate\Http\Request;
 use App\Services\Service;
-use Illuminate\Container\Container;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
 use Lcobucci\JWT\Builder as JWTBuilder;
 use Lcobucci\JWT\Parser as JWTParser;
 use Lcobucci\JWT\Token;
 use Lcobucci\JWT\ValidationData;
+use Illuminate\Contracts\Auth\UserProvider;
 
 /**
  * Created by PhpStorm.
@@ -23,11 +23,28 @@ class JWTAuthService extends Service implements Guard
     public $token;
     protected $_config;
     protected $request;
+    const guard = 'mobile';
 
-    public function __construct(Container $container)
+
+    public function __construct(UserProvider $provider)
     {
-        parent::__construct($container);
-        $this->_config = $this->container['config']['jwt'];
+        parent::__construct(app());
+        $this->_config = [
+            'alg' => 'HS256',
+            'key' => 'testkey',
+            'alg_classes' => [
+                'HS256' => \Lcobucci\JWT\Signer\Hmac\Sha256::class,
+                'HS384' => \Lcobucci\JWT\Signer\Hmac\Sha384::class,
+                'HS512' => \Lcobucci\JWT\Signer\Hmac\Sha512::class,
+                'RS256' => \Lcobucci\JWT\Signer\Rsa\Sha256::class,
+                'RS384' => \Lcobucci\JWT\Signer\Rsa\Sha384::class,
+                'RS512' => \Lcobucci\JWT\Signer\Rsa\Sha512::class,
+                'ES256' => \Lcobucci\JWT\Signer\Ecdsa\Sha256::class,
+                'ES384' => \Lcobucci\JWT\Signer\Ecdsa\Sha384::class,
+                'ES512' => \Lcobucci\JWT\Signer\Ecdsa\Sha512::class,
+            ],
+            'expire'=>3650*24*60*60,//过期时间（秒）
+        ];
     }
     public function logout()
     {
@@ -107,8 +124,6 @@ class JWTAuthService extends Service implements Guard
 
     public function attempt(array $credentials = array(), $remember = false, $login = true)
     {
-
-
         $username = $credentials['username'];
         $password = $credentials['password'];
         $redis = $this->make('redis');

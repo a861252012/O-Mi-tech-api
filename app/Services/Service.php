@@ -32,6 +32,6 @@ class Service
      * @description 继承原注入方法,方便调用
      */
     protected function make($name){
-        return Redis::resolve();
+            return resolve($name);
     }
 }

@@ -29,7 +29,7 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerPolicies();
 
         //
-        Auth::extend('jwt', function ($app, $name, array $config) {
+        Auth::extend('mobile', function ($app, $name, array $config) {
             // Return an instance of Illuminate\Contracts\Auth\Guard...
 
             return new JWTAuthService(Auth::createUserProvider($config['provider']));
