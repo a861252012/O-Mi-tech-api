@@ -26,6 +26,7 @@ use App\Models\Conf;
 use App\Models\Keywords;
 use App\Models\UserModNickName;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
@@ -111,9 +112,8 @@ class Controller extends BaseController
             case 'captcha':
 
                 break;
-            case "userServer":
-               // $service = app()->make(UserService::class);
-                break;
+            default:
+                $service = app($name);
         }
         return $service;
     }
@@ -333,6 +333,34 @@ class Controller extends BaseController
             }
         }
         return end($data);
+    }
+
+    /**
+     * 渲染模板
+     *
+     * @param $tpl
+     * @param $params
+     */
+    public function render($tpl, $params = [])
+    {
+        // 必须以html.twig结尾
+        return JsonResponse::create($params);
+    }
+    /**
+     * 给变量赋值
+     *
+     * @param string|array $var
+     * @param string $value
+     */
+    public function assign($var, $value = NULL)
+    {
+        if(is_array($var)) {
+            foreach($var as $key => $val) {
+                $this->data[$key] = $val;
+            }
+        } else {
+            $this->data[$var] = $value;
+        }
     }
 
     /**

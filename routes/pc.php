@@ -1,11 +1,15 @@
 <?php
+
+Route::get('/', function(){
+    echo  "aaa";
+});
+
 Route::group(['middleware'=>['login_auth']],function (){
     Route::match(['POST', 'GET'], '/onetomore', function(){
         echo "aaa";
     });
 });
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
-
 
 Route::get('/captcha', ['name' => 'captcha', 'uses' => 'BaseController@captcha']);
 // 所有路由都在这里配置
@@ -72,9 +76,6 @@ Route::get('/find', ['name' => 'find', 'uses' => 'ApiController@searchAnchor']);
 
 // 验证是否登录
 Route::group(['middleware' => []], function () {
-    Route::match(['GET', 'POST'], '/', ['name' => 'default', 'uses' => 'IndexController@indexAction']);
-    // 首页房间数据json
-    Route::get('/videoList', ['name' => 'index_videoList', 'uses' => 'IndexController@videoList']);
 // 任务api
     Route::get('/task', ['name' => 'task_index', 'uses' => 'TaskController@index']);
 // 任务完成领取奖励api
@@ -261,7 +262,6 @@ Route::group(['middleware' => []], function () {
     });
 
 
-    Route::match(['POST', 'GET'], '/indexinfo', ['uses' => 'IndexController@getIndexInfo']);
     Route::match(['POST', 'GET'], '/verfiyName', ['uses' => 'IndexController@checkUniqueName']);
     Route::match(['POST', 'GET'], '/setinroomstat', ['name' => 'setinroomstat', 'uses' => 'IndexController@setInRoomStat']);
 

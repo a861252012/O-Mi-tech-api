@@ -12,4 +12,3 @@ Route::group(['middleware'=>['login_auth']],function (){
         echo "aaa";
     });
 });
-Route::match();
