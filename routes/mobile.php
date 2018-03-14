@@ -12,3 +12,5 @@ Route::group(['middleware'=>['login_auth']],function (){
         echo "aaa";
     });
 });
+//登录
+Route::post('/login', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@login']);

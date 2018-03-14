@@ -6,7 +6,7 @@ use App\Models\Messages;
 use App\Services\Service;
 use DB;
 
-class MessageServices extends Service
+class MessageService extends Service
 {
 
     /**

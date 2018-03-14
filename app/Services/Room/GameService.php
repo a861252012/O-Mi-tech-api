@@ -6,7 +6,7 @@ use App\Services\Service;
 /**
  *
  */
-class GameServices extends Service{
+class GameService extends Service{
     public function getServer()
     {
 

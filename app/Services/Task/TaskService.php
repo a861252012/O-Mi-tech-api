@@ -7,7 +7,7 @@ use App\Models\Goods;
 
 use App\Services\Service;
 
-class TaskServices extends Service
+class TaskService extends Service
 {
     protected $uid;
     protected $uR;

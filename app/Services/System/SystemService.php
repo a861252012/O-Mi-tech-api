@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
  * @author dc
  * @version 20151118
  */
-class SystemServices extends Service
+class SystemService extends Service
 {
 
 

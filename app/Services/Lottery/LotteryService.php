@@ -8,7 +8,7 @@ use App\Models;
 /**
  * 抽奖服务
  */
-class LotteryServices extends Service
+class LotteryService extends Service
 {
 
 

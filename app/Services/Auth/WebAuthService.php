@@ -74,9 +74,6 @@ class WebAuthService implements Guard
     {
         return $this->attempt($credentials, false, false);
     }
-    public function check(){
-
-    }
     /**
      * Determine if the user matches the credentials.
      *
@@ -118,7 +115,7 @@ class WebAuthService implements Guard
      * @return bool|Token|void
      * @throws LoginException
      */
-    public function login( $user, $remember = false)
+    public function login(Authenticatable $user, $remember = false)
     {
         $this->updateSession($user['uid']);
 
@@ -199,9 +196,8 @@ class WebAuthService implements Guard
      */
     public function attempt(array $credentials = array(), $remember = false, $login = true)
     {
-        $username = $credentials['username'];
-        $password = $credentials['password'];
-        $user = app(UserService::class)->retrieveByCredentials($credentials);
+        $temp = app(UserService::class)->retrieveByCredentials($credentials);
+        $user = (new Users)->forceFill($temp);
         if ($this->hasValidCredentials($user, $credentials) && $user['status']) {
             if ($login) {
                 $this->login($user, $remember);
