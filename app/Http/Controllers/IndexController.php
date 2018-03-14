@@ -20,7 +20,6 @@ class IndexController extends Controller
 
     public function indexAction()
     {
-
         //如果登陆了显示登陆数据
 //        $userInfo = array();
 //        if ($this->checkLogin()) {
@@ -55,7 +54,6 @@ class IndexController extends Controller
                 $slider[] = $ad;
             }
         }
-
         $this->assign('ad_1', $slider);
 
         $ad_2 = $this->make('redis')->hget('img_cache', 2);

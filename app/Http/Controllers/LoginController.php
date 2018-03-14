@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Auth\WebAuthService;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Http\Request;
 
@@ -400,7 +401,7 @@ class LoginController extends Controller
         }
 
         //取uid
-        $auth = \Auth::guard('pc');
+        $auth = \Auth::guard($this->request()->get('guard',WebAuthService::guard));
         if(!$auth->attempt([
             'username'=>$username,
             'password'=>$password,

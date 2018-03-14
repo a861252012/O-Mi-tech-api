@@ -26,6 +26,7 @@ use App\Models\Conf;
 use App\Models\Keywords;
 use App\Models\UserModNickName;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
@@ -111,11 +112,10 @@ class Controller extends BaseController
                 $service = Redis::resolve();
                 break;
             case 'captcha':
-          //      $service = app()->make(CaptchaService::class);
+
                 break;
-            case "userServer":
-                $service = app()->make(UserService::class);
-                break;
+            default:
+                $service = app($name);
         }
         return $service;
     }
@@ -335,6 +335,34 @@ class Controller extends BaseController
             }
         }
         return end($data);
+    }
+
+    /**
+     * 渲染模板
+     *
+     * @param $tpl
+     * @param $params
+     */
+    public function render($tpl, $params = [])
+    {
+        // 必须以html.twig结尾
+        return JsonResponse::create($params);
+    }
+    /**
+     * 给变量赋值
+     *
+     * @param string|array $var
+     * @param string $value
+     */
+    public function assign($var, $value = NULL)
+    {
+        if(is_array($var)) {
+            foreach($var as $key => $val) {
+                $this->data[$key] = $val;
+            }
+        } else {
+            $this->data[$var] = $value;
+        }
     }
 
     /**
@@ -869,12 +897,10 @@ class Controller extends BaseController
      */
     public function captcha()
     {
-        var_dump('testddd');exit;
-       $headers = array(
+        $headers = array(
             'Content-Type' => 'image/png',
             'Content-Disposition' => 'inline; filename="' . $this->make('captcha')->Generate() . '"'
         );
-
         $_SESSION['CAPTCHA_KEY'] = strtolower($this->make('captcha')->phrase);
         return new Response(uniqid() . '.png', 200, $headers);
     }
