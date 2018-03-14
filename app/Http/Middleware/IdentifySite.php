@@ -26,8 +26,10 @@ class IdentifySite
     {
         $this->siteService->fromRequest($request);
         if (!$this->siteService->isValid()) {
-            return JsonResponse::create(['status' => 0, 'msg' => $this->siteService->getMsg()]);
-//            abort('410', $site->getMsg());
+            return JsonResponse::create([
+                'status' => 0,
+                'msg' => $this->siteService->errors()->first()
+            ]);
         }
         $this->siteService->shareConfigWithViews();
         return $next($request);
