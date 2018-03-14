@@ -2,10 +2,19 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\SiteService;
 use Closure;
+use Illuminate\Http\JsonResponse;
 
 class IdentifySite
 {
+    protected $siteService;
+
+    public function __construct(SiteService $siteService)
+    {
+        $this->siteService = $siteService;
+    }
+
     /**
      * Handle an incoming request.
      *
@@ -15,14 +24,12 @@ class IdentifySite
      */
     public function handle($request, Closure $next)
     {
-        $siteService = app('siteService');
-        $siteDomain = $siteService->getDomainInfo();
-        if (!$siteDomain->has('id')) {
-            abort('404', 'Invalid Domain');
+        $this->siteService->fromRequest($request);
+        if (!$this->siteService->isValid()) {
+            return JsonResponse::create(['status' => 0, 'msg' => $this->siteService->getMsg()]);
+//            abort('410', $site->getMsg());
         }
-        $siteInfo = $siteService->getSiteInfo();
-        config('SITE_DOMAIN', $siteDomain);
-        config('SITE_INFO', $siteInfo);
+        $this->siteService->shareConfigWithViews();
         return $next($request);
     }
 }
