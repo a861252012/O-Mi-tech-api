@@ -31,6 +31,8 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Providers\CaptchaServiceProvider;
+use App\Services\User\CaptchaService;
 
 
 use Illuminate\Support\Facades\Redis;
@@ -109,10 +111,10 @@ class Controller extends BaseController
                 $service = Redis::resolve();
                 break;
             case 'captcha':
-
+          //      $service = app()->make(CaptchaService::class);
                 break;
             case "userServer":
-               // $service = app()->make(UserService::class);
+                $service = app()->make(UserService::class);
                 break;
         }
         return $service;
@@ -867,10 +869,12 @@ class Controller extends BaseController
      */
     public function captcha()
     {
-        $headers = array(
+        var_dump('testddd');exit;
+       $headers = array(
             'Content-Type' => 'image/png',
             'Content-Disposition' => 'inline; filename="' . $this->make('captcha')->Generate() . '"'
         );
+
         $_SESSION['CAPTCHA_KEY'] = strtolower($this->make('captcha')->phrase);
         return new Response(uniqid() . '.png', 200, $headers);
     }

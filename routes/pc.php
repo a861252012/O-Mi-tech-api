@@ -24,4 +24,11 @@ Route::group(['middleware'=>['login_auth']],function (){
     });
 });
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
+/*//验证码
+Route::get('/captcha', ['name' => 'captcha', 'uses' => 'Controller@captcha']);*/
+
+//pc创建一对多
+Route::get('/member/roomOneToMore', ['name' => 'roomOneToMore', 'uses' => 'MemberController@roomOneToMore']);
+//移动端创建一对多
+Route::get('/m/OneToMore/create', ['name' => 'OneToMore', 'uses' => 'Controller@captcha']);
 

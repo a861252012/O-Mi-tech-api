@@ -33,6 +33,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 
+
 class MemberController extends Controller
 {
     private $_menus = array(
@@ -957,12 +958,16 @@ class MemberController extends Controller
      */
     public function roomOneToMore()
     {
-        $start_time = $this->make('request')->get('mintime');
+
+    /*    $start_time = $this->make('request')->get('mintime');
         $hour = $this->make('request')->get('hour');
         $minute = $this->make('request')->get('minute');
         $tid = $this->make('request')->get('tid');
         $duration = $this->make('request')->get('duration');
-        $points = $this->make('request')->get('points');
+        $points = $this->make('request')->get('points');*/
+       $input = Input::all();
+
+        exit;
         if (!in_array($duration, array(20, 25, 30, 35, 40, 45, 50, 55, 60))) return new JsonResponse(array('code' => 9, 'msg' => L('MEMBER.ROOMSETDURATION.ERROR')));
         if ($points > 99999 || $points <= 0) return new JsonResponse(array('code' => 3, 'msg' => '金额超出范围'));
 

@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Services\SiteService;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
-class Captcha extends ServiceProvider
+class CaptchaServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap the application services.
@@ -21,10 +23,16 @@ class Captcha extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public   function register()
     {
         //
-        parent::boot();
+    //    parent::boot();
+        //使用singleton绑定单例
+        $this->app->singleton('test',function(){
+            return new TestService();
+        });
+
+        var_dump('ddd');exit;
     }
     public function Verify(){
 
