@@ -215,12 +215,13 @@ class Controller extends BaseController
         $data = RoomDuration::where('status', 0)->where('uid',$this->_online)
             ->orderBy('starttime', 'DESC')
             ->get()->toArray();
-        $temp_data = array_column_multi($data,['starttime','endtime']);
+
+        $temp_data = $this->array_column_multi($data,['starttime','endtime']);
         if(!$this->checkActiveTime($start_time,$endtime,$temp_data)) return false;
 
         //时间，是否和一对多有重叠
         $data = RoomOneToMore::where('status', 0)->where('uid',$this->_online)->get()->toArray();
-        $temp_data = array_column_multi($data,['starttime','endtime']);
+        $temp_data = $this->array_column_multi($data,['starttime','endtime']);
         if(!$this->checkActiveTime($start_time,$endtime,$temp_data)) return false;
         return true;
     }
@@ -1680,5 +1681,14 @@ class Controller extends BaseController
 
         }
         return true;
+    }
+
+    function array_column_multi(array $input, array $column_keys) {
+        $result = array();
+        $column_keys = array_flip($column_keys);
+        foreach($input as $key => $el) {
+            $result[$key] = array_intersect_key($el, $column_keys);
+        }
+        return $result;
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App;
 use App\Models\AgentsPriv;
 use App\Models\AgentsRelationship;
 use App\Models\Anchor;
@@ -959,27 +959,27 @@ class MemberController extends Controller
     public function roomOneToMore()
     {
 
-    /*    $start_time = $this->make('request')->get('mintime');
+       $start_time = $this->make('request')->get('mintime');
         $hour = $this->make('request')->get('hour');
         $minute = $this->make('request')->get('minute');
         $tid = $this->make('request')->get('tid');
         $duration = $this->make('request')->get('duration');
-        $points = $this->make('request')->get('points');*/
-       $input = Input::all();
+        $points = $this->make('request')->get('points');
 
-        exit;
-        if (!in_array($duration, array(20, 25, 30, 35, 40, 45, 50, 55, 60))) return new JsonResponse(array('code' => 9, 'msg' => L('MEMBER.ROOMSETDURATION.ERROR')));
+        if (!in_array($duration, array(20, 25, 30, 35, 40, 45, 50, 55, 60))) return new JsonResponse(array('code' => 9, 'msg' => '请求错误'));
+
         if ($points > 99999 || $points <= 0) return new JsonResponse(array('code' => 3, 'msg' => '金额超出范围'));
 
-        if (empty($tid) || empty($start_time) || empty($duration)) return new JsonResponse(array('code' => 4, 'msg' => L('MEMBER.ROOMSETDURATION.ERROR')));
+        if (empty($tid) || empty($start_time) || empty($duration)) return new JsonResponse(array('code' => 4, 'msg' => '请求错误1'));
+
         $start_time = date("Y-m-d H:i:s", strtotime($start_time . ' ' . $hour . ':' . $minute . ':00'));
 
-        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(array('code' => 6, 'msg' => L('MEMBER.ROOMSETDURATION.LIMIT_OVERFLOW')));
+        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(array('code' => 6, 'msg' => '不能设置过去的时间'));
 
         //$room_config = $this->getRoomStatus($this->_online,7);
         $endtime = date('Y-m-d H:i:s', strtotime($start_time) + $duration * 60);
 
-        if (!$this->notSetRepeat($start_time, $endtime)) return new JsonResponse(array('code' => 2, 'msg' => L('MEMBER.ROOMSETDURATION.DURATION')));
+        if (!$this->notSetRepeat($start_time, $endtime)) return new JsonResponse(array('code' => 2, 'msg' => '你这段时间和一对一或一对多有重复的房间'));
 
         //添加
         /** @var \Redis $redis */
@@ -1069,7 +1069,7 @@ class MemberController extends Controller
         $one2moreLog = 'hroom_whitelist:' . $duroom['uid'] . ':' . $duroom->id . ' ' . json_encode($temp) . "\n";
         $this->logResult('roomOneToMore  ' . $one2moreLog, $logPath);
 
-        return new JsonResponse(array('code' => 1, 'msg' => L('MEMBER.ROOMSETDURATION.OK')));
+        return new JsonResponse(array('status' => 1, 'msg' =>'添加成功！'));
     }
 
     /**

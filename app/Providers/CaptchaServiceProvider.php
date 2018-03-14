@@ -28,13 +28,10 @@ class CaptchaServiceProvider extends ServiceProvider
         //
     //    parent::boot();
         //使用singleton绑定单例
-        $this->app->singleton('test',function(){
+        $this->app->singleton('captcha',function(){
             return new TestService();
         });
 
         var_dump('ddd');exit;
-    }
-    public function Verify(){
-
     }
 }
