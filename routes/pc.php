@@ -403,8 +403,7 @@ Route::get('/get_lcertificate', ['name' => 'islogin', 'uses' => 'ApiController@g
 Route::get('/m/index', ['name' => 'm_index', 'uses' => 'Mobile\MobileController@index']);
 //排行
 Route::get('/m/rank', ['name' => 'm_rank', 'uses' => 'Mobile\MobileController@rank']);
-//登录验证码
-Route::get('/m/login/captcha', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@loginCaptcha']);
+
 //注册
 Route::get('/m/register', ['name' => 'm_register', 'uses' => 'Mobile\MobileController@register']);
 

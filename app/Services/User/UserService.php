@@ -13,45 +13,31 @@ use App\Models\UserModNickName;
 use App\Models\Users;
 use App\Services\Service;
 use DB;
+use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
 use Mockery\Exception;
 
 class UserService extends Service
 {
 
+    const KEY_USERNAME_TO_ID = 'husername_to_id';
+    const KEY_USER_INFO = 'huser_info:';
     public $user;
+    protected $redis;
 
+    public function __construct(RedisManager $redis)
+    {
+        $this->redis = $redis;
+    }
 
     public function setUser($user)
     {
         if (!$user instanceof Users) {
-            abort(404,'Please make sure $user is a App\Models\Users object');
+            abort(404, 'Please make sure $user is a App\Models\Users object');
         }
         $this->user = $user;
         return $this;
     }
-
-    /**
-     * @param $credentials
-     * @return array
-     */
-    public function retrieveByCredentials($credentials){
-        $username = $credentials['username'];
-        $uid = $this->make('redis')->hget('husername_to_id', $username);
-        if (!$uid) {
-            $userinfo = Users::query()->where('username', $username)->first()->toArray();
-            app('redis')->hset('husername_to_id', $username,$userinfo['uid']);
-            return $userinfo;
-        }
-
-        $userinfo = $this->make('redis')->hgetall('huser_info:' . $uid);
-        if (!$userinfo) {
-            $userinfo = Users::find($uid)->toArray();
-            app('redis')->hmset('huser_info:', $userinfo['uid'],$userinfo);
-        }
-        return $userinfo;
-    }
-
 
     /**
      * @param array $user
@@ -62,7 +48,7 @@ class UserService extends Service
      */
     public function register(array $user, $gift = array(), $agent = 0, $invite_code = 0)
     {
-        $newUser = Arr::only($user, array('did','username','password', 'nickname', 'roled', 'exp', 'pop', 'created', 'status','province','city','county','video_status','rich','lv_exp','lv_rich','pic_total_size','pic_used_size','lv_type','icon_id','uuid','xtoken','origin','sex'));
+        $newUser = Arr::only($user, array('did', 'username', 'password', 'nickname', 'roled', 'exp', 'pop', 'created', 'status', 'province', 'city', 'county', 'video_status', 'rich', 'lv_exp', 'lv_rich', 'pic_total_size', 'pic_used_size', 'lv_type', 'icon_id', 'uuid', 'xtoken', 'origin', 'sex'));
         $newUser['created'] = date('Y-m-d H:i:s');
         if (strlen($newUser['password']) != 32) {
             $newUser['password'] = md5($newUser['password']);
@@ -169,6 +155,7 @@ class UserService extends Service
      * @param   integer $points [更新钻石数]
      * @param   integer $pay_type [充值方式：1 银行转账、2 抽奖  3 （未使用）   4后台充值 5充值赠送 6任务和签到奖励 7转帐记录]
      * @return  bool                  [成功true 失败false]
+     * @throws \ErrorException
      */
     public function updateUserOfPoints($uid, $operation, $points, $pay_type)
     {
@@ -215,26 +202,19 @@ class UserService extends Service
     public function getUserByUid($uid)
     {
         if (!$uid || !is_numeric($uid)) {
-            throw new Exception('Please make sure $uid is a numeric');
+            return null;
         }
-        $hashtable = 'huser_info:' . $uid;
+        $hashtable = static::KEY_USER_INFO . $uid;
 
-        if ($this->container->make('redis')->Hexists($hashtable, 'uid')) {
-            return $this->container->make('redis')->hgetall($hashtable);
+        if ($this->redis->Hexists($hashtable, 'uid')) {
+            return (new Users())->forceFill($this->redis->hgetall($hashtable));
         } else {
-            $retData = Users::find($uid);
-
-            //dc修正用户不存在抛出异常
-            if (!$retData) {
-                return false;
-            }
-            $retData = $retData->toArray();
+            $user = Users::find($uid);
             //已禁止账号不写redis
-            if ($retData['status']) {
-                $this->container->make('redis')->hmset($hashtable, $retData);
+            if ($user && $user['status']) {
+                $this->redis->hmset($hashtable, $user);
             }
-
-            return $retData;
+            return $user;
         }
     }
 
@@ -378,16 +358,12 @@ class UserService extends Service
      */
     public function getUserByUsername($username)
     {
-        if (!$username) {
-            throw new Exception('Please make sure $username is a string');
-        }
-        $user = Users::where('username', $username)->first();
+        return $this->getUserByUid($this->getUidByUsername($username));
+    }
 
-        if ($user) {
-            return $user->toArray();
-        }
-
-        return false;
+    public function getUidByUsername($username)
+    {
+        return $uid = $this->redis->hget(static::KEY_USERNAME_TO_ID, $username);
     }
 
     /**
@@ -583,10 +559,10 @@ class UserService extends Service
     {
         /** 先查询购买的权限 */
         //查询购买记录
-        $redis=$this->make('redis');
-        $flag=intval($redis->hget('modify.nickname',$this->user['uid']));
-        if ($flag>=1){
-            return ['num'=>$flag];
+        $redis = $this->make('redis');
+        $flag = intval($redis->hget('modify.nickname', $this->user['uid']));
+        if ($flag >= 1) {
+            return ['num' => $flag];
         }
 
         // TODO 贵族的权限
@@ -603,7 +579,7 @@ class UserService extends Service
 
         // 普通用户修改的权限 只允许一次
         $uMod = UserModNickName::where('uid', $this->user['uid'])->first();
-        if ($uMod &&$uMod->exists) {
+        if ($uMod && $uMod->exists) {
             return array('num' => 0);
         } else {
             return array('num' => 1);
@@ -842,7 +818,7 @@ class UserService extends Service
                 'score' => $score
             ],
                 isset($userCache[$uid]) ? $userCache[$uid]
-                    : ($userCache[$uid] = array_only($this->getUserByUid($uid), ['lv_rich', 'lv_exp', 'username', 'nickname','headimg', 'icon_id', 'description', 'vip']))
+                    : ($userCache[$uid] = array_only($this->getUserByUid($uid), ['lv_rich', 'lv_exp', 'username', 'nickname', 'headimg', 'icon_id', 'description', 'vip']))
             );
         }
         return $ret;

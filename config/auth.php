@@ -14,7 +14,7 @@ return [
     */
 
     'defaults' => [
-        'guard' => 'web',
+        'guard' => 'pc',
         'passwords' => 'users',
     ],
 
@@ -48,12 +48,12 @@ return [
 
         'pc' => [
             'driver' => 'pc',
-            'provider' => 'users',
+            'provider' => 'redisUsers',
         ],
 
         'mobile' => [
             'driver' => 'jwt',
-            'provider' => 'users',
+            'provider' => 'redisUsers',
         ],
     ],
 
@@ -83,6 +83,10 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\Users::class,
         ],
+        'redisUsers'=>[
+            'driver'=>'redisUsers',
+            'model'=>App\Models\Users::class,
+        ]
 
         // 'users' => [
         //     'driver' => 'database',

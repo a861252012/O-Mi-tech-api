@@ -1,15 +1,13 @@
 <?php
+
 namespace App\Services\Auth;
 
 use App\Models\Users;
-use App\Services\Service;
 use App\Services\User\UserService;
-use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Contracts\Auth\Guard;
-use Illuminate\Contracts\Auth\UserProvider;
-use Illuminate\Http\Request;
-use Illuminate\Session\SessionInterface;
 use Illuminate\Auth\GuardHelpers;
+use Illuminate\Auth\SessionGuard;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Session\SessionInterface;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Session;
 
@@ -19,7 +17,7 @@ use Illuminate\Support\Facades\Session;
  * Date: 2016/9/22
  * Time: 9:44
  */
-class WebAuthService implements Guard
+class WebAuthService extends SessionGuard
 {
     use GuardHelpers;
     const guard = 'pc';
@@ -42,68 +40,36 @@ class WebAuthService implements Guard
     protected $flash_version = '';
     public $_isGetCache = false;
 
-    public function __construct(UserProvider $provider)
-    {
-
-    }
-    public function logout()
-    {
-        // TODO: Implement logout() method.
-    }
-    public function viaRemember()
-    {
-        // TODO: Implement viaRemember() method.
-    }
-    public function basic($field = 'email')
-    {
-        // TODO: Implement basic() method.
-    }
-    public function loginUsingId($id, $remember = false)
-    {
-        // TODO: Implement loginUsingId() method.
-    }
-    public function once(array $credentials = array())
-    {
-        // TODO: Implement once() method.
-    }
-    public function onceBasic($field = 'email')
-    {
-        // TODO: Implement onceBasic() method.
-    }
-    public function validate(array $credentials = array())
-    {
-        return $this->attempt($credentials, false, false);
-    }
     /**
      * Determine if the user matches the credentials.
      *
-     * @param  mixed  $user
-     * @param  array  $credentials
+     * @param  mixed $user
+     * @param  array $credentials
      * @return bool
      */
     protected function hasValidCredentials($user, $credentials)
     {
-        return ! is_null($user) && $this->validateCredentials($user, $credentials);
+        return !is_null($user) && $this->validateCredentials($user, $credentials);
     }
 
     /**
      * Validate a user against the given credentials.
      *
-     * @param  \Illuminaattemptte\Contracts\Auth\Authenticatable  $user
-     * @param  array  $credentials
+     * @param  \Illuminaattemptte\Contracts\Auth\Authenticatable $user
+     * @param  array $credentials
      * @return bool
      */
-    public function validateCredentials( $user, array $credentials)
+    public function validateCredentials($user, array $credentials)
     {
         $plain = $credentials['password'];
         //具体验证密码有效性方法
-        return $user['password']==md5($plain);
+        return $user['password'] == md5($plain);
     }
 
     public function user()
     {
         $uid = Session::get(self::SEVER_SESS_ID);
-        $user = app(UserService::class)->getUserByUid($uid);
+        $user = resolve('userService')->getUserByUid($uid);
         $this->user = (new Users)->forceFill($user);
         return $this->user;
     }
@@ -113,7 +79,6 @@ class WebAuthService implements Guard
      * @param Authenticatable $user
      * @param bool $remember
      * @return bool|Token|void
-     * @throws LoginException
      */
     public function login(Authenticatable $user, $remember = false)
     {
@@ -122,9 +87,9 @@ class WebAuthService implements Guard
         /**
          * 7 天免登陆
          */
-        if ( Input::get('v_remember') ) {
+        if (Input::get('v_remember')) {
             //记住我的功能，
-            config()->set('session.lifetime',7*24*60);
+            config()->set('session.lifetime', 7 * 24 * 60);
             Session::save();
         }
 
@@ -141,16 +106,16 @@ class WebAuthService implements Guard
     /**
      * Update the session with the given ID.
      *
-     * @param  string  $id
+     * @param  string $id
      * @return void
      */
-    public function writeRedis($userInfo=[], $huser_sid="")
+    public function writeRedis($userInfo = [], $huser_sid = "")
     {
         try {
             //判断当前用户session是否是最新登陆
             $this->_online = $userInfo['uid'];
             //设置新session
-            session()->put(self::SEVER_SESS_ID,$userInfo['uid']);           //TODO 只根据session的webonline有无uid判断是否登录成功
+            session()->put(self::SEVER_SESS_ID, $userInfo['uid']);           //TODO 只根据session的webonline有无uid判断是否登录成功
             setcookie(self::WEB_UID, $userInfo['uid'], 0, '/');//用于首页判断
 
             $this->repeatLogin($huser_sid);
@@ -159,11 +124,12 @@ class WebAuthService implements Guard
             session()->remove(self::SEVER_SESS_ID);
             setcookie(self::WEB_UID, null, time() - 31536000, '/');
             $this->_online = false;
-            \Log::info("用户登录写redis异常：".$e->getMessage());
+            \Log::info("用户登录写redis异常：" . $e->getMessage());
         }
     }
 
-    public function repeatLogin($huser_sid){
+    public function repeatLogin($huser_sid)
+    {
         $this->_sess_id = Session::getId();
         $userInfo['uid'] = Session::get(self::SEVER_SESS_ID);
         if (empty($huser_sid)) { //说明以前没登陆过，没必要检查重复登录
@@ -182,10 +148,10 @@ class WebAuthService implements Guard
      */
     protected function updateSession($id)
     {
-        $userinfo['uid']= $id;
+        $userinfo['uid'] = $id;
         $huser_sid = app()->make('redis')->hget('huser_sid', $userinfo['uid']);
-        echo $userinfo['uid'].' update session ';
-        $this->writeRedis(['uid'=>$userinfo['uid']],$huser_sid);
+        echo $userinfo['uid'] . ' update session ';
+        $this->writeRedis(['uid' => $userinfo['uid']], $huser_sid);
     }
 
     /**

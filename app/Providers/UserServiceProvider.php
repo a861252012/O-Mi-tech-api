@@ -26,8 +26,11 @@ class UserServiceProvider extends ServiceProvider
     public function register()
     {
         //
-        $this->app->singleton('userServer', function () {
-            return new UserService();
+        $this->app->singleton('userService', function ($app) {
+            return new UserService($app['redis']);
+        });
+        $this->app->singleton('userServer', function ($app) {
+            return new UserService($app['redis']);
         });
     }
 }
