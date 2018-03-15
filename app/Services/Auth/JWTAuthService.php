@@ -9,6 +9,7 @@ use Lcobucci\JWT\Builder as JWTBuilder;
 use Lcobucci\JWT\Parser as JWTParser;
 use Lcobucci\JWT\Token;
 use Lcobucci\JWT\ValidationData;
+use Illuminate\Auth\GuardHelpers;
 use Illuminate\Contracts\Auth\UserProvider;
 
 /**
@@ -19,6 +20,7 @@ use Illuminate\Contracts\Auth\UserProvider;
  */
 class JWTAuthService extends Service implements Guard
 {
+    use GuardHelpers;
     /** @var  $token Token */
     public $token;
     protected $_config;
@@ -95,10 +97,6 @@ class JWTAuthService extends Service implements Guard
     {
         return $this->getUserFromToken($this->token);
     }
-    public function check()
-    {
-        // TODO: Implement check() method.
-    }
 
     /**
      * @param Authenticatable $user
@@ -112,7 +110,7 @@ class JWTAuthService extends Service implements Guard
         $credentials = [
             'username' => $user->username,
             'password' => $user->password,
-        ]
+        ];
         $userInfo = $this->attempt($credentials);
         if (!$userInfo) return false;
         $this->createToken([
@@ -159,7 +157,7 @@ class JWTAuthService extends Service implements Guard
             $redis->hset('hnickname_to_id', $userInfo['nickname'], $userInfo['uid']);
 //            $redis->hmset('huser_info:' . $userInfo['uid'], (array)$userInfo);
         }
-        return $userInfo;
+        return true;
     }
 
     /**

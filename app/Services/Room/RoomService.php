@@ -10,7 +10,7 @@ use Illuminate\Container\Container;
 /**
  *  @desc 房间类
  */
-class RoomServices extends Service
+class RoomService extends Service
 {
 
     public $tid = null;

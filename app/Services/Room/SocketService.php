@@ -7,7 +7,7 @@ use App\Services\Service;
 /**
  *
  */
-class SocketServices extends Service
+class SocketService extends Service
 {
     const CHANNEL_TIME_MILLS = 330000;
 

@@ -7,7 +7,7 @@ use DB;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Redis;
 
-class SafeServices extends Service
+class SafeService extends Service
 {
     //
     public function auth($uid)

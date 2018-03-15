@@ -4,7 +4,7 @@ namespace App\Services\Safe;
 
 use App\Services\Service;
 
-class RtmpServices extends Service
+class RtmpService extends Service
 {
     /**
      * 加参后地址

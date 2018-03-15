@@ -111,9 +111,6 @@ class Controller extends BaseController
             case 'redis':
                 $service = Redis::resolve();
                 break;
-            case 'captcha':
-
-                break;
             default:
                 $service = app($name);
         }

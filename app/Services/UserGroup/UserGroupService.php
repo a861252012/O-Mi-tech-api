@@ -7,7 +7,7 @@ use App\Models\UserGroup;
 use App\Models\Users;
 use App\Services\Service;
 
-class UserGroupServices extends Service
+class UserGroupService extends Service
 {
 
     /**

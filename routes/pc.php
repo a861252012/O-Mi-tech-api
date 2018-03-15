@@ -18,7 +18,7 @@ Route::get('/member/roomOneToMore', ['name' => 'roomOneToMore', 'uses' => 'Membe
 //移动端创建一对多
 Route::get('/m/OneToMore/create', ['name' => 'OneToMore', 'uses' => 'Controller@captcha']);
 
-Route::get('/captcha', ['name' => 'captcha', 'uses' => 'BaseController@captcha']);
+Route::get('/captcha', ['name' => 'captcha', 'uses' => 'Controller@captcha']);
 // 所有路由都在这里配置
 /** 代理改造，开放游客 */
 //rtmp地址
@@ -403,8 +403,6 @@ Route::get('/get_lcertificate', ['name' => 'islogin', 'uses' => 'ApiController@g
 Route::get('/m/index', ['name' => 'm_index', 'uses' => 'Mobile\MobileController@index']);
 //排行
 Route::get('/m/rank', ['name' => 'm_rank', 'uses' => 'Mobile\MobileController@rank']);
-//登录
-Route::post('/m/login', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@login']);
 //登录验证码
 Route::get('/m/login/captcha', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@loginCaptcha']);
 //注册

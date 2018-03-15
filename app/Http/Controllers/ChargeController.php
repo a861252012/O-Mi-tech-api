@@ -15,13 +15,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 
-//use Symfony\Component\HttpFoundation\Response;
-//use Symfony\Component\HttpFoundation\JsonResponse;
-//use Video\ProjectBundle\Entity\VideoChargeList;
-//use Video\ProjectBundle\Entity\VideoRecharge;
-//use Video\ProjectBundle\Entity\VideoUser;
-//use Video\ProjectBundle\Service\DataModel;
-
 class ChargeController extends Controller
 {
     /**
