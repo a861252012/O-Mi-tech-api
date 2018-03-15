@@ -11,18 +11,19 @@ use App\Models\Goods;
 use App\Models\ImagesText;
 use App\Models\MobileUseLogs;
 use App\Models\Pack;
-use App\Models\RoomDuration;
 use App\Models\Users;
-use App\Services\Auth\LoginException;
-use Core\Captcha\Captcha;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\Tests\JsonSerializableObject;
 
 class MobileController extends Controller
 {
     const ACTIVITY_LIST_PAGE_SIZE = 15;
     const MOUNT_LIST_PAGE_SIZE = 0;
+
+    public function __construct()
+    {
+        config()->set('auth.defaults.guard', 'mobile');
+    }
 
     public function __init__()
     {
@@ -40,7 +41,7 @@ class MobileController extends Controller
             $this->flash_url_v = '';
         }
 
-        if (Auth::guard('mobile')->check() === true && !$this->userInfo) {
+        if ($this->checkLogin() === true && !$this->userInfo) {
             // 通过用户服务去获取
             $userServer = $this->make('userServer');
 
@@ -66,9 +67,33 @@ class MobileController extends Controller
                 );
             }
             // 用户的图像的hsot 地址
-            $userInfo['imgHost'] = trim(config('app.REMOTE_PIC_URL'), '/') . '/';
+            $userInfo['imgHost'] = trim($this->container->config['config.REMOTE_PIC_URL'], '/') . '/';
             $this->userInfo = $userInfo;
         }
+    }
+
+    public function checkLogin()
+    {
+        if ($this->_online) return true;
+        $request = request();
+        $jwt = Auth::guard('mobile');
+
+        $jwt->getTokenForRequest($request);
+        if (!$jwt->token) {
+            return '请登录';
+        }
+        try {
+            $userInfo = $jwt->user();
+        } catch (\InvalidArgumentException $e) {
+            return 'Token格式错误' . $e->getMessage();
+        } catch (\RuntimeException $e) {
+            return 'Token解析失败' . $e->getMessage();
+        }
+        if (!$userInfo) {
+            return 'Token失效，请重新登录';
+        }
+        $this->_online = $userInfo['uid'];
+        return true;
     }
 
     /**
@@ -110,9 +135,10 @@ class MobileController extends Controller
         return $this->render('Mobile/rank', array());
     }
 
-    public function test(){
-        if(empty($_GET['s']) || $_GET['s']!="axwv4w8khj23"){
-            return ;
+    public function test()
+    {
+        if (empty($_GET['s']) || $_GET['s'] != "axwv4w8khj23") {
+            return;
         }
         $username = $_GET['uname'];
         $password = $_GET['pwd'];
@@ -126,6 +152,7 @@ class MobileController extends Controller
         ]);
         echo $token;
     }
+
     /**
      * 获取用户信息
      */
@@ -305,10 +332,8 @@ class MobileController extends Controller
      */
     public function loginCaptcha()
     {
-        /** @var Captcha $captcha */
-        $captcha = $this->make('captcha');
-        /** @var \Redis $redis */
-        $redis = $this->make('redis');
+        $captcha = resolve('captcha');
+        $redis = resolve('redis');
         $phrase = $captcha->Phrase();
         $img = $captcha->GenerateImage($phrase);
         ob_start();
@@ -326,17 +351,16 @@ class MobileController extends Controller
      */
     public function login()
     {
-        $request = $this->request();
+        $request = request();
         $username = $request->input('username');
         $password = $request->input('password');
         $captcha = $request->input('captcha');
         $cid = $request->input('cid');
-        if (!$this->container->config['config.SKIP_CAPTCHA_LOGIN']) {
+        if (!config('app.SKIP_CAPTCHA_LOGIN')) {
             if (empty($captcha) || empty($cid)) {
                 return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
             }
-            /** @var \Redis $redis */
-            $redis = $this->make('redis');
+            $redis = resolve('redis');
             $phrase = $redis->multi()
                 ->get($cid)
                 ->del($cid)
@@ -348,47 +372,28 @@ class MobileController extends Controller
         if (!$username || !$password) {
             return JsonResponse::create(['status' => 0, 'msg' => '用户名密码不能为空']);
         }
-
-        $jwt = $this->make('JWTAuth');
-        try {
-            $token = $jwt->login([
-                'username' => $username,
-                'password' => $password,
-            ]);
-        } catch (LoginException $e) {
-            return JsonResponse::create(['status' => 0, 'msg' => $e->getMessage()]);
-        }
-        if (!$token) {
+        $user = null;
+        $jwt = Auth::guard();
+        if (!$jwt->attempt(['username' => $username, 'password' => $password])) {
             return JsonResponse::create(['status' => 0, 'msg' => '用户名密码错误']);
         }
-        $userInfo = $this->make('userServer')->getUserByUsername($username);
+        $user = $jwt->user();
+        if ($user->banned()){
+            return JsonResponse::create(['status' => 0, 'msg' => '您的账号已经被禁止登录，请联系客服！']);
+        }
         $statis_date = date('Y-m-d');
         MobileUseLogs::create([
-            'imei' => "bbbb",
-            'uid' => $userInfo['uid'],
-            'ip' => "",
+            'imei' => $request->input('imei'),
+            'uid' => $user->getAuthIdentifier(),
+            'ip' => $request->getClientIp(),
             'statis_date' => $statis_date
         ]);
-        return JsonResponse::create(['status' => 1, 'jwt' => (string)$token]);
-    }
-
-    /**
-     * 登录验证middleware
-     * @param $request
-     * @param $next
-     * @return mixed
-     */
-    public function notLoginJson($request, $next)
-    {
-        $msg = $this->checkLogin();
-        if (true === $msg) return $next($request);
-        return JsonResponse::create(['status' => 0, 'msg' => $msg]);
-
+        return JsonResponse::create(['status' => 1, 'jwt' => (string)$jwt->getToken()]);
     }
 
     public function logintest()
     {
-        return JsonResponse::create(['status' => 1, 'message' => 'logged in as ' . $this->userInfo['nickname']]);
+        return JsonResponse::create(['status' => Auth::check(), 'user' => Auth::user()]);
     }
 
     /**
@@ -424,9 +429,9 @@ class MobileController extends Controller
     {
         $page = $this->request()->input('page', 1);
         $redis = $this->make('redis');
-      /*  if ($list = $redis->get('image.text:activity.list:page:' . $page)) {
-            return JsonResponse::create()->setContent($list);
-        }*/
+        /*  if ($list = $redis->get('image.text:activity.list:page:' . $page)) {
+              return JsonResponse::create()->setContent($list);
+          }*/
         $list = ImagesText::where('dml_flag', '<>', 3)->where('pid', 0)->selectRaw('img_text_id id,title,temp_name,url,init_time')
             ->orderBy('sort')->orderBy('img_text_id', 'desc')->simplePaginate(static::ACTIVITY_LIST_PAGE_SIZE);
         $redis->set('image.text:activity.list:page:' . $page, $list->toJson(), 180);
@@ -439,16 +444,16 @@ class MobileController extends Controller
     public function activityDetail($id)
     {
         $redis = $this->make('redis');
-       /* if ($activity = $redis->get('image.text:activity.detail:id:' . $id)) {
-            return JsonResponse::create()->setContent($activity);
-        }*/
+        /* if ($activity = $redis->get('image.text:activity.detail:id:' . $id)) {
+             return JsonResponse::create()->setContent($activity);
+         }*/
         $activity = ImagesText::where('dml_flag', '<>', 3)->where('pid', $id)->selectRaw($id . ' id,temp_name,init_time')->first();
-       //如果为空，返回默认json数据
+        //如果为空，返回默认json数据
         $is_array = array(
-            'id'=>$id,
-            'init_time'=>'',
-            'title'=>'',
-            'url'=>array()
+            'id' => $id,
+            'init_time' => '',
+            'title' => '',
+            'url' => array()
         );
         if (!$activity) return JsonResponse::create($is_array);
         $parent = ImagesText::where('dml_flag', '<>', 3)->select('title')->find($id);
@@ -600,7 +605,7 @@ class MobileController extends Controller
 
     public function appVersion()
     {
-        if (!isset($_REQUEST['agent'])&&!isset($_REQUEST['branch'])||$_SERVER['REQUEST_METHOD'] === 'POST')
+        if (!isset($_REQUEST['agent']) && !isset($_REQUEST['branch']) || $_SERVER['REQUEST_METHOD'] === 'POST')
             return $this->appVersionIOS();
         $branches = $this->request()->input('branch');
         if ($branches) {

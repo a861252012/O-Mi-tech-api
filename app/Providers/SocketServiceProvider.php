@@ -2,11 +2,10 @@
 
 namespace App\Providers;
 
-use App\Services\User\UserService;
-use Illuminate\Container\Container;
+use App\Services\Room\SocketService;
 use Illuminate\Support\ServiceProvider;
 
-class UserServiceProvider extends ServiceProvider
+class SocketServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap the application services.
@@ -26,11 +25,8 @@ class UserServiceProvider extends ServiceProvider
     public function register()
     {
         //
-        $this->app->singleton('userService', function ($app) {
-            return new UserService($app['redis']);
-        });
-        $this->app->singleton('userServer', function ($app) {
-            return new UserService($app['redis']);
+        $this->app->singleton('socketService', function () {
+            return new SocketService();
         });
     }
 }

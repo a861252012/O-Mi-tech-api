@@ -229,5 +229,6 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
 
     ],
-'REMOTE_PIC_URL'=>env('REMOTE_PIC_URL','')
+    'REMOTE_PIC_URL' => env('REMOTE_PIC_URL', ''),
+    'SKIP_CAPTCHA_LOGIN' => env('SKIP_CAPTCHA_LOGIN', false)
 ];

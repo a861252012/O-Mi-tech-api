@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\User\CaptchaService;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,7 +15,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        $this->app->singleton('captcha',function (){
+            return new CaptchaService();
+        });
+        if (config('app.env') !== 'production' || config('app.debug') == true) {
+            Artisan::call('route:clear');
+            Artisan::call('config:clear');
+        }
     }
 
     /**
