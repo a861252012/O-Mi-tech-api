@@ -358,12 +358,19 @@ class UserService extends Service
      */
     public function getUserByUsername($username)
     {
-        return $this->getUserByUid($this->getUidByUsername($username));
+        $uid = $this->getUidByUsername($username);
+        return $this->getUserByUid($uid);
     }
 
     public function getUidByUsername($username)
     {
-        return $uid = $this->redis->hget(static::KEY_USERNAME_TO_ID, $username);
+        $uid = $this->redis->hget(static::KEY_USERNAME_TO_ID, $username);
+        if (!$uid) {
+            $uid = Users::query()->where('username', $username)->get(['uid'])->get('uid');
+            if (!$uid) return null;
+            $uid = $this->redis->hset(static::KEY_USERNAME_TO_ID, $username, $uid);
+        }
+        return $uid;
     }
 
     /**

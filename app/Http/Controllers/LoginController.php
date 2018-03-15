@@ -2,20 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\Auth\WebAuthService;
-use Illuminate\Support\Facades\Input;
-use Illuminate\Http\Request;
-
 use App\Models\UserDomain;
-use App\UserLoginLog;
-use App\Users;
+use App\Models\UserLoginLog;
+use App\Models\Users;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Cookie;
-use DB;
-
-use App\Services\User\UserService;
 
 
 class LoginController extends Controller
@@ -125,8 +120,8 @@ class LoginController extends Controller
             $password = $_POST->get('password') ? $_POST->get('password') : '';
             $extends = $_POST->get('extends') ? $_POST->get('extends') : '';
 
-            if (isset($username,$password,$extends) ) {
-            }else{
+            if (isset($username, $password, $extends)) {
+            } else {
                 $res = array(
                     'status' => 1,
                     'msg' => '用户信息不全'
@@ -134,9 +129,9 @@ class LoginController extends Controller
                 return new JsonResponse($res);
             }
 
-            $extendsArr = json_decode($extends,1);
+            $extendsArr = json_decode($extends, 1);
             $nickname = $extendsArr['nickname'];
-            if(!isset($nickname)){
+            if (!isset($nickname)) {
                 $res = array(
                     'status' => 1,
                     'msg' => '用户信息不全'
@@ -195,7 +190,7 @@ class LoginController extends Controller
                     'pop' => 0,
                     'status' => 1,
                 );
-                $this->make('redis')->hmset("huser_info:".$uid, $userR);
+                $this->make('redis')->hmset("huser_info:" . $uid, $userR);
 //                $redis->hMset("huser_info:$uid", $user);
 
                 $userArr = explode("@", $user['username']);
@@ -244,23 +239,21 @@ class LoginController extends Controller
      * <p>
      * 此方法只用于在主域名中登录的具体方法，用户域名是限制走此方法的
      * </p>
+     * @param Request $request
      * @return RedirectResponse|Response
      */
     public function login(Request $request)
     {
         //获取值
-       // $request = $this->make('request');
-        $user_name = $request->get('uname') ? : '';
-        $password = $request->get('password') ? : '';
+        $user_name = $request->get('uname') ?: '';
+        $password = $request->get('password') ?: '';
         if (!isset($_REQUEST['_m'])) {
-            //$password = $this->decode($password); // 密码传递解密
+            $password = $this->decode($password); // 密码传递解密
         }
-        $retval = $this->solveUserLogin($user_name, $password, env('SKIP_CAPTCHA_LOGIN'));
+        $retval = $this->solveUserLogin($user_name, $password, config('app.SKIP_CAPTCHA_LOGIN'));
 
 
-
-
-        return new Response(json_encode($retval));
+        return JsonResponse::create($retval);
     }
 
 //    public function reloadLogin()
@@ -379,9 +372,9 @@ class LoginController extends Controller
      * @param  boolean $skipPassword 绕过密码，用于内部登录
      * @return array  数组格式提示信息
      */
-    public function solveUserLogin($username, $password, $skipCaptcha=false,$skipPassword=false)
+    public function solveUserLogin($username, $password, $skipCaptcha = false, $skipPassword = false)
     {
-        if (empty($username) || (empty($password)&&!$skipPassword)) {
+        if (empty($username) || (empty($password) && !$skipPassword)) {
             return array(
                 'status' => 0,
                 'msg' => '用户名或密码不能为空'
@@ -401,11 +394,11 @@ class LoginController extends Controller
         }
 
         //取uid
-        $auth = \Auth::guard($this->request()->get('guard',WebAuthService::guard));
-        if(!$auth->attempt([
-            'username'=>$username,
-            'password'=>$password,
-        ])){
+        $auth = Auth::guard();
+        if (!$auth->attempt([
+            'username' => $username,
+            'password' => $password,
+        ], request('v_remember'))) {
             return array(
                 'status' => 0,
                 'msg' => '您的账号登录失败，请联系客服！',
@@ -421,10 +414,11 @@ class LoginController extends Controller
         $user->logined = date('Y-m-d H:i:s'); // 最后登录时间
         $user->save();
         //记录登录日志
-        $this->loginLog($uid,$login_ip,date('Y-m-d H:i:s'));
+        $this->loginLog($uid, $login_ip, date('Y-m-d H:i:s'));
         return array(
             'status' => 1,
             'msg' => '登录成功',
+            'sid'=>Session::getId()
         );
     }
 
@@ -436,7 +430,7 @@ class LoginController extends Controller
     public function logout()
     {
         if (!$this->checkLogin()) {
-                return new RedirectResponse('/');
+            return new RedirectResponse('/');
         }
         // 从cookie里面获取A域名地址irwin
         $_reqCookie = $this->request()->cookies->all();
@@ -538,10 +532,10 @@ class LoginController extends Controller
 
     public function loginLog($uid, $login_ip, $date)
     {
-        return  UserLoginLog::create([
-            'uid'=>$uid,
-            'ip'=>$login_ip,
-            'created_at'=>$date,
+        return UserLoginLog::create([
+            'uid' => $uid,
+            'ip' => $login_ip,
+            'created_at' => $date,
         ]);
     }
 
