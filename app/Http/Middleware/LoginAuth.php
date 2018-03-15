@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Services\Auth\JWTAuthService;
+use App\Services\Auth\JWTGuard;
+use App\Services\Auth\SessionGuard;
 use App\Services\Auth\WebAuthService;
 use App\Services\User\UserService;
 use Closure;
@@ -22,9 +24,9 @@ class LoginAuth
      */
     public function handle($request, Closure $next)
     {
-        $client = WebAuthService::guard;;
+        $client = SessionGuard::guard;;
         if(strpos($request->getPathInfo(),'/m/')===0){
-            $client = JWTAuthService::guard;
+            $client = JWTGuard::guard;
         }
         $request->offsetSet('guard',$client);
         if (\Auth::guard($client)->guest()) return JsonResponse::create(['status'=>0,'未登录']);
