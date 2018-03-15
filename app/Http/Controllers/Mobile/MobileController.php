@@ -374,6 +374,7 @@ class MobileController extends Controller
         }
         $user = null;
         $jwt = Auth::guard();
+
         if (!$jwt->attempt(['username' => $username, 'password' => $password])) {
             return JsonResponse::create(['status' => 0, 'msg' => '用户名密码错误']);
         }

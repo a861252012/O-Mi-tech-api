@@ -13,11 +13,6 @@ Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginCont
 /*//验证码
 Route::get('/captcha', ['name' => 'captcha', 'uses' => 'Controller@captcha']);*/
 
-//pc创建一对多
-Route::get('/member/roomOneToMore', ['name' => 'roomOneToMore', 'uses' => 'MemberController@roomOneToMore']);
-//移动端创建一对多
-Route::get('/m/OneToMore/create', ['name' => 'OneToMore', 'uses' => 'Controller@captcha']);
-
 Route::get('/captcha', ['name' => 'captcha', 'uses' => 'Controller@captcha']);
 // 所有路由都在这里配置
 /** 代理改造，开放游客 */
@@ -171,10 +166,16 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/member/delRoomOne2One', ['name' => 'member_roomDelOne2One', 'uses' => 'MemberController@delRoomOne2One']);
     //删除一对多
     Route::get('/member/delRoomOne2Many', ['name' => 'member_roomDelOne2Many', 'uses' => 'MemberController@delRoomOne2Many']);
-    //一对多添加
-    Route::get('/member/roomOneToMore', ['uses' => 'MemberController@roomOneToMore']);
+   /* //一对多添加
+    Route::get('/member/roomOneToMore', ['uses' => 'MemberController@roomOneToMore']);*/
     //一对多记录详情-购买用户
     Route::get('/member/getBuyOneToMore', ['uses' => 'MemberController@getBuyOneToMore']);
+
+    //pc创建一对多
+    Route::get('/member/roomOneToMore', ['name' => 'roomOneToMore', 'uses' => 'MemberController@roomOneToMore']);
+    //pc一对多补票
+    Route::post('/member/makeUpOneToMore', ['name' => 'makeUpOneToMore', 'uses' => 'MemberController@makeUpOneToMore']);
+
 
     // 用户中心 房间游戏
     Route::get('/member/gamelist[/{type:\d+}]', ['name' => 'member_gamelist', 'uses' => 'MemberController@gamelist']);
@@ -299,8 +300,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/member/roomSetDuration', ['name' => 'member_roomSetDuration', 'uses' => 'MemberController@roomSetDuration']);
     Route::get('/member/roomUpdateDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@roomUpdateDuration']);
     Route::get('/member/delRoomDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@delRoomDuration']);
-    //一对多补票
-    Route::post('/member/makeUpOneToMore', ['name' => 'makeUpOneToMore', 'uses' => 'MemberController@makeUpOneToMore']);
     // 用户中心 密码房间设置
     Route::post('/member/roomSetPwd', ['name' => 'member_roomSetPwd', 'uses' => 'MemberController@roomSetPwd']);
     // 用户中心 体现
@@ -445,13 +444,17 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/m/user/stealth[/{status:\d+}]', ['name' => 'm_stealth', 'uses' => 'Mobile\MobileController@stealth']);
     //购买一对一
     Route::post('/m/room/buyOneToOne', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@buyOneToOne']);
-    //购买一对多
-//    Route::post('/m/room/buyOneToMany', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@buyOneToMany']);
-    Route::post('/m/room/buyOneToMany', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@makeUpOneToMore']);
+
     /** 检查密码房密码 */
     Route::post('/m/room/checkPwd', ['name' => 'm_room_checkpwd', 'uses' => 'Mobile\RoomController@checkPwd']);
     /** 获取RTMP地址 */
     Route::get('/m/room/rtmp/{rid:\d+}', ['name' => 'm_room_rtmp', 'uses' => 'RoomController@getRTMP']);
+
+    //移动端创建一对多
+    Route::get('/m/OneToMore/create', ['name' => 'OneToMore', 'uses' => 'Mobiel\RoomController@createOne2More']);
+    //移动端购买一对多
+    Route::post('/m/room/buyOneToMany', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@makeUpOneToMore']);
+
 });
 Route::get('/m/find', ['name' => 'm_find', 'uses' => 'Mobile\MobileController@searchAnchor']);
 Route::match(['POST', 'GET'], '/m/pay/{action}', ['name' => 'm_pay', 'uses' => 'Mobile\PaymentController@action']);
