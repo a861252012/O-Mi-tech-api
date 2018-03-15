@@ -1,8 +1,9 @@
 <?php
 
 
-namespace App\Controller\Mobile;
+namespace App\Http\Controllers\Mobile;
 
+use App\Http\Controllers\Controller;
 use App\Models\AppCrash;
 use App\Models\AppVersion;
 use App\Models\AppVersionIOS;
@@ -12,13 +13,13 @@ use App\Models\MobileUseLogs;
 use App\Models\Pack;
 use App\Models\RoomDuration;
 use App\Models\Users;
-use App\Service\Auth\LoginException;
+use App\Services\Auth\LoginException;
 use Core\Captcha\Captcha;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Tests\JsonSerializableObject;
 
-class MobileController extends \App\Controller\BaseController
+class MobileController extends Controller
 {
     const ACTIVITY_LIST_PAGE_SIZE = 15;
     const MOUNT_LIST_PAGE_SIZE = 0;
@@ -39,7 +40,7 @@ class MobileController extends \App\Controller\BaseController
             $this->flash_url_v = '';
         }
 
-        if ($this->checkLogin() === true && !$this->userInfo) {
+        if (Auth::guard('mobile')->check() === true && !$this->userInfo) {
             // 通过用户服务去获取
             $userServer = $this->make('userServer');
 
@@ -65,32 +66,9 @@ class MobileController extends \App\Controller\BaseController
                 );
             }
             // 用户的图像的hsot 地址
-            $userInfo['imgHost'] = trim($this->container->config['config.REMOTE_PIC_URL'], '/') . '/';
+            $userInfo['imgHost'] = trim(config('app.REMOTE_PIC_URL'), '/') . '/';
             $this->userInfo = $userInfo;
         }
-    }
-
-    public function checkLogin()
-    {
-        if ($this->_online) return true;
-        $request = $this->request();
-        $jwt = $this->make('JWTAuth');
-        $jwt->getTokenFromRequest($request);
-        if (!$jwt->token) {
-            return '请登录';
-        }
-        try {
-            $userInfo = $jwt->user();
-        } catch (\InvalidArgumentException $e) {
-            return 'Token格式错误' . $e->getMessage();
-        } catch (\RuntimeException $e) {
-            return 'Token解析失败' . $e->getMessage();
-        }
-        if (!$userInfo) {
-            return 'Token失效，请重新登录';
-        }
-        $this->_online = $userInfo['uid'];
-        return true;
     }
 
     /**

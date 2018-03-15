@@ -82,7 +82,7 @@ Route::get('/m/room/rtmp/{rid:\d+}', ['name' => 'm_room_rtmp', 'uses' => 'RoomCo
 Route::get('/find', ['name' => 'find', 'uses' => 'ApiController@searchAnchor']);
 
 // 验证是否登录
-Route::group(['middleware' => []], function () {
+Route::group(['middleware' => ['login_auth']], function () {
 // 任务api
     Route::get('/task', ['name' => 'task_index', 'uses' => 'TaskController@index']);
 // 任务完成领取奖励api
@@ -288,11 +288,7 @@ Route::group(['middleware' => []], function () {
 
 
     // Route::get('/{rid:\d+}[/{h5:h5}]',['as'=>'room','uses'=>'RoomController@index']);
-});
 
-
-// 验证是否登录 json
-Route::group(['middleware' => []], function () {
     // 获取用户有多少钱
     Route::post('/getmoney', ['name' => 'shop_getmoney', 'uses' => 'MemberController@getmoney']);
     // 用户领取坐骑
@@ -429,7 +425,7 @@ Route::get('/m/conf', ['name' => 'm_conf', 'uses' => 'Mobile\RoomController@getC
 Route::get('/m/room/conf', ['name' => 'm_room_conf', 'uses' => 'Mobile\RoomController@getRoomConf']);
 Route::get('/m/room/{rid}/checkAccess', ['name' => 'm_room_checkAccess', 'uses' => 'Mobile\RoomController@getRoomAccess']);
 //移动端登录验证
-Route::group(['middleware' => []], function () {
+Route::group(['middleware' => ['login_auth']], function () {
 //    Route::get('/m/logintest', ['name' => 'm_logintest', 'uses' => 'Mobile\MobileController@logintest']);
 
     //关注列表

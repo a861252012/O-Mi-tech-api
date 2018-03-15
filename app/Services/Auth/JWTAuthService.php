@@ -56,10 +56,6 @@ class JWTAuthService extends Service implements Guard
     {
         // TODO: Implement viaRemember() method.
     }
-    public function guest()
-    {
-        // TODO: Implement guest() method.
-    }
     public function basic($field = 'email')
     {
         // TODO: Implement basic() method.
@@ -79,18 +75,6 @@ class JWTAuthService extends Service implements Guard
     public function validate(array $credentials = array())
     {
         // TODO: Implement validate() method.
-    }
-    public function id()
-    {
-        // TODO: Implement id() method.
-    }
-
-    /**
-     * @param Authenticatable $user
-     */
-    public function setUser(Authenticatable $user)
-    {
-        // TODO: Implement setUser() method.
     }
 
     public function user()

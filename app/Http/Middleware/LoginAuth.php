@@ -27,7 +27,7 @@ class LoginAuth
             $client = JWTAuthService::guard;
         }
         $request->offsetSet('guard',$client);
-        if (!\Auth::guard($client)->user()) return JsonResponse::create(['status'=>0,'未登录']);
+        if (\Auth::guard($client)->guest()) return JsonResponse::create(['status'=>0,'未登录']);
         return $next($request);
     }
 
