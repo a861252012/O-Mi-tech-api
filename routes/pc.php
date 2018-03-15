@@ -8,6 +8,9 @@ Route::group(['middleware'=>['login_auth']],function (){
     Route::match(['POST', 'GET'], '/onetomore', function(){
         echo "aaa";
     });
+    Route::get('login/test',function (){
+        return Auth::guard()->user();
+    });
 });
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 /*//验证码
