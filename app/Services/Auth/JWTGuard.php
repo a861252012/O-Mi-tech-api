@@ -149,43 +149,6 @@ class JWTGuard implements StatefulGuard
         }
         $this->fireFailedEvent($user, $credentials);
         return false;
-
-        $username = $credentials['username'];
-        $password = $credentials['password'];
-        $redis = $this->make('redis');
-        $uid = $redis->hget('husername_to_id', $username);
-        $_isGetCache = false;
-
-        if (!$uid) {
-//            $userInfo = Users::where('username', $username)->first();
-
-            $userInfo = $this->make('userServer')->getUserByUsername($username);
-        } else {
-            $userInfo = $redis->hgetall('huser_info:' . $uid);
-
-            if (!$userInfo) {
-//               $userInfo = Users::find($uid)->toArray();
-                $userInfo = $this->make('userServer')->getUserByUid($uid);
-            } else {
-                $_isGetCache = true;
-            }
-        }
-
-        if (empty($userInfo) || $userInfo['password'] != md5($password)) {
-            throw new LoginException('帐号密码错误!');
-        }
-
-        //后台设置了是否登录
-        if ($userInfo['status'] != 1) {
-            throw new LoginException('您的账号已经被禁止登录，请联系客服！');
-        }
-//        $huser_sid = $redis->hget('huser_sid', $uid);
-        if (!$_isGetCache) {
-            $redis->hset('husername_to_id', $userInfo['username'], $userInfo['uid']);
-            $redis->hset('hnickname_to_id', $userInfo['nickname'], $userInfo['uid']);
-//            $redis->hmset('huser_info:' . $userInfo['uid'], (array)$userInfo);
-        }
-        return true;
     }
 
     /**
