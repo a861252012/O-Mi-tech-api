@@ -37,7 +37,7 @@ use App\Services\User\CaptchaService;
 
 
 use Illuminate\Support\Facades\Redis;
-
+use Illuminate\Support\Facades\Auth;
 //use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Symfony\Component\HttpFoundation\Session\Session;
 class Controller extends BaseController

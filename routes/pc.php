@@ -169,9 +169,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/member/delRoomOne2One', ['name' => 'member_roomDelOne2One', 'uses' => 'MemberController@delRoomOne2One']);
     //删除一对多
     Route::get('/member/delRoomOne2Many', ['name' => 'member_roomDelOne2Many', 'uses' => 'MemberController@delRoomOne2Many']);
-   /* //一对多添加
-    Route::get('/member/roomOneToMore', ['uses' => 'MemberController@roomOneToMore']);*/
-    //一对多记录详情-购买用户
+//一对多记录详情-购买用户
     Route::get('/member/getBuyOneToMore', ['uses' => 'MemberController@getBuyOneToMore']);
 
     //pc创建一对多
@@ -357,7 +355,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/ajaxProxy', ['name' => 'ajaxProxy', 'uses' => 'ApiController@ajaxProxy']);
 });
 Route::get('/m/test', ['name' => 'm_testasds', 'uses' => 'Mobile\MobileController@test']);
-
+Route::get('/m/login', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@login']);
 //rtmp地址
 Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp', 'uses' => 'RoomController@get']);
 

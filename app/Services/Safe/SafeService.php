@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Services\Safe;
-
+use App\Services\System\SystemService;
 use App\Services\Service;
 use DB;
 use Illuminate\Support\Arr;
@@ -75,8 +75,8 @@ class SafeService extends Service
 
         if(empty($hz)){
             $lcertificate = $redis->rpop("lsocket_certi");
-            $logPath = BASEDIR . '/app/logs/room' . date('Y-m') . '.log';
-            $this->make('systemServer')->logResult('lcertificate:' . $lcertificate, $logPath);
+            $logPath = base_path() . '/storage/logs/room' . date('Y-m') . '.log';
+            $this->make('SystemService')->logResult('lcertificate:' . $lcertificate, $logPath);
             return $lcertificate;
         }
         $expire = $this->make('config')['config.hcertificate_start_expire'];

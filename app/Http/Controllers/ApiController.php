@@ -739,7 +739,8 @@ class ApiController extends Controller
     public function get_lcertificate()
     {
         //get certificate
-        $certificate = $this->make('safeService')->getLcertificate("socket");
+        $certificate = $this->make('socketService')->getLcertificate("socket");
+
         if (!$certificate) return new JsonResponse(array('status' => 0, 'msg' => "票据用完或频率过快"));
         return new JsonResponse(array('status' => 1, 'msg' => $certificate));
     }
