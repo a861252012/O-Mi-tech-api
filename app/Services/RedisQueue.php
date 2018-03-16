@@ -1,5 +1,5 @@
 <?php
-namespace Core\Redis;
+namespace App\Services;
 /**
  * Created by PhpStorm.
  * User: nicholas
@@ -23,7 +23,7 @@ class RedisQueue
         $this->default = $default;
     }
 
-    public static function create($redis, $default = 'queue:default')
+    public static function create($redis, $default = 'queue:default'):RedisQueue
     {
         return new static($redis, $default);
     }

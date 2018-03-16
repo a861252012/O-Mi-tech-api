@@ -443,7 +443,7 @@ class IndexController extends Controller
             'lv_rich' => $userinfo['lv_rich'],
             'lv_exp' => $userinfo['lv_exp'],
             'safemail' => isset($userinfo['safemail']) ? urlencode($userinfo['safemail']) : '',
-            'mails' => resolve('messageServer')->getMessageNotReadCount($userinfo['uid'], $userinfo['lv_rich']),// 通过服务取到数量
+            'mails' => resolve('messageService')->getMessageNotReadCount($userinfo['uid'], $userinfo['lv_rich']),// 通过服务取到数量
             'icon_id' => intval($userinfo['icon_id']),
             'new_user' => $userinfo['created'] > config('config.USER_TIME_DIVISION') ? 1 : 0,
         );
@@ -699,7 +699,7 @@ class IndexController extends Controller
      */
     public function captchaAction()
     {
-        $captcha = new \Video\ProjectBundle\Service\Captcha\Captcha();
+        $captcha = resolve('captcha');
         $captcha->width = 90;
         $captcha->height = 28;
         $image = $captcha->Generate();

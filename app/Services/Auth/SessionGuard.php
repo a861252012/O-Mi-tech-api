@@ -88,16 +88,13 @@ class SessionGuard extends Guard
     {
         try {
             //判断当前用户session是否是最新登陆
-            $this->_online = $userInfo['uid'];
             //设置新session
             $this->session->put(self::SEVER_SESS_ID, $userInfo['uid']);           //TODO 只根据session的webonline有无uid判断是否登录成功
             $this->getCookieJar()->queue(self::WEB_UID, $userInfo['uid'], 0);
             $this->repeatLogin($huser_sid);
-
         } catch (\Exception $e) {
             $this->session->remove(self::SEVER_SESS_ID);
             $this->getCookieJar()->queue(self::WEB_UID, $userInfo['uid'], time() - 31536000);
-            $this->_online = false;
             Log::info("用户登录写redis异常：" . $e->getMessage());
         }
     }

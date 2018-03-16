@@ -15,6 +15,7 @@ use App\Services\Service;
 use DB;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Session;
 use Mockery\Exception;
 
 class UserService extends Service
@@ -22,6 +23,7 @@ class UserService extends Service
 
     const KEY_USERNAME_TO_ID = 'husername_to_id';
     const KEY_USER_INFO = 'huser_info:';
+    const KEY_USER_SID = 'huser_sid:';
     public $user;
     protected $redis;
 
@@ -42,13 +44,13 @@ class UserService extends Service
     /**
      * @param array $user
      * @param array $gift
-     * @param int $agent
-     * @param int $invite_code
+     * @param int   $agent
+     * @param int   $invite_code
      * @return bool|int
      */
-    public function register(array $user, $gift = array(), $agent = 0, $invite_code = 0)
+    public function register(array $user, $gift = [], $agent = 0, $invite_code = 0)
     {
-        $newUser = Arr::only($user, array('did', 'username', 'password', 'nickname', 'roled', 'exp', 'pop', 'created', 'status', 'province', 'city', 'county', 'video_status', 'rich', 'lv_exp', 'lv_rich', 'pic_total_size', 'pic_used_size', 'lv_type', 'icon_id', 'uuid', 'xtoken', 'origin', 'sex'));
+        $newUser = Arr::only($user, ['did', 'username', 'password', 'nickname', 'roled', 'exp', 'pop', 'created', 'status', 'province', 'city', 'county', 'video_status', 'rich', 'lv_exp', 'lv_rich', 'pic_total_size', 'pic_used_size', 'lv_type', 'icon_id', 'uuid', 'xtoken', 'origin', 'sex']);
         $newUser['created'] = date('Y-m-d H:i:s');
         if (strlen($newUser['password']) != 32) {
             $newUser['password'] = md5($newUser['password']);
@@ -65,7 +67,7 @@ class UserService extends Service
 
             //注册主播房间
             if (Arr::get($user, 'roled') == 3) {
-                DB::table($userTable)->where('uid', $uid)->update(array('rid' => $uid));
+                DB::table($userTable)->where('uid', $uid)->update(['rid' => $uid]);
             }
 
             //更新域名用户统计
@@ -94,7 +96,7 @@ class UserService extends Service
                     $agent = $invite->group->agents ?: 0;
 
                     //注消邀请码
-                    DB::table((new InviteCodes)->getTable())->where('gid', $gid)->where('status', 0)->where('code', $code)->update(array('uid' => $uid, 'used_at' => date('Y-m-d H:i:s'), 'status' => 1));
+                    DB::table((new InviteCodes)->getTable())->where('gid', $gid)->where('status', 0)->where('code', $code)->update(['uid' => $uid, 'used_at' => date('Y-m-d H:i:s'), 'status' => 1]);
 
                 }
             }
@@ -147,13 +149,13 @@ class UserService extends Service
     /**
      * [updateUserOfPoints 更新用户钻石]
      *
-     * @see src\Video\ProjectBundle\Controller\VideoBaseController.php addUserPoints function
-     * @author dc <dc@wisdominfo.my>
+     * @see     src\Video\ProjectBundle\Controller\VideoBaseController.php addUserPoints function
+     * @author  dc <dc@wisdominfo.my>
      * @version 2015-11-05
-     * @param   integer $uid [用户id]
-     * @param   string $operation [操作符，只能是+ -符号]
-     * @param   integer $points [更新钻石数]
-     * @param   integer $pay_type [充值方式：1 银行转账、2 抽奖  3 （未使用）   4后台充值 5充值赠送 6任务和签到奖励 7转帐记录]
+     * @param   integer $uid       [用户id]
+     * @param   string  $operation [操作符，只能是+ -符号]
+     * @param   integer $points    [更新钻石数]
+     * @param   integer $pay_type  [充值方式：1 银行转账、2 抽奖  3 （未使用）   4后台充值 5充值赠送 6任务和签到奖励 7转帐记录]
      * @return  bool                  [成功true 失败false]
      * @throws \ErrorException
      */
@@ -211,8 +213,10 @@ class UserService extends Service
         } else {
             $user = Users::find($uid);
             //已禁止账号不写redis
-            if ($user && $user['status']) {
+            if ($user && !$user->banned()) {
                 $this->redis->hmset($hashtable, $user);
+            } else {
+                $this->deleteUserSession($user);
             }
             return $user;
         }
@@ -221,7 +225,7 @@ class UserService extends Service
     /**
      * [userReset 重置用户redis并获取数据]
      *
-     * @author dc <dc@wisdominfo.my>
+     * @author  dc <dc@wisdominfo.my>
      * @version 2015-11-10
      * @param   int $uid 用户id
      * @return  array      用户数据
@@ -239,16 +243,16 @@ class UserService extends Service
 
         //更新redis;
         $hashtable = 'huser_info:' . $uid;
-        $this->container->make('redis')->hmset($hashtable, $user);
+        $this->redis->hmset($hashtable, $user);
         return $user;
     }
 
     /**
      * [updateUserOfVip 开通贵族及延长贵族时间]
-     * @param $uid [用户ID]
-     * @param $level_id [贵族id]
-     * @param $type [开通类型]
-     * @param $days [天数]
+     * @param      $uid          [用户ID]
+     * @param      $level_id     [贵族id]
+     * @param      $type         [开通类型]
+     * @param      $days         [天数]
      * @param bool $fill_expires [已经是贵族,是否延长贵族时间]
      * @return bool[成功true 失败false]
      */
@@ -276,7 +280,7 @@ class UserService extends Service
             //追加过期时间
             $expires = date('Y-m-d H:i:s', strtotime($userVip->vip_end) + ($days * 86400));
 
-            Users::where('uid', $uid)->update(array('vip' => $level_id, 'vip_end' => $expires));
+            Users::where('uid', $uid)->update(['vip' => $level_id, 'vip_end' => $expires]);
             UserBuyGroup::where('uid', $uid)->where('level_id', $level_id)->orderBy('id', 'desc')->limit(1);
         } elseif ($vip < $level_id) {
             $group = UserGroup::where('level_id', $level_id)->first();
@@ -284,25 +288,25 @@ class UserService extends Service
             if (!is_array($group['system'])) return false;
 
             //开通贵族
-            UserBuyGroup::create(array(
-                'uid' => $uid,
-                'gid' => $group['gid'],
-                'level_id' => $level_id,
-                'type' => $type,
-                'end_time' => $expires,
-                'create_at' => date('Y-m-d H:i:s'),
-                'open_money' => $group['system']['open_money'],
-                'keep_level' => $group['system']['keep_level'],
-                'status' => 1,
+            UserBuyGroup::create([
+                                     'uid' => $uid,
+                                     'gid' => $group['gid'],
+                                     'level_id' => $level_id,
+                                     'type' => $type,
+                                     'end_time' => $expires,
+                                     'create_at' => date('Y-m-d H:i:s'),
+                                     'open_money' => $group['system']['open_money'],
+                                     'keep_level' => $group['system']['keep_level'],
+                                     'status' => 1,
 
-            ));
-            $vip_data = array('vip' => $level_id, 'vip_end' => $expires);
+                                 ]);
+            $vip_data = ['vip' => $level_id, 'vip_end' => $expires];
 
             //赠送等级
             if ($gift_level = $group['system']['gift_level']) {
-                $level = UserGroup::where('level_id', $gift_level)->first(array('level_value'));
+                $level = UserGroup::where('level_id', $gift_level)->first(['level_value']);
                 $level_value = $user['rich'] + $level->level_value;
-                $vip_data = array_merge($vip_data, array('lv_rich' => $gift_level, 'rich' => $level_value));
+                $vip_data = array_merge($vip_data, ['lv_rich' => $gift_level, 'rich' => $level_value]);
             }
             Users::where('uid', $uid)->update($vip_data);
 
@@ -317,7 +321,7 @@ class UserService extends Service
     /**
      * [checkVipStatus 检查vip状态]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-11
      * @param   int $uid 用户id
      * @return object|false
@@ -342,16 +346,16 @@ class UserService extends Service
     {
         $agent = AgentsRelationship::where('uid', $uid)->exists();
         if ($agent) {
-            return AgentsRelationship::where('uid', $uid)->update(array('aid' => $aid));
+            return AgentsRelationship::where('uid', $uid)->update(['aid' => $aid]);
         } else {
-            return AgentsRelationship::create(array('uid' => $uid, 'aid' => $aid))->id;
+            return AgentsRelationship::create(['uid' => $uid, 'aid' => $aid])->id;
         }
     }
 
     /**
      * [getUserByUsername 通过帐号获取用户]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-13
      * @param   string $username [用户帐号]
      * @return  array|bool               返回用户数据
@@ -375,10 +379,10 @@ class UserService extends Service
 
     /**
      * 获取当前用户被别人关注的用户信息/当前用户关注别人的用户信息 TODO 优化
-     * @param $uid
+     * @param      $uid
      * @param bool $fid
-     * @param $end
-     * @param int $start
+     * @param      $end
+     * @param int  $start
      * @param bool $getScores
      * @return mixed
      * @Author Orino
@@ -390,14 +394,14 @@ class UserService extends Service
         }
         $pageTotal = $this->getUserAttensCount($uid);
         if ($pageTotal == 0 || $pageTotal < $pageStart) {
-            return array(
-                'pagination' => array(
+            return [
+                'pagination' => [
                     'page' => 0,
                     'count' => 0,
-                    "pages" => 0
-                ),
-                'data' => array()
-            );
+                    "pages" => 0,
+                ],
+                'data' => [],
+            ];
         }
         if ($pageStart < 1) {
             $pageStart = 1;
@@ -410,23 +414,23 @@ class UserService extends Service
             $uids = $this->container->make('redis')->zrevrange('zuser_byattens:' . $uid, ($pageStart - 1) * $pageLimit, $pageStart * $pageLimit - 1);
         }
         if (!$uids) {
-            return array(
-                'pagination' => array(
+            return [
+                'pagination' => [
                     'page' => 0,
                     'count' => 0,
-                    "pages" => 0
-                ),
-                'data' => array()
-            );
+                    "pages" => 0,
+                ],
+                'data' => [],
+            ];
         }
         //查询用户信息数据
         $data = Users::findMany($uids);
-        $result['data'] = array();
-        $result['pagination'] = array(
+        $result['data'] = [];
+        $result['pagination'] = [
             'page' => $pageStart,
             'count' => $pageTotal,
-            "pages" => ceil($pageTotal / $pageLimit)
-        );
+            "pages" => ceil($pageTotal / $pageLimit),
+        ];
         //fid
         foreach ($data as $key => $item) {
 
@@ -443,7 +447,7 @@ class UserService extends Service
 
     /**
      * 获取自己被别人关注的数量/获取自己关注别人的数量
-     * @param $uid
+     * @param      $uid
      * @param bool $flag
      * @return mixed
      * @Author Orino
@@ -464,7 +468,7 @@ class UserService extends Service
     /**
      * 获取头像地址 默认头像 TODO 优化
      *
-     * @param $headimg
+     * @param        $headimg
      * @param string $size
      * @return string
      */
@@ -519,8 +523,8 @@ class UserService extends Service
     public function checkNickNameUnique($nickname)
     {
         $user = Users::where('nickname', $nickname)
-            ->where('uid', '!=', $this->user['uid'])
-            ->first();
+                     ->where('uid', '!=', $this->user['uid'])
+                     ->first();
         if ($user) {
             return false;
         } else {
@@ -587,9 +591,9 @@ class UserService extends Service
         // 普通用户修改的权限 只允许一次
         $uMod = UserModNickName::where('uid', $this->user['uid'])->first();
         if ($uMod && $uMod->exists) {
-            return array('num' => 0);
+            return ['num' => 0];
         } else {
-            return array('num' => 1);
+            return ['num' => 1];
         }
     }
 
@@ -603,37 +607,37 @@ class UserService extends Service
     {
         // 不可修改
         if ($permission['modnickname'] == 0) {
-            return array('num' => 0);
+            return ['num' => 0];
         }
         // 无限制的
         if ($permission['modnickname'] == -1) {
-            return array('num' => -1);
+            return ['num' => -1];
         }
         // 其他的按照 周 月 年 判断修改的次数
         list($num, $day) = explode('|', $permission['modnickname']);
         if ($day == 'week') {
             $uMod = UserModNickName::where('uid', $this->user['uid'])
-                ->where('update_at', '>', strtotime('-1 week'))->count();
-            return array('num' => $num - $uMod, 'mod' => $uMod, 'type' => $day);
+                                   ->where('update_at', '>', strtotime('-1 week'))->count();
+            return ['num' => $num - $uMod, 'mod' => $uMod, 'type' => $day];
         }
         if ($day == 'month') {
             $uMod = UserModNickName::where('uid', $this->user['uid'])
-                ->where('update_at', '>', strtotime('-1 month'))->count();
-            return array('num' => $num - $uMod, 'mod' => $uMod, 'type' => $day);
+                                   ->where('update_at', '>', strtotime('-1 month'))->count();
+            return ['num' => $num - $uMod, 'mod' => $uMod, 'type' => $day];
         }
         if ($day == 'year') {
             $uMod = UserModNickName::where('uid', $this->user['uid'])
-                ->where('update_at', '>', strtotime('-1 year'))->count();
-            return array('num' => $num - $uMod, 'mod' => $uMod, 'type' => $day);
+                                   ->where('update_at', '>', strtotime('-1 year'))->count();
+            return ['num' => $num - $uMod, 'mod' => $uMod, 'type' => $day];
         }
     }
 
     /**
-     * @todo 原方法未写数据库，侍确认。
+     * @todo        原方法未写数据库，侍确认。
      * @param $uid [用户id]
      * @param $pid [被关注用户id]
      * @return bool
-     * @author dc
+     * @author      dc
      * @description 迁移原方法setUserAttens
      */
     public function setFollow($uid, $pid)
@@ -652,13 +656,13 @@ class UserService extends Service
     }
 
     /**
-     * @param null $uid 本身用户id
-     * @param null $pid 被关注的用户id
-     * @param bool|true $flag
+     * @param null       $uid 本身用户id
+     * @param null       $pid 被关注的用户id
+     * @param bool|true  $flag
      * @param bool|false $reservation
      * @return bool
-     * @author dc
-     * @version 20151022
+     * @author      dc
+     * @version     20151022
      * @description 因迁移过来，目前所涉及的参数解释 暂时未知。 原方法名 @checkUserAttensExists
      */
     public function checkFollow($uid = null, $pid = null, $flag = true, $reservation = false)
@@ -672,12 +676,12 @@ class UserService extends Service
     }
 
     /**
-     * @todo 原方法未写数据库，侍确认。
+     * @todo        原方法未写数据库，侍确认。
      * @param $uid [用户id]
      * @param $pid [被关注用户id]
      * @return bool
-     * @author dc
-     * @version 20151022
+     * @author      dc
+     * @version     20151022
      * @description 迁移原方法delUserAttens
      */
     public function delFollow($uid, $pid)
@@ -696,12 +700,12 @@ class UserService extends Service
 
 
     /**
-     * @param $uid [发信用户id]
+     * @param     $uid   [发信用户id]
      * @param int $limit [发信数量限制 由调用方定]
-     * @param $table [信息类型]
+     * @param     $table [信息类型]
      * @return bool [返回true表示未达到上限]
-     * @author dc
-     * @version 20151023
+     * @author      dc
+     * @version     20151023
      * @description 该含数迁移自原来 VideoBaseController中的 checkAstrictUidDay方法
      */
     public function checkUserSmsLimit($uid, $limit, $table)
@@ -724,12 +728,12 @@ class UserService extends Service
 
 
     /**
-     * @param $uid [用户id]
-     * @param $num [数量]
+     * @param $uid   [用户id]
+     * @param $num   [数量]
      * @param $table [私信类型]
      * @return bool [更新结果]
-     * @author dc
-     * @version 20151023
+     * @author      dc
+     * @version     20151023
      * @description 迁移自原 VideoBaseController中的 setAstrictUidDay方法。主要功能更新用户发送私信数量
      */
     public function updateUserSmsTotal($uid, $num, $table)
@@ -749,7 +753,7 @@ class UserService extends Service
     /**
      * [getUserHiddenPermission 根据id获取该用户是否有隐身权限]
      *
-     * @todo 优化查询，迁移到redis
+     * @todo    优化查询，迁移到redis
      * @param array $user [用户信息,要包含uid,lv_rich, vip, vip_end等字段]
      *
      * @return mixed
@@ -763,7 +767,7 @@ class UserService extends Service
         if (!($user['vip'] > 0 && $user['vip_end'] > date('Y-m-d H:i:s'))) return false;
 
         //用户组权限判断
-        $userBuyGroup = $userBuyGroup = UserBuyGroup::where('uid', $user['uid'])->orderby('auto_id', 'desc')->first(array('gid'));
+        $userBuyGroup = $userBuyGroup = UserBuyGroup::where('uid', $user['uid'])->orderby('auto_id', 'desc')->first(['gid']);
         $buyGid = $userBuyGroup ? $userBuyGroup->gid : 0; //购买贵宾组条件
         $lv_rich = $user['lv_rich'];    //普通组条件
         $UserGroupPermission = UserGroupPermission::where('allowstealth', 1)->where(function ($query) use ($lv_rich, $buyGid) {
@@ -776,9 +780,9 @@ class UserService extends Service
     /**
      * todo
      * @param $userinfo [用户信息,常为获取到的信息数组]
-     * @param $des_key [加密密钥]
+     * @param $des_key  [加密密钥]
      * @return string [返回加密代码]
-     * @author dc
+     * @author       dc
      * @description  加密用户信息
      */
     public function get3Des($userinfo, $des_key)
@@ -799,7 +803,7 @@ class UserService extends Service
      * todo
      * @param $data [经3des加密的密文]
      * @return string
-     * @author dc
+     * @author      dc
      * @description 加密//补位填充函数 迁移自原原PaddingPK27函数
      */
     private function _PaddingPKCS7($data)
@@ -821,11 +825,11 @@ class UserService extends Service
         static $userCache = [];//缓存用户信息
         foreach ($rank as $uid => $score) {
             $ret[] = array_merge([
-                'uid' => $uid,
-                'score' => $score
-            ],
-                isset($userCache[$uid]) ? $userCache[$uid]
-                    : ($userCache[$uid] = array_only($this->getUserByUid($uid), ['lv_rich', 'lv_exp', 'username', 'nickname', 'headimg', 'icon_id', 'description', 'vip']))
+                                     'uid' => $uid,
+                                     'score' => $score,
+                                 ],
+                                 isset($userCache[$uid]) ? $userCache[$uid]
+                                     : ($userCache[$uid] = array_only($this->getUserByUid($uid), ['lv_rich', 'lv_exp', 'username', 'nickname', 'headimg', 'icon_id', 'description', 'vip']))
             );
         }
         return $ret;
@@ -839,5 +843,11 @@ class UserService extends Service
         if (!$this->user instanceof Users) {
             throw new Exception('Please make sure $user is a App\Models\Users object');
         }
+    }
+
+    public function deleteUserSession(Users $user)
+    {
+        $sid = $this->redis->hget(static::KEY_USER_SID, $user->getAuthIdentifier());
+        Session::getHandler()->destroy($sid);
     }
 }

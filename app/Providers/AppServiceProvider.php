@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\Message\MessageService;
 use App\Services\User\CaptchaService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\ServiceProvider;
@@ -17,6 +18,9 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton('captcha',function (){
             return new CaptchaService();
+        });
+        $this->app->singleton('messageService',function (){
+            return new MessageService();
         });
         if (config('app.env') !== 'production' || config('app.debug') == true) {
             Artisan::call('route:clear');

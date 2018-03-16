@@ -27,7 +27,7 @@ class JWTGuard implements StatefulGuard
     use GuardHelpers;
     /** @var  $token Token */
     private $token;
-    public $guard='mobile';
+    const guard='mobile';
     protected $_config;
     protected $request;
     protected $events;

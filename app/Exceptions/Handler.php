@@ -5,6 +5,8 @@ namespace App\Exceptions;
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -32,25 +34,41 @@ class Handler extends ExceptionHandler
      *
      * This is a great spot to send exceptions to Sentry, Bugsnag, etc.
      *
-     * @param  \Exception  $exception
+     * @param  \Exception $exception
      * @return void
+     * @throws Exception
      */
     public function report(Exception $exception)
     {
-    //    \Log::debug($exception->getMessage());
         parent::report($exception);
     }
 
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $exception
-     * @return \Illuminate\Http\Response
+     * @param  \Illuminate\Http\Request $request
+     * @param  \Exception               $exception
+     * @return JsonResponse|Response|\Symfony\Component\HttpFoundation\Response
      */
     public function render($request, Exception $exception)
     {
-    //    return new JsonResponse($exception->getMessage());
+        if ($exception instanceof HttpException) {
+            $statusCode = $exception->getStatusCode();
+            $status = 0;
+            $msg = $exception->getMessage();
+
+            $return = collect(compact('status', 'statusCode', 'msg'));
+            switch ($statusCode) {
+                case Response::HTTP_TOO_MANY_REQUESTS:
+                    $return['headers']=$exception->getHeaders();
+                    break;
+                default;
+                    break;
+
+            }
+            return JsonResponse::create($return);
+        }
+
         return parent::render($request, $exception);
     }
 }

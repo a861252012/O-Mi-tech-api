@@ -2,44 +2,41 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Area;
-use App\Models\BirthStar;
 use App\Models\AnchorGroup;
+use App\Models\Area;
 use App\Models\Attention;
+use App\Models\BirthStar;
+use App\Models\Conf;
 use App\Models\Goods;
+use App\Models\Keywords;
 use App\Models\LevelRich;
 use App\Models\LiveList;
+use App\Models\MallList;
 use App\Models\Messages;
 use App\Models\Pack;
 use App\Models\Recharge;
 use App\Models\RoomDuration;
 use App\Models\RoomOneToMore;
 use App\Models\UserBuyGroup;
-use App\Models\UserDomain;
-use App\Models\Users;
 use App\Models\UserGroup;
-use App\Models\VideoMail;
-use App\Models\WithDrawalRules;
-use App\Models\WithDrawalList;
-use App\Models\MallList;
-use App\Models\Conf;
-use App\Models\Keywords;
 use App\Models\UserModNickName;
+use App\Models\Users;
+use App\Models\VideoMail;
+use App\Models\WithDrawalList;
+use App\Models\WithDrawalRules;
+use App\Providers\CaptchaServiceProvider;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Foundation\Validation\ValidatesRequests;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Providers\CaptchaServiceProvider;
-use App\Services\User\CaptchaService;
-
-
 use Illuminate\Support\Facades\Redis;
 
+
 //use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
-use Symfony\Component\HttpFoundation\Session\Session;
+
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
@@ -66,10 +63,10 @@ class Controller extends BaseController
      *
      * 写入redis
      **/
-    public function writeRedis($userInfo, $huser_sid="")
+    public function writeRedis($userInfo, $huser_sid = "")
     {
         try {
-            $userInfo =   json_decode(Auth::guard()->user());
+            $userInfo = json_decode(Auth::guard()->user());
             //判断当前用户session是否是最新登陆
             //设置新session
             $_SESSION['_sf2_attributes'][self::SEVER_SESS_ID] = $userInfo['uid'];           //TODO 只根据session的webonline有无uid判断是否登录成功
@@ -96,7 +93,7 @@ class Controller extends BaseController
             unset($_SESSION['_sf2_attributes'][self::SEVER_SESS_ID]);
             setcookie(self::WEB_UID, null, time() - 31536000, '/', $GLOBALS['CUR_DOMAIN']);
             $logPath = BASEDIR . '/app/logs/business_' . date('Y-m-d') . '.log';
-            $this->logResult("用户登录写redis异常：".$e->getMessage(),$logPath);
+            $this->logResult("用户登录写redis异常：" . $e->getMessage(), $logPath);
         }
     }
 
@@ -104,23 +101,18 @@ class Controller extends BaseController
      * @param string $name
      * @return \Illuminate\Redis\Connections\Connection|null
      */
-    public function make($name=""){
-        $service = null;
-        switch ($name){
-            case 'redis':
-                $service = Redis::resolve();
-                break;
-            default:
-                $service = app($name);
-        }
-        return $service;
+    public function make($name = "")
+    {
+        return resolve($name);
     }
 
     /**
      */
-    public function request(){
+    public function request()
+    {
         return request();
     }
+
     /**
      * * 全站注册/登录密码解密函数
      * @param $s
@@ -135,21 +127,19 @@ class Controller extends BaseController
         $s = urldecode($s);
         return trim($s);
     }
+
     public function __init__()
     {
-        $params = array(
-            'REMOTE_JS_URL' => $GLOBALS['REMOTE_JS_URL']
-        );
         if (Auth::check()) {
             // 通过用户服务去获取
             $userServer = $this->make('userServer');
 
             // 获取用户的信息 初始化了用户信息
-            $userInfo = $userServer->getUserByUid(Auth::id());
-            if (!$userInfo['status']){
+            $userInfo = Auth::user();
+            if (!$userInfo['status']) {
                 // 删除B域名上的session 踢出用户
-                $sid = $this->make('redis')->hget('huser_sid', Auth::id());
-                $this->make('redis')->del('PHPREDIS_SESSION:' . $sid);
+                $sid = Redis::hget('huser_sid', Auth::id());
+                Redis::del('PHPREDIS_SESSION:' . $sid);
                 return RedirectResponse::create('/');
             }
 
@@ -177,11 +167,11 @@ class Controller extends BaseController
             }
 
             // 用户的图像的hsot 地址
-            $params['userInfo']['imgHost'] = $this->container->config['REMOTE_PIC_URL'];
+            $params['userInfo']['imgHost'] = resolve('siteService')->config()->get('img_host');
         }
         $this->assign($this->userInfo);
 
-//        $flash_url = $this->make('redis')->get('flash_url');
+//        $flash_url = Redis::get('flash_url');
 //        if ($flash_url) {
 //            $url_array = explode(';', $flash_url);
 //            $url_first = explode('/', trim($url_array[0]));
@@ -192,33 +182,33 @@ class Controller extends BaseController
 //            $params['flash_url_v'] = '';
 //        }
 
-        $flash_version = $this->make('redis')->get('flash_version');
-        $flash_url = $this->container->config['config.WEB_CDN_STATIC'].'/flash/'.$flash_version;
+        $flash_version = Redis::get('flash_version');
 
-        $params['flash_url'] = $flash_url;
         $params['flash_version'] = $flash_version;
         //$login_domain_arr = $this->container->config['config.login_domain'];
         //$params['login_domain'] = "http://".$login_domain_arr[array_rand($login_domain_arr)];
         $this->assign($params);  // 且设置到了模板中 全部都可用用户信息
     }
+
     /**
      * 时段房间互拆（一对一，一对多）
      * 返回 true 不重叠 false重叠
      */
-    public function notSetRepeat($start_time,$endtime){
+    public function notSetRepeat($start_time, $endtime)
+    {
         $now = date('Y-m-d H:i:s');
         //时间，是否和一对一有重叠
-        $data = RoomDuration::where('status', 0)->where('uid',Auth::id())
+        $data = RoomDuration::where('status', 0)->where('uid', Auth::id())
             ->orderBy('starttime', 'DESC')
             ->get()->toArray();
 
-        $temp_data = $this->array_column_multi($data,['starttime','endtime']);
-        if(!$this->checkActiveTime($start_time,$endtime,$temp_data)) return false;
+        $temp_data = $this->array_column_multi($data, ['starttime', 'endtime']);
+        if (!$this->checkActiveTime($start_time, $endtime, $temp_data)) return false;
 
         //时间，是否和一对多有重叠
-        $data = RoomOneToMore::where('status', 0)->where('uid',Auth::id())->get()->toArray();
-        $temp_data = $this->array_column_multi($data,['starttime','endtime']);
-        if(!$this->checkActiveTime($start_time,$endtime,$temp_data)) return false;
+        $data = RoomOneToMore::where('status', 0)->where('uid', Auth::id())->get()->toArray();
+        $temp_data = $this->array_column_multi($data, ['starttime', 'endtime']);
+        if (!$this->checkActiveTime($start_time, $endtime, $temp_data)) return false;
         return true;
     }
 
@@ -228,24 +218,25 @@ class Controller extends BaseController
      * @param array $data
      * @return bool false重叠 true不重叠
      */
-    public function checkActiveTime($stime='',$etime='',$data=array()){
+    public function checkActiveTime($stime = '', $etime = '', $data = array())
+    {
         $stime = strtotime($stime);
         $etime = strtotime($etime);
 
         $flag = true;
-        foreach($data as $k=>$v){
+        foreach ($data as $k => $v) {
             //开始时间在区间之内
-            if($stime>=strtotime($v['starttime'])&&$stime<=strtotime($v['endtime'])){
+            if ($stime >= strtotime($v['starttime']) && $stime <= strtotime($v['endtime'])) {
                 $flag = false;
                 break;
             }
             //结束时间在区间之内
-            if($etime>=strtotime($v['starttime'])&&$etime<=strtotime($v['endtime'])){
+            if ($etime >= strtotime($v['starttime']) && $etime <= strtotime($v['endtime'])) {
                 $flag = false;
                 break;
             }
             //包含
-            if($stime<=strtotime($v['starttime']) && $etime>=strtotime($v['endtime'])){
+            if ($stime <= strtotime($v['starttime']) && $etime >= strtotime($v['endtime'])) {
                 $flag = false;
                 break;
             }
@@ -257,16 +248,18 @@ class Controller extends BaseController
      * @param $uid
      * @param $auto_id
      */
-    public function setRoomWhiteKey($uid,$auto_id){
-        $ids = $this->make('redis')->hget('hroom_whitelist_key',$uid);
-        if($ids){
-            $ids .= ','.$auto_id;
-        }else{
+    public function setRoomWhiteKey($uid, $auto_id)
+    {
+        $ids = Redis::hget('hroom_whitelist_key', $uid);
+        if ($ids) {
+            $ids .= ',' . $auto_id;
+        } else {
             $ids = $auto_id;
         }
-        $this->make('redis')->hset('hroom_whitelist_key',$uid,$ids);
+        Redis::hset('hroom_whitelist_key', $uid, $ids);
         return true;
     }
+
     /**
      * @param $year
      * @return bool|string
@@ -298,9 +291,9 @@ class Controller extends BaseController
     public function getUserAttensCount($uid, $flag = true)
     {
         if ($flag) {
-            return $this->make('redis')->zcard('zuser_attens:' . $uid);//获取自己关注别人的数量
+            return Redis::zcard('zuser_attens:' . $uid);//获取自己关注别人的数量
         } else {
-            return $this->make('redis')->zcard('zuser_byattens:' . $uid);//获取自己被别人关注的数量
+            return Redis::zcard('zuser_byattens:' . $uid);//获取自己被别人关注的数量
         }
     }
 
@@ -312,8 +305,8 @@ class Controller extends BaseController
     public function getStarNames($monthday = 0)
     {
         $data = array();
-        if ($this->make('redis')->exists('hstar_names')) {
-            $data = $this->make('redis')->hgetall('hstar_names');
+        if (Redis::exists('hstar_names')) {
+            $data = Redis::hgetall('hstar_names');
         } else {
             $data = BirthStar::orderBy('id', 'ASC')->get();
             $tmpArr = array();
@@ -322,7 +315,7 @@ class Controller extends BaseController
                 $tmpArr[$data[$i]['monthday']] = $data[$i]['starname'];
             }
             $data = $tmpArr;
-            $this->make('redis')->hmset('hstar_names', $data);
+            Redis::hmset('hstar_names', $data);
         }
         if ($monthday == 0)
             return current($data);
@@ -345,6 +338,7 @@ class Controller extends BaseController
         // 必须以html.twig结尾
         return JsonResponse::create($params);
     }
+
     /**
      * 给变量赋值
      *
@@ -353,8 +347,8 @@ class Controller extends BaseController
      */
     public function assign($var, $value = NULL)
     {
-        if(is_array($var)) {
-            foreach($var as $key => $val) {
+        if (is_array($var)) {
+            foreach ($var as $key => $val) {
                 $this->data[$key] = $val;
             }
         } else {
@@ -559,8 +553,8 @@ class Controller extends BaseController
             array_pop($argsList);
         }
 
-        if ($this->make('redis')->Hexists($redis_key, $argsList[0])) {
-            $areas = $this->make('redis')->hmget($redis_key, $argsList);
+        if (Redis::Hexists($redis_key, $argsList[0])) {
+            $areas = Redis::hmget($redis_key, $argsList);
             //ksort($areas,SORT_NUMERIC);//按键值从小到大排序
             return implode($limit, $areas);
         }
@@ -577,7 +571,7 @@ class Controller extends BaseController
                 $area[] = $areas[$argsList[$i]];
             }
         }
-        $this->make('redis')->hmset($redis_key, $areas);
+        Redis::hmset($redis_key, $areas);
         ksort($area, SORT_NUMERIC);//按键值从小到大排序
         return implode($limit, $area);
     }
@@ -612,8 +606,8 @@ class Controller extends BaseController
         }
 
         //读取redis数据
-        if ($this->make('redis')->exists($cacheKey)) {
-            $hashData = $this->make('redis')->get($cacheKey);
+        if (Redis::exists($cacheKey)) {
+            $hashData = Redis::get($cacheKey);
             $hashData = json_decode($hashData, true);
         } else {
             $data = $modle->all();
@@ -621,7 +615,7 @@ class Controller extends BaseController
             foreach ($data as $item) {
                 $hashData[$item->level_id] = $item->getAttributes();
             }
-            $this->make('redis')->set($cacheKey, json_encode($hashData, JSON_UNESCAPED_SLASHES));
+            Redis::set($cacheKey, json_encode($hashData, JSON_UNESCAPED_SLASHES));
         }
 
         //currentExp 当前等级经验值
@@ -765,16 +759,16 @@ class Controller extends BaseController
      */
     public function getRoomUid($uid)
     {
-        $count = $this->make('redis')->zcard('zuser_reservation:' . $uid);
+        $count = Redis::zcard('zuser_reservation:' . $uid);
         if ($count > 0) {
-            $reservation = $uids = $this->make('redis')->zrevrange('zuser_reservation:' . $uid, 0, $count - 1);
+            $reservation = $uids = Redis::zrevrange('zuser_reservation:' . $uid, 0, $count - 1);
         } else {
             $reservation = array();
         }
         $result ['reservation'] = $reservation;
-        $count = $this->make('redis')->zcard('zuser_attens:' . $uid);
+        $count = Redis::zcard('zuser_attens:' . $uid);
         if ($count > 0) {
-            $result['attens'] = $this->make('redis')->zrevrange('zuser_attens:' . $uid, 0, $count - 1);
+            $result['attens'] = Redis::zrevrange('zuser_attens:' . $uid, 0, $count - 1);
         } else {
             $result['attens'] = array();
         }
@@ -839,7 +833,7 @@ class Controller extends BaseController
         $keys = 'hroom_duration:' . $durationRoom->uid . ':' . $durationRoom->roomtid;
         $arr = $durationRoom->find($durationRoom->id)->toArray();
         unset($arr['endtime']);
-        $this->make('redis')->hSet($keys, $arr['id'], json_encode($arr));
+        Redis::hSet($keys, $arr['id'], json_encode($arr));
         return true;
     }
 
@@ -861,7 +855,7 @@ class Controller extends BaseController
         if ($reservation) {
             $zkey = 'zuser_reservation';
         }
-        if ($this->make('redis')->zscore($zkey . $fid, $tid)) {
+        if (Redis::zscore($zkey . $fid, $tid)) {
             return true;
         } else {
             return false;
@@ -911,7 +905,7 @@ class Controller extends BaseController
      */
     protected function setCookieByDomain($key, $vaule = null, $time = 0)
     {
-        setcookie($key, $vaule, $time, '/', $GLOBALS['CUR_DOMAIN']);
+        setcookie($key, $vaule, $time, '/');
     }
 
 
@@ -963,7 +957,7 @@ class Controller extends BaseController
     public function generateUidToken($uid)
     {
         $token = md5(uniqid(mt_rand(), true));
-        $this->make('redis')->set('user_token:' . $uid, $token);
+        Redis::set('user_token:' . $uid, $token);
         return $token;
     }
 
@@ -979,9 +973,9 @@ class Controller extends BaseController
         if ($token == null)
             return false;
         $key = 'user_token:' . $uid;
-        $search_token = $this->make('redis')->get($key);
+        $search_token = Redis::get($key);
         if ($search_token != null) {
-            $this->make('redis')->del($key);//销毁token
+            Redis::del($key);//销毁token
         }
         if ($search_token == $token) {
             return true;
@@ -998,7 +992,7 @@ class Controller extends BaseController
      */
     public function getUserAttensBycuruid($uid, $start = 0, $limit = 4)
     {
-        return $this->make('redis')->zrevrange('zuser_attens:' . $uid, $start, $limit);
+        return Redis::zrevrange('zuser_attens:' . $uid, $start, $limit);
     }
 
     /**
@@ -1019,10 +1013,10 @@ class Controller extends BaseController
     {
         $timecheck = $timecheck ? $timecheck : date('Y-m-d H:i:s', time());
         $type = 5;
-        $curStatus = $this->make('redis')->hgetall('hroom_status:' . $rid . ':' . $type);
-        if(!isset($curStatus['status'])) return 0;
+        $curStatus = Redis::hgetall('hroom_status:' . $rid . ':' . $type);
+        if (!isset($curStatus['status'])) return 0;
         if ($curStatus != null && $curStatus['status'] == 1) {
-            $rooms = $this->make('redis')->hGetAll('hroom_duration:' . $rid . ':' . $type);
+            $rooms = Redis::hGetAll('hroom_duration:' . $rid . ':' . $type);
             foreach ($rooms as $value) {
                 $room = json_decode($value, true);
                 $start = date('Y-m-d H:i:s', strtotime($room['starttime']));
@@ -1033,10 +1027,10 @@ class Controller extends BaseController
             }
         }
         --$type;
-        $curStatus = $this->make('redis')->hgetall('hroom_status:' . $rid . ':' . $type);
-        if(!isset($curStatus['status'])) return 0;
+        $curStatus = Redis::hgetall('hroom_status:' . $rid . ':' . $type);
+        if (!isset($curStatus['status'])) return 0;
         if ($curStatus != null && $curStatus['status'] == 1) {
-            $rooms = $this->make('redis')->hGetAll('hroom_duration:' . $rid . ':' . $type);
+            $rooms = Redis::hGetAll('hroom_duration:' . $rid . ':' . $type);
             foreach ($rooms as $value) {
                 $room = json_decode($value, true);
                 $start = date('Y-m-d H:i:s', strtotime($room['starttime']));
@@ -1047,10 +1041,10 @@ class Controller extends BaseController
             }
         }
         --$type;
-        $curStatus = $this->make('redis')->hgetall('hroom_status:' . $rid . ':' . $type);
-        if(!isset($curStatus['status'])) return 0;
+        $curStatus = Redis::hgetall('hroom_status:' . $rid . ':' . $type);
+        if (!isset($curStatus['status'])) return 0;
         if ($curStatus != null && $curStatus['status'] == 1) {
-            $rooms = $this->make('redis')->hGetAll('hroom_duration:' . $rid . ':' . $type);
+            $rooms = Redis::hGetAll('hroom_duration:' . $rid . ':' . $type);
             foreach ($rooms as $value) {
                 $room = json_decode($value, true);
                 $start = date('Y-m-d H:i:s', strtotime($room['starttime']));
@@ -1061,8 +1055,8 @@ class Controller extends BaseController
             }
         }
         --$type;
-        $curStatus = $this->make('redis')->hgetall('hroom_status:' . $rid . ':' . $type);
-        if(!isset($curStatus['status'])) return 0;
+        $curStatus = Redis::hgetall('hroom_status:' . $rid . ':' . $type);
+        if (!isset($curStatus['status'])) return 0;
         if ($curStatus != null && $curStatus['status'] == 1 && $curStatus['pwd'] != null) { //特殊处理密码
             return $type;
         }
@@ -1080,9 +1074,9 @@ class Controller extends BaseController
         // 到提交的时候
         $postData = $this->make('request')->request->all();
 
-        $postData = Arr::only($postData, array('nickname','birthday','headimg','sex','description', 'province','city','county'));
+        $postData = Arr::only($postData, array('nickname', 'birthday', 'headimg', 'sex', 'description', 'province', 'city', 'county'));
 
-        if(empty($postData)){
+        if (empty($postData)) {
             $msg = array(
                 'ret' => false,
                 'info' => '非法提交'
@@ -1091,7 +1085,7 @@ class Controller extends BaseController
         }
 
         // 初始化一个用户服务器 并初始化用户
-        $userServer=$this->make('userServer');
+        $userServer = $this->make('userServer');
         $userServer = $userServer->setUser((new Users)->forceFill($userServer->getUserByUid(Auth::id())));
         $msg = array(
             'ret' => false,
@@ -1145,10 +1139,10 @@ class Controller extends BaseController
                 return new JsonResponse($msg);
             }
             //查询购买记录
-            $redis=$this->make('redis');
-            $boughtModifyNickname=intval($redis->hget('modify.nickname',Auth::id()));
-            if ($boughtModifyNickname>=1){//重置
-                $redis->del('modify.nickname',Auth::id());
+            $redis = $this->make('redis');
+            $boughtModifyNickname = intval($redis->hget('modify.nickname', Auth::id()));
+            if ($boughtModifyNickname >= 1) {//重置
+                $redis->del('modify.nickname', Auth::id());
             }
 
         }
@@ -1162,7 +1156,7 @@ class Controller extends BaseController
 
         //维护redis中的hnickname_to_id 用于注册时验证是否重名
         if (isset($postData['nickname']) && ($postData['nickname'] != $this->userInfo['nickname'])) {
-            $this->make('redis')->hset('hnickname_to_id', $postData['nickname'], $this->userInfo['uid']);
+            Redis::hset('hnickname_to_id', $postData['nickname'], $this->userInfo['uid']);
             // 修改昵称成功后 就记录日志
             $modNameLog = array(
                 'uid' => $this->userInfo['uid'],
@@ -1179,7 +1173,7 @@ class Controller extends BaseController
         // 更新对象的数据 顺序在这儿 改变顺序上面的逻辑会受影响
         $this->userInfo = Users::find($this->userInfo['uid'])->toArray();
         // 更新redis
-        $this->make('redis')->hmset('huser_info:' . $this->userInfo['uid'], $this->userInfo);
+        Redis::hmset('huser_info:' . $this->userInfo['uid'], $this->userInfo);
 
         $msg = array(
             'info' => '更新成功！',
@@ -1305,7 +1299,7 @@ class Controller extends BaseController
         $expireTime = $total_num * 86400;
 
         try {
-            $criteria = array('uid' => Auth::id(), 'gid' => $gid);
+            $criteria = array('uid' => $this->_online, 'gid' => $gid);
             $gidExpireTime = 0;
             $packEntity = Pack::where($criteria)->first();
 
@@ -1332,11 +1326,11 @@ class Controller extends BaseController
 
             if (!$flag) {
                 DB::rollback();
-                $this->make('redis')->del('huser_info:' . Auth::id());
+                Redis::del('huser_info:' . Auth::id());
                 return false;
             }
             MallList::create(array(
-                'send_uid' => Auth::id(),
+                'send_uid' => $this->_online,
                 'rec_uid' => 0,
                 'gid' => $gid,
                 'gnum' => $months,
@@ -1345,17 +1339,17 @@ class Controller extends BaseController
                 'points' => $total_price
             ));
             DB::commit();
-            $gidinfo = $this->make('redis')->hgetall('user_car:' . Auth::id());
+            $gidinfo = Redis::hgetall('user_car:' . Auth::id());
 
             if (!empty($gidinfo) && isset($gidinfo[$gid])) {
-                $this->make('redis')->hset('user_car:' . Auth::id(), $gid, $gidExpireTime);
+                Redis::hset('user_car:' . Auth::id(), $gid, $gidExpireTime);
             }
             // 更新redis
-            $this->make('redis')->del('huser_info:' . Auth::id());
+            Redis::del('huser_info:' . Auth::id());
             return true;
         } catch (\Exception $e) {
             DB::rollback();
-            $this->make('redis')->del('huser_info:' . Auth::id());
+            Redis::del('huser_info:' . Auth::id());
             return false;
         }
     }
@@ -1371,8 +1365,8 @@ class Controller extends BaseController
     public function checkAstrictUidDay($uid, $astrictNum, $table)
     {
         $redisKey = 'h' . $table . date('Ymd');
-        if ($this->make('redis')->exists($redisKey)) {
-            $num = intval($this->make('redis')->hget($redisKey, $uid));//有可能取出为空
+        if (Redis::exists($redisKey)) {
+            $num = intval(Redis::hget($redisKey, $uid));//有可能取出为空
             if ($num >= $astrictNum) {
                 $flag = 0;
             } else {
@@ -1380,7 +1374,7 @@ class Controller extends BaseController
             }
         } else {
             //不存在就删除前1天的，维护好数据
-            $this->make('redis')->del('h' . $table . date('Ymd', strtotime('-1 day')));
+            Redis::del('h' . $table . date('Ymd', strtotime('-1 day')));
             $flag = 1;
         }
         return $flag;
@@ -1413,8 +1407,8 @@ class Controller extends BaseController
     public function getGoods($gid = 0)
     {
 
-        if ($this->make('redis')->hexists('goods', $gid)) {
-            return $this->make('redis')->hget('goods', $gid);
+        if (Redis::hexists('goods', $gid)) {
+            return Redis::hget('goods', $gid);
         }
 //        $query = $this->getDoctrine()->getManager()->getRepository('Video\ProjectBundle\Entity\VideoGoods')
 //            ->createQueryBuilder('e')->getQuery();
@@ -1422,9 +1416,9 @@ class Controller extends BaseController
         $result = Goods::all()->toArray();
         foreach ($result as $v) {
             $goods[$v['gid']] = $v;
-            $this->make('redis')->hset('goods', $v['gid'], $v['name']); //目前只缓存name项
+            Redis::hset('goods', $v['gid'], $v['name']); //目前只缓存name项
         }
-        $this->make('redis')->EXPIRE('goods', 86400);
+        Redis::EXPIRE('goods', 86400);
         if (!$gid) {
             return $goods;
         } else {
@@ -1456,10 +1450,10 @@ class Controller extends BaseController
             return true;// 用户组都不在了没保级了
         }
 
-        $userGid=$group->gid;
+        $userGid = $group->gid;
 
         // 获取购买记录
-        $log = UserBuyGroup::where('uid', $user['uid'])->where('gid',$userGid)->orderBy('end_time', 'desc')->first();
+        $log = UserBuyGroup::where('uid', $user['uid'])->where('gid', $userGid)->orderBy('end_time', 'desc')->first();
         // 获取充值详细 时间为有效期往前推一个月
 
         //$startTime = strtotime($log->end_time) - 30 * 24 * 60 * 60;
@@ -1487,7 +1481,7 @@ class Controller extends BaseController
             // 更改有效期
             //开启事务
             DB::begintransaction();
-            try{
+            try {
                 $newTime = strtotime($log->end_time) + 30 * 24 * 60 * 60;
                 $log->end_time = date('Y-m-d H:i:s', $newTime);
                 $log->save();
@@ -1507,11 +1501,12 @@ class Controller extends BaseController
                 ));
                 DB::commit();
                 // 更新完刷新redis
-                $this->make('redis')->hset('huser_info:' . $user['uid'], 'vip_end', date('Y-m-d H:i:s', $newTime));
-            }catch(\Exception $e){
-                $testPath = BASEDIR . '/app/logs/test_' . date('Y-m-d') . '.log';
-                $testInfo = "保级异常：getmypid ".getmypid()."checkUserVipStatus 更新数据成功  \n";
-                $this->logResult($testInfo, $testPath);
+                Redis::hset('huser_info:' . $user['uid'], 'vip_end', date('Y-m-d H:i:s', $newTime));
+            } catch (\Exception $e) {
+//                $testPath = BASEDIR . '/app/logs/test_' . date('Y-m-d') . '.log';
+                $testInfo = "保级异常：getmypid " . getmypid() . "checkUserVipStatus 更新数据成功  \n";
+                Log::error($testInfo);
+//                $this->logResult($testInfo, $testPath);
                 DB::rollBack();//事务回滚
             }
 
@@ -1519,10 +1514,11 @@ class Controller extends BaseController
         return true;
     }
 
-    function array_column_multi(array $input, array $column_keys) {
+    function array_column_multi(array $input, array $column_keys)
+    {
         $result = array();
         $column_keys = array_flip($column_keys);
-        foreach($input as $key => $el) {
+        foreach ($input as $key => $el) {
             $result[$key] = array_intersect_key($el, $column_keys);
         }
         return $result;

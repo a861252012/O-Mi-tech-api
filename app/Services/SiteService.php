@@ -69,10 +69,17 @@ class SiteService
         $this->config = collect($config);
     }
 
-    public function config(): Collection
+    /**
+     * @param null $name
+     * @return Collection|mixed
+     */
+    public function config($name = null)
     {
-        if (!isset($config))
+        if (!isset($this->config))
             $this->loadConfig();
+        if (!is_null($name)) {
+            return $this->config->get($name);
+        }
         return $this->config;
     }
 

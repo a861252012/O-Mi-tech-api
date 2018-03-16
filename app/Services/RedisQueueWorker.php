@@ -1,5 +1,5 @@
 <?php
-namespace Core\Redis;
+namespace App\Services;
 /**
  * Created by PhpStorm.
  * User: nicholas

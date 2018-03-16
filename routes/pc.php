@@ -1,9 +1,5 @@
 <?php
 
-Route::get('/', function(){
-    echo  "aaa";
-});
-
 Route::group(['middleware'=>['login_auth']],function (){
     Route::match(['POST', 'GET'], '/onetomore', function(){
         echo "aaa";
@@ -13,10 +9,15 @@ Route::group(['middleware'=>['login_auth']],function (){
     });
 });
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
-/*//验证码
-Route::get('/captcha', ['name' => 'captcha', 'uses' => 'Controller@captcha']);*/
 
 Route::get('/captcha', ['name' => 'captcha', 'uses' => 'Controller@captcha']);
+Route::group(['prefix'=>'member','middleware'=>'login_auth'],function(){
+    Route::post('mail/verify/send','PasswordController@sendVerifyMail')->middleware('throttle:5:1')->name('mail_verify_send');
+    Route::any('mail/verify/confirm/{token}','PasswordController@VerifySafeMail')->name('mail_verify_confirm');
+});
+
+
+
 // 所有路由都在这里配置
 /** 代理改造，开放游客 */
 //rtmp地址
