@@ -53,21 +53,21 @@ class RoomController extends MobileController
         if (empty($duroom)) return new JsonResponse(array('status' => 401, 'msg' => L('MEMBER.DORESERVATION.NO_EXIST')));
         if ($duroom['status'] == 1) return new JsonResponse(array('status' => 402, 'msg' => L('MEMBER.DORESERVATION.OFFLINE')));
         if ($duroom['reuid'] != '0') return new JsonResponse(array('status' => 403, 'msg' => L('MEMBER.DORESERVATION.BOOKED')));
-        if ($duroom['uid'] == $this->_online) return new JsonResponse(array('status' => 404, 'msg' => L('MEMBER.DORESERVATION.SELF')));
+        if ($duroom['uid'] == Auth::id()) return new JsonResponse(array('status' => 404, 'msg' => L('MEMBER.DORESERVATION.SELF')));
         if ($this->userInfo['points'] < $duroom['points']) return new JsonResponse(array('status' => 405, 'msg' => L('MEMBER.DORESERVATION.POINTS_NOT_ENOUGH')));
         //关键点，这个时段内有没有其他的房间重复，标志位为flag 默认值为false 当用户确认后传入的值为true
 //        if ($flag == 'false' && !$this->notBuyRepeat($duroom['starttime'], $duroom['endtime'])) return new JsonResponse(array('status' => 407, 'msg' => L('MEMBER.DORESERVATION.CONFIRM')));
 
-        $duroom['reuid'] = $this->_online;
+        $duroom['reuid'] = Auth::id();
         //$duroom->save();
 
         $logPath = BASEDIR . '/app/logs/test_' . date('Ym') . '.log';
         try {
             DB::beginTransaction();
 //            DB::table('video_room_duration')
-//                ->where('id', $rid)->update(['reuid' => $this->_online, 'invitetime' => time(), 'origin' => $origin]);
+//                ->where('id', $rid)->update(['reuid' => Auth::id(), 'invitetime' => time(), 'origin' => $origin]);
             if (!DB::table('video_room_duration')
-                ->where('id', $rid)->where('reuid', '0')->update(['reuid' => $this->_online, 'invitetime' => time(), 'origin' => $origin])
+                ->where('id', $rid)->where('reuid', '0')->update(['reuid' => Auth::id(), 'invitetime' => time(), 'origin' => $origin])
             ) {
                 DB::rollBack();
                 return JsonResponse::create(['status' => 408, 'msg' => L('MEMBER.DORESERVATION.ERROR')]);
@@ -92,16 +92,16 @@ class RoomController extends MobileController
 
         //$this->set_durationredis($duroom);
         //记录一个标志位，在我的预约列表查询中需要优先显示查询已经预约过的主播，已经预约过的主播的ID会写到这个redis中类似关注一样的
-        if (!($this->checkUserAttensExists($this->_online, $duroom['uid'], true, true))) {
-            $this->make('redis')->zadd('zuser_reservation:' . $this->_online, time(), $duroom['uid']);
+        if (!($this->checkUserAttensExists(Auth::id(), $duroom['uid'], true, true))) {
+            $this->make('redis')->zadd('zuser_reservation:' . Auth::id(), time(), $duroom['uid']);
         }
-        Users::where('uid', $this->_online)->update(array('points' => ($this->userInfo['points'] - $duroom['points']), 'rich' => ($this->userInfo['rich'] + $duroom['oints'])));
-        $this->make('userServer')->getUserReset($this->_online);// 更新redis TODO 好屌
+        Users::where('uid', Auth::id())->update(array('points' => ($this->userInfo['points'] - $duroom['points']), 'rich' => ($this->userInfo['rich'] + $duroom['oints'])));
+        $this->make('userServer')->getUserReset(Auth::id());// 更新redis TODO 好屌
 //        RoomDuration::where('id', $duroom['id'])
-//            ->update(array('reuid' => $this->_online, 'invitetime' => time()));
+//            ->update(array('reuid' => Auth::id(), 'invitetime' => time()));
         //增加消费记录查询
         MallList::create(array(
-            'send_uid' => $this->_online,
+            'send_uid' => Auth::id(),
             'rec_uid' => $duroom['uid'],
             'gid' => $duroom['roomtid'],
             'gnum' => 1,
@@ -117,7 +117,7 @@ class RoomController extends MobileController
         $expire_week = strtotime(date('Y-m-d 00:00:00', strtotime('next week'))) - time();
         $zrank_user = array('zrank_rich_history', 'zrank_rich_week', 'zrank_rich_day', 'zrank_rich_month:' . date('Ym'));
         foreach ($zrank_user as $value) {
-            $this->make('redis')->zIncrBy($value, $duroom['points'], $this->_online);
+            $this->make('redis')->zIncrBy($value, $duroom['points'], Auth::id());
             if ('zrank_rich_day' == $value) {
                 $this->make('redis')->expire('zrank_rich_day', $expire_day);
             }
@@ -148,7 +148,7 @@ class RoomController extends MobileController
      */
     public function makeUpOneToMore()
     {
-        $uid = $this->_online;
+        $uid = Auth::id();
         $request = $this->request();
         $rid = intval($request->input('rid'));
         $origin = intval($request->input('origin'))?:12;
@@ -208,10 +208,10 @@ class RoomController extends MobileController
         $duroom = RoomOneToMore::find($rid);
         if (empty($duroom)) return new JsonResponse(array('status' => 410, 'msg' => L('MEMBER.DORESERVATION.ERROR')));
         if ($duroom['status'] == 1) return new JsonResponse(array('status' => 402, 'msg' => L('MEMBER.DORESERVATION.OFFLINE')));
-        if ($duroom['uid'] == $this->_online) return new JsonResponse(array('status' => 404, 'msg' => L('MEMBER.DORESERVATION.SELF')));
+        if ($duroom['uid'] == Auth::id()) return new JsonResponse(array('status' => 404, 'msg' => L('MEMBER.DORESERVATION.SELF')));
         if ($this->userInfo['points'] < $duroom['points']) return new JsonResponse(array('status' => 405, 'msg' => L('MEMBER.DORESERVATION.POINTS_NOT_ENOUGH')));
         if ($duroom['endtime'] < date('Y-m-d H:i:s')) return new JsonResponse(array('status' => 406, 'msg' => L('MEMBER.DOONETOMORE.END')));
-        if (UserBuyOneToMore::where('onetomore', $rid)->where('uid', $this->_online)->first()) return new JsonResponse(array('status' => 407, 'msg' => L('MEMBER.DOONETOMORE.HAS_ROOM')));
+        if (UserBuyOneToMore::where('onetomore', $rid)->where('uid', Auth::id())->first()) return new JsonResponse(array('status' => 407, 'msg' => L('MEMBER.DOONETOMORE.HAS_ROOM')));
 
         //关键点，这个时段内有没有其他的房间重复，标志位为flag 默认值为false 当用户确认后传入的值为true
         if ($flag == 'false' && !$this->notBuyRepeat($duroom['starttime'], $duroom['endtime'])) return new JsonResponse(array('status' => 408, 'msg' => L('MEMBER.DORESERVATION.CONFIRM')));
@@ -223,7 +223,7 @@ class RoomController extends MobileController
         $buy_item = [
             'rid' => $duroom['uid'],
             'onetomore' => $rid,
-            'uid' => $this->_online,
+            'uid' => Auth::id(),
             'type' => 2,
             'created' => date('Y-m-d H:i:s'),
             'starttime' => $duroom['starttime'],
@@ -240,11 +240,11 @@ class RoomController extends MobileController
         //添加白名单
         $uids = $this->make('redis')->hget('hroom_whitelist:' . $duroom['uid'] . ':' . $rid, 'uids');
         if ($uids) {
-            if (!in_array($this->_online, explode(',', $uids))) {
-                $uids .= ',' . $this->_online;
+            if (!in_array(Auth::id(), explode(',', $uids))) {
+                $uids .= ',' . Auth::id();
             }
         } else {
-            $uids = $this->_online;
+            $uids = Auth::id();
         }
         $temp = [
             'nums' => $duroom['tickets'],
@@ -253,12 +253,12 @@ class RoomController extends MobileController
         $this->make('redis')->hmset('hroom_whitelist:' . $duroom['uid'] . ':' . $rid, $temp);
 
         //扣减钻石
-        DB::table('video_user')->where('uid', $this->_online)->decrement('points', $duroom['points']);
-        DB::table('video_user')->where('uid', $this->_online)->increment('rich', $duroom['points']);
-        $this->make('userServer')->getUserReset($this->_online);
+        DB::table('video_user')->where('uid', Auth::id())->decrement('points', $duroom['points']);
+        DB::table('video_user')->where('uid', Auth::id())->increment('rich', $duroom['points']);
+        $this->make('userServer')->getUserReset(Auth::id());
 
         $logPath = BASEDIR . '/app/logs/one2more_' . date('Ym') . '.log';
-        $one2moreLog = 'uid:' . $this->_online . ' id:' . $rid . '用户钻石：' . $this->userInfo['points'] . '+';
+        $one2moreLog = 'uid:' . Auth::id() . ' id:' . $rid . '用户钻石：' . $this->userInfo['points'] . '+';
         $one2moreLog .= $duroom['points'];
         $this->logResult('doOneToMore ' . $one2moreLog, $logPath);
 
@@ -272,10 +272,10 @@ class RoomController extends MobileController
         $lists = [];
         $flashVersion = $this->make('redis')->get('flash_version') ?: 'v201504092044';
         if ($type & static::FLAG_ONE_TO_ONE) {//一对一
-            $lists['oneToOne'] = $this->getReserveOneToOneByUid($this->_online, $flashVersion);
+            $lists['oneToOne'] = $this->getReserveOneToOneByUid(Auth::id(), $flashVersion);
         }
         if ($type & static::FLAG_ONE_TO_MANY) {//一对多
-            $lists['oneToMany'] = $this->getReserveOneToManyByUid($this->_online, $flashVersion);
+            $lists['oneToMany'] = $this->getReserveOneToManyByUid(Auth::id(), $flashVersion);
         }
         return JsonResponse::create(['status' => 1, 'data' => $lists]);
     }
@@ -485,7 +485,7 @@ class RoomController extends MobileController
         /** @var RoomService $roomService */
         $roomService = $this->make('roomService');
 
-        $room = $roomService->getRoom($rid, $this->_online);
+        $room = $roomService->getRoom($rid, Auth::id());
         /** @var SocketService $socketService */
         $socketService = $this->make('socketService');
         $chatServer = [];
@@ -496,7 +496,7 @@ class RoomController extends MobileController
             //创建房间
             if ($this->userInfo['rid'] == $rid) {   //最近一次与当前一致
                 try {
-                    $room = $roomService->addRoom($rid, $rid, $this->_online);
+                    $room = $roomService->addRoom($rid, $rid, Auth::id());
                     $chatServer = $socketService->getServer($room['channel_id']);
                 } catch (NoSocketChannelException $e) {
                     $chatServer['error'] = $e->getMessage();
@@ -533,11 +533,11 @@ class RoomController extends MobileController
                     $return['onetomore'] = $room;
                     $return['onetomore']['id'] = $onetomore;
                     $return['onetomore']['access'] = 0;
-                    if ($this->_online) {
+                    if (Auth::id()) {
                         /** 判断用户是否购买 */
                         $uids = array_merge(explode(',', $room['uids']), explode(',', isset($room['tickets']) ? $room['tickets'] : ''));
                         $uids = array_filter($uids);
-                        if (in_array($this->_online, $uids)) {
+                        if (in_array(Auth::id(), $uids)) {
                             $return['onetomore']['access'] = 1;
                         }
                     }
@@ -558,7 +558,7 @@ class RoomController extends MobileController
                     $endtime = $starttime + $ord['duration'];
                     if ($now >= $starttime && $now <= $endtime) {
                         $return['ord'] = $ord;
-                        $return['ord']['access'] = $this->_online == $ord['reuid'] ? 1 : 0;
+                        $return['ord']['access'] = Auth::id() == $ord['reuid'] ? 1 : 0;
                     }
                 }
             }
@@ -600,7 +600,7 @@ class RoomController extends MobileController
 
         if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(array('code' => 6, 'msg' => L('MEMBER.ROOMSETDURATION.LIMIT_OVERFLOW')));
 
-        //$room_config = $this->getRoomStatus($this->_online,7);
+        //$room_config = $this->getRoomStatus(Auth::id(),7);
         $endtime = date('Y-m-d H:i:s',strtotime($start_time)+$duration * 60);
 
         if(!$this->notSetRepeat($start_time,$endtime)) return new JsonResponse(array('code' => 2, 'msg' => L('MEMBER.ROOMSETDURATION.DURATION')));
@@ -614,8 +614,8 @@ class RoomController extends MobileController
 
         //如果结束时间在记录之前并且未结速，则处理。否则忽略
         $now = date('Y-m-d H:i:s');
-        $lastRoom = RoomOneToMore::where('uid',$this->_online)->where('endtime','>',$now)->where('status',0)->orderBy('endtime','asc')->first();
-        //$preRoom = RoomOneToMore::where('starttime','>',$endtime)->where('uid',$this->_online)->where('endtime','>',$now)->where('status',0)->first();
+        $lastRoom = RoomOneToMore::where('uid',Auth::id())->where('endtime','>',$now)->where('status',0)->orderBy('endtime','asc')->first();
+        //$preRoom = RoomOneToMore::where('starttime','>',$endtime)->where('uid',Auth::id())->where('endtime','>',$now)->where('status',0)->first();
         if(!$lastRoom || strtotime($lastRoom->starttime)>strtotime($endtime)){
             //当天消费,并且只能向后设置，固不用判断时间大于开始时间情况
             $macro_starttime = strtotime($start_time);
@@ -627,7 +627,7 @@ class RoomController extends MobileController
                 $etime = strtotime(date('Y-m-d'))+6*3600;
             }
             if($macro_starttime<$etime){
-                $user_send_gite = $redis->hGetAll('one2many_statistic:'.$this->_online);
+                $user_send_gite = $redis->hGetAll('one2many_statistic:'.Auth::id());
                 if($user_send_gite){
                     foreach ($user_send_gite as $k=>$v){
                         if($v>=$points){
@@ -646,8 +646,8 @@ class RoomController extends MobileController
         //$points = $room_config['timecost'];
         $oneToMoreRoom = new RoomOneToMore();
         $oneToMoreRoom->created = date('Y-m-d H:i:s');
-        //  $oneToMoreRoom->uid = $this->_online;
-        $oneToMoreRoom->uid = $this->_online;
+        //  $oneToMoreRoom->uid = Auth::id();
+        $oneToMoreRoom->uid = Auth::id();
         /*    $oneToMoreRoom->roomtid = $tid;*/
         $oneToMoreRoom->starttime = $start_time;
         $oneToMoreRoom->duration = $duration * 60;
@@ -664,7 +664,7 @@ class RoomController extends MobileController
             foreach ($uidArr as $k=>$v){
                 $temp = [];
                 $temp['onetomore']=$oneToMoreRoom->id;
-                $temp['rid']=$this->_online;
+                $temp['rid']=Auth::id();
                 $temp['type']=2;
                 $temp['starttime']=$start_time;
                 $temp['endtime']=$endtime;

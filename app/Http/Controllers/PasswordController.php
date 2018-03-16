@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 
 use Core\Redis\RedisQueue;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\Debug\Debug;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -188,7 +189,7 @@ class PasswordController extends Controller
      */
     public function getPwd()
     {
-        if ($this->checkLogin()) {
+        if (Auth::check()) {
             return new RedirectResponse('/');
         }
         return $this->render('Password/getpwd');

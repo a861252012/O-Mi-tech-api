@@ -22,7 +22,7 @@ class RoomController extends Controller
     public function index($rid, $h5 = false)
     {
         if ($this->make('config')['config.open_safe'])
-            if (!$this->make('safeService')->auth($this->_online)) return new RedirectResponse('/');
+            if (!$this->make('safeService')->auth(Auth::id())) return new RedirectResponse('/');
 
         if ($rid <= 0) return $this->render('Room/no_room');
         $user = $this->make('userServer')->getUserByUid($rid);
@@ -35,11 +35,11 @@ class RoomController extends Controller
         $roomService = $this->make('roomService');
         //$xo_httphost = $roomService->getXOHost();
         //check kickout
-        $timeleft = $roomService->checkKickOut($rid, $this->_online);
+        $timeleft = $roomService->checkKickOut($rid, Auth::id());
         if ($timeleft !== true) {
             return $this->render('Room/kicked', ['timeleft' => ceil($timeleft / 60)]);
         }
-        $room = $roomService->getRoom($rid, $this->_online);
+        $room = $roomService->getRoom($rid, Auth::id());
         /** @var SocketService $socketService */
         $socketService = $this->make('socketService');
         if (!empty($room) && !empty($room['channel_id'])) {
@@ -49,7 +49,7 @@ class RoomController extends Controller
             //创建房间
             if ($this->userInfo['rid'] == $rid) {   //最近一次与当前一致
                 try {
-                    $room = $roomService->addRoom($rid, $rid, $this->_online);
+                    $room = $roomService->addRoom($rid, $rid, Auth::id());
                     $chatServer = $socketService->getServer($room['channel_id']);
                 } catch (NoSocketChannelException $e) {
 //                    die($e->getMessage());
@@ -65,7 +65,7 @@ class RoomController extends Controller
             //php setcookie 不支持写入逗号，直接调用header
             header('Set-Cookie: room_host="' . $host . ':' . $chatServer['port'] . '"; Max-Age=604800; Path=/');  //一周
             $getRoomKey = $host . ':' . $chatServer['port'];
-            $this->make('systemServer')->logResult('enter_room:' . $rid . ":" . $this->_online . ':' . $room['channel_id'] . ':' . $getRoomKey, $logPath);
+            $this->make('systemServer')->logResult('enter_room:' . $rid . ":" . Auth::id() . ':' . $room['channel_id'] . ':' . $getRoomKey, $logPath);
             header("Cache-Control: no-cache");
             header("Cache-Control: no-store");
             header("Pragma: no-cache");
@@ -179,7 +179,7 @@ class RoomController extends Controller
             }
         }
         $channel_id = isset($room['channel_id']) ? $room['channel_id'] : 0;
-        $this->make('systemServer')->logResult('in:' . $rid . ":" . $this->_online . ':' . $channel_id, $logPath);
+        $this->make('systemServer')->logResult('in:' . $rid . ":" . Auth::id() . ':' . $channel_id, $logPath);
 
         $plat_backurl = $roomService->getPlatUrl($origin);
         //$httphost = $roomService->getPlatHost();
@@ -273,7 +273,7 @@ class RoomController extends Controller
 
     protected function isHost($rid)
     {
-        return $this->_online == $rid;
+        return Auth::id() == $rid;
     }
 
     /**
@@ -498,6 +498,6 @@ class RoomController extends Controller
 
     private function getRid($uid = null)
     {
-        return $this->make('redis')->hget('huser_info:' . $uid ?: $this->_online, 'rid');
+        return $this->make('redis')->hget('huser_info:' . $uid ?: Auth::id(), 'rid');
     }
 }

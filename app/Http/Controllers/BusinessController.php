@@ -8,6 +8,7 @@ use App\Models\HostAudit;
 use App\Models\Redirect;
 use App\Models\UserExtends;
 use App\Models\Users;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Core\Exceptions\NotFoundHttpException;
@@ -32,7 +33,7 @@ class BusinessController extends Controller
             return $this->signup();
         }
         if( $act == 'agreement' ){
-            $var['login'] = $this->checkLogin();
+            $var['login'] = Auth::id();
         }
         return $this->render('Business/'.$act,$var);
     }
@@ -44,7 +45,7 @@ class BusinessController extends Controller
      * @return Response
      */
     public function signup(){
-        if ( !$this->checkLogin() )
+        if (Auth::guest())
             return new  RedirectResponse('/index.html');
 
         $user = $this->userInfo;

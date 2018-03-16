@@ -77,7 +77,7 @@ class LoginController extends Controller
         }
 
 
-        if ($this->checkLogin()) {
+        if (Auth::check()) {
             $redirect = UserDomain::find($this->userInfo['did']);
 
             /**
@@ -291,7 +291,7 @@ class LoginController extends Controller
             $res = array(
                 'status' => 1,
                 'msg' => $this->_sess_id,
-                'uid' => $this->_online
+                'uid' => Auth::id()
             );
             return new JsonResponse($res);
         }
@@ -339,7 +339,7 @@ class LoginController extends Controller
             //   $expireDay = 604800;//7*24*60*60
             //记住我的功能，将uid,|,用户名，密钥 一起md5加密，验证的时候可以用|分割，增加A域名地址信息irwin
             setcookie(
-                self::CLIENT_ENCRY_FIELD, $this->_online . '|' . $this->remypwdMd5($this->login_user['username']) . '|' . $domainA,
+                self::CLIENT_ENCRY_FIELD, Auth::id() . '|' . $this->remypwdMd5($this->login_user['username']) . '|' . $domainA,
                 time() + 604800, '/'
             );
             $day = date('Ymd');
@@ -352,7 +352,7 @@ class LoginController extends Controller
     public function isLogin()
     {
         return new Response(json_encode(array(
-            'ret' => $this->checkLogin()
+            'ret' => Auth::check()
         )));
     }
 
@@ -431,14 +431,14 @@ class LoginController extends Controller
      */
     public function logout()
     {
-        if (!$this->checkLogin()) {
+        if (Auth::guest()) {
             return new RedirectResponse('/');
         }
         // 从cookie里面获取A域名地址irwin
         $_reqCookie = $this->request()->cookies->all();
 
         // 删除B域名上的session 踢出用户
-        $sid = $this->make('redis')->hget('huser_sid', $this->_online);
+        $sid = $this->make('redis')->hget('huser_sid', Auth::id());
         $this->make('redis')->del('PHPREDIS_SESSION:' . $sid);
 
         // 检查cookie
@@ -450,7 +450,7 @@ class LoginController extends Controller
             $cookiestr = explode('|', $_reqCookie[self::CLIENT_ENCRY_FIELD]);
 
             if ((count($cookiestr) != 3) || !isset($cookiestr[2])) {
-                return $this->_online;
+                return Auth::id();
             }
             return new RedirectResponse('/');
         }

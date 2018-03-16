@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Goods;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class ShopController extends Controller
@@ -42,7 +43,7 @@ class ShopController extends Controller
 
         $goodId = $this->make('request')->get('gid');
 
-        if (!$this->checkLogin()) {
+        if (Auth::guest()) {
             return new JsonResponse(array(
                 'ret' => false,
                 'info' => '请前往首页登录!'

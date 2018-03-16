@@ -56,8 +56,8 @@ class ActivityController extends Controller
         }
 
         //$this->checklogin();
-        if ($this->_online > 0) {
-            $arr['userHasTimes'] = intval($this->make('redis')->hget('hlottery_ary', $this->_online));
+        if (Auth::id() > 0) {
+            $arr['userHasTimes'] = intval($this->make('redis')->hget('hlottery_ary', Auth::id()));
             $arr['nickname'] = $this->userInfo['nickname'];
             $arr['is_login'] = true;
         } else {

@@ -69,8 +69,8 @@ class Controller extends BaseController
     public function writeRedis($userInfo, $huser_sid="")
     {
         try {
+            $userInfo =   json_decode(Auth::guard()->user());
             //判断当前用户session是否是最新登陆
-            $this->_online = $userInfo['uid'];
             //设置新session
             $_SESSION['_sf2_attributes'][self::SEVER_SESS_ID] = $userInfo['uid'];           //TODO 只根据session的webonline有无uid判断是否登录成功
             setcookie(self::WEB_UID, $userInfo['uid'], 0, '/');//用于首页判断
@@ -95,7 +95,6 @@ class Controller extends BaseController
         } catch (\Exception $e) {
             unset($_SESSION['_sf2_attributes'][self::SEVER_SESS_ID]);
             setcookie(self::WEB_UID, null, time() - 31536000, '/', $GLOBALS['CUR_DOMAIN']);
-            $this->_online = false;
             $logPath = BASEDIR . '/app/logs/business_' . date('Y-m-d') . '.log';
             $this->logResult("用户登录写redis异常：".$e->getMessage(),$logPath);
         }
@@ -141,19 +140,19 @@ class Controller extends BaseController
         $params = array(
             'REMOTE_JS_URL' => $GLOBALS['REMOTE_JS_URL']
         );
-        if ($this->checkLogin()) {
+        if (Auth::check()) {
             // 通过用户服务去获取
             $userServer = $this->make('userServer');
 
             // 获取用户的信息 初始化了用户信息
-            $userInfo = $userServer->getUserByUid($this->_online);
+            $userInfo = $userServer->getUserByUid(Auth::id());
             if (!$userInfo['status']){
                 // 删除B域名上的session 踢出用户
-                $sid = $this->make('redis')->hget('huser_sid', $this->_online);
+                $sid = $this->make('redis')->hget('huser_sid', Auth::id());
                 $this->make('redis')->del('PHPREDIS_SESSION:' . $sid);
                 return RedirectResponse::create('/');
             }
-            $this->userInfo = $userInfo;
+
 
             // 格式化用户信息 过滤掉用户的密码之类的敏感信息
             $userInfo = $this->getOutputUser($userInfo);
@@ -209,7 +208,7 @@ class Controller extends BaseController
     public function notSetRepeat($start_time,$endtime){
         $now = date('Y-m-d H:i:s');
         //时间，是否和一对一有重叠
-        $data = RoomDuration::where('status', 0)->where('uid',$this->_online)
+        $data = RoomDuration::where('status', 0)->where('uid',Auth::id())
             ->orderBy('starttime', 'DESC')
             ->get()->toArray();
 
@@ -217,7 +216,7 @@ class Controller extends BaseController
         if(!$this->checkActiveTime($start_time,$endtime,$temp_data)) return false;
 
         //时间，是否和一对多有重叠
-        $data = RoomOneToMore::where('status', 0)->where('uid',$this->_online)->get()->toArray();
+        $data = RoomOneToMore::where('status', 0)->where('uid',Auth::id())->get()->toArray();
         $temp_data = $this->array_column_multi($data,['starttime','endtime']);
         if(!$this->checkActiveTime($start_time,$endtime,$temp_data)) return false;
         return true;
@@ -725,166 +724,6 @@ class Controller extends BaseController
         return $headimg ? config('app.REMOTE_PIC_URL') . '/' . $headimg . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size) : $this->container->config['config.WEB_CDN_STATIC'] . '/public/src/img/head_' . $size . '.png';
     }
 
-    /**
-     * 检查是否登录了，这里是根据原有的sf2中的session来判断的
-     * 以后如果废掉sf2之后，有必要的话，是可以修改掉的
-     */
-    public function checkLogin()
-    {
-        $_curRequest = $this->make('request');
-        $this->_reqSession = $_curRequest->getSession();
-
-        //echo $this->_reqSession->get(self::SEVER_SESS_ID);
-        //print_r($this->_reqSession); die;
-        if ($this->_online) {
-            return $this->_online;
-        }
-        /** jwt处理*/
-        $request = $this->request();
-        $jwt = $this->make('JWTAuth');
-        $jwt->getTokenFromRequest($request);
-        if ($jwt->token) {
-            try {
-                $userInfo = $jwt->user();
-            } catch (\InvalidArgumentException $e) {
-//                return 'Token格式错误' . $e->getMessage();
-                return false;
-            } catch (\RuntimeException $e) {
-//                return 'Token解析失败' . $e->getMessage();
-                return false;
-            }
-            if (!$userInfo) {
-//                return 'Token失效，请重新登录';
-                return false;
-            }
-            $this->_online = $userInfo['uid'];
-        }else{
-            $_reqCookie = $_curRequest->cookies->all();
-
-            if ($this->_reqSession && $this->_reqSession->get(self::SEVER_SESS_ID) != null) {
-                $this->_online = $this->_reqSession->get(self::SEVER_SESS_ID);
-            } elseif ($_reqCookie && isset($_reqCookie[self::CLIENT_ENCRY_FIELD]) && $_reqCookie[self::CLIENT_ENCRY_FIELD] != null) {
-                //记住密码的功能
-                $cookiestr = explode('|', $_reqCookie[self::CLIENT_ENCRY_FIELD]);
-
-                if (count($cookiestr) != 3) {
-                    return $this->_online;
-                }
-//            var_dump($_reqCookie);
-//            var_dump($cookiestr);
-
-                $uid = intval($cookiestr[0]);
-                $userinfo = $this->make('redis')->hGetAll('huser_info:' . $uid);
-
-                if (!$userinfo) {
-                    $userinfo = Users::find($uid);
-                }
-//            var_dump($userinfo);
-//            var_dump(md5($userinfo['username'] . $this->container->config['config.WEB_SECRET_KEY']));exit;
-                //通过uid获取用户信息，检查并且验证密钥的合法性 用户登录邮箱和密钥md5
-
-                if (!!$userinfo && md5($userinfo['username'] . $this->container->config['config.WEB_SECRET_KEY']) === $cookiestr[1]) {
-                    // $this->_online = true;
-//                var_dump($userinfo);exit;
-                    $this->wPhpSession($userinfo);
-                }
-            } elseif ($this->_online == false) {
-                $this->_clearCookie();
-            }
-
-        }
-
-        return $this->_online;
-    }
-
-    /**
-     * 用户登录的处理逻辑，web/Api/apilogin.php也存在
-     * @param $userInfo
-     * @Author Orino
-     */
-    protected function wPhpSession($userInfo)
-    {
-        //判断当前用户session是否是最新登陆
-        $this->_online = $userInfo['uid'];
-        $this->setCookieByDomain(self::WEB_UID, $userInfo['uid']);
-        $this->_sess_id = session_id();
-
-        if (empty($huser_sid)) { //说明以前没登陆过，没必要检查重复登录
-            $this->make('redis')->hset('huser_sid', $userInfo['uid'], $this->_sess_id);
-
-        } elseif ($huser_sid != $this->_sess_id) {//有可能重复登录了
-            //更新用户对应的sessid
-            $this->make('redis')->hset('huser_sid', $userInfo['uid'], $this->_sess_id);
-            //删除旧session，踢出用户在上一个浏览器的登录状态
-            $this->make('redis')->del('PHPREDIS_SESSION:' . $huser_sid);
-        }
-
-        $this->_reqSession->set(self::SEVER_SESS_ID, $this->_online);
-
-    }
-
-    /**
-     * 未登录的 修饰前置验证 返回的是跳转对象
-     *
-     * @param $request
-     * @param $next
-     * @return RedirectResponse
-     */
-    public function notLogin($request, $next)
-    {
-        if (!$this->userInfo) {
-            $login_domain = $this->container->config['config.login_domain'];
-            $domain = array_rand($login_domain, 1);
-            return new  RedirectResponse('http://' . $login_domain[$domain] . '/passport');
-
-            //判断用户充值金额
-        }else{
-            $as = isset($this->container->currentRoute[1]['as'])?$this->container->currentRoute[1]['as']:false;
-            //if( !$this->make('userServer')->checkUserLoginAsset($this->_online) && $as!=='charge' ){
-            if( false ){
-
-                return $this->render('error', array(
-                    'user_login_asset'=>false,
-                    'title'=>'帐户钻石余额不足',
-                    'msg'=>'您的帐户余额不足3000钻,请点击『<a style="color: blue;" href="/charge/order">充值</a>』进行充值后再来哦。...༼ꉺɷꉺ༽ ...<br>蜜桃儿年底大放利 打包白尊更优惠！包季：499元 包半年:666 包年：999元<br>充值后请联系QQ：2991393914<br>联系邮箱：mitao5201314@gmail.com'
-                ));
-                //  die('<script type="text/javascript">alert("您的帐户余额不足3000钻,请先充值!");location.href="http://'.$this->container->config['config.register_domain'].'/charge/order";</script>');
-            }else{
-                $currDomain = $this->make('request')->getHost();
-                if(!isset($this->userInfo['user_domain'])){
-                    $redirect = UserDomain::find($this->userInfo['did']);
-                    $this->make('redis')->hset('huser_info:'.$this->userInfo['uid'], 'user_domain', $redirect['domain']);
-                    $this->userInfo['user_domain']=$redirect['domain'];
-                }
-                $userDomain = $this->userInfo['user_domain'];
-                if($currDomain && $userDomain && $currDomain != $userDomain){
-                    // return new RedirectResponse('http://'.$userDomain);
-                }
-
-            }
-        }
-        return $next($request);
-    }
-
-    /**
-     * 未登录的 修饰前置验证 返回的是JSON对象
-     *
-     * @param $request
-     * @param $next
-     * @return JsonResponse
-     */
-    public function notLoginJson($request, $next)
-    {
-        if (!$this->userInfo) {
-            $msg = array(
-                'code' => 101,
-                'msg' => '亲，请先登录哦！'
-            );
-            return new JsonResponse($msg);
-        }
-        return $next($request);
-    }
-
 
     /**
      * [captcha 公用验证码调用方法]
@@ -1253,7 +1092,7 @@ class Controller extends BaseController
 
         // 初始化一个用户服务器 并初始化用户
         $userServer=$this->make('userServer');
-        $userServer = $userServer->setUser((new Users)->forceFill($userServer->getUserByUid($this->_online)));
+        $userServer = $userServer->setUser((new Users)->forceFill($userServer->getUserByUid(Auth::id())));
         $msg = array(
             'ret' => false,
             'info' => ''
@@ -1307,9 +1146,9 @@ class Controller extends BaseController
             }
             //查询购买记录
             $redis=$this->make('redis');
-            $boughtModifyNickname=intval($redis->hget('modify.nickname',$this->_online));
+            $boughtModifyNickname=intval($redis->hget('modify.nickname',Auth::id()));
             if ($boughtModifyNickname>=1){//重置
-                $redis->del('modify.nickname',$this->_online);
+                $redis->del('modify.nickname',Auth::id());
             }
 
         }
@@ -1466,7 +1305,7 @@ class Controller extends BaseController
         $expireTime = $total_num * 86400;
 
         try {
-            $criteria = array('uid' => $this->_online, 'gid' => $gid);
+            $criteria = array('uid' => Auth::id(), 'gid' => $gid);
             $gidExpireTime = 0;
             $packEntity = Pack::where($criteria)->first();
 
@@ -1489,15 +1328,15 @@ class Controller extends BaseController
                 Pack::where($criteria)->update(array('expires' => $gidExpireTime));
             }
             $upUser = array('points' => $userinfo['points'] - $total_price, 'rich' => $userinfo['rich'] + $total_price);
-            $flag = Users::where('uid', $this->_online)->update($upUser);
+            $flag = Users::where('uid', Auth::id())->update($upUser);
 
             if (!$flag) {
                 DB::rollback();
-                $this->make('redis')->del('huser_info:' . $this->_online);
+                $this->make('redis')->del('huser_info:' . Auth::id());
                 return false;
             }
             MallList::create(array(
-                'send_uid' => $this->_online,
+                'send_uid' => Auth::id(),
                 'rec_uid' => 0,
                 'gid' => $gid,
                 'gnum' => $months,
@@ -1506,17 +1345,17 @@ class Controller extends BaseController
                 'points' => $total_price
             ));
             DB::commit();
-            $gidinfo = $this->make('redis')->hgetall('user_car:' . $this->_online);
+            $gidinfo = $this->make('redis')->hgetall('user_car:' . Auth::id());
 
             if (!empty($gidinfo) && isset($gidinfo[$gid])) {
-                $this->make('redis')->hset('user_car:' . $this->_online, $gid, $gidExpireTime);
+                $this->make('redis')->hset('user_car:' . Auth::id(), $gid, $gidExpireTime);
             }
             // 更新redis
-            $this->make('redis')->del('huser_info:' . $this->_online);
+            $this->make('redis')->del('huser_info:' . Auth::id());
             return true;
         } catch (\Exception $e) {
             DB::rollback();
-            $this->make('redis')->del('huser_info:' . $this->_online);
+            $this->make('redis')->del('huser_info:' . Auth::id());
             return false;
         }
     }

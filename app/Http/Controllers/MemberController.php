@@ -32,6 +32,7 @@ use Illuminate\Pagination\Paginator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Auth;
 
 
 class MemberController extends Controller
@@ -253,7 +254,7 @@ class MemberController extends Controller
          * @var $userServer /App/Service/User/UserService
          */
         $userService = $this->make('userServer');
-        $modNickName = $userService->setUser((new Users)->forceFill($userService->getUserByUid($this->_online)))->getModNickNameStatus();//2017-05-12 nicholas 优化，不直接读库
+        $modNickName = $userService->setUser((new Users)->forceFill($userService->getUserByUid(Auth::id())))->getModNickNameStatus();//2017-05-12 nicholas 优化，不直接读库
         //print_r($modNickName);die();
         return $this->render('Member/index', array('modNickName' => $modNickName));
     }
@@ -277,10 +278,10 @@ class MemberController extends Controller
         $msg = $this->container->make('messageServer');
 
         // 根据用户登录的uid或者用户消息的分页数据
-        $ms = $msg->getMessageByUidAndType($this->checkLogin(), $type, '', $this->userInfo['lv_rich']);
+        $ms = $msg->getMessageByUidAndType(Auth::id(), $type, '', $this->userInfo['lv_rich']);
 
         // 更新读取的状态
-        $msg->updateMessageStatus($this->_online, $type);
+        $msg->updateMessageStatus(Auth::id(), $type);
 
         // 不同的消息类型做不同的模板 （移除私信 by Young）
         //$tpl = 'Member/msglist' . $type;
@@ -301,7 +302,7 @@ class MemberController extends Controller
     public function transfer()
     {
         $request = $this->make('request');
-        $uid = $this->_online;
+        $uid = Auth::id();
         //转帐菜单
         if (!isset($this->userInfo['transfer']) || !$this->userInfo['transfer']) {
             return new RedirectResponse('/');
@@ -442,7 +443,7 @@ class MemberController extends Controller
      */
     public function roomadmin()
     {
-        $rid = $this->_online;
+        $rid = Auth::id();
         $request = $this->make('request');
 
         //删除操作
@@ -481,15 +482,15 @@ class MemberController extends Controller
 
             $userGid = $group->gid;
 
-            //$log = UserBuyGroup::with('group')->where('uid', $this->_online)
+            //$log = UserBuyGroup::with('group')->where('uid', Auth::id())
             //dc修改增加status字段筛选
-            $log = UserBuyGroup::with('group')->where('uid', $this->_online)->where('status', 1)
+            $log = UserBuyGroup::with('group')->where('uid', Auth::id())->where('status', 1)
                 ->where('gid', $userGid)->orderBy('end_time', 'desc')->first();
 
             // 获取最近一个月充值的总额
             if ($startTime < time()) {
                 //如果还没保级成功的话
-                $charge = Recharge::where('uid', $this->_online)
+                $charge = Recharge::where('uid', Auth::id())
                     ->where('created', '>=', date('Y-m-d H:i:s', $startTime))
                     ->where('pay_status', 2)->where(function ($query) {
                         //$query->orWhere('pay_type', 1)->orWhere('pay_type', 4);
@@ -498,7 +499,7 @@ class MemberController extends Controller
                     })->sum('points');
             } else {
                 // 如果已经保级过了，就应该再往前减一个月才是当前月充值的
-                $charge = Recharge::where('uid', $this->_online)
+                $charge = Recharge::where('uid', Auth::id())
                     ->where('created', '>=', date('Y-m-d H:i:s', $startTime - 30 * 24 * 60 * 60))
                     ->where('pay_status', 2)->where(function ($query) {
                         //$query->orWhere('pay_type', 1)->orWhere('pay_type', 4);
@@ -565,7 +566,7 @@ class MemberController extends Controller
     public function invite()
     {
         //获取用户ID
-        $uid = $this->_online;
+        $uid = Auth::id();
 
         //组装推广网址
         $userUrl = rtrim($this->make('request')->getSchemeAndHttpHost(), '/') . '/?u=' . $uid;
@@ -594,7 +595,7 @@ class MemberController extends Controller
         $key = '942825741';
         $api_url = sprintf($api . "?source=%s&url_long=%s", $key, $url);
 
-        $uid = $this->_online;
+        $uid = Auth::id();
         $redis = $this->make('redis');
         if ($redis->hexists('user_url_t', $uid)) {
             return $redis->hget('user_url_t', $uid);
@@ -633,7 +634,7 @@ class MemberController extends Controller
         $curpage = $this->make("request")->get('page') ?: 1;
 
         $userServer = $this->make('userServer');
-        $data = $userServer->getUserAttens($this->_online, $curpage);
+        $data = $userServer->getUserAttens(Auth::id(), $curpage);
 
         return $this->render('Member/attention',
             array(
@@ -653,7 +654,7 @@ class MemberController extends Controller
      */
     public function scene()
     {
-        $uid = $this->_online;
+        $uid = Auth::id();
 
         //道具装备操作
         if ($this->make('request')->get('handle') == 'equip') {
@@ -688,7 +689,7 @@ class MemberController extends Controller
     private function _getEquipHandle($gid)
     {
 
-        $uid = $this->_online;
+        $uid = Auth::id();
         if (!$gid || !$uid) {
             return false;
         }
@@ -728,7 +729,7 @@ class MemberController extends Controller
     public function charge()
     {
         //获取用户ID
-        $uid = $this->_online;
+        $uid = Auth::id();
         //获取下用户信息
         $chargelist = Recharge::where('uid', $uid)->where('del', 0)
             ->orderBy('id', 'DESC')->paginate();
@@ -751,7 +752,7 @@ class MemberController extends Controller
      */
     public function consumerd()
     {
-        $uid = $this->_online;
+        $uid = Auth::id();
         $result['user'] = $this->userInfo;
         $result['data'] = MallList::with('goods')->where('send_uid', $uid)
             ->where('gid', '>', 0)
@@ -770,10 +771,10 @@ class MemberController extends Controller
     public function password()
     {
 
-        if (!$this->checkLogin()) {
+        if (Auth::guest()) {
             return new Response('Login:TimeOut');
         }
-        $uid = $this->_online;
+        $uid = Auth::id();
         if ($this->make('request')->getMethod() === 'POST') {
             $post = $this->make('request')->request->all();
             if (!$this->make('captcha')->Verify($post['captcha'])) {
@@ -809,11 +810,11 @@ class MemberController extends Controller
             }
 
             // 删除A域名上的session 踢出用户
-           // $sid_a = $this->make('redis')->hget('huser_sid_a', $this->_online);
+           // $sid_a = $this->make('redis')->hget('huser_sid_a', Auth::id());
            // $this->make('redis')->del('PHPREDIS_SESSION:' . $sid_a);
 
             // 删除B域名上的session 踢出用户
-            $sid = $this->make('redis')->hget('huser_sid', $this->_online);
+            $sid = $this->make('redis')->hget('huser_sid', Auth::id());
             $this->make('redis')->del('PHPREDIS_SESSION:' . $sid);
 
             $this->_clearCookie();
@@ -840,7 +841,7 @@ class MemberController extends Controller
         $tab = $this->request()->input('tab', 'one2one');
         $status = array();
         for ($i = 1; $i <= 7; $i++) {//获取房间状态，从2到7的状态
-            $ROOM = $this->getRoomStatus($this->_online, $i);//获取对应的房间权限状态
+            $ROOM = $this->getRoomStatus(Auth::id(), $i);//获取对应的房间权限状态
             if (!empty($ROOM)) {
                 array_push($status, $ROOM);
             }
@@ -850,13 +851,13 @@ class MemberController extends Controller
         Paginator::currentPageResolver(function () use ($page2) {
             return $page2;
         });
-        $result['roomlistOneToMore'] = RoomOneToMore::where('uid', $this->_online)->where('status', 0)
+        $result['roomlistOneToMore'] = RoomOneToMore::where('uid', Auth::id())->where('status', 0)
             ->orderBy('starttime', 'DESC')
             ->paginate(10)->appends(['tab' => 'one2many', 'page1' => $page1])->setPageName('page2')->setPath('');
         Paginator::currentPageResolver(function () use ($page1) {
             return $page1;
         });
-        $result['roomlistOneToOne'] = RoomDuration::where('uid', $this->_online)->where('status', 0)
+        $result['roomlistOneToOne'] = RoomDuration::where('uid', Auth::id())->where('status', 0)
             ->orderBy('starttime', 'DESC')
             ->paginate(10)->appends(['tab' => 'one2one', 'page2' => $page2])->setPageName('page1')->setPath('');
         for ($i = 0; $i < 25; $i++) {//生成前端的小时下拉框
@@ -869,7 +870,7 @@ class MemberController extends Controller
         }
 
         //时长房间
-        $roomStatus = $this->getRoomStatus($this->_online, 6);
+        $roomStatus = $this->getRoomStatus(Auth::id(), 6);
         $result['roomStatus'] = $roomStatus;
         //      die(json_encode($result['types']));
         //var_dump($status); exit();
@@ -976,7 +977,7 @@ class MemberController extends Controller
 
         if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(array('code' => 6, 'msg' => '不能设置过去的时间'));
 
-        //$room_config = $this->getRoomStatus($this->_online,7);
+        //$room_config = $this->getRoomStatus(Auth::id(),7);
         $endtime = date('Y-m-d H:i:s', strtotime($start_time) + $duration * 60);
 
         if (!$this->notSetRepeat($start_time, $endtime)) return new JsonResponse(array('code' => 2, 'msg' => '你这段时间和一对一或一对多有重复的房间'));
@@ -987,11 +988,15 @@ class MemberController extends Controller
 
         $uids = '';
         $tickets = 0;
+        //获取主播id
+        $auth = Auth::guard();
+        $uid = $auth->id();
+
 
         //如果结束时间在记录之前并且未结速，则处理。否则忽略
         $now = date('Y-m-d H:i:s');
-        $lastRoom = RoomOneToMore::where('uid', $this->_online)->where('endtime', '>', $now)->where('status', 0)->orderBy('endtime', 'asc')->first();
-        //$preRoom = RoomOneToMore::where('starttime','>',$endtime)->where('uid',$this->_online)->where('endtime','>',$now)->where('status',0)->first();
+        $lastRoom = RoomOneToMore::where('uid', $uid)->where('endtime', '>', $now)->where('status', 0)->orderBy('endtime', 'asc')->first();
+        //$preRoom = RoomOneToMore::where('starttime','>',$endtime)->where('uid',Auth::id())->where('endtime','>',$now)->where('status',0)->first();
         if (!$lastRoom || strtotime($lastRoom->starttime) > strtotime($endtime)) {
             //当天消费,并且只能向后设置，固不用判断时间大于开始时间情况
             $macro_starttime = strtotime($start_time);
@@ -1003,7 +1008,7 @@ class MemberController extends Controller
                 $etime = strtotime(date('Y-m-d')) + 6 * 3600;
             }
             if ($macro_starttime < $etime) {
-                $user_send_gite = $redis->hGetAll('one2many_statistic:' . $this->_online);
+                $user_send_gite = $redis->hGetAll('one2many_statistic:' . Auth::id());
                 if ($user_send_gite) {
                     foreach ($user_send_gite as $k => $v) {
                         if ($v >= $points) {
@@ -1019,7 +1024,7 @@ class MemberController extends Controller
         //$points = $room_config['timecost'];
         $oneToMoreRoom = new RoomOneToMore();
         $oneToMoreRoom->created = date('Y-m-d H:i:s');
-        $oneToMoreRoom->uid = $this->_online;
+        $oneToMoreRoom->uid = $uid;
         $oneToMoreRoom->roomtid = $tid;
         $oneToMoreRoom->starttime = $start_time;
         $oneToMoreRoom->duration = $duration * 60;
@@ -1037,7 +1042,7 @@ class MemberController extends Controller
             foreach ($uidArr as $k => $v) {
                 $temp = [];
                 $temp['onetomore'] = $oneToMoreRoom->id;
-                $temp['rid'] = $this->_online;
+                $temp['rid'] = $uid;
                 $temp['type'] = 2;
                 $temp['starttime'] = $start_time;
                 $temp['endtime'] = $endtime;
@@ -1066,9 +1071,9 @@ class MemberController extends Controller
         ];
         $rs = $this->make('redis')->hmset('hroom_whitelist:' . $duroom['uid'] . ':' . $duroom->id, $temp);
 
-        $logPath = BASEDIR . '/app/logs/one2more_' . date('Ym') . '.log';
+       // $logPath = BASEDIR . '/app/logs/one2more_' . date('Ym') . '.log';
         $one2moreLog = 'hroom_whitelist:' . $duroom['uid'] . ':' . $duroom->id . ' ' . json_encode($temp) . "\n";
-        $this->logResult('roomOneToMore  ' . $one2moreLog, $logPath);
+        //$this->logResult('roomOneToMore  ' . $one2moreLog, $logPath);
 
         return new JsonResponse(array('status' => 1, 'msg' =>'添加成功！'));
     }
@@ -1085,12 +1090,12 @@ class MemberController extends Controller
         if ($timecost <= 0 || $timecost > 999999) return new JsonResponse(array('code' => "301", 'msg' => '金额设置有误'));
 
         //todo 时长房直播，并且开启时，不处理
-        $timecost_status = $this->make("redis")->hget("htimecost:" . $this->_online, "timecost_status");
+        $timecost_status = $this->make("redis")->hget("htimecost:" . Auth::id(), "timecost_status");
         if ($timecost_status == 1) return new JsonResponse(array('code' => "302", 'msg' => '时长房直播中,不能设置'));
 
-        RoomStatus::where("uid", $this->_online)->where("tid", 6)->where("status", 1)->update(['timecost' => $timecost]);
+        RoomStatus::where("uid", Auth::id())->where("tid", 6)->where("status", 1)->update(['timecost' => $timecost]);
 
-        $this->make("redis")->hset("hroom_status:" . $this->_online . ":6", "timecost", $timecost);
+        $this->make("redis")->hset("hroom_status:" . Auth::id() . ":6", "timecost", $timecost);
         return new JsonResponse(array('code' => 1, 'msg' => '设置成功'));
     }
 
@@ -1131,7 +1136,7 @@ class MemberController extends Controller
 
         $durationRoom = new RoomDuration();
         $durationRoom->created = date('Y-m-d H:i:s');
-        $durationRoom->uid = $this->_online;
+        $durationRoom->uid = Auth::id();
         $durationRoom->roomtid = $tid;
         $durationRoom->starttime = $start_time;
         $durationRoom->duration = $duration * 60;
@@ -1168,13 +1173,13 @@ class MemberController extends Controller
                 return new JsonResponse(array('code' => 3, 'msg' => '密码格式不对'));
             }
 //        $this->getRedis();
-        $this->make('redis')->hset('hroom_status:' . $this->_online . ':2', 'pwd', $password);
+        $this->make('redis')->hset('hroom_status:' . Auth::id() . ':2', 'pwd', $password);
 //        $em = $this->getDoctrine()->getManager();
 //        $roomtype =  $em->getRepository('Video\ProjectBundle\Entity\VideoRoomStatus')->findOneBy(array('uid'=>$this->_uid,'tid'=>2));
 //        $roomtype->setPwd($password);
 //        $em->persist($roomtype);
 //        $em->flush();
-        $roomtype = RoomStatus::where('uid', $this->_online)->where('tid', 2)->update(['pwd' => $password]);
+        $roomtype = RoomStatus::where('uid', Auth::id())->where('tid', 2)->update(['pwd' => $password]);
         if ($room_radio == 'false') return new JsonResponse(array('code' => 1, 'msg' => '密码关闭成功'));
         return new JsonResponse(array('code' => 1, 'msg' => '密码修改成功'));
     }
@@ -1272,11 +1277,11 @@ class MemberController extends Controller
         $userServer = $this->make('userServer');
         switch ($type) {
             case 2:
-                $data = UserBuyOneToMore::where('uid', $this->_online)->orderBy('starttime', 'DESC')->paginate();
+                $data = UserBuyOneToMore::where('uid', Auth::id())->orderBy('starttime', 'DESC')->paginate();
                 break;
             case 1:
             default:
-                $data = RoomDuration::where('reuid', $this->_online)
+                $data = RoomDuration::where('reuid', Auth::id())
                     ->where('starttime', '>', time() . '-duration')
                     ->orderBy('starttime', 'DESC')
                     ->paginate();;
@@ -1295,7 +1300,7 @@ class MemberController extends Controller
         }
         $thispage = $this->make("request")->get('page') ?: 1;
         //我的预约推荐是从redis中取数据的，先全部取出数据，做排序
-        $roomlists = $this->getReservation($this->_online);
+        $roomlists = $this->getReservation(Auth::id());
         $roomlist = array_slice($roomlists, ($thispage - 1) * 6, 6);
         $Count = count($roomlists);
         $rooms['pagination'] = array(
@@ -1428,26 +1433,26 @@ class MemberController extends Controller
         if (empty($duroom)) return new JsonResponse(array('code' => 401, 'msg' => '您预约的房间不存在'));
         if ($duroom['status'] == 1) return new JsonResponse(array('code' => 402, 'msg' => '当前的房间已经下线了，请选择其他房间。'));
         if ($duroom['reuid'] != '0') return new JsonResponse(array('code' => 403, 'msg' => '当前的房间已经被预定了，请选择其他房间。'));
-        if ($duroom['uid'] == $this->_online) return new JsonResponse(array('code' => 404, 'msg' => '自己不能预约自己的房间'));
+        if ($duroom['uid'] == Auth::id()) return new JsonResponse(array('code' => 404, 'msg' => '自己不能预约自己的房间'));
         if ($this->userInfo['points'] < $duroom['points']) return new JsonResponse(array('code' => 405, 'msg' => '余额不足哦，请充值！'));
         //关键点，这个时段内有没有其他的房间重复，标志位为flag 默认值为false 当用户确认后传入的值为true
-        if (!$this->checkRoomUnique($duroom, $this->_online) && $flag == 'false') {
+        if (!$this->checkRoomUnique($duroom, Auth::id()) && $flag == 'false') {
             return new JsonResponse(array('code' => 407, 'msg' => '您这个时间段有房间预约了，您确定要预约么'));
         }
-        $duroom['reuid'] = $this->_online;
+        $duroom['reuid'] = Auth::id();
         $duroom->save();
         $this->set_durationredis($duroom);
         //记录一个标志位，在我的预约列表查询中需要优先显示查询已经预约过的主播，已经预约过的主播的ID会写到这个redis中类似关注一样的
-        if (!($this->checkUserAttensExists($this->_online, $duroom['uid'], true, true))) {
-            $this->make('redis')->zadd('zuser_reservation:' . $this->_online, time(), $duroom['uid']);
+        if (!($this->checkUserAttensExists(Auth::id(), $duroom['uid'], true, true))) {
+            $this->make('redis')->zadd('zuser_reservation:' . Auth::id(), time(), $duroom['uid']);
         }
-        Users::where('uid', $this->_online)->update(array('points' => ($this->userInfo['points'] - $duroom['points']), 'rich' => ($this->userInfo['rich'] + $duroom['points'])));
-        $this->make('userServer')->getUserReset($this->_online);// 更新redis TODO 好屌
+        Users::where('uid', Auth::id())->update(array('points' => ($this->userInfo['points'] - $duroom['points']), 'rich' => ($this->userInfo['rich'] + $duroom['points'])));
+        $this->make('userServer')->getUserReset(Auth::id());// 更新redis TODO 好屌
         RoomDuration::where('id', $duroom['id'])
-            ->update(array('reuid' => $this->_online, 'invitetime' => time()));
+            ->update(array('reuid' => Auth::id(), 'invitetime' => time()));
         //增加消费记录查询
         MallList::create(array(
-            'send_uid' => $this->_online,
+            'send_uid' => Auth::id(),
             'rec_uid' => $duroom['uid'],
             'gid' => 410001,
             //$duroom['roomtid'],irwin
@@ -1464,7 +1469,7 @@ class MemberController extends Controller
         $expire_week = strtotime(date('Y-m-d 00:00:00', strtotime('next week'))) - time();
         $zrank_user = array('zrank_rich_history', 'zrank_rich_week', 'zrank_rich_day', 'zrank_rich_month:' . date('Ym'));
         foreach ($zrank_user as $value) {
-            $this->make('redis')->zIncrBy($value, $duroom['points'], $this->_online);
+            $this->make('redis')->zIncrBy($value, $duroom['points'], Auth::id());
             if ('zrank_rich_day' == $value) {
                 $this->make('redis')->expire('zrank_rich_day', $expire_day);
             }
@@ -1502,7 +1507,7 @@ class MemberController extends Controller
                 'info' => '接受者用户不存在！'
             )));
         }
-        if ($this->_online == $tid) {
+        if (Auth::id() == $tid) {
             return new Response(json_encode(array(
                 'ret' => false,
                 'info' => '不能给自己发私信！'
@@ -1524,7 +1529,7 @@ class MemberController extends Controller
             )));
         }
 
-        $num = $this->checkAstrictUidDay($this->_online, 1000, 'video_mail');//验证每天发帖次数
+        $num = $this->checkAstrictUidDay(Auth::id(), 1000, 'video_mail');//验证每天发帖次数
         if ($num == 0) {
             return new Response(json_encode(array(
                 'ret' => false,
@@ -1534,7 +1539,7 @@ class MemberController extends Controller
 
         $message = new Messages();
         $res = $message->create(array(
-            'send_uid' => $this->_online,
+            'send_uid' => Auth::id(),
             'rec_uid' => $tid,
             'content' => htmlentities($content),
             'category' => 2,
@@ -1542,7 +1547,7 @@ class MemberController extends Controller
             'created' => date('Y-m-d H:i:s')
         ));
         if ($res) {
-            $this->setAstrictUidDay($this->_online, $num, 'video_mail');//更新每天发帖次数
+            $this->setAstrictUidDay(Auth::id(), $num, 'video_mail');//更新每天发帖次数
             return new Response(json_encode(array(
                 'ret' => true,
                 'info' => '私信发送成功！'
@@ -1577,7 +1582,7 @@ class MemberController extends Controller
         $mintime = $this->make('request')->get('mintime') ?: date('Y-m-d', strtotime('-1 month'));
         $maxtime = $this->make('request')->get('maxtime') ?: date('Y-m-d', strtotime('now'));
         $status = $this->make('request')->get('status') ?: 0;
-        $availableBalance = $this->getAvailableBalance($this->_online);
+        $availableBalance = $this->getAvailableBalance(Auth::id());
         $result['sum_points'] = $availableBalance['availpoints'];
         //$result['sum_points'] = 6000000;
         $result['Available_points'] = $availableBalance['availmoney'];
@@ -1598,7 +1603,7 @@ class MemberController extends Controller
 //            ->getQuery();
 
 //        $thispage = $this->make('request')->get('page') ?: 1;
-        $data = WithDrawalList::where('uid', $this->_online)->where('created', '<', $maxtime)->where('created', '>', $mintime)
+        $data = WithDrawalList::where('uid', Auth::id())->where('created', '<', $maxtime)->where('created', '>', $mintime)
             ->where('status', $status)
             ->orderBy('created', 'DESC')
             ->paginate();
@@ -1640,14 +1645,14 @@ class MemberController extends Controller
      */
     public function addwithdraw()
     {
-        if (!$this->checkLogin()) {
+        if (Auth::guest()) {
             return new Response('Login:TimeOut');
         }
         $money = $this->make('request')->get('withdrawnum');
         if (empty($money) || $money < 200) {
             return new JsonResponse(array('code' => 309, 'msg' => '每次提现不能少于200！'));
         }
-        $uid = $this->_online;
+        $uid = Auth::id();
         $avila_points = $this->getAvailableBalance($uid);
         if ($money > $avila_points['availmoney']) {
             return new JsonResponse(array('code' => 310, 'msg' => '提现金额不能大于可用余额！'));
@@ -1695,7 +1700,7 @@ class MemberController extends Controller
             }
         }
 
-        $data = Anchor::where('uid', $this->_online)->orderBy('jointime', 'DESC')
+        $data = Anchor::where('uid', Auth::id())->orderBy('jointime', 'DESC')
             ->paginate();
 //        $result['IMGHOST'] = trim($this->container->getParameter('REMOTE_PIC_URL'), '/') . '/';
         $result['gallery'] = $data;
@@ -1732,8 +1737,8 @@ class MemberController extends Controller
                 $dm->setUserField(array('pic_used_size' => $pic_used_size), $user['uid']);
                 $gm->remove($anchor);*/
                 //将用户剩余图片空间同步更新数据库及redis
-                Users::find($this->_online)->update(array('pic_used_size' => $pic_used_size));
-                $this->make('redis')->hMset('huser_info:' . $this->_online, Users::find($this->_online)->toArray());
+                Users::find(Auth::id())->update(array('pic_used_size' => $pic_used_size));
+                $this->make('redis')->hMset('huser_info:' . Auth::id(), Users::find(Auth::id())->toArray());
                 Anchor::find($id)->delete();
                 break;
 
@@ -1775,7 +1780,7 @@ class MemberController extends Controller
             $data = CarGameBetBak::with(['game' => function ($query) {
                 $query->with('gameMasterUser');
             }])->with('gameRoomUser')
-                ->where('uid', $this->_online)
+                ->where('uid', Auth::id())
                 ->where('dml_flag', '!=', 3)
                 ->orderBy('created', 'desc')
                 ->paginate();
@@ -1783,7 +1788,7 @@ class MemberController extends Controller
         // 我做庄的
         if ($type == 2) {
             $data = CarGame::with('gameRoomUser')
-                ->where('uid', $this->_online)
+                ->where('uid', Auth::id())
                 ->where('dml_flag', '!=', 3)
                 ->orderBy('stime', 'DESC')
                 ->paginate();
@@ -1800,7 +1805,7 @@ class MemberController extends Controller
      */
     public function count()
     {
-        $uid = $this->_online;
+        $uid = Auth::id();
         if (!$uid) {
             throw new NotFoundHttpException();
         }
@@ -1864,9 +1869,9 @@ class MemberController extends Controller
 
         //todo author raby
         if ($type == "counttime") {
-            $where_uid = ['send_uid' => $this->_online];
+            $where_uid = ['send_uid' => Auth::id()];
             if ($this->userInfo['roled'] == 3) {
-                $where_uid = ['rec_uid' => $this->_online];
+                $where_uid = ['rec_uid' => Auth::id()];
             }
 
             $timecost = (new TimecostMallList())->getList($where_uid, [$mintime, $maxtime]);
@@ -1905,7 +1910,7 @@ class MemberController extends Controller
     public function live()
     {
 
-        $uid = $this->_online;
+        $uid = Auth::id();
 
         /**
          * 查询的开始时间 用于获取数据
@@ -2102,7 +2107,7 @@ class MemberController extends Controller
 
         if (!$result['ret']) return new JsonResponse($result);
 
-        $anchor = Anchor::create(array('uid' => $this->_online, 'file' => $result['info']['md5'], 'size' => $result['info']['size'], 'jointime' => time()));
+        $anchor = Anchor::create(array('uid' => Auth::id(), 'file' => $result['info']['md5'], 'size' => $result['info']['size'], 'jointime' => time()));
 
         //更新用户空间
         Users::where('uid', $user['uid'])->update(array('pic_used_size' => $user['pic_used_size'] + $result['info']['size']));
@@ -2122,7 +2127,7 @@ class MemberController extends Controller
      */
     public function cancelScene()
     {
-        $this->make('redis')->del('user_car:' . $this->_online);//检查过期直接删除对应的缓存key
+        $this->make('redis')->del('user_car:' . Auth::id());//检查过期直接删除对应的缓存key
         return new JsonResponse(array('status' => 0, 'msg' => '操作成功'));
     }
 
@@ -2198,9 +2203,9 @@ class MemberController extends Controller
             /**
              * 首开礼包 先判断是否已经开通过了此贵族的 TODO 为了解决mysqlnd_ms 的bug问题 强制读主库
              */
-            $isBuyThisGroup = DB::select('select * from video_user_buy_group where gid=? and uid=? limit 1', array($gid, $this->_online));
+            $isBuyThisGroup = DB::select('select * from video_user_buy_group where gid=? and uid=? limit 1', array($gid, Auth::id()));
 
-            $userServer = $this->make('userServer')->setUser(Users::find($this->_online)); // 初始化用户服务
+            $userServer = $this->make('userServer')->setUser(Users::find(Auth::id())); // 初始化用户服务
             $u['vip'] = $userGroup['level_id'];
             $exp = date('Y-m-d H:i:s', time() + $day * 24 * 60 * 60);
             // 用户的钻石 减去开通的价格
@@ -2208,15 +2213,15 @@ class MemberController extends Controller
             $user->points = ($user->points - $userGroup['system']['open_money']); // 扣除的钻石
             $u['vip_end'] = $exp; // 过期时间
             $u['hidden'] = 0;
-            DB::table('video_user')->where('uid', $this->_online)->update($u);
+            DB::table('video_user')->where('uid', Auth::id())->update($u);
             // 首开礼包
             if (!$isBuyThisGroup && $userGroup['system']['gift_money']) {
                 // 赠送 TODO 整合到用户的服务中去
                 $us['points'] = ($user->points + $userGroup['system']['gift_money']);
-                DB::table('video_user')->where('uid', $this->_online)->update($us);
+                DB::table('video_user')->where('uid', Auth::id())->update($us);
                 // 写入赠送日志
                 $arr = array(
-                    'uid' => $this->_online,
+                    'uid' => Auth::id(),
                     'created' => date('Y-m-d H:i:s'),
                     'points' => $userGroup['system']['gift_money'],
                     'paymoney' => round($userGroup['system']['gift_money'],1),
@@ -2237,7 +2242,7 @@ class MemberController extends Controller
 
             // 写入购买用户组的记录 user_buy_group
             $buyGroup = array(
-                'uid' => $this->_online,
+                'uid' => Auth::id(),
                 'gid' => $gid,
                 'create_at' => date('Y-m-d H:i:s'),
                 'rid' => $roomId,
@@ -2254,11 +2259,11 @@ class MemberController extends Controller
              * @author dc
              * @version 20151026
              */
-            $userPack = Pack::whereUid($this->_online)->whereGid($userGroup['mount'])->first();
+            $userPack = Pack::whereUid(Auth::id())->whereGid($userGroup['mount'])->first();
             if (!$userPack) {
-                DB::insert('insert into `video_pack` (uid, gid, expires, num) values (?, ?, ?, ?)', [$this->_online, $userGroup['mount'], strtotime($exp), 1]);
+                DB::insert('insert into `video_pack` (uid, gid, expires, num) values (?, ?, ?, ?)', [Auth::id(), $userGroup['mount'], strtotime($exp), 1]);
                 /*@todo 待检查为何这个方法插入失败*/
-                //Pack::create(array('uid'=>$this->_online,'gid'=>$userGroup['mount'],'expires'=>strtotime($exp),'num'=>1));
+                //Pack::create(array('uid'=>Auth::id(),'gid'=>$userGroup['mount'],'expires'=>strtotime($exp),'num'=>1));
             }
 
             // 赠送爵位
@@ -2279,7 +2284,7 @@ class MemberController extends Controller
             if ($roomId && DB::table('video_user')->where('uid', $roomId)->first()) {
                 $commission = array(
                     'uid' => $roomId,
-                    'r_uid' => $this->_online,
+                    'r_uid' => Auth::id(),
                     'r_id' => $gid,
                     'type' => 'open_vip',
                     'title' => '房间内开通贵族返佣',
@@ -2295,13 +2300,13 @@ class MemberController extends Controller
                 DB::table('video_user_commission')->insertGetId($commission);
                 $casheback = $userGroup['system']['host_money'];
             }
-            $userinfo = DB::select('select * from video_user where uid=? limit 1', array($this->_online));
+            $userinfo = DB::select('select * from video_user where uid=? limit 1', array(Auth::id()));
             //赠送完坐骑立即装备
             $redis = $this->make('redis');
             // 更新用户redis中的信息
-            $redis->hMset('huser_info:' . $this->_online, (array)$userinfo[0]);
-            $redis->del('user_car:' . $this->_online);
-            $redis->hset('user_car:' . $this->_online, $userGroup['mount'], strtotime($exp));
+            $redis->hMset('huser_info:' . Auth::id(), (array)$userinfo[0]);
+            $redis->del('user_car:' . Auth::id());
+            $redis->hset('user_car:' . Auth::id(), $userGroup['mount'], strtotime($exp));
 
             DB::commit();
 
@@ -2309,7 +2314,7 @@ class MemberController extends Controller
             DB::rollback();
             //记录下日志
             $logPath = BASEDIR . '/app/logs/test_' . date('Y-m-d') . '.log';
-            $loginfo = date('Y-m-d H:i:s') . ' uid' . $this->_online . "\n 购买贵族 事务结果: \n" . $e->getMessage() . "\n";
+            $loginfo = date('Y-m-d H:i:s') . ' uid' . Auth::id() . "\n 购买贵族 事务结果: \n" . $e->getMessage() . "\n";
             $this->logResult($loginfo, $logPath);
 
             $msg['code'] = 1003;
@@ -2318,7 +2323,7 @@ class MemberController extends Controller
         }
         $msg['msg'] = '开通成功';
         $msg['data'] = array(
-            'uid' => $this->_online,
+            'uid' => Auth::id(),
             'roomid' => $roomId,
             'vip' => $userGroup['level_id'],
             'cashback' => $casheback,
@@ -2341,7 +2346,7 @@ class MemberController extends Controller
         );
 
         // 判断是否已经领过了
-        $pack = Pack::where('uid', $this->_online)->where('gid', $mid)->first();
+        $pack = Pack::where('uid', Auth::id())->where('gid', $mid)->first();
         if ($pack) {
             $msg['code'] = 1002;
             $msg['msg'] = '你已经获取过了该坐骑！';
@@ -2365,7 +2370,7 @@ class MemberController extends Controller
 
         // 领取成功
         $pack = new Pack();
-        $pack->uid = $this->_online;
+        $pack->uid = Auth::id();
         $pack->gid = $mid;
         $pack->num = 1;
         $pack->expires = strtotime($this->userInfo['vip_end']);
@@ -2406,7 +2411,7 @@ class MemberController extends Controller
     {
         if (!in_array($status, array('0', '1'))) return new JsonResponse(array('status' => 0, 'message' => '参数错误'));
 
-        $uid = $this->_online;
+        $uid = Auth::id();
         if (!$uid) return new JsonResponse(array('status' => 0, 'message' => '用户错误'));
         $user = Users::where('uid', $uid)->with('vipGroup')->first();
 
@@ -2431,7 +2436,7 @@ class MemberController extends Controller
     public function ajax($act)
     {
 //        $act = $this->request()->get('action');
-        if (($act != 'getfidinfo') && !$this->checkLogin()) {
+        if (($act != 'getfidinfo') && Auth::guest()) {
             return new RedirectResponse('/', 301);
         }
 //        $this->_initUser();
@@ -2443,10 +2448,10 @@ class MemberController extends Controller
             'equipHandle' => '_getEquipHandle'
         );
         if ($act == 'userinfo') {
-            $info = $this->$actions[$act]($this->request()->reques->all(), $this->_online);
+            $info = $this->$actions[$act]($this->request()->reques->all(), Auth::id());
             return new Response(json_encode($info));
         } elseif ($act == 'attenionCancel') {
-            $this->$actions[$act]($this->_online, $this->request()->get('tid'));
+            $this->$actions[$act](Auth::id(), $this->request()->get('tid'));
         } else if ($act == 'getfidinfo') {
             $onlineId = $this->request()->getSession()->get(self::SEVER_SESS_ID);
             $uid = intval($this->request()->get('uid'));
@@ -2471,7 +2476,7 @@ class MemberController extends Controller
                 return new Response(json_encode(array('ret' => true, 'info' => $data)));
             }
         } else if ($act == 'delmsg') {
-            $data = $this->$actions[$act]($this->_online);
+            $data = $this->$actions[$act](Auth::id());
             //  return;
         } else if ($act == 'equipHandle') {
             $this->$actions[$act]($this->request()->get('gid'));
@@ -2509,7 +2514,7 @@ class MemberController extends Controller
         if (!$rid) return JsonResponse::create(['code' => 401, 'msg' => '请求错误']);
         $room = RoomDuration::find($rid);
         if (!$room) return new JsonResponse(array('code' => 402, 'msg' => '房间不存在'));
-        if ($room->uid != $this->_online) return JsonResponse::create(['code' => 404, 'msg' => '非法操作']);//只能删除自己房间
+        if ($room->uid != Auth::id()) return JsonResponse::create(['code' => 404, 'msg' => '非法操作']);//只能删除自己房间
         if ($room->status == 1) return new JsonResponse(array('code' => 403, 'msg' => '房间已经删除'));
         if ($room->reuid != 0) {
             return new JsonResponse(array('code' => 400, 'msg' => '房间已经被预定，不能删除！'));
@@ -2529,7 +2534,7 @@ class MemberController extends Controller
         if (!$rid) return JsonResponse::create(['code' => 401, 'msg' => '请求错误']);
         $room = RoomOneToMore::find($rid);
         if (!$room) return new JsonResponse(array('code' => 402, 'msg' => '房间不存在'));
-        if ($room->uid != $this->_online) return JsonResponse::create(['code' => 404, 'msg' => '非法操作']);//只能删除自己房间
+        if ($room->uid != Auth::id()) return JsonResponse::create(['code' => 404, 'msg' => '非法操作']);//只能删除自己房间
         if ($room->status == 1) return new JsonResponse(array('code' => 403, 'msg' => '房间已经删除'));
         if ($room->purchase()->exists()) {
             return new JsonResponse(array('code' => 400, 'msg' => '房间已经被预定，不能删除！'));
@@ -2548,7 +2553,7 @@ class MemberController extends Controller
      */
     public function makeUpOneToMore()
     {
-        $uid = $this->_online;
+        $uid = Auth::id();
         $request = $this->request();
         $rid = intval($request->input('rid'));
         $origin = intval($request->input('origin'))?:12;
@@ -2600,7 +2605,7 @@ class MemberController extends Controller
 
     public function buyModifyNickname()
     {
-        $uid = $this->_online;
+        $uid = Auth::id();
         $price = $this->make('config')['config.nickname_price'] ?: 200;
         $userService = $this->make('userServer');
         $user = $userService->getUserByUid($uid);

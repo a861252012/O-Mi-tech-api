@@ -126,7 +126,7 @@ class IndexController extends Controller
                 break;
 
             case 'fav':
-                $uid = $this->_online;
+                $uid = Auth::id();
                 $myfavArr = $this->getUserAttensBycuruid($uid);
                 $list = $this->make('redis')->get('home_all_' . $flashVer);
                 $list = str_replace(array('cb(', ');'), array('', ''), $list);
@@ -162,7 +162,7 @@ class IndexController extends Controller
 
     public function registerAction()
     {
-        if ($this->checkLogin()) {
+        if (Auth::check()) {
             return new Response(
                 json_encode(array(
                     "data" => 0,
@@ -257,7 +257,7 @@ class IndexController extends Controller
             ->where('tid', 6)->where('status', 1)->first();
         if (!$data) return new JsonResponse(array('code' => 3, 'msg' => '不是时长房间'));
 
-        $this->make('redis')->hset('htimecost_watch:' . $roomid, $this->_online, $roomid);
+        $this->make('redis')->hset('htimecost_watch:' . $roomid, Auth::id(), $roomid);
         return new JsonResponse(array('code' => 1, 'msg' => '设置状态成功'));
     }
 
@@ -717,7 +717,7 @@ class IndexController extends Controller
      */
     public function complaints()
     {
-        if (!$this->checkLogin()) {
+        if (Auth::guest()) {
             return new Response(json_encode(
                 array(
                     'ret' => false,

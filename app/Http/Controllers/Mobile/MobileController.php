@@ -41,12 +41,12 @@ class MobileController extends Controller
             $this->flash_url_v = '';
         }
 
-        if ($this->checkLogin() === true && !$this->userInfo) {
+        if (Auth::check() && !$this->userInfo) {
             // 通过用户服务去获取
             $userServer = $this->make('userServer');
 
             // 获取用户的信息 初始化了用户信息
-            $userInfo = $userServer->getUserByUid($this->_online);
+            $userInfo = $userServer->getUserByUid(Auth::id());
             // 格式化用户信息 过滤掉用户的密码之类的敏感信息
 //            $userInfo = $this->getOutputUser($userInfo);
             // 获取用户等级提升还需要的级别
@@ -72,29 +72,6 @@ class MobileController extends Controller
         }
     }
 
-    public function checkLogin()
-    {
-        if ($this->_online) return true;
-        $request = request();
-        $jwt = Auth::guard('mobile');
-
-        $jwt->getTokenForRequest($request);
-        if (!$jwt->token) {
-            return '请登录';
-        }
-        try {
-            $userInfo = $jwt->user();
-        } catch (\InvalidArgumentException $e) {
-            return 'Token格式错误' . $e->getMessage();
-        } catch (\RuntimeException $e) {
-            return 'Token解析失败' . $e->getMessage();
-        }
-        if (!$userInfo) {
-            return 'Token失效，请重新登录';
-        }
-        $this->_online = $userInfo['uid'];
-        return true;
-    }
 
     /**
      * 移动端首页
@@ -158,7 +135,7 @@ class MobileController extends Controller
      */
     public function userInfo()
     {
-        $uid = $this->_online;
+        $uid = Auth::id();
         $remote_js_url = $GLOBALS['REMOTE_JS_URL'];
         $redis = $this->make('redis');
         $userinfo = (object)$redis->hgetall('huser_info:' . $uid) ?: Users::find($uid);
@@ -193,7 +170,7 @@ class MobileController extends Controller
      */
     public function userPrivilege()
     {
-        $uid = $this->_online;
+        $uid = Auth::id();
         $user = Users::find($uid);
 
         //判断隐身权限
@@ -226,7 +203,7 @@ class MobileController extends Controller
      */
     public function mountList()
     {
-        $uid = $this->_online;
+        $uid = Auth::id();
 //        $page = $this->make("request")->input('page',1);
         $list = Pack::with('mountGroup')->where('uid', $uid)->simplePaginate(self::MOUNT_LIST_PAGE_SIZE);
 //        $result['user'] = $this->userInfo;
@@ -266,7 +243,7 @@ class MobileController extends Controller
     private function _getEquipHandle($gid)
     {
 
-        $uid = $this->_online;
+        $uid = Auth::id();
         if (!$gid || !$uid) {
             return false;
         }
@@ -301,7 +278,7 @@ class MobileController extends Controller
      */
     public function unmount()
     {
-        $this->make('redis')->del('user_car:' . $this->_online);//检查过期直接删除对应的缓存key
+        $this->make('redis')->del('user_car:' . Auth::id());//检查过期直接删除对应的缓存key
         return JsonResponse::create(['status' => 0, 'msg' => '操作成功']);
     }
 
@@ -312,7 +289,7 @@ class MobileController extends Controller
     {
         if (!in_array($status, ['0', '1'])) return JsonResponse::create(['status' => 0, 'message' => '参数错误']);
 
-        $uid = $this->_online;
+        $uid = Auth::id();
         if (!$uid) return JsonResponse::create(['status' => 0, 'message' => '用户错误']);
         $userServer = $this->make('userServer');
         $user = $userServer->getUserByUid($uid);
@@ -492,7 +469,7 @@ class MobileController extends Controller
             $hasharr[$value['uid']] = $value;
         }
         unset($arr);
-        $myfavArr = $this->make('redis')->zrevrange('zuser_attens:' . $this->_online, 0, -1);
+        $myfavArr = $this->make('redis')->zrevrange('zuser_attens:' . Auth::id(), 0, -1);
         $myfav = [];
         if (!!$myfavArr) {
             //过滤出主播
@@ -556,7 +533,7 @@ class MobileController extends Controller
             ]);
         };
         //获取当前用户id
-        $uid = $this->_online;
+        $uid = Auth::id();
         if (($ret != 0) && ($uid == $pid)) return JsonResponse::create(['status' => 0, 'msg' => '请勿关注自己！']);
 
         $userService = $this->make('userServer');

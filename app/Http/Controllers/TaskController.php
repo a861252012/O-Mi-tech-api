@@ -6,6 +6,7 @@ use App\Models\Users;
 use App\Service\Task\TaskService;
 use Core\Model;
 use Core\Response;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class TaskController extends Controller
@@ -19,7 +20,7 @@ class TaskController extends Controller
     public function index()
     {
 
-        $online = $this->checkLogin();
+        $online =Auth::id();
         if (!$online) {
             //irwin$taskService = new TaskService();
             $taskService = $this->container->make('taskServer');
@@ -46,7 +47,7 @@ class TaskController extends Controller
     public function test($id)
     {
         $msg = $this->container->make('messageServer');
-        $ms=$msg->getMessageByUid($this->checkLogin());
+        $ms=$msg->getMessageByUid(Auth::id());
         return $this->render('Member/msglist1', array('data'=>$ms));
     }
 
@@ -58,7 +59,7 @@ class TaskController extends Controller
      */
     public function billTask($task_id)
     {
-        $online = $this->checkLogin();
+        $online = Auth::id();
         if (!$online) {
             $msg = array('code' => 0, 'msg' => '未登录');
             return new JsonResponse($msg);

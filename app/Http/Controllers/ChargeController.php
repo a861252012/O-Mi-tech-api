@@ -11,6 +11,7 @@ use App\Models\RechargeConf;
 use App\Models\RechargeWhiteList;
 use App\Models\Users;
 use DB;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -61,7 +62,7 @@ class ChargeController extends Controller
             header('Location:' . $rs->getPlatUrl($origin)['pay']);
         }
         if ($action != 'notice2' && $action != 'notice' && $action != 'moniCharge' && $action != 'moniHandler' && $action != 'callFailOrder' && $action != 'checkKeepVip') {
-            if (!$this->checkLogin()) {
+            if (Auth::guest()) {
                 return new RedirectResponse('/?handle=reg');
 //                return $this->redirect($this->generateUrl('video_project_index') . '?handle=reg', 301);
             }
@@ -84,7 +85,7 @@ class ChargeController extends Controller
      */
     public function orderAction()
     {
-        $uid = $this->_online;
+        $uid = Auth::id();
         $origin = $this->request()->get('origin') ?: 12;
         $user = $this->make('userServer')->getUserByUid($uid);
 
@@ -206,7 +207,7 @@ class ChargeController extends Controller
             $var['recharge_type'] = $RechargeTypes ?: array();
 
             //检查用户登录权限
-            //$var['user_login_asset'] = $this->make('userServer')->checkUserLoginAsset($this->_online);
+            //$var['user_login_asset'] = $this->make('userServer')->checkUserLoginAsset(Auth::id());
             $var['user_login_asset'] = true;
 
             //最小充值限制
@@ -511,7 +512,7 @@ class ChargeController extends Controller
                     'isMobile' => $origin >= 20 && $origin <= 39,
                     'origin' => $origin,
                     'plat_code' => $this->container->config['config.BACK_PLAT_CODE'],
-                    'uid' => $this->_online,
+                    'uid' => Auth::id(),
                     'user_name' => $this->userInfo['username'],
                     'remark' =>$remark,
                     't' => $timeHex
@@ -523,7 +524,7 @@ class ChargeController extends Controller
                     'remoteUrl' => $remoteUrl,
                 ];
                 $record = Recharge::create([
-                    'uid' => $this->_online,
+                    'uid' => Auth::id(),
                     'created' => date('Y-m-d H:i:s', $time),
                     'pay_status' => 0,// 刚开始受理
                     'pay_type' => 1, // 银行充值
@@ -548,7 +549,7 @@ class ChargeController extends Controller
 
     public function generateOrderId()
     {
-        return date('ymdHis') . mt_rand(10, 99) . sprintf('%08s', strrev($this->_online)) . '';
+        return date('ymdHis') . mt_rand(10, 99) . sprintf('%08s', strrev(Auth::id())) . '';
     }
 
     /**
@@ -665,7 +666,7 @@ class ChargeController extends Controller
         $postdata = json_encode($postdataArr);
 
         //记录下数据库
-        $uid = $this->_online;
+        $uid = Auth::id();
         Recharge::create(
             array(
                 'uid' => $uid,

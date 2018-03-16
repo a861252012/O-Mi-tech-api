@@ -22,6 +22,7 @@ use App\Models\Users;
 use Core\Exceptions\NotFoundHttpException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Slb\Request\V20140515\AddListenerWhiteListItemRequest;
 use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\HttpFoundation\Cookie;
@@ -151,9 +152,9 @@ class ApiController extends Controller
             $newUser['aid'] = $domaid->agent->id;
         }
         $uid = $this->make("userServer")->register($newUser, [], $newUser['aid']);
-        $this->userInfo = Users::find($uid)->toArray();
+        $user = Users::find($uid);
         // 此时调用的是单实例登录的session 验证
-        $this->writeRedis($this->userInfo);
+        Auth::guard('pc')->login($user);
         $return = [
             'status' => 1,
             'msg' => '',
@@ -770,12 +771,12 @@ class ApiController extends Controller
 
     {
         //获取用户信息
-        $userInfo = $this->make('userServer')->getUserByUid($this->_online);
+        $userInfo = $this->make('userServer')->getUserByUid(Auth::id());
 
         //判断非主播返回0
         if (!$userInfo || $userInfo['roled'] != 3) return new Response(0);
 
-        return new Response($this->getUserAttensCount($this->_online));
+        return new Response($this->getUserAttensCount(Auth::id()));
     }
 
 
@@ -795,7 +796,7 @@ class ApiController extends Controller
         $ret = $request->get('ret');
 
         //获取当前用户id
-        $uid = $this->_online;
+        $uid = Auth::id();
         //获取被关注用户uid
         $pid = $request->get('pid');
 
@@ -861,7 +862,7 @@ class ApiController extends Controller
         $request = $this->make('request');
 
         //获取发送者id
-        $sid = $this->_online;
+        $sid = Auth::id();
         //获取接收者id
         $rid = $request->get('rid');
 
@@ -1123,7 +1124,7 @@ class ApiController extends Controller
      */
     public function lottery()
     {
-        $uid = $this->_online;
+        $uid = Auth::id();
         $user = $this->userInfo;
         if (!$uid || !$user) throw new HttpException('Your are login failled');
         //if(!$user['safemail']) return new JsonResponse(['data'=>0, 'msg'=>'您好，您还未进行邮箱验证，验证邮箱后才能获取3次抽奖机会。']);
@@ -1250,7 +1251,7 @@ class ApiController extends Controller
     {
 
         $request = $this->make('request');
-        $uid = $this->_online;
+        $uid = Auth::id();
         $user = $this->make('userServer')->getUserByUid($uid);
 
         /**
@@ -1653,9 +1654,9 @@ class ApiController extends Controller
             'status' => 0,
             'msg' => ''
         );
-        if ($this->checkLogin()) {
+        if (Auth::check()) {
             $res['status'] = 1;
-            $res['msg'] = $this->make('redis')->hget('huser_sid', $this->_online);
+            $res['msg'] = $this->make('redis')->hget('huser_sid', Auth::id());
         } else {
             $res['msg'] = session_id();
         }

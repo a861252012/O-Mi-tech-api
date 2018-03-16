@@ -18,6 +18,7 @@ use App\Models\RechargeWhiteList;
 use App\Models\Users;
 use DB;
 use Illuminate\Container\Container;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -37,7 +38,7 @@ class PaymentController extends MobileController
         // 充钱成功后 检测用户的贵族状态
 
         if ($action != 'notice' && $action != 'moniCharge' && $action != 'callFailOrder' && $action != 'checkKeepVip') {
-            if (true !== ($msg = $this->checkLogin())) {
+            if (true !== ($msg = Auth::check())) {
                 return JsonResponse::create(['status' => 0, 'msg' => $msg]);
             }
         }
@@ -56,7 +57,7 @@ class PaymentController extends MobileController
      */
     public function orderAction()
     {
-        $uid = $this->_online;
+        $uid = Auth::id();
 
         $user = $this->make('userServer')->getUserByUid($uid);
         $open = $this->make("redis")->hget("hconf", "open_pay") ?: 0;
@@ -296,7 +297,7 @@ class PaymentController extends MobileController
 
         //记录下数据库
 //        $uid = $this->request()->getSession()->get(self::SEVER_SESS_ID);
-        $uid = $this->_online;//todo recheck session
+        $uid = Auth::id();//todo recheck session
         $tradeno = $sMessageNo;
         switch (substr($tradeno, 0, 3)) {
             case "ARD":
@@ -444,7 +445,7 @@ class PaymentController extends MobileController
 
         //记录下数据库
 //        $uid = $this->request()->getSession()->get(self::SEVER_SESS_ID);
-        $uid = $this->_online;//todo recheck session
+        $uid = Auth::id();//todo recheck session
         $tradeno = $sMessageNo;
         switch (substr($tradeno, 0, 3)) {
             case "ARD":
@@ -519,11 +520,11 @@ class PaymentController extends MobileController
     {
 //        $rtn = $this->request()->getSession()->get('orderInfo');
         $redis = $this->make('redis');
-        $rtn = $redis->hgetall('currentOrderInfo:' . $this->_online);
+        $rtn = $redis->hgetall('currentOrderInfo:' . Auth::id());
         if ($rtn) {
             //销毁session，保证页面的提交，每次是新的订单
 //            $this->request()->getSession()->set('orderInfo', null);
-            $redis->del('currentOrderInfo:' . $this->_online);//改为redis
+            $redis->del('currentOrderInfo:' . Auth::id());//改为redis
         } else {
             $rtn = array();
         }
