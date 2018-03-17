@@ -179,6 +179,7 @@ return [
         App\Providers\UserServiceProvider::class,
 
         \App\Providers\SiteServiceProvider::class,
+        \App\Providers\SocketServiceProvider::class,
     ],
 
     /*

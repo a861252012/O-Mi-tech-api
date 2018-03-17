@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Services\Room\SocketService;
 use Illuminate\Support\ServiceProvider;
+use App\Services\Safe\SafeService;
+use App\Services\System\SystemService;
 
 class SocketServiceProvider extends ServiceProvider
 {
@@ -26,7 +28,10 @@ class SocketServiceProvider extends ServiceProvider
     {
         //
         $this->app->singleton('socketService', function () {
-            return new SocketService();
+            return new SafeService();
+        });
+        $this->app->singleton('SystemService', function () {
+            return new SystemService();
         });
     }
 }
