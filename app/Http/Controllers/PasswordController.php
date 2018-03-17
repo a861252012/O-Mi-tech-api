@@ -85,7 +85,7 @@ class PasswordController extends Controller
             'uid' => $user->uid,
             'time' => time(),
         ]);
-        $tokenUrl =  Request::getSchemeAndHttpHost().'/api'.route('mail_verify_confirm', ['token' => $token],false);
+        $tokenUrl =  route('mail_verify_confirm', ['token' => $token]);
         $name = $user['nickname'] ?: $user['username'];
         $date = date('Y-m-d H:i:s');
         $url = $tokenUrl;

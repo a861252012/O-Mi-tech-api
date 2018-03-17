@@ -76,13 +76,14 @@ class RouteServiceProvider extends ServiceProvider
 
     protected function mapMobileRoutes()
     {
-        Route::prefix('m')
+        Route::prefix('api/m')
             ->namespace($this->namespace)
             ->group(base_path('routes/mobile.php'));
     }
     protected function mapPCRoutes()
     {
-        Route::middleware('pc')
+        Route::prefix('api')
+            ->middleware('pc')
             ->namespace($this->namespace)
             ->group(base_path('routes/pc.php'));
     }
