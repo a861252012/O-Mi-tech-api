@@ -10,9 +10,9 @@ class IdentifySite
 {
     protected $siteService;
 
-    public function __construct(SiteService $siteService)
+    public function __construct()
     {
-        $this->siteService = $siteService;
+        $this->siteService = resolve('siteService');
     }
 
     /**

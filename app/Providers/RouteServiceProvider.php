@@ -39,8 +39,8 @@ class RouteServiceProvider extends ServiceProvider
 
 //        $this->mapWebRoutes();
 
-        $this->mapMobileRoutes();
         $this->mapPCRoutes();
+        $this->mapMobileRoutes();
 
         //
     }

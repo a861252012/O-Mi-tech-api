@@ -1,21 +1,22 @@
 <?php
 
-Route::group(['middleware'=>['login_auth']],function (){
-    Route::match(['POST', 'GET'], '/onetomore', function(){
+Route::group(['middleware' => ['login_auth']], function () {
+    Route::match(['POST', 'GET'], '/onetomore', function () {
         echo "aaa";
     });
-    Route::get('login/test',function (){
+    Route::get('login/test', function () {
         return Auth::guard()->user();
     });
 });
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 
 Route::get('/captcha', ['name' => 'captcha', 'uses' => 'Controller@captcha']);
-Route::group(['prefix'=>'member','middleware'=>'login_auth'],function(){
-    Route::post('mail/verify/send','PasswordController@sendVerifyMail')->middleware('throttle:5:1')->name('mail_verify_send');
-    Route::any('mail/verify/confirm/{token}','PasswordController@VerifySafeMail')->name('mail_verify_confirm');
+Route::group(['prefix' => 'member'], function () {
+    Route::any('mail/verify/confirm/{token}', 'PasswordController@VerifySafeMail')->name('mail_verify_confirm');
+    Route::group(['middle' => 'login_auth'], function () {
+        Route::post('mail/verify/send', 'PasswordController@sendVerifyMail')->middleware('throttle:5:1')->name('mail_verify_send');
+    });
 });
-
 
 
 // 所有路由都在这里配置
@@ -32,7 +33,7 @@ Route::get('/download', ['name' => 'download', 'uses' => 'PageController@downloa
 // 首页房间数据json
 Route::get('/videoList', ['name' => 'index_videoList', 'uses' => 'IndexController@videoList']);
 //首页
-Route::get('/', ['name' => 'default', 'uses' => 'IndexController@indexAction']);
+Route::get('/', 'IndexController@indexAction');
 // 获取主播房间内的礼物清单
 Route::get('/rank_list_gift', ['name' => 'json_rank_list_gift', 'uses' => 'ApiController@rankListGift']);
 // 获取主播房间内的礼物排行榜

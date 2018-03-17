@@ -75,7 +75,7 @@ class SiteService
      */
     public function config($name = null)
     {
-        if (!isset($this->config))
+        if (is_null($this->config))
             $this->loadConfig();
         if (!is_null($name)) {
             return $this->config->get($name);
