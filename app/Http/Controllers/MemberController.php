@@ -1020,6 +1020,10 @@ class MemberController extends Controller
                 }
             }
         }
+        if(empty($uids)){
+            return new JsonResponse(array('status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间'));
+        }
+
 
         //$points = $room_config['timecost'];
         $oneToMoreRoom = new RoomOneToMore();

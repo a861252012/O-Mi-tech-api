@@ -485,7 +485,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/m/room/rtmp/{rid:\d+}', ['name' => 'm_room_rtmp', 'uses' => 'RoomController@getRTMP']);
 
     //移动端创建一对多
-    Route::get('/m/OneToMore/create', ['name' => 'OneToMore', 'uses' => 'Mobiel\RoomController@createOne2More']);
+    Route::get('/m/OneToMore/create', ['name' => 'OneToMore', 'uses' => 'Mobile\RoomController@createOne2More']);
     //移动端购买一对多
     Route::post('/m/room/buyOneToMany', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@makeUpOneToMore']);
     //app删除一对多房间
