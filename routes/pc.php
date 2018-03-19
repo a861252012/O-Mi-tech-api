@@ -11,12 +11,11 @@ Route::group(['middleware'=>['login_auth']],function (){
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 
 Route::get('/captcha', ['name' => 'captcha', 'uses' => 'Controller@captcha']);
-Route::group(['prefix' => 'member'], function () {
-    Route::any('mail/verify/confirm/{token}', 'PasswordController@VerifySafeMail')->name('mail_verify_confirm');
-    Route::group(['middle' => 'login_auth'], function () {
-        Route::post('mail/verify/send', 'PasswordController@sendVerifyMail')->middleware('throttle:5:1')->name('mail_verify_send');
-    });
+Route::group(['prefix'=>'member','middleware'=>'login_auth'],function(){
+    Route::post('mail/verify/send','PasswordController@sendVerifyMail')->middleware('throttle:5:1')->name('mail_verify_send');
+    Route::any('mail/verify/confirm/{token}','PasswordController@VerifySafeMail')->name('mail_verify_confirm');
 });
+
 
 
 // 所有路由都在这里配置
@@ -362,7 +361,27 @@ Route::get('/m/login', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@
 Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp', 'uses' => 'RoomController@get']);
 
 // 充值类 TODO 登录验证
-Route::match(['POST', 'GET'], '/charge/{action}', ['name' => 'charge', 'uses' => 'ChargeController@index']);
+
+
+// 验证是否登录
+Route::group(['prefix' => 'charge','middleware'=>['charge','login_auth']], function () {
+    Route::match(['POST', 'GET'], '/pay', ['name' => 'charge', 'uses' => 'ChargeController@pay']);
+    Route::match(['POST', 'GET'], '/order', ['name' => 'charge', 'uses' => 'ChargeController@order']);
+    Route::match(['POST', 'GET'], '/order2', ['name' => 'charge', 'uses' => 'ChargeController@order2']);
+    Route::match(['POST', 'GET'], '/pay2', ['name' => 'charge', 'uses' => 'ChargeController@pay2']);
+    Route::match(['POST', 'GET'], '/translate', ['name' => 'translate', 'uses' => 'ChargeController@translate']);
+
+});
+//通知
+Route::group(['prefix' => 'charge','middleware'=>['charge']], function () {
+    Route::match(['POST', 'GET'], 'notice2', ['name' => 'charge', 'uses' => 'ChargeController@notice2']);
+    Route::match(['POST', 'GET'], 'notice', ['name' => 'charge_notice', 'uses' => 'ChargeController@notice'])->name('charge_notice');
+    Route::match(['POST', 'GET'], 'checkKeepVip', ['name' => 'charge', 'uses' => 'ChargeController@checkKeepVip']);
+    Route::match(['POST', 'GET'], 'callFailOrder', ['name' => 'charge', 'uses' => 'ChargeController@callFailOrder']);
+    Route::post(['POST'], 'moniCharge', ['name' => 'charge', 'uses' => 'ChargeController@moniCharge']);
+    Route::match(['POST', 'GET'], 'moniHandler', ['name' => 'charge', 'uses' => 'ChargeController@moniHandler']);
+    Route::post('del', ['name' => 'charge', 'uses' => 'ChargeController@del']);
+});
 
 //连通测试
 Route::get('/ping', ['name' => 'ping', 'uses' => 'ApiController@ping']);
