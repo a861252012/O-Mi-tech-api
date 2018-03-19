@@ -25,7 +25,7 @@ class LoginAuth
 //        }
 //        $request->offsetSet('guard', $client);
 //        dd($request->all());
-        if (Auth::guest()) return JsonResponse::create(['status' => 0, '未登录']);
+        if (Auth::guest()) return JsonResponse::create(['status' => 0, 'msg'=>'未登录']);
         return $next($request);
     }
 
