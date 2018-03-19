@@ -6,7 +6,7 @@
  * Time: 11:10
  */
 
-namespace App\Controller\Mobile;
+namespace App\Http\Controllers\Mobile;
 
 
 use App\Models\MallList;
@@ -19,8 +19,13 @@ use App\Service\Room\RoomService;
 use App\Service\Room\SocketService;
 use DB;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use App\Models\RoomOneToMore;
+use Illuminate\Pagination\LengthAwarePaginator;
+use App\Models\LiveList;
 
-class RoomController extends MobileController
+class RoomController extends Controller
 {
     const FLAG_ONE_TO_ONE = 0b01;
     const FLAG_ONE_TO_MANY = 0b10;
@@ -168,7 +173,7 @@ class RoomController extends MobileController
         if ($user['points'] < $points) return JsonResponse::create(['status' => 0, 'msg' => '余额不足', 'cmd' => 'topupTip']);
         if ($redis->hGet("hvediosKtv:$rid", "status") == 0) return JsonResponse::create(['status' => 0, 'msg' => '主播不在播，不能购买！']);
 
-        $logPath = BASEDIR . '/app/logs/one2more_' . date('Ym') . '.log';
+        $logPath =  base_path() . '/storage/logs/one2more_' . date('Ym') . '.log';
         $this->logResult('makeUpOneToMore ' . json_encode(['rid' => $rid, 'uid' => $uid, 'onetomore' => $onetomany,]), $logPath);
         /** 通知java送礼*/
         $redis->publish('makeUpOneToMore',
@@ -179,12 +184,12 @@ class RoomController extends MobileController
                 'origin' => $origin
             ]));
         /** 检查购买状态 */
-        $timeout = microtime(true) + 3;
+        $timeout = microtime(true) + 4;
         while (true) {
             if (microtime(true) > $timeout) break;
             $tickets = explode(',', $redis->hGet("hroom_whitelist:$rid:$onetomany", 'tickets'));
             if (in_array($uid, $tickets)) return JsonResponse::create(['status' => 1, 'msg' => '购买成功']);
-            usleep(10000);
+            usleep(20000);
         }
         return JsonResponse::create(['status' => 0, 'msg' => '购买失败']);
     }
@@ -592,18 +597,18 @@ class RoomController extends MobileController
         $points = intval($this->make('request')->get('points'));
         $origin = $this->make('request')->get('origin', 11);
 
-        if (!in_array($duration, array(20,25,30,35,40,45,50,55,60))) return new JsonResponse(array('code' => 9, 'msg' => L('MEMBER.ROOMSETDURATION.ERROR')));
-        if ($points>99999 || $points<=0) return new JsonResponse(array('code' => 3, 'msg' => '金额超出范围'));
+        if (!in_array($duration, array(20,25,30,35,40,45,50,55,60))) return new JsonResponse(array('status' => 9, 'msg' => '请求错误'));
+        if ($points>99999 || $points<=0) return new JsonResponse(array('status' => 3, 'msg' => '金额超出范围'));
 
-        if (empty($start_time) || empty($duration)) return new JsonResponse(array('code' => 4, 'msg' => L('MEMBER.ROOMSETDURATION.ERROR')));
+        if (empty($start_time) || empty($duration)) return new JsonResponse(array('status' => 4, 'msg' => '请求错误'));
         $start_time = date("Y-m-d H:i:s", strtotime($start_time . ' ' . $hour . ':' . $minute . ':00'));
 
-        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(array('code' => 6, 'msg' => L('MEMBER.ROOMSETDURATION.LIMIT_OVERFLOW')));
+        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(array('status' => 6, 'msg' =>'不能设置过去的时间'));
 
         //$room_config = $this->getRoomStatus(Auth::id(),7);
         $endtime = date('Y-m-d H:i:s',strtotime($start_time)+$duration * 60);
 
-        if(!$this->notSetRepeat($start_time,$endtime)) return new JsonResponse(array('code' => 2, 'msg' => L('MEMBER.ROOMSETDURATION.DURATION')));
+        if(!$this->notSetRepeat($start_time,$endtime)) return new JsonResponse(array('status' => 2, 'msg' => '你这段时间和一对一或一对多有重复的房间'));
 
         //添加
         /** @var \Redis $redis */
@@ -691,11 +696,116 @@ class RoomController extends MobileController
         ];
         $rs = $this->make('redis')->hmset('hroom_whitelist:'.$duroom['uid'].':'.$duroom->id,$temp);
 
-        $logPath = BASEDIR . '/app/logs/one2more_' . date('Ym') . '.log';
+        $logPath = base_path() . '/storage/logs/one2more_' . date('Ym') . '.log';
         $one2moreLog = 'hroom_whitelist:'.$duroom['uid'].':'.$duroom->id.' '.json_encode($temp)."\n";
         $this->logResult('roomOneToMore  '.$one2moreLog,$logPath);
 
         return new JsonResponse(array('status' =>1, 'msg' =>'添加成功'));
+    }
+
+    /**
+     * 删除一对多房间 by desmond
+     * @return JsonResponse
+     */
+    public function delRoomOne2More()
+    {
+
+        $rid = $this->request()->input('rid');
+
+        if (!$rid) return JsonResponse::create(['status' => 0, 'msg' => '请求错误']);
+        $room = RoomOneToMore::find($rid);
+        if (!$room) return new JsonResponse(array('status' => 0, 'msg' => '房间不存在'));
+
+        if ($room->uid != Auth::id()) return JsonResponse::create(['status' => 0, 'msg' => '非法操作']);//只能删除自己房间
+        if ($room->status == 1) return new JsonResponse(['status' => 0, 'msg' => '房间已经删除']);
+        if ($room->purchase()->exists()) {
+            return new JsonResponse(array('status' => 0, 'msg' => '房间已经被预定，不能删除！'));
+        }
+
+        $redis = $this->make('redis');
+        $redis->sRem('hroom_whitelist_key:' . $room->uid, $room->id);
+        $redis->delete('hroom_whitelist:' . $room->uid . ':' . $room->id);
+        $room->update(['status' => 1]);
+        return JsonResponse::create(['status' => 1, 'msg' => '删除成功']);
+    }
+
+    /*
+    *  一对多房间记录接口by desmond
+    */
+    public function  listOneToMoreByHost(){
+
+        //$this->isLogin() or die;
+
+        $start_date = $this->request()->input('starttime') ? $this->request()->input('starttime') . ' 00:00:00' : date('0000-00-00 00:00:00');
+        $end_date = $this->request()->input('endtime') ? $this->request()->input('endtime') . ' 23:59:59' : date('Y-m-d 23:59:59');
+        $uid        =  Auth::id();
+
+        if(isset($_GET['page'])){
+            $pages = $_GET['page'];
+        }else{
+            $pages = 1;
+        }
+        $result['data'] = RoomOneToMore::where('uid','=',$uid)
+            ->where('status','=', 0)
+            ->where('starttime','>=',$start_date)
+            ->where('starttime','<=',$end_date)
+            ->orderBy('starttime','=', 'DESC')
+            ->paginate(15)
+            ->appends($_GET);
+
+        return JsonResponse::create($result);
+    }
+
+    /*
+   * 判断登录的主播是否开通一对多
+   */
+    public function competence(){
+        $uid = $this->request()->input('uid')?:'';
+        $key = 'hroom_status:'.$uid.':7';
+        $keys = 'hroom_status:'.$uid.':4';
+        $listonetomany = $this->make('redis')->hGetAll($key);
+        $listonetoone = $this->make('redis')->hGetAll($keys);
+        $result[0] = $listonetomany;
+        $result[1] = $listonetoone;
+        if($listonetoone && $listonetoone){
+            return JsonResponse::create(['status' => 1, 'data' => $result]);
+        }else{
+            return JsonResponse::create(['status' => 0, 'data' => '']);
+        }
+
+    }
+
+    /*
+    *  直播记录接口 by desmond
+    */
+    public function showlist(){
+
+        $start_time =  $this->request()->input('starttime') ? strtotime($this->request()->input('starttime') . ' 00:00:00') : strtotime('-1 month');
+        $end_time   =  $this->request()->input('endtime') ? strtotime($this->request()->input('endtime') . ' 23:59:59') : strtotime('tomorrow') - 1;
+        $uid        =  Auth::id();
+
+        $result = LiveList::where('uid','=',$uid)
+            ->where('start_time','>=', date("Y-m-d H:i:s",$start_time))
+            ->where('start_time','<=', date("Y-m-d H:i:s",$end_time))
+            ->select('id','created','start_time','rid','duration')
+            ->get();
+
+
+
+        $liveinfo = array();
+        $duration_total = 0;
+        foreach($result as $key=>$value){
+            $liveinfo[$key]['id']      = $value['id'];
+            $liveinfo[$key]['start_time']  = $value['start_time'];
+            $liveinfo[$key]['end_time'] = date("Y-m-d H:i:s",strtotime($value['start_time'] )+ $value['duration']);
+            $liveinfo[$key]['duration']  = $value['duration'];
+            $duration_total = $duration_total+$value['duration'];
+        }
+        $getinfo['list'] = $liveinfo;
+        $getinfo['duration_total'] = $duration_total;
+        return JsonResponse::create($getinfo);
+
+
     }
 
 }

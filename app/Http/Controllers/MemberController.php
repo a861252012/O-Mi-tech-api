@@ -1071,9 +1071,9 @@ class MemberController extends Controller
         ];
         $rs = $this->make('redis')->hmset('hroom_whitelist:' . $duroom['uid'] . ':' . $duroom->id, $temp);
 
-       // $logPath = BASEDIR . '/app/logs/one2more_' . date('Ym') . '.log';
+        $logPath =  base_path() . '/storage/logs/one2more_' . date('Ym') . '.log';
         $one2moreLog = 'hroom_whitelist:' . $duroom['uid'] . ':' . $duroom->id . ' ' . json_encode($temp) . "\n";
-        //$this->logResult('roomOneToMore  ' . $one2moreLog, $logPath);
+        $this->logResult('roomOneToMore  ' . $one2moreLog, $logPath);
 
         return new JsonResponse(array('status' => 1, 'msg' =>'添加成功！'));
     }
@@ -2531,21 +2531,19 @@ class MemberController extends Controller
     public function delRoomOne2Many()
     {
         $rid = $this->request()->input('rid');
-        if (!$rid) return JsonResponse::create(['code' => 401, 'msg' => '请求错误']);
+        if (!$rid) return JsonResponse::create(['status' => 401, 'msg' => '请求错误']);
         $room = RoomOneToMore::find($rid);
-        if (!$room) return new JsonResponse(array('code' => 402, 'msg' => '房间不存在'));
-        if ($room->uid != Auth::id()) return JsonResponse::create(['code' => 404, 'msg' => '非法操作']);//只能删除自己房间
-        if ($room->status == 1) return new JsonResponse(array('code' => 403, 'msg' => '房间已经删除'));
+        if (!$room) return new JsonResponse(array('status' => 402, 'msg' => '房间不存在'));
+        if ($room->uid != Auth::id()) return JsonResponse::create(['status' => 404, 'msg' => '非法操作']);//只能删除自己房间
+        if ($room->status == 1) return new JsonResponse(array('status' => 403, 'msg' => '房间已经删除'));
         if ($room->purchase()->exists()) {
-            return new JsonResponse(array('code' => 400, 'msg' => '房间已经被预定，不能删除！'));
+            return new JsonResponse(array('status' => 400, 'msg' => '房间已经被预定，不能删除！'));
         }
-
-        /** @var \Redis $redis */
         $redis = $this->make('redis');
         $redis->sRem('hroom_whitelist_key:' . $room->uid, $room->id);
         $redis->delete('hroom_whitelist:' . $room->uid . ':' . $room->id);
         $room->update(['status' => 1]);
-        return JsonResponse::create(['code' => 1, 'msg' => '删除成功']);
+        return JsonResponse::create(['status' => 1, 'msg' => '删除成功']);
     }
 
     /**
@@ -2580,27 +2578,14 @@ class MemberController extends Controller
                 'origin' => $origin
             ]));
         /** 检查购买状态 */
-        $timeout = microtime(true) + 3;
+        $timeout = microtime(true) + 4;
         while (true) {
             if (microtime(true) > $timeout) break;
             $tickets = explode(',', $redis->hGet("hroom_whitelist:$rid:$onetomany", 'tickets'));
             if (in_array($uid, $tickets)) return JsonResponse::create(['status' => 1, 'msg'=>'购买成功']);
-            usleep(100);
+            usleep(200000);
         }
         return JsonResponse::create(['status' => 0, 'msg'=> '购买失败']);
-
-//        if(Users::where('uid',$uid)->where('points','>=',$points)->decrement('points',$points)){
-//            $redis->hIncrBy('huser_info:'.$uid,'points',$points*-1);
-//            list($status, $msg) = ($try = $this->addOneToManyRoomUser($rid, $onetomany, $uid, 14, $points));
-//            if ($status != 1) {
-//                Users::where('uid',$uid)->increment('points',$points);
-//                $redis->hIncrBy('huser_info:'.$uid,'points',$points);
-//                return JsonResponse::create(compact('status', 'msg'));
-//            }
-//            return JsonResponse::create(['status' => 1, '购买成功']);
-//        }else{
-//            return JsonResponse::create(['status' => 0, '扣款失败']);
-//        }
     }
 
     public function buyModifyNickname()
