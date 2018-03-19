@@ -28,5 +28,8 @@ class SiteServiceProvider extends ServiceProvider
         $this->app->singleton('siteService', function () {
             return new SiteService;
         });
+        $this->app->singleton('site', function () {
+            return new SiteService;
+        });
     }
 }

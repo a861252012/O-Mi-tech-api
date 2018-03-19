@@ -9,4 +9,5 @@
 define('USER_ID',12345789);
 return [
     'ADMIN_NAME' => 'administrator',
+    'USER_POINTS_MIN' => 3000,
 ];

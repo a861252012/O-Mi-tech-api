@@ -173,11 +173,6 @@ class UserService extends Service
         switch ($operation) {
             case '+':
                 if (Users::where('uid', $uid)->increment('points', $points)) {
-                    /*
-                    if(!Recharge::create(array('uid'=>$uid, 'points'=>$points, 'created'=>date('Y-m-d H:i:s'), 'pay_type'=>$pay_type, 'order_id'=>uniqid(time().'_'), 'pay_status'=>2, 'del'=>0))){
-                            throw new \ErrorException('update recharge table by update userOfPoints is exception');
-                        }
-                    */
                 } else {
                     throw new \ErrorException('increment user points error');
                 }
@@ -195,6 +190,21 @@ class UserService extends Service
         $this->getUserReset($uid);
         return true;
     }
+
+    /**
+     * @param int $uid
+     * @param int $points
+     * @return bool
+     */
+    public function addPoint($uid=0, $points=0):bool {
+        if (!$this->getUserByUid($uid)) return false;
+
+        if (!Users::where('uid', $uid)->increment('points', $points)) return false;
+
+        $this->getUserReset($uid);
+        return true;
+    }
+
 
     /**
      * 从redis中读取，读取不到就读db,再写redis
@@ -318,6 +328,7 @@ class UserService extends Service
         return true;
     }
 
+
     /**
      * [checkVipStatus 检查vip状态]
      *
@@ -375,6 +386,13 @@ class UserService extends Service
             $uid = $this->redis->hset(static::KEY_USERNAME_TO_ID, $username, $uid);
         }
         return $uid;
+    }
+
+    /**
+     *
+     */
+    public function addPoints($uid=0,$points=0){
+
     }
 
     /**

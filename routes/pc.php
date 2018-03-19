@@ -1,10 +1,10 @@
 <?php
 
-Route::group(['middleware' => ['login_auth']], function () {
-    Route::match(['POST', 'GET'], '/onetomore', function () {
+Route::group(['middleware'=>['login_auth']],function (){
+    Route::match(['POST', 'GET'], '/onetomore', function(){
         echo "aaa";
     });
-    Route::get('login/test', function () {
+    Route::get('login/test',function (){
         return Auth::guard()->user();
     });
 });
@@ -33,7 +33,7 @@ Route::get('/download', ['name' => 'download', 'uses' => 'PageController@downloa
 // 首页房间数据json
 Route::get('/videoList', ['name' => 'index_videoList', 'uses' => 'IndexController@videoList']);
 //首页
-Route::get('/', 'IndexController@indexAction');
+Route::get('/', ['name' => 'default', 'uses' => 'IndexController@indexAction']);
 // 获取主播房间内的礼物清单
 Route::get('/rank_list_gift', ['name' => 'json_rank_list_gift', 'uses' => 'ApiController@rankListGift']);
 // 获取主播房间内的礼物排行榜

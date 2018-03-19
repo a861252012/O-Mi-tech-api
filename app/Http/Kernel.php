@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\Charge;
 use App\Http\Middleware\LoginAuth;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
@@ -69,5 +70,6 @@ class Kernel extends HttpKernel
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'login_auth' => LoginAuth::class,
+        'charge' => Charge::class,
     ];
 }

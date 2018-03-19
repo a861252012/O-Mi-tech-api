@@ -55,7 +55,14 @@ class Controller extends BaseController
     protected $flash_url = '';
     protected $flash_version = '';
     public $_isGetCache = false;
+    public $container = null;
 
+
+    public function __construct()
+    {
+        config()->set('auth.defaults.guard', 'pc');
+        $this->container = app();
+    }
     /**
      * b域名用户登录后，进行的redis的写入，和a域名最大的区别是写入的redis的key是不一样的
      *
@@ -1439,7 +1446,7 @@ class Controller extends BaseController
      * @param object $user
      * @return boolean
      */
-    protected function checkUserVipStatus($user)
+    public function checkUserVipStatus($user)
     {
         // 当不是贵族时
         if (!$user['vip']) {
