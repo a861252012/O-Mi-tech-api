@@ -13,6 +13,8 @@ use App\Models\UserModNickName;
 use App\Models\Users;
 use App\Services\Service;
 use DB;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Session;
@@ -23,7 +25,7 @@ class UserService extends Service
 
     const KEY_USERNAME_TO_ID = 'husername_to_id';
     const KEY_USER_INFO = 'huser_info:';
-    const KEY_USER_SID = 'huser_sid:';
+    const KEY_USER_SID = 'huser_sid';
     public $user;
     protected $redis;
 
@@ -219,17 +221,17 @@ class UserService extends Service
         $hashtable = static::KEY_USER_INFO . $uid;
 
         if ($this->redis->Hexists($hashtable, 'uid')) {
-            return (new Users())->forceFill($this->redis->hgetall($hashtable));
+            $user = (new Users())->forceFill($this->redis->hgetall($hashtable));
         } else {
             $user = Users::find($uid);
-            //已禁止账号不写redis
-            if ($user && !$user->banned()) {
-                $this->redis->hmset($hashtable, $user);
-            } else {
-                $this->deleteUserSession($user);
-            }
-            return $user;
+            $this->redis->hmset($hashtable, $user);
         }
+        //已禁止账号不写redis
+        if ($user && $user->banned()) {
+            $this->deleteUserSession($user);
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => 'banned']));
+        }
+        return $user;
     }
 
     /**
@@ -299,17 +301,17 @@ class UserService extends Service
 
             //开通贵族
             UserBuyGroup::create([
-                                     'uid' => $uid,
-                                     'gid' => $group['gid'],
-                                     'level_id' => $level_id,
-                                     'type' => $type,
-                                     'end_time' => $expires,
-                                     'create_at' => date('Y-m-d H:i:s'),
-                                     'open_money' => $group['system']['open_money'],
-                                     'keep_level' => $group['system']['keep_level'],
-                                     'status' => 1,
+                'uid' => $uid,
+                'gid' => $group['gid'],
+                'level_id' => $level_id,
+                'type' => $type,
+                'end_time' => $expires,
+                'create_at' => date('Y-m-d H:i:s'),
+                'open_money' => $group['system']['open_money'],
+                'keep_level' => $group['system']['keep_level'],
+                'status' => 1,
 
-                                 ]);
+            ]);
             $vip_data = ['vip' => $level_id, 'vip_end' => $expires];
 
             //赠送等级
@@ -541,8 +543,8 @@ class UserService extends Service
     public function checkNickNameUnique($nickname)
     {
         $user = Users::where('nickname', $nickname)
-                     ->where('uid', '!=', $this->user['uid'])
-                     ->first();
+            ->where('uid', '!=', $this->user['uid'])
+            ->first();
         if ($user) {
             return false;
         } else {
@@ -635,17 +637,17 @@ class UserService extends Service
         list($num, $day) = explode('|', $permission['modnickname']);
         if ($day == 'week') {
             $uMod = UserModNickName::where('uid', $this->user['uid'])
-                                   ->where('update_at', '>', strtotime('-1 week'))->count();
+                ->where('update_at', '>', strtotime('-1 week'))->count();
             return ['num' => $num - $uMod, 'mod' => $uMod, 'type' => $day];
         }
         if ($day == 'month') {
             $uMod = UserModNickName::where('uid', $this->user['uid'])
-                                   ->where('update_at', '>', strtotime('-1 month'))->count();
+                ->where('update_at', '>', strtotime('-1 month'))->count();
             return ['num' => $num - $uMod, 'mod' => $uMod, 'type' => $day];
         }
         if ($day == 'year') {
             $uMod = UserModNickName::where('uid', $this->user['uid'])
-                                   ->where('update_at', '>', strtotime('-1 year'))->count();
+                ->where('update_at', '>', strtotime('-1 year'))->count();
             return ['num' => $num - $uMod, 'mod' => $uMod, 'type' => $day];
         }
     }
@@ -843,11 +845,11 @@ class UserService extends Service
         static $userCache = [];//缓存用户信息
         foreach ($rank as $uid => $score) {
             $ret[] = array_merge([
-                                     'uid' => $uid,
-                                     'score' => $score,
-                                 ],
-                                 isset($userCache[$uid]) ? $userCache[$uid]
-                                     : ($userCache[$uid] = array_only($this->getUserByUid($uid), ['lv_rich', 'lv_exp', 'username', 'nickname', 'headimg', 'icon_id', 'description', 'vip']))
+                'uid' => $uid,
+                'score' => $score,
+            ],
+                isset($userCache[$uid]) ? $userCache[$uid]
+                    : ($userCache[$uid] = array_only($this->getUserByUid($uid), ['lv_rich', 'lv_exp', 'username', 'nickname', 'headimg', 'icon_id', 'description', 'vip']))
             );
         }
         return $ret;
@@ -867,5 +869,6 @@ class UserService extends Service
     {
         $sid = $this->redis->hget(static::KEY_USER_SID, $user->getAuthIdentifier());
         Session::getHandler()->destroy($sid);
+
     }
 }

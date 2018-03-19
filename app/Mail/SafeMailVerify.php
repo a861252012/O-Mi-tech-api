@@ -30,6 +30,8 @@ class SafeMailVerify extends Mailable implements ShouldQueue
      */
     public function __construct(Users $user, $email)
     {
+        $this->queue = 'mail:safeMailVerify';
+
         $this->to($email);
         $siteConfig = resolve('siteService')->config();
         $siteName = $siteConfig->get('name', '');
@@ -68,6 +70,11 @@ class SafeMailVerify extends Mailable implements ShouldQueue
     public function build()
     {
         return $this->view('emails.safeMailVerify', ['content' => $this->content]);
+    }
+
+    public function failed()
+    {
+
     }
 
 }

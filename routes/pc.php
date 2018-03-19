@@ -1,19 +1,30 @@
 <?php
 
-Route::group(['middleware'=>['login_auth']],function (){
-    Route::match(['POST', 'GET'], '/onetomore', function(){
+Route::group(['middleware' => ['login_auth']], function () {
+    Route::match(['POST', 'GET'], '/onetomore', function () {
         echo "aaa";
     });
-    Route::get('login/test',function (){
-        return Auth::guard()->user();
+    Route::get('login/test', function () {
+        return [Auth::guard()->user(),session()->getId()];
     });
 });
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 
 Route::get('/captcha', ['name' => 'captcha', 'uses' => 'Controller@captcha']);
-Route::group(['prefix'=>'member','middleware'=>'login_auth'],function(){
-    Route::post('mail/verify/send','PasswordController@sendVerifyMail')->middleware('throttle:5:1')->name('mail_verify_send');
-    Route::any('mail/verify/confirm/{token}','PasswordController@VerifySafeMail')->name('mail_verify_confirm');
+
+/** 用户中心路由组 */
+Route::group(['prefix' => 'member'], function () {
+    Route::any('mail/verify/confirm/{token}', 'PasswordController@VerifySafeMail')->name('mail_verify_confirm');
+
+    Route::group(['middleware' => 'login_auth'], function () {
+        Route::post('mail/verify/send', 'PasswordController@sendVerifyMail')->middleware('throttle:5:1')->name('mail_verify_send');
+    });
+});
+
+Route::group(['prefix' => 'user'], function () {
+    Route::group(['middleware' => 'login_auth'], function () {
+        Route::get('current', 'UserController@getCurrentUser')->name('user_current');
+    });
 });
 
 
@@ -32,7 +43,7 @@ Route::get('/download', ['name' => 'download', 'uses' => 'PageController@downloa
 // 首页房间数据json
 Route::get('/videoList', ['name' => 'index_videoList', 'uses' => 'IndexController@videoList']);
 //首页
-Route::get('/', ['name' => 'default', 'uses' => 'IndexController@indexAction']);
+Route::get('/', 'IndexController@indexAction');
 // 获取主播房间内的礼物清单
 Route::get('/rank_list_gift', ['name' => 'json_rank_list_gift', 'uses' => 'ApiController@rankListGift']);
 // 获取主播房间内的礼物排行榜
@@ -378,7 +389,7 @@ Route::group(['prefix' => 'charge','middleware'=>['charge']], function () {
     Route::match(['POST', 'GET'], 'notice', ['name' => 'charge_notice', 'uses' => 'ChargeController@notice'])->name('charge_notice');
     Route::match(['POST', 'GET'], 'checkKeepVip', ['name' => 'charge', 'uses' => 'ChargeController@checkKeepVip']);
     Route::match(['POST', 'GET'], 'callFailOrder', ['name' => 'charge', 'uses' => 'ChargeController@callFailOrder']);
-    Route::post(['POST'], 'moniCharge', ['name' => 'charge', 'uses' => 'ChargeController@moniCharge']);
+//    Route::post( 'moniCharge', ['name' => 'charge', 'uses' => 'ChargeController@moniCharge']);
     Route::match(['POST', 'GET'], 'moniHandler', ['name' => 'charge', 'uses' => 'ChargeController@moniHandler']);
     Route::post('del', ['name' => 'charge', 'uses' => 'ChargeController@del']);
 });

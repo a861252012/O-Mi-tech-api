@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\UserDomain;
 use App\Models\UserLoginLog;
 use App\Models\Users;
+use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Foundation\Auth\ThrottlesLogins;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -15,7 +17,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class LoginController extends Controller
 {
-
     /**
      * [登录页面进入] 主域名登录使用的页面
      *
@@ -100,7 +101,7 @@ class LoginController extends Controller
 
             return new RedirectResponse($synstr);
         }
-        return $this->render('Login/passport', array());
+        return $this->render('Login/passport', []);
     }
 
     /**
@@ -122,43 +123,43 @@ class LoginController extends Controller
 
             if (isset($username, $password, $extends)) {
             } else {
-                $res = array(
+                $res = [
                     'status' => 1,
-                    'msg' => '用户信息不全'
-                );
+                    'msg' => '用户信息不全',
+                ];
                 return new JsonResponse($res);
             }
 
             $extendsArr = json_decode($extends, 1);
             $nickname = $extendsArr['nickname'];
             if (!isset($nickname)) {
-                $res = array(
+                $res = [
                     'status' => 1,
-                    'msg' => '用户信息不全'
-                );
+                    'msg' => '用户信息不全',
+                ];
                 return new JsonResponse($res);
             }
 
             $user = Users::where('username', $username)->first();
             //->fields(array('uid', 'username'))->eq(array('username' => trim($_POST['username'])))->getOne();
             if ($user['uid']) {
-                $res = array(
+                $res = [
                     'status' => 1,
-                    'msg' => '对不起！该邮件地址已存在'
-                );
+                    'msg' => '对不起！该邮件地址已存在',
+                ];
                 return new JsonResponse($res);
             }
 
             //$user = $this->_frontuserModel->fields(array('nickname'))->eq(array('nickname' => trim($_POST['nickname'])))->getOne();
             if ($user['nickname']) {
-                $res = array(
+                $res = [
                     'status' => 1,
-                    'msg' => '对不起！该昵称已被使用'
-                );
+                    'msg' => '对不起！该昵称已被使用',
+                ];
                 return new JsonResponse($res);
             }
 
-            $user = array(
+            $user = [
                 'did' => 1,
                 'username' => trim($username),
                 'password' => md5(trim($password)),
@@ -170,13 +171,13 @@ class LoginController extends Controller
                 'rich' => 0,
                 'pop' => 0,
                 'status' => 1,
-            );
+            ];
             $res = Users::create($user);
             if ($res) {
                 $user = Users::where('username', trim($username))->first();
                 $uid = $user['uid'];
                 $created = $user['created'];
-                $userR = array(
+                $userR = [
                     'uid' => $uid,
                     'did' => 1,
                     'username' => trim($username),
@@ -189,7 +190,7 @@ class LoginController extends Controller
                     'rich' => 0,
                     'pop' => 0,
                     'status' => 1,
-                );
+                ];
                 $this->make('redis')->hmset("huser_info:" . $uid, $userR);
 //                $redis->hMset("huser_info:$uid", $user);
 
@@ -201,32 +202,32 @@ class LoginController extends Controller
 
                 $res = UserDomain::where('id', 1)->increment('users', 1);
                 if (!$res) {
-                    $res = array(
+                    $res = [
                         'status' => 1,
-                        'msg' => '更新域名失败'
-                    );
+                        'msg' => '更新域名失败',
+                    ];
                     return new JsonResponse($res);
                 }
 //                    $sql = "UPDATE video_user_domain SET users = users+1 WHERE id=" . $_POST['did'];
 //                    $this->_frontUserDomain->execute($sql);
 
-                $res = array(
+                $res = [
                     'status' => 0,
-                    'msg' => '注册成功'
-                );
+                    'msg' => '注册成功',
+                ];
                 return new JsonResponse($res);
             } else {
-                $res = array(
+                $res = [
                     'status' => 1,
-                    'msg' => '用户注册失败'
-                );
+                    'msg' => '用户注册失败',
+                ];
                 return new JsonResponse($res);
             }
         } else {
-            $res = array(
+            $res = [
                 'status' => 1,
-                'msg' => '未收到用户数据'
-            );
+                'msg' => '未收到用户数据',
+            ];
             return new JsonResponse($res);
         }
 
@@ -288,11 +289,11 @@ class LoginController extends Controller
     {
         $result = $this->doSynLogin();
         if ($result) {
-            $res = array(
+            $res = [
                 'status' => 1,
                 'msg' => $this->_sess_id,
-                'uid' => Auth::id()
-            );
+                'uid' => Auth::id(),
+            ];
             return new JsonResponse($res);
         }
         return new Response('Bad Request!', 404);
@@ -351,9 +352,9 @@ class LoginController extends Controller
 
     public function isLogin()
     {
-        return new Response(json_encode(array(
-            'ret' => Auth::check()
-        )));
+        return new Response(json_encode([
+            'ret' => Auth::check(),
+        ]));
     }
 
     /**
@@ -367,20 +368,19 @@ class LoginController extends Controller
      *          主域名和用户域名分开在不同的redis的key中
      * </p>
      *
-     * @param  string $username [用户名称]
-     * @param  string $password [用户密码]
-     * @param  boolean $skipCaptcha 绕过验证码，用于内部登录
+     * @param  string  $username     [用户名称]
+     * @param  string  $password     [用户密码]
+     * @param  boolean $skipCaptcha  绕过验证码，用于内部登录
      * @param  boolean $skipPassword 绕过密码，用于内部登录
      * @return array  数组格式提示信息
      */
     public function solveUserLogin($username, $password, $skipCaptcha = false, $skipPassword = false)
     {
-
         if (empty($username) || (empty($password) && !$skipPassword)) {
-            return array(
+            return [
                 'status' => 0,
-                'msg' => '用户名或密码不能为空'
-            );
+                'msg' => '用户名或密码不能为空',
+            ];
         }
 
         //$times = intval($this->make('redis')->hget('hlogin_authcode', $userinfo['uid'])) ?: 0;
@@ -388,11 +388,11 @@ class LoginController extends Controller
         $times = 0;
         //todo 验证码是否更换
         if (!isset($_REQUEST['_m']) && !$skipCaptcha && !$this->make('captcha')->Verify($this->make('request')->get('sCode'))) {
-            return array(
+            return [
                 "status" => 0,
                 "msg" => "验证码错误，请重新输入！",
-                "failNums" => $times
-            );
+                "failNums" => $times,
+            ];
         }
 
         //取uid
@@ -401,11 +401,12 @@ class LoginController extends Controller
             'username' => $username,
             'password' => $password,
         ], request('v_remember'))) {
-            return array(
+            return [
                 'status' => 0,
                 'msg' => '您的账号登录失败，请联系客服！',
-            );
+            ];
         };
+
         /**
          * 记录最后的登录ip地址
          */
@@ -417,11 +418,11 @@ class LoginController extends Controller
         $user->save();
         //记录登录日志
         $this->loginLog($uid, $login_ip, date('Y-m-d H:i:s'));
-        return array(
+        return [
             'status' => 1,
             'msg' => '登录成功',
-            'sid'=>Session::getId()
-        );
+            'sid' => Session::getId(),
+        ];
     }
 
     /**
@@ -462,10 +463,10 @@ class LoginController extends Controller
     /**
      * 双向加密解密方法
      *
-     * @param $string 要加密的字符串
+     * @param        $string    要加密的字符串
      * @param string $operation 要加密或解密
-     * @param string $key 加密解密的秘钥
-     * @param int $expiry
+     * @param string $key       加密解密的秘钥
+     * @param int    $expiry
      * @return string
      */
     protected function authcode($string, $operation = 'DECODE', $key = '', $expiry = 0)
@@ -487,7 +488,7 @@ class LoginController extends Controller
         $result = '';
         $box = range(0, 255);
 
-        $rndkey = array();
+        $rndkey = [];
         for ($i = 0; $i <= 255; $i++) {
             $rndkey[$i] = ord($cryptkey[$i % $key_length]);
         }

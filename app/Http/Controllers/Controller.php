@@ -136,67 +136,6 @@ class Controller extends BaseController
         return trim($s);
     }
 
-    public function __init__()
-    {
-        if (Auth::check()) {
-            // 通过用户服务去获取
-            $userServer = $this->make('userServer');
-
-            // 获取用户的信息 初始化了用户信息
-            $userInfo = Auth::user();
-            if (!$userInfo['status']) {
-                // 删除B域名上的session 踢出用户
-                $sid = Redis::hget('huser_sid', Auth::id());
-                Redis::del('PHPREDIS_SESSION:' . $sid);
-                return RedirectResponse::create('/');
-            }
-
-
-            // 格式化用户信息 过滤掉用户的密码之类的敏感信息
-            $userInfo = $this->getOutputUser($userInfo);
-            $params['userInfo'] = $userInfo;
-
-            // 获取用户等级提升还需要的级别
-            $levelInfo = $this->getLevelByRole($this->userInfo);
-            $params['userInfo']['lv_current_exp'] = $levelInfo['lv_current_exp'];
-            $params['userInfo']['lv_next_exp'] = $levelInfo['lv_next_exp'];
-            $params['userInfo']['lv_percent'] = $levelInfo['lv_percent'];
-            $params['userInfo']['lv_sub'] = $levelInfo['lv_sub'];
-
-            // 判断是否设置了地区的信息 设置就是初始化地区的信息
-            if (!$params['userInfo']['province'] && !$params['userInfo']['city']) {
-                $params['userInfo']['DATAPCA'] = false;
-            } else {
-                $params['userInfo']['DATAPCA'] = array(
-                    'province' => array('code' => $params['userInfo']['province'], 'text' => $this->getArea($params['userInfo']['province'])),
-                    'city' => array('code' => $params['userInfo']['city'], 'text' => $this->getArea($params['userInfo']['city'])),
-                    'area' => array('code' => $params['userInfo']['county'], 'text' => $this->getArea($params['userInfo']['county'])),
-                );
-            }
-
-            // 用户的图像的hsot 地址
-            $params['userInfo']['imgHost'] = resolve('siteService')->config()->get('img_host');
-        }
-        $this->assign($this->userInfo);
-
-//        $flash_url = Redis::get('flash_url');
-//        if ($flash_url) {
-//            $url_array = explode(';', $flash_url);
-//            $url_first = explode('/', trim($url_array[0]));
-//            $count = count($url_first);
-//            $params['flash_url_v'] = $url_first[$count - 1];
-//            $this->flash_url_v = $params['flash_version'];
-//        } else {
-//            $params['flash_url_v'] = '';
-//        }
-
-        $flash_version = Redis::get('flash_version');
-
-        $params['flash_version'] = $flash_version;
-        //$login_domain_arr = $this->container->config['config.login_domain'];
-        //$params['login_domain'] = "http://".$login_domain_arr[array_rand($login_domain_arr)];
-        $this->assign($params);  // 且设置到了模板中 全部都可用用户信息
-    }
 
     /**
      * 时段房间互拆（一对一，一对多）

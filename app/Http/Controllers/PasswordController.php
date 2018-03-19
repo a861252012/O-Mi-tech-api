@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\MessageBag;
+use Illuminate\Support\ViewErrorBag;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -50,26 +52,14 @@ class PasswordController extends Controller
         return new Response($captcha->phrase . '.png', 200, $headers);
     }
 
-    /**
-     * 邮箱验证
-     * @return Render
-     * @author Young, D.C
-     */
-    public function mailVerific()
-    {
-        $user = $this->userInfo;
-
-        if ($user['safemail']) {
-            return $this->render('Password/mailfail', ['error' => '你已验证过安全邮箱！']);
-        }
-
-        return $this->render('Password/mailverific', ['step' => 1]);
-    }
-
     public function sendVerifyMail()
     {
         $user = Auth::user();
+        $errors=new MessageBag();
         if ($user->safemail) {
+            $errors->add('mail','你已验证过安全邮箱！');
+            return $errors;
+            return RedirectResponse::create('/member/mailverify/mailFail');
             return JsonResponse::create(['status' => 0, 'msg' => '你已验证过安全邮箱！',]);
         }
         $email = Request::get('mail');
@@ -79,8 +69,7 @@ class PasswordController extends Controller
         if (Users::where('safemail', $email)->exists()) {
             return JsonResponse::create(['status' => 0, 'msg' => '安全邮件已被使用',]);
         }
-        $mail = (new SafeMailVerify($user, $email))
-            ->onQueue(static::QUEUE_MAIL_VERIFY_SEND);
+        $mail = (new SafeMailVerify($user, $email));
         Mail::send($mail);
 
         return JsonResponse::create(['status' => 1, 'msg' => '发送成功！']);

@@ -6,7 +6,9 @@ use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -52,15 +54,15 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
+
         if ($exception instanceof HttpException) {
             $statusCode = $exception->getStatusCode();
             $status = 0;
             $msg = $exception->getMessage();
-
-            $return = collect(compact('status', 'statusCode', 'msg'));
+            $headers=$exception->getHeaders();
+            $return = collect(compact('status', 'statusCode', 'msg','headers'));
             switch ($statusCode) {
                 case Response::HTTP_TOO_MANY_REQUESTS:
-                    $return['headers']=$exception->getHeaders();
                     break;
                 default;
                     break;
@@ -68,7 +70,10 @@ class Handler extends ExceptionHandler
             }
             return JsonResponse::create($return);
         }
-
+        if ($exception instanceof ValidationException) {
+            return JsonResponse::create(['status' => 0, 'msg' => '参数错误', 'errors' => $exception->errors()]);
+        }
+//        $request->headers->set('Accept','Application/json');
         return parent::render($request, $exception);
     }
 }
