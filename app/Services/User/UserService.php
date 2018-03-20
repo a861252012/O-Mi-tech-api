@@ -17,6 +17,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Mockery\Exception;
 
@@ -227,9 +228,9 @@ class UserService extends Service
             $this->redis->hmset($hashtable, $user);
         }
         //已禁止账号不写redis
-        if ($user && $user->banned()) {
+       if ($user && $user->banned()) {
             $this->deleteUserSession($user);
-            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => 'banned']));
+            if ($user->uid===Auth::id())throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => 'banned']));
         }
         return $user;
     }
@@ -841,15 +842,15 @@ class UserService extends Service
         $redis = $this->make('redis');
 
         $rank = $redis->zRevRange($key, $offset, $limit, true);
-        $ret = [];
+       $ret = [];
         static $userCache = [];//缓存用户信息
         foreach ($rank as $uid => $score) {
-            $ret[] = array_merge([
+           $ret[] = array_merge([
                 'uid' => $uid,
                 'score' => $score,
             ],
                 isset($userCache[$uid]) ? $userCache[$uid]
-                    : ($userCache[$uid] = array_only($this->getUserByUid($uid), ['lv_rich', 'lv_exp', 'username', 'nickname', 'headimg', 'icon_id', 'description', 'vip']))
+                    : ($userCache[$uid] = array_only($this->getUserByUid($uid)->toArray(), ['lv_rich', 'lv_exp', 'username', 'nickname', 'headimg', 'icon_id', 'description', 'vip']))
             );
         }
         return $ret;

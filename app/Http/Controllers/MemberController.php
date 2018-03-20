@@ -2332,7 +2332,7 @@ class MemberController extends Controller
             'roomid' => $roomId,
             'vip' => $userGroup['level_id'],
             'cashback' => $casheback,
-            'name' => Auth::id()
+            'name' => $user->username
         );
 
         return (new JsonResponse($msg))->setCallback('cb');

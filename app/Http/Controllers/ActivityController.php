@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Active;
+use App\Models\ActivePage;
 use App\Models\ActivityPag;
 use App\Models\CharmRank;
 use App\Models\ExtremeRank;
@@ -10,6 +11,7 @@ use Core\Exceptions\NotFoundHttpException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Redis;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Auth;
 
 class ActivityController extends Controller
 {
@@ -19,8 +21,8 @@ class ActivityController extends Controller
 
         $data = Redis::get('huodong_cache');
         $list = collect(json_decode($data))->where('pid', 0);
-        return $list;
-//        return $this->render('Activity/index', array('list'=>$list));
+        return  new jsonresponse($list);
+
     }
 
     /**
@@ -48,17 +50,21 @@ class ActivityController extends Controller
     public function activity($action)
     {
         $active = $this->make('redis')->hgetall('hactive_page');
+
+        //先从redis中获取，如果取不到，再去匹配数据库。
         if ($action != $active['url']) {
-            throw new NotFoundHttpException();
-            //$active = ActivePage::where("url",$action)->orderBy('created',"desc")->first();
-            //if(!$active) throw new NotFoundHttpException();
-            //$active = $active->toArray();
+          $active  = ActivePage::where('url',action)->first();
+          if(empty($active)){
+              throw  new NotFoundHttpException();
+          }else{
+              $active = json_decode($active,true);
+          }
         }
 
-        //$this->checklogin();
+
         if (Auth::id() > 0) {
             $arr['userHasTimes'] = intval($this->make('redis')->hget('hlottery_ary', Auth::id()));
-            $arr['nickname'] = $this->userInfo['nickname'];
+            $arr['nickname'] = Auth::user()->nickname;
             $arr['is_login'] = true;
         } else {
             $arr = array(
@@ -68,8 +74,8 @@ class ActivityController extends Controller
             );
         }
         $arr = array_merge($arr, $active);
-        return $arr;
-//        return $this->render('Activity/template', $arr);
+        return  new jsonresponse($arr);
+
 
     }
 
@@ -113,7 +119,9 @@ class ActivityController extends Controller
                 $var['stime'] = 0;
                 $var['starlist'] = array();
                 $var['charmlist'] = array();
-                return $this->render('Business/charmstar', $var);
+
+                return JsonResponse::create($var);
+              //  return $this->render('Business/charmstar', $var);
             }
             $var['etime'] = date('Y/m/d H:i:s', strtotime($time['etime'] . ' 23:59:59'));
             $var['stime'] = date('Y/m/d H:i:s', strtotime($time['stime'] . ' 00:00:00'));
