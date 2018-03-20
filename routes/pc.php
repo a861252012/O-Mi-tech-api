@@ -181,14 +181,15 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/member/delRoomOne2One', ['name' => 'member_roomDelOne2One', 'uses' => 'MemberController@delRoomOne2One']);
     //删除一对多
     Route::get('/member/delRoomOne2Many', ['name' => 'member_roomDelOne2Many', 'uses' => 'MemberController@delRoomOne2Many']);
-//一对多记录详情-购买用户
-    Route::get('/member/getBuyOneToMore', ['uses' => 'MemberController@getBuyOneToMore']);
 
+    //一对多记录详情-购买用户
+    Route::get('/member/getBuyOneToMore', ['uses' => 'MemberController@getBuyOneToMore']);
     //pc创建一对多
     Route::get('/member/roomOneToMore', ['name' => 'roomOneToMore', 'uses' => 'MemberController@roomOneToMore']);
     //pc一对多补票
     Route::post('/member/makeUpOneToMore', ['name' => 'makeUpOneToMore', 'uses' => 'MemberController@makeUpOneToMore']);
-
+    //删除一对多
+    Route::get('/member/delRoomOne2Many', ['name' => 'member_roomDelOne2Many', 'uses' => 'MemberController@delRoomOne2Many']);
 
     // 用户中心 房间游戏
     Route::get('/member/gamelist[/{type:\d+}]', ['name' => 'member_gamelist', 'uses' => 'MemberController@gamelist']);
@@ -484,9 +485,17 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/m/room/rtmp/{rid:\d+}', ['name' => 'm_room_rtmp', 'uses' => 'RoomController@getRTMP']);
 
     //移动端创建一对多
-    Route::get('/m/OneToMore/create', ['name' => 'OneToMore', 'uses' => 'Mobiel\RoomController@createOne2More']);
+    Route::get('/m/OneToMore/create', ['name' => 'OneToMore', 'uses' => 'Mobile\RoomController@createOne2More']);
     //移动端购买一对多
     Route::post('/m/room/buyOneToMany', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@makeUpOneToMore']);
+    //app删除一对多房间
+    Route::get('/m/OneToMore/delete', ['name' => 'm_onetomoredel','uses' => 'Mobile\RoomController@delRoomOne2More']);
+    //app一对多房间列表
+    Route::get('/m/OneToMore/list', ['as' => 'm_onetomorelist', 'uses' => 'Mobile\RoomController@listOneToMoreByHost']);
+    //app判断是否开通一对多和一对一
+    Route::get('/m/oneToManyCompetence',['as'=>'competence','uses'=>'Mobile\RoomController@competence']);
+    //app直播记录表
+    Route::get('/m/showlist', ['as' => 'm_showlist', 'uses' => 'Mobile\RoomController@showlist']);
 
 });
 Route::get('/m/find', ['name' => 'm_find', 'uses' => 'Mobile\MobileController@searchAnchor']);

@@ -30,7 +30,8 @@ class ShopController extends Controller
         $result['vipmount'] = $vipmount;
         $result['group'] = $group;
 
-        return $this->render('Shop/index', $result);
+        return  new jsonresponse($result);
+
     }
 
     /**
@@ -71,7 +72,7 @@ class ShopController extends Controller
         // 获取vip坐骑的id
         $gid = $this->make('request')->get('gid');
         $msg = array(
-            'code' => 0,
+            'status' => 1,
             'msg' => ''
         );
         $userGroup = $this->make('userGroupServer')->getGroupById($gid);

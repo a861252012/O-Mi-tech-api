@@ -57,11 +57,6 @@ class ChargeController extends Controller
      */
     public function order()
     {
-//        echo "aa";
-//        $user = Users::find(2653774);
-//        Event::fire(new Active($user));
-//        echo "bb";
-//        die;
         $uid = Auth::id();
         $origin = $this->request()->get('origin') ?: 12;
         $user = $this->make('userServer')->getUserByUid($uid);
@@ -77,7 +72,6 @@ class ChargeController extends Controller
             $var['payConfig'] = PayConfig::where('open', 1)->get(['id', 'cid', 'bus', 'channel']);
             $var['origin'] = $origin;
          //   $jwt && $var['jwt'] = $token;
-            $var['jwt'] = Auth::id();
             //右边广告图
             $var['ad'] = '';
             $ad = $this->make('redis')->hget('img_cache', 3);// 获取右边的广告栏的数据
@@ -654,15 +648,7 @@ class ChargeController extends Controller
         if ($ret['pay_status'] == 3) {
             return new JsonResponse(array('status' => 0, 'msg' => '该订单号支付已经失败,请返回会员中心的"充值记录"查看！'));
         }
-        $Datas = array(
-            array(
-                "dataNo" => $orderId,
-                "orderId" => $orderId,
-                "payOrderId" => "",
-                "type" => 1 //查询接口类型
-            )
-        );
-        $POST_Array = resolve('charge')->decorateDataSign($Datas);
+        $POST_Array = resolve('charge')->getFindRequest($orderId);
         $logPath = BASEDIR . '/app/logs/charge_' . date('Y-m-d') . '_3.log';
 
         $send_result = $this->sendCurlRequest($this->container->config['config.PAY_CALL_URL'], json_encode($POST_Array));

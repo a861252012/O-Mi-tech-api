@@ -80,6 +80,19 @@ class ChargeService extends Service
         return json_encode($postdataArr);
     }
 
+    public function getFindRequest($orderId="") : array
+    {
+        $Datas = array(
+            array(
+                "dataNo" => $orderId,
+                "orderId" => $orderId,
+                "payOrderId" => "",
+                "type" => 1 //查询接口类型
+            )
+        );
+        return $this->decorateDataSign($Datas);
+    }
+
     public function getDatas($amount, $channel): array
     {
         //通知地址
