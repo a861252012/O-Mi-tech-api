@@ -24,6 +24,7 @@ use App\Models\Users;
 use App\Models\VideoMail;
 use App\Models\WithDrawalList;
 use App\Models\WithDrawalRules;
+use App\Services\User\UserService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -378,7 +379,7 @@ class Controller extends BaseController
      */
     public function getAvailableBalance($uid, $status = 0)
     {
-        $userServer = $this->make('userServer');
+        $userServer = resolve(UserService::class);
         $userinfo = $userServer->getUserByUid($uid);
         if (empty($userinfo)) return false;
         if ($userinfo['lv_type'] == 1) {
@@ -435,7 +436,7 @@ class Controller extends BaseController
      */
     public function BalanceToOponts($money, $uid)
     {
-        $userServer = $this->make('userServer');
+        $userServer = resolve(UserService::class);
         $userinfo = $userServer->getUserByUid($uid);
         if ($userinfo['lv_type'] == 1) {
             $date_start = date("Y-m-d H:i:s", mktime(0, 0, 0, date("m") - 1, 1, date("Y")));
@@ -1004,7 +1005,7 @@ class Controller extends BaseController
         }
 
         // 初始化一个用户服务器 并初始化用户
-        $userServer = $this->make('userServer');
+        $userServer = resolve(UserService::class);
         $userServer = $userServer->setUser((new Users)->forceFill($userServer->getUserByUid(Auth::id())));
         $msg = [
             'ret' => false,

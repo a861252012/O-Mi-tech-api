@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 use App\Service\User\UserService;
+use App\Services\User\UserService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class RankController extends Controller
@@ -53,7 +54,7 @@ class RankController extends Controller
         $cb = $this->request()->get('callback', null);
 
         /** @var UserService $userService */
-        $userService = $this->make('userServer');
+        $userService = resolve(UserService::class);
         $month = date('Ym');
 //        $month = '201701';
         $data = [

@@ -13,6 +13,7 @@ use App\Models\MobileUseLogs;
 use App\Models\Pack;
 use App\Models\Users;
 use App\Services\SiteService;
+use App\Services\User\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -130,7 +131,7 @@ class MobileController extends Controller
         $user = Users::find($uid);
 
         //判断隐身权限
-        $allowStealth = $this->make('userServer')->getUserHiddenPermission($user);
+        $allowStealth = resolve(UserService::class)->getUserHiddenPermission($user);
         $return = [
             'allow_stealth' => $allowStealth,//可以隐身
             'hidden' => $allowStealth && $user->hidden,//当前隐身状态
@@ -247,7 +248,7 @@ class MobileController extends Controller
 
         $uid = Auth::id();
         if (!$uid) return JsonResponse::create(['status' => 0, 'message' => '用户错误']);
-        $userServer = $this->make('userServer');
+        $userServer = resolve(UserService::class);
         $user = $userServer->getUserByUid($uid);
         //判断用户是否有隐身权限
         if (!$userServer->getUserHiddenPermission($user)) return JsonResponse::create(['status' => 0, 'message' => '没有权限!']);
@@ -403,7 +404,7 @@ class MobileController extends Controller
     public function userFollowing()
     {
 //        $page = $this->request()->input('page', 1);
-//        $userServer = $this->make('userServer');
+//        $userServer = resolve(UserService::class);
         $arr = include(BASEDIR . '/app/cache/cli-files/anchor-search-data.php');
         $hasharr = [];
         foreach ($arr as $value) {
@@ -477,7 +478,7 @@ class MobileController extends Controller
         $uid = Auth::id();
         if (($ret != 0) && ($uid == $pid)) return JsonResponse::create(['status' => 0, 'msg' => '请勿关注自己！']);
 
-        $userService = $this->make('userServer');
+        $userService = resolve(UserService::class);
         $userInfo = $userService->getUserByUid($pid);
 
         if (!is_array($userInfo)) {

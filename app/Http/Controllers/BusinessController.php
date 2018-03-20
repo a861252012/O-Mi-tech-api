@@ -8,6 +8,7 @@ use App\Models\HostAudit;
 use App\Models\Redirect;
 use App\Models\UserExtends;
 use App\Models\Users;
+use App\Services\User\UserService;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -268,7 +269,7 @@ class BusinessController extends Controller
 //        }
         //昵称重复
         $nickname = isset($criteria['nickname']) ? $criteria['nickname'] : false;
-        $userServer = $this->make('userServer')->setUser(Users::find($this->userInfo['uid']));
+        $userServer = resolve(UserService::class)->setUser(Users::find($this->userInfo['uid']));
         if(!$userServer->checkNickNameUnique($nickname)){
             return false;
         }

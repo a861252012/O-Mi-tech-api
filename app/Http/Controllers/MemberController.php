@@ -256,7 +256,7 @@ class MemberController extends Controller
          *
          * @var $userServer /App/Service/User/UserService
          */
-        $userService = $this->make('userServer');
+        $userService = resolve(UserService::class);
         $modNickName = $userService->setUser((new Users)->forceFill($userService->getUserByUid(Auth::id())))->getModNickNameStatus();//2017-05-12 nicholas 优化，不直接读库
         //print_r($modNickName);die();
         return $this->render('Member/index', array('modNickName' => $modNickName));
@@ -343,7 +343,7 @@ class MemberController extends Controller
         if (intval($points) < 1) return new JsonResponse(array('status' => 0, 'message' => '转帐金额错误!'));
 
         //获取转到用户信息
-        $user = $this->make('userServer')->getUserByUsername($username);
+        $user = resolve(UserService::class)->getUserByUsername($username);
 
         if (!$user) return new JsonResponse(array('status' => 0, 'message' => '对不起！该用户不存在'));
 
@@ -380,10 +380,10 @@ class MemberController extends Controller
             //检查收款人用户VIP保级状态 一定要在事务之后进行验证
             $this->checkUserVipStatus($user);
             //更新转帐人用户redis信息
-            $this->make('userServer')->getUserReset($uid);
+            resolve(UserService::class)->getUserReset($uid);
 
             //更新收款人用户redis信息
-            $this->make('userServer')->getUserReset($user['uid']);
+            resolve(UserService::class)->getUserReset($user['uid']);
 
 
             return new JsonResponse(array('status' => 1, 'message' => '您成功转出' . $points . '钻石'));
@@ -634,7 +634,7 @@ class MemberController extends Controller
     {
         $curpage = $this->make("request")->get('page') ?: 1;
 
-        $userServer = $this->make('userServer');
+        $userServer = resolve(UserService::class);
         $data = $userServer->getUserAttens(Auth::id(), $curpage);
 
         return $this->render('Member/attention',
@@ -821,7 +821,7 @@ class MemberController extends Controller
             $this->_clearCookie();
             $this->_reqSession->invalidate();//销毁session,生成新的sesssID
             //更新用户redis
-            $this->make('userServer')->getUserReset($uid);
+            resolve(UserService::class)->getUserReset($uid);
             return new JsonResponse(array('code' => 0, 'msg' => '修改成功!请重新登录'));
         }
 
@@ -938,7 +938,7 @@ class MemberController extends Controller
     public function getBuyOneToMore()
     {
         $onetomore = $this->make('request')->get('onetomore');
-        $userService = $this->make('userServer');
+        $userService = resolve(UserService::class);
         $buyOneToMore = UserBuyOneToMore::where('onetomore', $onetomore)->where('type', 2)->get();
         $buyOneToMore->map(function (&$item) use ($userService) {
             $user = $userService->getUserByUid($item->uid);
@@ -1279,7 +1279,7 @@ class MemberController extends Controller
         $type = $this->make('request')->get('type') ?: 1;
         $rooms['type'] = $type;
         $rooms['data'] = array();
-        $userServer = $this->make('userServer');
+        $userServer = resolve(UserService::class);
         switch ($type) {
             case 2:
                 $data = UserBuyOneToMore::where('uid', Auth::id())->orderBy('starttime', 'DESC')->paginate();
@@ -1452,7 +1452,7 @@ class MemberController extends Controller
             $this->make('redis')->zadd('zuser_reservation:' . Auth::id(), time(), $duroom['uid']);
         }
         Users::where('uid', Auth::id())->update(array('points' => ($this->userInfo['points'] - $duroom['points']), 'rich' => ($this->userInfo['rich'] + $duroom['points'])));
-        $this->make('userServer')->getUserReset(Auth::id());// 更新redis TODO 好屌
+        resolve(UserService::class)->getUserReset(Auth::id());// 更新redis TODO 好屌
         RoomDuration::where('id', $duroom['id'])
             ->update(array('reuid' => Auth::id(), 'invitetime' => time()));
         //增加消费记录查询
@@ -2093,7 +2093,7 @@ class MemberController extends Controller
         Users::where('uid', $user['uid'])->update(array('headimg' => $result['info']['md5']));
 
         //更新用户redis
-        $this->make('userServer')->getUserReset($user['uid']);
+        resolve(UserService::class)->getUserReset($user['uid']);
 
         return new JsonResponse($result);
     }
@@ -2117,7 +2117,7 @@ class MemberController extends Controller
         //更新用户空间
         Users::where('uid', $user['uid'])->update(array('pic_used_size' => $user['pic_used_size'] + $result['info']['size']));
         //更新用户redis
-        $this->make('userServer')->getUserReset($user['uid']);
+        resolve(UserService::class)->getUserReset($user['uid']);
 
 
         $result['info']['id'] = $anchor->id;
@@ -2211,7 +2211,7 @@ class MemberController extends Controller
              */
             $isBuyThisGroup = DB::select('select * from video_user_buy_group where gid=? and uid=? limit 1', array($gid, Auth::id()));
 
-            $userServer = $this->make('userServer')->setUser(Users::find(Auth::id())); // 初始化用户服务
+            $userServer = resolve(UserService::class)->setUser(Users::find(Auth::id())); // 初始化用户服务
             $u['vip'] = $userGroup['level_id'];
             $exp = date('Y-m-d H:i:s', time() + $day * 24 * 60 * 60);
             // 用户的钻石 减去开通的价格
@@ -2422,13 +2422,13 @@ class MemberController extends Controller
         $user = Users::where('uid', $uid)->with('vipGroup')->first();
 
         //判断用户是否有隐身权限
-        if (!$this->make('userServer')->getUserHiddenPermission($user)) return new JsonResponse(array('status' => 0, 'message' => '没有权限!'));
+        if (!resolve(UserService::class)->getUserHiddenPermission($user)) return new JsonResponse(array('status' => 0, 'message' => '没有权限!'));
 
         //更新数据库隐身状态
         $hidden = Users::where('uid', $uid)->update(array('hidden' => $status));
 
         //更新用户redis
-        $this->make('userServer')->getUserReset($uid);
+        resolve(UserService::class)->getUserReset($uid);
 
         return new JsonResponse(array('status' => 1, 'message' => '操作成功'));
     }
@@ -2472,7 +2472,7 @@ class MemberController extends Controller
                 unset($data['safemail']);
                 if ($onlineId) {
                     //$data['checkatten'] = $this->_data_model->checkIsattenByuid($uid,$onlineId);
-                    $data['checkatten'] = $this->make('userServer')->checkFollow($onlineId, $uid) ? 1 : 0;
+                    $data['checkatten'] = resolve(UserService::class)->checkFollow($onlineId, $uid) ? 1 : 0;
                 } else {
                     $data['checkatten'] = 0;
                 }
@@ -2573,7 +2573,7 @@ class MemberController extends Controller
         if (isset($room['uids']) && in_array($uid, explode(',', $room['uids']))) return JsonResponse::create(['status' => 0, 'msg' => '您已有资格进入该房间，请从“我的预约”进入。']);
         if (isset($room['tickets']) && in_array($uid, explode(',', $room['tickets']))) return JsonResponse::create(['status' => 0, 'msg' => '您已有资格进入该房间，请从“我的预约”进入。']);
         /** 检查余额 */
-        $user = $this->make('userServer')->getUserByUid($uid);
+        $user = resolve(UserService::class)->getUserByUid($uid);
         if ($user['points'] < $points) return JsonResponse::create(['status' => 0, 'msg' => '余额不足', 'cmd' => 'topupTip']);
         /** 通知java送礼*/
         $redis->publish('makeUpOneToMore',
@@ -2598,7 +2598,7 @@ class MemberController extends Controller
     {
         $uid = Auth::id();
         $price = $this->make('config')['config.nickname_price'] ?: 200;
-        $userService = $this->make('userServer');
+        $userService = resolve(UserService::class);
         $user = $userService->getUserByUid($uid);
         if ($user['points'] < $price) return JsonResponse::create(['status' => 0, 'msg' => '余额不足' . $price . '钻']);
         $userService->setUser((new Users)->forceFill($user));

@@ -3,6 +3,7 @@
 namespace App\Services\Room;
 
 use App\Models\Users;
+use App\Services\User\UserService;
 use Core\Request;
 use App\Services\Service;
 use Illuminate\Container\Container;
@@ -69,7 +70,7 @@ class RoomService extends Service
         $this->rid = $rid;
         $room = $redis->hgetAll($key);
         $uid = $redis->hget($roomids, $rid);
-        $user = $this->make('userServer')->getUserByUid($uid);
+        $user = resolve(UserService::class)->getUserByUid($uid);
         $room['user'] = $user;
         $room['room_status'] = [//todo 1站加7
             1 => $redis->hgetall("hroom_status:$rid:1"),

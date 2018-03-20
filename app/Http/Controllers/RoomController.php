@@ -8,6 +8,7 @@ use App\Service\Room\NoSocketChannelException;
 use App\Service\Room\RoomService;
 use App\Service\Room\SocketService;
 use App\Service\Safe\RtmpService;
+use App\Services\User\UserService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
@@ -25,7 +26,7 @@ class RoomController extends Controller
             if (!$this->make('safeService')->auth(Auth::id())) return new RedirectResponse('/');
 
         if ($rid <= 0) return $this->render('Room/no_room');
-        $user = $this->make('userServer')->getUserByUid($rid);
+        $user = resolve(UserService::class)->getUserByUid($rid);
         if (!$user || $user['roled'] != 3) return $this->render('Room/no_room');
 
         //get certificate
@@ -125,7 +126,7 @@ class RoomController extends Controller
                             'start_time' => $roomService->extend_room['starttime'],
                             'end_time' => $roomService->extend_room['endtime'],
                             'duration' => strtotime($roomService->extend_room['endtime']) - strtotime($roomService->extend_room['starttime']),
-                            'username' => $this->make('userServer')->getUserByUid($rid)['nickname']
+                            'username' => resolve(UserService::class)->getUserByUid($rid)['nickname']
                         ];
 
                         $hplat = $redis->exists("hplatforms:$origin") ? "plat_whitename_room" : "not_whitename_room";

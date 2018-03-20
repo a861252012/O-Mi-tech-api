@@ -9,6 +9,7 @@
 namespace App\Services\Auth;
 
 
+use App\Services\User\UserService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Redis\RedisManager;
@@ -32,7 +33,7 @@ class RedisUserProvider implements UserProvider
      */
     public function retrieveById($identifier)
     {
-        return resolve('userService')->getUserByUid($identifier);
+        return resolve(UserService::class)->getUserByUid($identifier);
     }
 
     /**
@@ -72,7 +73,7 @@ class RedisUserProvider implements UserProvider
                 array_key_exists('password', $credentials))) {
             return;
         }
-        return resolve('userService')->getUserByUsername($credentials['username']);
+        return resolve(UserService::class)->getUserByUsername($credentials['username']);
     }
 
     /**

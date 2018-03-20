@@ -13,6 +13,7 @@ use App\Models\Recharge;
 use App\Models\RechargeConf;
 use App\Models\RechargeWhiteList;
 use App\Services\Service;
+use App\Services\User\UserService;
 
 class ChargeGroupService extends Service
 {
@@ -47,7 +48,7 @@ class ChargeGroupService extends Service
                 $query->orWhere('pay_type', 1)->orWhere('pay_type', 4);//4=只统计银行充值和后台充值记录
             })->sum('paymoney');
 
-        $user = resolve('userServer')->getUserByUid($uid);
+        $user = resolve(UserService::class)->getUserByUid($uid);
         //循环匹配充值组
         foreach ($rechargeGroup as $rid => $val) {
             if ($rid < 3) continue; //黑名单、白名单不进入循环

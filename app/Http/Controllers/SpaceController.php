@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Services\User\UserService;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\Anchor;
 
@@ -30,7 +31,7 @@ class SpaceController extends Controller{
             //return new response(json_encode(array('code'=>100,'info'=>'非法来源')));
         }
 
-        $userServer = $this->make('userServer');
+        $userServer = resolve(UserService::class);
         $vars['user'] = $userServer->getUserByUid($uid);
 
         /**

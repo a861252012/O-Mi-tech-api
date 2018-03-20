@@ -16,6 +16,7 @@ use App\Models\Recharge;
 use App\Models\RechargeConf;
 use App\Models\RechargeWhiteList;
 use App\Models\Users;
+use App\Services\User\UserService;
 use DB;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\Auth;
@@ -59,7 +60,7 @@ class PaymentController extends MobileController
     {
         $uid = Auth::id();
 
-        $user = $this->make('userServer')->getUserByUid($uid);
+        $user = resolve(UserService::class)->getUserByUid($uid);
         $open = $this->make("redis")->hget("hconf", "open_pay") ?: 0;
         $origin = $this->request()->get('origin') ?: 12;
         $jwt = $this->make('JWTAuth');

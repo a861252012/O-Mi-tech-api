@@ -12,6 +12,7 @@ use App\Models\RechargeConf;
 use App\Models\RechargeWhiteList;
 use App\Models\Users;
 use App\Services\SiteService;
+use App\Services\User\UserService;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -59,7 +60,7 @@ class ChargeController extends Controller
     {
         $uid = Auth::id();
         $origin = $this->request()->get('origin') ?: 12;
-        $user = $this->make('userServer')->getUserByUid($uid);
+        $user = resolve(UserService::class)->getUserByUid($uid);
 
         $var['user'] = $user;
 

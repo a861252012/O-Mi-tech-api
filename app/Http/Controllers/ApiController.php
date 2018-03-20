@@ -19,6 +19,7 @@ use App\Models\Messages;
 use App\Models\Pack;
 use App\Models\UserGroup;
 use App\Models\Users;
+use App\Services\User\UserService;
 use Core\Exceptions\NotFoundHttpException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -60,7 +61,7 @@ class ApiController extends Controller
      */
     public function getUserByDes($uid)
     {
-        $userService = $this->make('userServer');
+        $userService = resolve(UserService::class);
         $userInfo = $userService->getUserByUid($uid);
 
         //获取用户信息失败返回
@@ -151,7 +152,7 @@ class ApiController extends Controller
             $domaid = Domain::where('url', $agent)->where('type', 0)->where('status', 0)->with("agent")->first();
             $newUser['aid'] = $domaid->agent->id;
         }
-        $uid = $this->make("userServer")->register($newUser, [], $newUser['aid']);
+        $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
         $user = Users::find($uid);
         // 此时调用的是单实例登录的session 验证
         Auth::guard('pc')->login($user);
@@ -286,7 +287,7 @@ class ApiController extends Controller
                 return new JsonResponse(array('status' => 0, 'msg' => '导入过程出现异常'));
             }
             $redis = $this->make('redis');
-            $this->make('userServer')->getUserReset($uid);
+            resolve(UserService::class)->getUserReset($uid);
             $redis->hset('husername_to_id', $user['username'], $uid);
             $redis->hset('hnickname_to_id', $user['nickname'], $uid);
 
@@ -297,7 +298,7 @@ class ApiController extends Controller
 
             //赠送贵族
             if ($vip && $vip_days) {
-                $this->make('userServer')->updateUserOfVip($uid, $vip, 1, $vip_days);
+                resolve(UserService::class)->updateUserOfVip($uid, $vip, 1, $vip_days);
             }
 
             //添加代理
@@ -308,7 +309,7 @@ class ApiController extends Controller
                 if (!Agents::find($aid)) {
                     return new JsonResponse(array('status' => 1, 'msg' => '注册成功！但该用户所属代理不存在,导入代理失败！'));
                 }
-                $this->make('userServer')->setUserAgents($uid, $aid);
+                resolve(UserService::class)->setUserAgents($uid, $aid);
             }
             $this->userInfo = Users::find($uid)->toArray();
             $_SESSION['webonline'] = $this->userInfo['uid'];
@@ -428,7 +429,7 @@ class ApiController extends Controller
         if ($estimatedSign != $sign) return new Response("校验失败");
 //    $callback = 2650010;
         $room = $callback;
-        if (!$this->make("userServer")->getUserByUid($room)) return new Response("房间不存在");
+        if (!resolve(UserService::class)->getUserByUid($room)) return new Response("房间不存在");
 
         //TODO PHP端 注册并登录用户 跳转到callback参数指定的直播间
         //实现cure通讯报文
@@ -474,7 +475,7 @@ class ApiController extends Controller
                 'xtoken' => $data['token'],
                 'origin' => 51,
             ];
-            $uid = $this->make("userServer")->register($user);
+            $uid = resolve(UserService::class)->register($user);
             $this->make("systemServer")->logResult("XO项目 注册:" . json_encode($user) . '-' . (string)$uid, $logPath);
             if (!$uid) {
                 return new Response("用户不存在" . json_encode($user) . $uid . $res);
@@ -485,7 +486,7 @@ class ApiController extends Controller
                 'aid' => $this->container->config['config.xo_agent'],
             ]);
 
-            $this->userInfo = $this->make("userServer")->getUserByUid($uid);
+            $this->userInfo = resolve(UserService::class)->getUserByUid($uid);
             if (empty($this->userInfo)) {
                 return new Response("获取用户信息失败" . json_encode($user) . $uid . $res);
             }
@@ -538,7 +539,7 @@ class ApiController extends Controller
         if ($estimatedSign != $sign) return new Response("校验失败");
 //    $callback = 2650010;
         $room = $callback;
-        if (!$this->make("userServer")->getUserByUid($room)) return new Response("房间不存在");
+        if (!resolve(UserService::class)->getUserByUid($room)) return new Response("房间不存在");
 
         //TODO PHP端 注册并登录用户 跳转到callback参数指定的直播间
         //实现cure通讯报文
@@ -581,7 +582,7 @@ class ApiController extends Controller
                 'origin' => 61,
             ];
 
-            $uid = $this->make("userServer")->register($user);
+            $uid = resolve(UserService::class)->register($user);
             $this->make("systemServer")->logResult("L项目 注册:" . json_encode($user) . '-' . (string)$uid, $logPath);
             if (!$uid) {
                 return new Response("用户不存在" . json_encode($user) . $uid . $res);
@@ -592,7 +593,7 @@ class ApiController extends Controller
                 'aid' => $this->container->config['config.l_agent'],
             ]);
 
-            $this->userInfo = $this->make("userServer")->getUserByUid($uid);
+            $this->userInfo = resolve(UserService::class)->getUserByUid($uid);
             if (empty($this->userInfo)) {
                 return new Response("获取用户信息失败" . json_encode($user) . $uid . $res);
             }
@@ -646,7 +647,7 @@ class ApiController extends Controller
         if ($estimatedSign != $sign) return new Response("接入方校验失败");
 //    $callback = 2650010;
         $room = $callback;
-        if (!$this->make("userServer")->getUserByUid($room)) return new Response("房间不存在");
+        if (!resolve(UserService::class)->getUserByUid($room)) return new Response("房间不存在");
 
         //TODO PHP端 注册并登录用户 跳转到callback参数指定的直播间
         //实现cure通讯报文
@@ -692,7 +693,7 @@ class ApiController extends Controller
                 'origin' => $origin,
             ];
 
-            $uid = $this->make("userServer")->register($user);
+            $uid = resolve(UserService::class)->register($user);
             $this->make("systemServer")->logResult("$plat_code 项目 注册:" . json_encode($user) . '-' . (string)$uid, $logPath);
             if (!$uid) {
                 return new Response("用户不存在" . json_encode($user) . $uid . $res);
@@ -703,7 +704,7 @@ class ApiController extends Controller
                 'aid' => $platforms['aid'],
             ]);
 
-            $this->userInfo = $this->make("userServer")->getUserByUid($uid);
+            $this->userInfo = resolve(UserService::class)->getUserByUid($uid);
             if (empty($this->userInfo)) {
                 return new Response("获取用户信息失败" . json_encode($user) . $uid . $res);
             }
@@ -771,7 +772,7 @@ class ApiController extends Controller
 
     {
         //获取用户信息
-        $userInfo = $this->make('userServer')->getUserByUid(Auth::id());
+        $userInfo = resolve(UserService::class)->getUserByUid(Auth::id());
 
         //判断非主播返回0
         if (!$userInfo || $userInfo['roled'] != 3) return new Response(0);
@@ -806,7 +807,7 @@ class ApiController extends Controller
             'status' => 0,
             'msg' => '请勿关注自己'
         ]);
-        $userService = $this->make('userServer');
+        $userService = resolve(UserService::class);
         $userInfo = $userService->getUserByUid($pid);
 
         if (!is_array($userInfo)) throw new NotFoundHttpException();
@@ -867,7 +868,7 @@ class ApiController extends Controller
         $rid = $request->get('rid');
 
         //判断用户是否存在
-        $userInfo = $this->make('userServer')->getUserByUid($rid);
+        $userInfo = resolve(UserService::class)->getUserByUid($rid);
         if (!$userInfo) return new JsonResponse(array('status' => 0, 'msg' => '该用户不存在'));
 
         //发送内容检测
@@ -880,7 +881,7 @@ class ApiController extends Controller
         if ($userInfo['roled'] == 0 && $userInfo['lv_rich'] < 3) return new JsonResponse(array('status' => 0, 'msg' => '财富等级达到二富才能发送私信哦，请先去给心爱的主播送礼物提升财富等级吧.'));
 
         //判断私信发送数量限制
-        $userService = $this->make('userServer');
+        $userService = resolve(UserService::class);
 
         if (!$userService->checkUserSmsLimit($sid, 1000, 'video_mail')) return new JsonResponse(array('status' => 0, 'msg' => '本日发送私信数量已达上限，请明天再试！'));
 
@@ -923,7 +924,7 @@ class ApiController extends Controller
 
         //检查用户信息
         $uid = $this->make('request')->get('uid');
-        $userInfo = $this->make('userServer')->getUserByUid($uid);
+        $userInfo = resolve(UserService::class)->getUserByUid($uid);
         if (!$userInfo['uid']) return new JsonResponse(array('ret' => 2, 'msg' => 'Get user information was failled'));
 
         if (!$userInfo['status']) return new Response(0);
@@ -1048,14 +1049,14 @@ class ApiController extends Controller
              * @todo 原方法存在疑问 src\Video\ProjectBundle\Controller\ApiController.php  activityAction
              * @var bool
              */
-            $updatePoints = $this->make('userServer')->updateUserOfPoints($d['uid'], '+', $activity['gitmoney'], 6);
+            $updatePoints = resolve(UserService::class)->updateUserOfPoints($d['uid'], '+', $activity['gitmoney'], 6);
             $message = '充值奖励，恭喜您获得' . $activity['giftname'];
         } else {
             /**
              * @todo 原方法存在疑问 src\Video\ProjectBundle\Controller\ApiController.php  activityAction
              * @var bool
              */
-            $updatePoints = $this->make('userServer')->updateUserOfPoints($d['uid'], '+', $activity['gitmoney'], 6);
+            $updatePoints = resolve(UserService::class)->updateUserOfPoints($d['uid'], '+', $activity['gitmoney'], 6);
             $message = '充值成功，恭喜您获得' . $d['money'] * 10 . ' 钻';
 
         }
@@ -1152,10 +1153,10 @@ class ApiController extends Controller
         $this->make('redis')->hset('hlottery_ary', $uid, $lotteryTimes - 1);
 
         //给中奖用户增加奖励
-        $this->make('userServer')->updateUserOfPoints($uid, '+', $lotteryItem[$lotteryid]['fenshu'], 6);
+        resolve(UserService::class)->updateUserOfPoints($uid, '+', $lotteryItem[$lotteryid]['fenshu'], 6);
 
         //更新用户redis数据
-        $this->make('userServer')->getUserReset($uid);
+        resolve(UserService::class)->getUserReset($uid);
 
         //发信给用户
         $this->make('messageServer')->sendSystemToUsersMessage(['send_uid' => 0, 'rec_uid' => $uid, 'content' => '通过抽奖奖励，恭喜您获得' . $lotteryItem[$lotteryid]['fenshu'] . '钻石，抽奖次数剩余' . $lotteryTimes . '次']);
@@ -1252,7 +1253,7 @@ class ApiController extends Controller
 
         $request = $this->make('request');
         $uid = Auth::id();
-        $user = $this->make('userServer')->getUserByUid($uid);
+        $user = resolve(UserService::class)->getUserByUid($uid);
 
         /**
          * 获取提交过来的图片二进制流
@@ -1584,7 +1585,7 @@ class ApiController extends Controller
         /**
          * 格式化数据返回，获取用户的信息
          */
-        $userServer = $this->make('userServer');
+        $userServer = resolve(UserService::class);
         $data = array();
         foreach ($score as $uid => $score) {
             $arr = array();
@@ -1610,7 +1611,7 @@ class ApiController extends Controller
     protected function _formatLiveList($lrange)
     {
         $data = array();
-        $userServer = $this->make('userServer');
+        $userServer = resolve(UserService::class);
         $goodObj = new Goods();
         foreach ($lrange as $item) {
             $live = array();

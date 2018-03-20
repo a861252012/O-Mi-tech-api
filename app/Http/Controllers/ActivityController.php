@@ -7,6 +7,7 @@ use App\Models\ActivePage;
 use App\Models\ActivityPag;
 use App\Models\CharmRank;
 use App\Models\ExtremeRank;
+use App\Services\User\UserService;
 use Core\Exceptions\NotFoundHttpException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Redis;
@@ -94,7 +95,7 @@ class ActivityController extends Controller
             $charm = $this->make('redis')->zRevRange('zvideo_charm', 0, 9, true);
             $star = $this->make('redis')->zRevRange('zvideo_extreme', 0, 9, true);
             $no_charm = 1;
-            $userServer = $this->make('userServer');
+            $userServer = resolve(UserService::class);
             foreach ($charm as $key => $value) {
                 $var['charmlist'][$no_charm - 1]['points'] = $value;
                 $var['charmlist'][$no_charm - 1]['nickname'] = $userServer->getUserByUid($key)['nickname'];
@@ -109,7 +110,7 @@ class ActivityController extends Controller
                 $no_star++;
             }
         } else {
-            $userServer = $this->make('userServer');
+            $userServer = resolve(UserService::class);
 //            $time= $this->get('database_connection')->fetchAll("SELECT * FROM video_active WHERE etime < '".date('Y-m-d')."' AND  dml_flag !=3  ORDER BY etime DESC LIMIT 1");
             $time = Active::where('etime', '<', date('Y-m-d'))->where('dml_flag', '!=', 3)
                 ->orderBy('etime', 'desc')

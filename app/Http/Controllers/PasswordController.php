@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\SafeMailVerify;
 use App\Models\Users;
+use App\Services\User\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
@@ -72,7 +73,7 @@ class PasswordController extends Controller
             return RedirectResponse::create('/member/mailverify/mailFail?'.http_build_query(['errors'=>$errors->toJson()]));
         }
 
-        $user = resolve('userService')->getUserByUid($token['uid']);
+        $user = resolve(UserService::class)->getUserByUid($token['uid']);
         if ($user->safemail) {
             $errors->add('mail','你已验证过安全邮箱！');
             return RedirectResponse::create('/member/mailverify/mailFail?'.http_build_query(['errors'=>$errors->toJson()]));
@@ -89,7 +90,7 @@ class PasswordController extends Controller
             return RedirectResponse::create('/member/mailverify/mailFail?'.http_build_query(['errors'=>$errors->toJson()]));
         }
 
-        $this->make('userServer')->getUserReset($token['uid']);
+        resolve(UserService::class)->getUserReset($token['uid']);
         //赠送砖石奖励
         //$this->addUserPoints($uid,500, array('date'=>date('Y-m-d H:i:s'),'pay_type'=>5 ,'nickname'=>$user['nickname']?:$user['username']), array('mailcontent'=>'你通过“安全邮箱验证”获得500钻石奖励！','date'=>date('Y-m-d H:i:s')), $dm);
         $errors->add('mail','更新安全邮箱成功！');

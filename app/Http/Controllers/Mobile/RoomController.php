@@ -17,6 +17,7 @@ use App\Models\Users;
 use App\Service\Room\NoSocketChannelException;
 use App\Service\Room\RoomService;
 use App\Service\Room\SocketService;
+use App\Services\User\UserService;
 use DB;
 use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -102,7 +103,7 @@ class RoomController extends Controller
             $this->make('redis')->zadd('zuser_reservation:' . Auth::id(), time(), $duroom['uid']);
         }
         Users::where('uid', Auth::id())->update(array('points' => ($this->userInfo['points'] - $duroom['points']), 'rich' => ($this->userInfo['rich'] + $duroom['oints'])));
-        $this->make('userServer')->getUserReset(Auth::id());// 更新redis TODO 好屌
+        resolve(UserService::class)->getUserReset(Auth::id());// 更新redis TODO 好屌
 //        RoomDuration::where('id', $duroom['id'])
 //            ->update(array('reuid' => Auth::id(), 'invitetime' => time()));
         //增加消费记录查询
@@ -170,7 +171,7 @@ class RoomController extends Controller
         if (isset($room['uids']) && in_array($uid, explode(',', $room['uids']))) return JsonResponse::create(['status' => 0, 'msg' => '您已有资格进入该房间，请从“我的预约”进入。']);
         if (isset($room['tickets']) && in_array($uid, explode(',', $room['tickets']))) return JsonResponse::create(['status' => 0, 'msg' => '您已有资格进入该房间，请从“我的预约”进入。']);
         /** 检查余额 */
-        $user = $this->make('userServer')->getUserByUid($uid);
+        $user = resolve(UserService::class)->getUserByUid($uid);
         if ($user['points'] < $points) return JsonResponse::create(['status' => 0, 'msg' => '余额不足', 'cmd' => 'topupTip']);
         if ($redis->hGet("hvediosKtv:$rid", "status") == 0) return JsonResponse::create(['status' => 0, 'msg' => '主播不在播，不能购买！']);
 
@@ -261,7 +262,7 @@ class RoomController extends Controller
         //扣减钻石
         DB::table('video_user')->where('uid', Auth::id())->decrement('points', $duroom['points']);
         DB::table('video_user')->where('uid', Auth::id())->increment('rich', $duroom['points']);
-        $this->make('userServer')->getUserReset(Auth::id());
+        resolve(UserService::class)->getUserReset(Auth::id());
 
         $logPath = BASEDIR . '/app/logs/one2more_' . date('Ym') . '.log';
         $one2moreLog = 'uid:' . Auth::id() . ' id:' . $rid . '用户钻石：' . $this->userInfo['points'] . '+';

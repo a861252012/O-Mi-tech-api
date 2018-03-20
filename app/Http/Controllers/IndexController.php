@@ -8,6 +8,7 @@ use App\Models\RoomDuration;
 use App\Models\RoomStatus;
 use App\Models\UserBuyOneToMore;
 use App\Models\Users;
+use App\Services\User\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -462,7 +463,7 @@ class IndexController extends Controller
         /**
          * @author dc 修改，判断用户是否有隐身权限
          */
-        if (resolve('userServer')->getUserHiddenPermission($userinfo)) {
+        if (resolve(UserService::class)->getUserHiddenPermission($userinfo)) {
             $uinfo['hidden'] = $userinfo['hidden'];
         }
 
