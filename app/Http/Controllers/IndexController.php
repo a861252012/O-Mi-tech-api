@@ -347,12 +347,13 @@ class IndexController extends Controller
     /**
      * todo 可删除关注部分的代码
      * @return Response
+     * @throws \Exception
      */
     public function getIndexInfo()
     {
         $return = [];
         $uid = Auth::id();
-        $userinfo = Auth::guard('pc')->user();
+        $userinfo = Auth::user();
         $ads = Redis::hget('img_cache', 1);
         $ads = json_decode($ads, true);
         $slider = array();

@@ -27,8 +27,11 @@ use App\Models\Users;
 use App\Models\WithDrawalList;
 use Core\Exceptions\NotFoundHttpException;
 use DB;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Input;
+use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -299,9 +302,8 @@ class MemberController extends Controller
      * @version 2015-11-13
      * @return  JsonResponse
      */
-    public function transfer()
+    public function transfer(Request $request)
     {
-        $request = $this->make('request');
         $uid = Auth::id();
         //转帐菜单
         if (!isset($this->userInfo['transfer']) || !$this->userInfo['transfer']) {
@@ -330,8 +332,7 @@ class MemberController extends Controller
          * 转帐处理过程
          * @todo 待优化
          */
-        if (!$this->make('captcha')->Verify($request->get('code'))) return new JsonResponse(array('status' => 0, 'message' => '验证码错误!'));;
-        $this->make('captcha')->clear(); // 清空验证码
+        if (!Captcha::check($request->get('code'))) return new JsonResponse(array('status' => 0, 'message' => '验证码错误!'));;
         //收款人信息
         $username = $request->get('username');
         $points = $request->get('points');
@@ -777,7 +778,7 @@ class MemberController extends Controller
         $uid = Auth::id();
         if ($this->make('request')->getMethod() === 'POST') {
             $post = $this->make('request')->request->all();
-            if (!$this->make('captcha')->Verify($post['captcha'])) {
+            if (!Captcha::check(Input::get('captcha'))) {
                 return new JsonResponse(array('code' => 300, 'msg' => '对不起，验证码错误!'));
             }
 
@@ -1211,7 +1212,7 @@ class MemberController extends Controller
             if (empty($captcha)) {
                 return new JsonResponse(array('code' => 4, 'msg' => '请输入验证码!', 'times' => $times));
             }
-            if (!$this->make('captcha')->Verify($captcha)) return new JsonResponse(array('code' => 0, 'msg' => '验证码错误!', 'times' => $times));;
+            if (!Captcha::check($captcha)) return new JsonResponse(array('code' => 0, 'msg' => '验证码错误!', 'times' => $times));
         }
         if (strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
             $this->make('redis')->set($keys_room, $times + 1);

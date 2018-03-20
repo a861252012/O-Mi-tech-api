@@ -24,18 +24,17 @@ use App\Models\Users;
 use App\Models\VideoMail;
 use App\Models\WithDrawalList;
 use App\Models\WithDrawalRules;
-use App\Providers\CaptchaServiceProvider;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Support\Facades\Redis;
-
-
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redis;
+use Mews\Captcha\Facades\Captcha;
+
+
 //use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 
 class Controller extends BaseController
@@ -63,6 +62,7 @@ class Controller extends BaseController
         config()->set('auth.defaults.guard', 'pc');
         $this->container = app();
     }
+
     /**
      * b域名用户登录后，进行的redis的写入，和a域名最大的区别是写入的redis的key是不一样的
      *
@@ -90,7 +90,7 @@ class Controller extends BaseController
                 $this->make('redis')->del('PHPREDIS_SESSION:' . $huser_sid);
             }
             if ($this->_isGetCache == false) {
-                $userArr = array();
+                $userArr = [];
                 $userArr = explode("@", $userInfo['username']);
                 $this->make('redis')->hset('husername_to_id', (count($userArr) == 2) ? $userArr[0] . "@" . strtolower($userArr[1]) : $userInfo['username'], $userInfo['uid']);
                 $this->make('redis')->hset('hnickname_to_id', $userInfo['nickname'], $userInfo['uid']);
@@ -162,10 +162,10 @@ class Controller extends BaseController
     /**
      * @param string $stime
      * @param string $etime
-     * @param array $data
+     * @param array  $data
      * @return bool false重叠 true不重叠
      */
-    public function checkActiveTime($stime = '', $etime = '', $data = array())
+    public function checkActiveTime($stime = '', $etime = '', $data = [])
     {
         $stime = strtotime($stime);
         $etime = strtotime($etime);
@@ -230,7 +230,7 @@ class Controller extends BaseController
 
     /**
      * 获取自己被别人关注的数量/获取自己关注别人的数量
-     * @param $uid
+     * @param      $uid
      * @param bool $flag
      * @return mixed
      * @Author Orino
@@ -251,12 +251,12 @@ class Controller extends BaseController
      */
     public function getStarNames($monthday = 0)
     {
-        $data = array();
+        $data = [];
         if (Redis::exists('hstar_names')) {
             $data = Redis::hgetall('hstar_names');
         } else {
             $data = BirthStar::orderBy('id', 'ASC')->get();
-            $tmpArr = array();
+            $tmpArr = [];
             $len = count($data);
             for ($i = 0; $i < $len; $i++) {
                 $tmpArr[$data[$i]['monthday']] = $data[$i]['starname'];
@@ -290,7 +290,7 @@ class Controller extends BaseController
      * 给变量赋值
      *
      * @param string|array $var
-     * @param string $value
+     * @param string       $value
      */
     public function assign($var, $value = NULL)
     {
@@ -311,7 +311,7 @@ class Controller extends BaseController
      */
     public function getOutputUser($userInfo, $size = 150, $pct = true)
     {
-        if (!$userInfo) return array();
+        if (!$userInfo) return [];
         //$userInfo['nickname_sub'] = mb_substr($userInfo['nickname'],0,10,'utf-8');
         $userInfo['headimg'] = $this->getHeadimg($userInfo['headimg'], $size);
         if ($userInfo['birthday']) {
@@ -329,7 +329,7 @@ class Controller extends BaseController
             $userInfo['procity'] = $this->getArea($userInfo['province'], $userInfo['city'], $userInfo['county']);//取地区code对应的地区名称
         }
         // return $userInfo;
-        $data = array(
+        $data = [
             'headimg' => $userInfo['headimg'],
             'uid' => strval($userInfo['uid']),
             'nickname' => $userInfo['nickname'],
@@ -346,7 +346,7 @@ class Controller extends BaseController
             'sex' => $userInfo['sex'],
             'safemail' => $userInfo['safemail'],
             'icon_id' => intval($userInfo['icon_id']),
-        );
+        ];
         if (!$userInfo['province'] || !$userInfo['city']) {
             $data['procity'] = '中国的某个角落';
         } else {
@@ -354,7 +354,7 @@ class Controller extends BaseController
         }
         //  $data['attens'] = strval($this->_data_model->getAttenCount($userInfo['uid'],$field='t.tid '));
         $data['attens'] = strval($this->getUserAttensCount($userInfo['uid'], false));
-        $data['space_url'] = 'http://' . $_SERVER['HTTP_HOST'] . '/space?u=' . $userInfo['uid'];
+        $data['space_url'] = request()->getSchemeAndHttpHost() . '/space?u=' . $userInfo['uid'];
         if ($pct) {
             $data['province'] = $userInfo['province'];
             $data['city'] = $userInfo['city'];
@@ -399,7 +399,7 @@ class Controller extends BaseController
         $sumDuration = LiveList::where('uid', $uid)->where('start_time', '>', $date_start)
             ->where('start_time', '<', $date_end)->sum('duration');
 //        $sumlist = $this->get('database_connection')->fetchAll('SELECT SUM(moneypoints) as sum_points FROM video_withdrawal_list WHERE uid = '.$uid .' AND video_withdrawal_list.status in(1,'.$status.')   AND created >'."'$date_with_start'".'  AND created < '."'$date_with_end'")[0]['sum_points'];
-        $sumlist = WithDrawalList::where('uid', $uid)->where('status', 'in', array(1, $status))
+        $sumlist = WithDrawalList::where('uid', $uid)->where('status', 'in', [1, $status])
             ->where('created', '>', $date_with_start)->where('created', '<', $date_with_end)
             ->sum('moneypoints');
         $result['availmoney'] = 0;
@@ -431,7 +431,7 @@ class Controller extends BaseController
     /**
      * @param $money TODO
      * @return int
-     * 通过钱数获取对应的钻石数
+     *               通过钱数获取对应的钻石数
      */
     public function BalanceToOponts($money, $uid)
     {
@@ -475,7 +475,7 @@ class Controller extends BaseController
      */
     public function ordinary($points, $type)
     {
-        $typearr = array(1, 2, 3);
+        $typearr = [1, 2, 3];
         if (!in_array($type, $typearr)) return 0;
 //        $otype = $this->get('database_connection')
 //            ->fetchAll('SELECT * FROM video_withdrawal_rules WHERE anchortype = '."'$type'".' AND minincome<='."'$points'".' and maxincome>='."'$points'");
@@ -507,11 +507,11 @@ class Controller extends BaseController
         }
         //从数据库中查找并缓存到Redis
         $area = Area::all();
-        $areas = array();
+        $areas = [];
         foreach ($area as $a) {
             $areas[$a->code] = $a->area;
         }
-        $area = array();
+        $area = [];
         $len = count($argsList);
         for ($i = 0; $i < $len; $i++) {
             if (isset($areas[$argsList[$i]])) {
@@ -558,7 +558,7 @@ class Controller extends BaseController
             $hashData = json_decode($hashData, true);
         } else {
             $data = $modle->all();
-            $hashData = array();
+            $hashData = [];
             foreach ($data as $item) {
                 $hashData[$item->level_id] = $item->getAttributes();
             }
@@ -571,7 +571,7 @@ class Controller extends BaseController
         //$currentExp = $hashData[$levelid -1]['level_value'];
         /**
          * 修复当等级为空时报错
-         * @author dc
+         * @author  dc
          * @version 20160325
          */
         $currentExp = isset($hashData[$levelid - 1]) ? $hashData[$levelid - 1]['level_value'] : 0;
@@ -584,12 +584,12 @@ class Controller extends BaseController
             $dec = $nextExp - $currentExp;
         } else {
             //升级到最高级的情况
-            return array(
+            return [
                 'lv_sub' => 0,
                 'lv_next_exp' => 0,
                 'lv_current_exp' => $currentExp,
-                'lv_percent' => 100
-            );
+                'lv_percent' => 100,
+            ];
         }
 
         //如果是主播
@@ -656,7 +656,7 @@ class Controller extends BaseController
     /**
      * 获取头像地址 默认头像
      *
-     * @param $headimg
+     * @param        $headimg
      * @param string $size
      * @return string
      */
@@ -666,37 +666,9 @@ class Controller extends BaseController
     }
 
 
-    /**
-     * [captcha 公用验证码调用方法]
-     *
-     * @author dc <dc#wisdominfo.my>
-     * @version 2015-11-16
-     * @return  image/png
-     */
     public function captcha()
     {
-        $headers = array(
-            'Content-Type' => 'image/png',
-            'Content-Disposition' => 'inline; filename="' . $this->make('captcha')->Generate() . '"'
-        );
-        $_SESSION['CAPTCHA_KEY'] = strtolower($this->make('captcha')->phrase);
-        return new Response(uniqid() . '.png', 200, $headers);
-    }
-
-
-    protected function _clearCookie()
-    {
-        //清除无用的cookie
-        $cookies = $this->make('request')->cookies->all();
-        if (isset($cookies[self::CLIENT_ENCRY_FIELD])) {
-            // setcookie(self::CLIENT_ENCRY_FIELD, null, time()-31536000,'/',$GLOBALS['CUR_DOMAIN']);
-            $this->setCookieByDomain(self::CLIENT_ENCRY_FIELD, null, time() - 31536000);
-        }
-
-        if (isset($cookies[self::WEB_UID])) {
-            // setcookie(self::WEB_UID, null, time()-31536000,'/',$GLOBALS['CUR_DOMAIN']);
-            $this->setCookieByDomain(self::WEB_UID, null, time() - 31536000);
-        }
+        return Captcha::create();
     }
 
     /**获取推荐的房间ID
@@ -710,14 +682,14 @@ class Controller extends BaseController
         if ($count > 0) {
             $reservation = $uids = Redis::zrevrange('zuser_reservation:' . $uid, 0, $count - 1);
         } else {
-            $reservation = array();
+            $reservation = [];
         }
         $result ['reservation'] = $reservation;
         $count = Redis::zcard('zuser_attens:' . $uid);
         if ($count > 0) {
             $result['attens'] = Redis::zrevrange('zuser_attens:' . $uid, 0, $count - 1);
         } else {
-            $result['attens'] = array();
+            $result['attens'] = [];
         }
         $result['attens'] = array_diff($result['attens'], $reservation);
         return $result;
@@ -845,9 +817,9 @@ class Controller extends BaseController
 
     /**
      * 设置二级域名的cookie
-     * @param $key
+     * @param      $key
      * @param null $vaule
-     * @param int $time
+     * @param int  $time
      * @Author Orino
      */
     protected function setCookieByDomain($key, $vaule = null, $time = 0)
@@ -860,14 +832,14 @@ class Controller extends BaseController
      * [toSql 创建一个监听事件，获取Eloquent的SQL语句]
      * 本功能主要用于调式数据库操作返回SQL
      *
-     * @author dc <dc@wisdominfo.my>
+     * @author  dc <dc@wisdominfo.my>
      * @version 2015-11-02
      * @return  [type]     [description]
      */
     protected function toSql()
     {
         $this->container->events->listen('illuminate.query', function ($query, $bindings, $time) {
-            $query = str_replace(array('%', '?'), array('%%', '%s'), $query);
+            $query = str_replace(['%', '?'], ['%%', '%s'], $query);
             $query = vsprintf($query, $bindings);
             echo $query . PHP_EOL . $time;
             return;
@@ -931,7 +903,7 @@ class Controller extends BaseController
     }
 
     /**
-     * @param $uid
+     * @param     $uid
      * @param int $start
      * @param int $limit
      * @return mixed
@@ -1021,23 +993,23 @@ class Controller extends BaseController
         // 到提交的时候
         $postData = $this->make('request')->request->all();
 
-        $postData = Arr::only($postData, array('nickname', 'birthday', 'headimg', 'sex', 'description', 'province', 'city', 'county'));
+        $postData = Arr::only($postData, ['nickname', 'birthday', 'headimg', 'sex', 'description', 'province', 'city', 'county']);
 
         if (empty($postData)) {
-            $msg = array(
+            $msg = [
                 'ret' => false,
-                'info' => '非法提交'
-            );
+                'info' => '非法提交',
+            ];
             return new JsonResponse($msg);
         }
 
         // 初始化一个用户服务器 并初始化用户
         $userServer = $this->make('userServer');
         $userServer = $userServer->setUser((new Users)->forceFill($userServer->getUserByUid(Auth::id())));
-        $msg = array(
+        $msg = [
             'ret' => false,
-            'info' => ''
-        );
+            'info' => '',
+        ];
         //昵称重复
         if (isset($postData['nickname']) && ($postData['nickname'] != $this->userInfo['nickname'])) {
 
@@ -1045,10 +1017,10 @@ class Controller extends BaseController
             $len = $this->count_chinese_utf8($postData['nickname']);
             //昵称不能使用/:;\空格,换行等符号。
             if ($len < 2 || $len > 8 || !preg_match("/^[^\s\/\:;]+$/", $postData['nickname'])) {
-                $msg = array(
+                $msg = [
                     'info' => '注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)',
-                    'ret' => false
-                );
+                    'ret' => false,
+                ];
                 return new JsonResponse($msg);
             }
 
@@ -1058,23 +1030,23 @@ class Controller extends BaseController
              * @author dc
              * @var array
              */
-            $query = Keywords::where('btype', 2)->where('status', 0)->get(array('keyword'))->toArray();
+            $query = Keywords::where('btype', 2)->where('status', 0)->get(['keyword'])->toArray();
 
             if (is_array($query)) {
                 foreach ($query as $v) {
                     $v['keyword'] = addcslashes($v['keyword'], '.^$*+?()[]{}|\\');
                     if (preg_match("/{$v['keyword']}/i", $postData['nickname'])) {
-                        return new JsonResponse(array('info' => '昵称中含有非法字符，请修改后再提交!', 'ret' => false));
+                        return new JsonResponse(['info' => '昵称中含有非法字符，请修改后再提交!', 'ret' => false]);
                     }
                 }
             }
 
             // 判断昵称的唯一性
             if (!$userServer->checkNickNameUnique($postData['nickname'])) {
-                $msg = array(
+                $msg = [
                     'info' => '昵称重复！',
-                    'ret' => false
-                );
+                    'ret' => false,
+                ];
                 return new JsonResponse($msg);
             }
 
@@ -1105,15 +1077,15 @@ class Controller extends BaseController
         if (isset($postData['nickname']) && ($postData['nickname'] != $this->userInfo['nickname'])) {
             Redis::hset('hnickname_to_id', $postData['nickname'], $this->userInfo['uid']);
             // 修改昵称成功后 就记录日志
-            $modNameLog = array(
+            $modNameLog = [
                 'uid' => $this->userInfo['uid'],
                 'before' => $this->userInfo['nickname'],
                 'after' => $postData['nickname'],
                 'update_at' => time(),
                 'init_time' => date('Y-m-d H:i:s', time()),
                 'dml_time' => date('Y-m-d H:i:s', time()),
-                'dml_flag' => 1
-            );
+                'dml_flag' => 1,
+            ];
             UserModNickName::create($modNameLog);
         }
 
@@ -1122,10 +1094,10 @@ class Controller extends BaseController
         // 更新redis
         Redis::hmset('huser_info:' . $this->userInfo['uid'], $this->userInfo);
 
-        $msg = array(
+        $msg = [
             'info' => '更新成功！',
-            'ret' => true
-        );
+            'ret' => true,
+        ];
         return new JsonResponse($msg);
     }
 
@@ -1176,7 +1148,7 @@ class Controller extends BaseController
             //用户存在问题
             return false;
         }
-        $this->delBylogicflag(array('id' => $id, 'send_uid' => $fid, 'rec_uid' => $tid));
+        $this->delBylogicflag(['id' => $id, 'send_uid' => $fid, 'rec_uid' => $tid]);
         //$this->delByEntity('Video\ProjectBundle\Entity\VideoMail',array('id'=>$id,'sendUid'=>$fid,'recUid'=>$tid));
     }
 
@@ -1204,7 +1176,7 @@ class Controller extends BaseController
 //        $stmt->execute();//    $stmt->execute($parmas);
 //        $data =  $stmt->fetchAll();
         $data = Users::where($criteria)->get();
-        $data = count($data) > 0 ? $data[0] : array();
+        $data = count($data) > 0 ? $data[0] : [];
         return (empty($data) || $data['uid'] == $uid) ? true : false;
     }
 
@@ -1220,7 +1192,7 @@ class Controller extends BaseController
 //        $goodsObj = $this->_doctrine_em->getRepository('Video\ProjectBundle\Entity\VideoGoods')
 //            ->findOneBy(array('gid'=>$gid,'isShow'=>1,'unitType'=>2));
 
-        $goodsObj = Goods::where(array('gid' => $gid, 'is_show' => 1, 'unit_type' => 2))->first();//强制为商城出售的商品
+        $goodsObj = Goods::where(['gid' => $gid, 'is_show' => 1, 'unit_type' => 2])->first();//强制为商城出售的商品
 
         if (!$goodsObj) {
             return false;
@@ -1246,7 +1218,7 @@ class Controller extends BaseController
         $expireTime = $total_num * 86400;
 
         try {
-            $criteria = array('uid' => $this->_online, 'gid' => $gid);
+            $criteria = ['uid' => $this->_online, 'gid' => $gid];
             $gidExpireTime = 0;
             $packEntity = Pack::where($criteria)->first();
 
@@ -1266,9 +1238,9 @@ class Controller extends BaseController
                 } else {
                     $gidExpireTime += $expireTime;
                 }
-                Pack::where($criteria)->update(array('expires' => $gidExpireTime));
+                Pack::where($criteria)->update(['expires' => $gidExpireTime]);
             }
-            $upUser = array('points' => $userinfo['points'] - $total_price, 'rich' => $userinfo['rich'] + $total_price);
+            $upUser = ['points' => $userinfo['points'] - $total_price, 'rich' => $userinfo['rich'] + $total_price];
             $flag = Users::where('uid', Auth::id())->update($upUser);
 
             if (!$flag) {
@@ -1276,15 +1248,15 @@ class Controller extends BaseController
                 Redis::del('huser_info:' . Auth::id());
                 return false;
             }
-            MallList::create(array(
+            MallList::create([
                 'send_uid' => $this->_online,
                 'rec_uid' => 0,
                 'gid' => $gid,
                 'gnum' => $months,
                 'created' => date('Y-m-d H:i:s'),
                 'rid' => 0,
-                'points' => $total_price
-            ));
+                'points' => $total_price,
+            ]);
             DB::commit();
             $gidinfo = Redis::hgetall('user_car:' . Auth::id());
 
@@ -1328,11 +1300,11 @@ class Controller extends BaseController
     }
 
     /**
-     * @param $uid
-     * @param $num
-     * @param $table
+     * @param           $uid
+     * @param           $num
+     * @param           $table
      * @param DataModel $dataModel
-     * @param $num
+     * @param           $num
      * @Author Orino
      */
     public function setAstrictUidDay($uid, $num, $table)
@@ -1347,8 +1319,8 @@ class Controller extends BaseController
      * 获取礼物道具相关信息
      * @param int $gid |默认返回所有记录
      * @return bool|string
-     * @author D.C
-     * @update 2015-02-09
+     * @author  D.C
+     * @update  2015-02-09
      * @version 1.0
      */
     public function getGoods($gid = 0)
@@ -1438,14 +1410,14 @@ class Controller extends BaseController
                 $userObj->save();
 
                 //发送私信给用户
-                VideoMail::create(array(
+                VideoMail::create([
                     'send_uid' => 0,
                     'rec_uid' => $user['uid'],
                     'content' => '贵族保级成功提醒：您的' . $group->level_name . '贵族保级成功啦！到期日：' . date('Y-m-d H:i:s', $newTime),
                     'category' => 1,
                     'status' => 0,
                     'created' => date('Y-m-d H:i:s'),
-                ));
+                ]);
                 DB::commit();
                 // 更新完刷新redis
                 Redis::hset('huser_info:' . $user['uid'], 'vip_end', date('Y-m-d H:i:s', $newTime));
@@ -1463,7 +1435,7 @@ class Controller extends BaseController
 
     function array_column_multi(array $input, array $column_keys)
     {
-        $result = array();
+        $result = [];
         $column_keys = array_flip($column_keys);
         foreach ($input as $key => $el) {
             $result[$key] = array_intersect_key($el, $column_keys);

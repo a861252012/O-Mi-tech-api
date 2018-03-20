@@ -34,32 +34,11 @@ class PasswordController extends Controller
     }
 
 
-    /**
-     * 获取验证码输出图形
-     * @return Response
-     * @author D.C
-     */
-    public function CaptchaAction()
-    {
-        $captcha = new \Video\ProjectBundle\Service\Captcha\Captcha();
-        $captcha->width = 90;
-        $captcha->height = 28;
-        $image = $captcha->Generate();
-        $headers = [
-            'Content-Type' => 'image/png',
-            'Content-Disposition' => 'inline; filename="' . $image . '"'];
-        $this->get('session')->set('CAPTCHA_KEY', $captcha->phrase);
-        return new Response($captcha->phrase . '.png', 200, $headers);
-    }
 
     public function sendVerifyMail()
     {
         $user = Auth::user();
-        $errors=new MessageBag();
         if ($user->safemail) {
-            $errors->add('mail','你已验证过安全邮箱！');
-            return $errors;
-            return RedirectResponse::create('/member/mailverify/mailFail');
             return JsonResponse::create(['status' => 0, 'msg' => '你已验证过安全邮箱！',]);
         }
         $email = Request::get('mail');
@@ -86,28 +65,35 @@ class PasswordController extends Controller
     public function VerifySafeMail($token)
     {
         $token = Crypt::decrypt($token);
+        $errors=new MessageBag();
+
         if (time() > $token['time'] + 86400) {
-            return JsonResponse::create(['status' => 0, 'msg' => '验证链接已过期！']);
+            $errors->add('mail','验证链接已过期！');
+            return RedirectResponse::create('/member/mailverify/mailFail?'.http_build_query(['errors'=>$errors->toJson()]));
         }
 
         $user = resolve('userService')->getUserByUid($token['uid']);
         if ($user->safemail) {
-            return JsonResponse::create(['status' => 0, 'msg' => '该用户已验证过安全邮箱！']);
+            $errors->add('mail','你已验证过安全邮箱！');
+            return RedirectResponse::create('/member/mailverify/mailFail?'.http_build_query(['errors'=>$errors->toJson()]));
         }
 
         //$getMailStatus =  $this->getDoctrine()->getManager()->getRepository('Video\ProjectBundle\Entity\VideoUser')->findOneBy(array('safemail' => $email));
-        $getMailStatus = Users::where('safemail', $token['email'])->first();
+        $getMailStatus = Users::where('safemail', $token['email'])->toJson();
         if ($getMailStatus) {
-            return JsonResponse::create(['status' => 0, 'msg' => '对不起！该邮箱已绑定其他帐号！']);
+            $errors->add('mail','对不起！该邮箱已绑定其他帐号！');
+            return RedirectResponse::create('/member/mailverify/mailFail?'.http_build_query(['errors'=>$errors->toJson()]));
         }
         if (!Users::where('uid', $token['uid'])->update(['safemail' => $token['email'], 'safemail_at' => date('Y-m-d H:i:s')])) {
-            return JsonResponse::create(['status' => 0, 'msg' => '更新安全邮箱失败！']);
+            $errors->add('mail','更新安全邮箱失败！');
+            return RedirectResponse::create('/member/mailverify/mailFail?'.http_build_query(['errors'=>$errors->toJson()]));
         }
 
         $this->make('userServer')->getUserReset($token['uid']);
         //赠送砖石奖励
         //$this->addUserPoints($uid,500, array('date'=>date('Y-m-d H:i:s'),'pay_type'=>5 ,'nickname'=>$user['nickname']?:$user['username']), array('mailcontent'=>'你通过“安全邮箱验证”获得500钻石奖励！','date'=>date('Y-m-d H:i:s')), $dm);
-        return JsonResponse::create(['status' => 1, 'msg' => '更新安全邮箱成功！']);
+        $errors->add('mail','更新安全邮箱成功！');
+        return RedirectResponse::create('/member/mailverify/mailSuccess?'.http_build_query(['errors'=>$errors->toJson()]));
     }
 
 

@@ -20,6 +20,7 @@ class SiteService
 {
     const KEY_SITE_DOMAIN = 'hsite_domains:';
     const KEY_SITE_CONFIG = 'hsite_config:';
+    protected $booted;
     private $domain;
     private $config;
     private $host;
@@ -35,8 +36,14 @@ class SiteService
         return !$this->errors->any();
     }
 
+    public function booted()
+    {
+        return $this->booted ?: false;
+    }
+
     public function fromRequest(Request $request): SiteService
     {
+        $this->booted = true;
         $this->host = $request->getHost();
         $this->loadDomainInfo();
         $this->checkDomainValidity($this->domain);

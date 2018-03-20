@@ -11,6 +11,7 @@ use App\Models\Recharge;
 use App\Models\RechargeConf;
 use App\Models\RechargeWhiteList;
 use App\Models\Users;
+use App\Services\SiteService;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -166,7 +167,7 @@ class ChargeController extends Controller
 
         $tradeno = $data['order_id'];//拿出1个账单号
         //验证签名
-        $key = resolve('siteService')->config('back_pay_sign_key');
+        $key = resolve(SiteService::class)->config('back_pay_sign_key');
         if (hash_hmac('sha256', $jsonData, $key) !== $sign) {
             $signError = "订单号：" . $tradeno . "\n签名没有通过！\n";
             $loginfo .= $signError;
@@ -258,7 +259,7 @@ class ChargeController extends Controller
         //第二步，更新数据
         $loginfo .= "订单号：" . $tradeno . " 数据处理成功！\n";
         //成功才触发充值自动送礼
-        if ($chargeStatus && resolve('siteService')->config('activity_open')) {
+        if ($chargeStatus && resolve(SiteService::class)->config('activity_open')) {
             //活动的调用写到对应的方法内
             resolve('active')->doHuodong($money, $stmt['uid'], $tradeno);
         }

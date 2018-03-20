@@ -1,39 +1,25 @@
 <?php
 
 
-
 namespace App\Services\User;
 
-use App\Models\Agents;
-use App\Models\AgentsRelationship;
-use App\Models\InviteCodes;
-use App\Models\UserBuyGroup;
-use App\Models\UserDomain;
-use App\Models\UserGroup;
-use App\Models\UserGroupPermission;
-use App\Models\UserModNickName;
-use App\Models\Users;
 use App\Services\Service;
-use DB;
-use Illuminate\Support\Arr;
-use Mockery\Exception;
 
 
 //输出图片
-
 
 
 class CaptchaService extends Service
 {
 
 
-    var $image  = null;
-    var $fonts  = array('CeruleanNF.otf','droidsansmono__.ttf','Route66NF.otf','TuringCarNF.otf');
-    var $width  = 100;
+    var $image = null;
+    var $fonts = ['CeruleanNF.otf', 'droidsansmono__.ttf', 'Route66NF.otf', 'TuringCarNF.otf'];
+    var $width = 100;
     var $height = 30;
     var $length = 4;
     var $phrase = null;
-    var $string = array('A','B','C','D','E','F','H','J','K','L','M','N','P','R','S','T','U','V','W','X','Y','Z');
+    var $string = ['A', 'B', 'C', 'D', 'E', 'F', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
     var $session = null;
     var $requset = null;
 
@@ -64,12 +50,18 @@ class CaptchaService extends Service
         if (!extension_loaded("gd")) exit("Captcha Unable Load GD Library Copyright 1Room");
         $this->phrase = $this->Phrase();
 
-        $image = is_resource($this->image) ? $this->image : $this->GenerateImage($this->phrase);
-        imagepng($image);
-        imagedestroy($image);
-        return $image;
+        $this->image = is_resource($this->image) ? $this->image : $this->GenerateImage($this->phrase);
+//        imagepng($image);
+//        imagedestroy($image);
+        return $this->image;
     }
 
+    public function __destruct()
+    {
+        if (is_resource($this->image)) {
+            imagedestroy($this->image);
+        }
+    }
 
     /**
      * Use GD Library Create Image
@@ -82,8 +74,8 @@ class CaptchaService extends Service
         if (!is_resource($this->image)) {
 
             $this->image = imagecreatetruecolor($this->width, $this->height);
-            $color1 = imagecolorallocate($this->image, mt_rand(200, 255),mt_rand(200, 255), mt_rand(150, 255));
-            $color2 = imagecolorallocate($this->image, mt_rand(200, 255),mt_rand(200, 255), mt_rand(150, 255));
+            $color1 = imagecolorallocate($this->image, mt_rand(200, 255), mt_rand(200, 255), mt_rand(150, 255));
+            $color2 = imagecolorallocate($this->image, mt_rand(200, 255), mt_rand(200, 255), mt_rand(150, 255));
             $color1 = imagecolorsforindex($this->image, $color1);
             $color2 = imagecolorsforindex($this->image, $color2);
             $steps = $this->width;
@@ -92,7 +84,10 @@ class CaptchaService extends Service
             $g1 = ($color1['green'] - $color2['green']) / $steps;
             $b1 = ($color1['blue'] - $color2['blue']) / $steps;
 
-            $x1 = 0; $y1 =& $i; $x2 = $this->width; $y2 =& $i;
+            $x1 = 0;
+            $y1 =& $i;
+            $x2 = $this->width;
+            $y2 =& $i;
 
             for ($i = 0; $i <= $steps; $i++) {
                 $r2 = $color1['red'] - floor($i * $r1);
@@ -114,7 +109,7 @@ class CaptchaService extends Service
 
     /**
      * Merge Random String and Created Image and Set Session
-     * @author D.C
+     * @author  D.C
      * @version 1.1
      * @param null $phrase
      * @return resource
@@ -124,8 +119,8 @@ class CaptchaService extends Service
         $image = $this->CreateImage();
         $phrase == null && $phrase = $this->Phrase();
         $fontsize = min($this->width, $this->height * 2) / (strlen($phrase));
-        $spacing = (integer) ($this->width * 0.9 / strlen($phrase));
-        $font = __DIR__.'/Fonts/'.$this->fonts[array_rand($this->fonts)];
+        $spacing = (integer)($this->width * 0.9 / strlen($phrase));
+        $font = __DIR__ . '/Fonts/' . $this->fonts[array_rand($this->fonts)];
 
         for ($i = 0, $strlen = strlen($phrase); $i < $strlen; $i++) {
             $color = imagecolorallocate($image, mt_rand(0, 160), mt_rand(0, 160), mt_rand(0, 160));
@@ -144,7 +139,7 @@ class CaptchaService extends Service
     /**
      * verify Captcha and Str return true or false
      * how to use please see of the Member Controller Password Method
-     * @author d.c
+     * @author  d.c
      * @version 1.0
      * @param null $str
      * @return bool

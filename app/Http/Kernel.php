@@ -2,9 +2,11 @@
 
 namespace App\Http;
 
-use App\Http\Middleware\Charge;
 use App\Http\Middleware\LoginAuth;
+use App\Http\Middleware\MobileSession;
+use App\Services\Task\TaskScript\Charge;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use Illuminate\Session\Middleware\StartSession;
 
 class Kernel extends HttpKernel
 {
@@ -30,15 +32,15 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middlewareGroups = [
-        'web' => [
-            \App\Http\Middleware\EncryptCookies::class,
-            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-            \Illuminate\Session\Middleware\StartSession::class,
-            // \Illuminate\Session\Middleware\AuthenticateSession::class,
-            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            \App\Http\Middleware\VerifyCsrfToken::class,
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
-        ],
+//        'web' => [
+//            \App\Http\Middleware\EncryptCookies::class,
+//            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+//            \Illuminate\Session\Middleware\StartSession::class,
+//            // \Illuminate\Session\Middleware\AuthenticateSession::class,
+//            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+//            \App\Http\Middleware\VerifyCsrfToken::class,
+//            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+//        ],
         'pc' => [
             \App\Http\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
@@ -49,10 +51,10 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
 
-        'api' => [
-            'throttle:60,1',
-            'bindings',
-        ],
+//        'api' => [
+//            'throttle:60,1',
+//            'bindings',
+//        ],
     ];
 
     /**
@@ -71,5 +73,6 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'login_auth' => LoginAuth::class,
         'charge' => Charge::class,
+        'mobile.session' => MobileSession::class,
     ];
 }

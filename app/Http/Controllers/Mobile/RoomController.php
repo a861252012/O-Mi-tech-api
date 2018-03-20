@@ -18,6 +18,7 @@ use App\Service\Room\NoSocketChannelException;
 use App\Service\Room\RoomService;
 use App\Service\Room\SocketService;
 use DB;
+use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class RoomController extends MobileController
@@ -363,7 +364,7 @@ class RoomController extends MobileController
             if (empty($captcha)) {
                 return new JsonResponse(array('status' => 0, 'msg' => '请输入验证码!', 'times' => $times, 'cmd' => 'showCaptcha'));
             }
-            if (!$this->make('captcha')->Verify($captcha)) return new JsonResponse(array('status' => 0, 'msg' => '验证码错误!', 'times' => $times));;
+            if (!Captcha::check($captcha)) return new JsonResponse(array('status' => 0, 'msg' => '验证码错误!', 'times' => $times));;
         }
         if (strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
             $this->make('redis')->set($keys_room, $times + 1);

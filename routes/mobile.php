@@ -14,6 +14,16 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('/login/test', 'Mobile\MobileController@logintest');
 });
 //登录
-Route::post('/login', 'Mobile\MobileController@login')->name('m_login');
+Route::post('/login', 'Mobile\MobileController@login')->name('m_login')->middleware('mobile.session');
 //登录验证码
-Route::get('/login/captcha', 'Mobile\MobileController@loginCaptcha');
+Route::get('/login/captcha', 'Mobile\MobileController@loginCaptcha')->middleware('mobile.session');
+
+Route::get('captcha/test',function (\Illuminate\Http\Request $request){
+//    Session::setId($request->get('cid'));
+//    Session::start();
+//    \Illuminate\Support\Facades\Session::getHandler()->read()
+    $phrase =$request->get('captcha');
+    var_dump(session()->getId());
+    var_dump(Session::get('captcha'));
+    var_dump(\Mews\Captcha\Facades\Captcha::check($phrase));
+})->middleware('mobile.session');

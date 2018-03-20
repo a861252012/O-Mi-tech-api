@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use App\Services\SiteService;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
 class SiteServiceProvider extends ServiceProvider
@@ -25,11 +24,10 @@ class SiteServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->singleton('siteService', function () {
-            return new SiteService;
+
+        $this->app->singleton('site', function ($app) {
+            return $app->make(SiteService::class);
         });
-        $this->app->singleton('site', function () {
-            return new SiteService;
-        });
+        $this->app->singleton(SiteService::class);
     }
 }

@@ -12,7 +12,11 @@ use App\Models\ImagesText;
 use App\Models\MobileUseLogs;
 use App\Models\Pack;
 use App\Models\Users;
+use App\Services\SiteService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
+use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class MobileController extends Controller
@@ -24,54 +28,6 @@ class MobileController extends Controller
     {
         config()->set('auth.defaults.guard', 'mobile');
     }
-
-    public function __init__()
-    {
-        /**
-         * 如果用户登录了就分表用户信息到data中
-         */
-
-        $flash_url = $this->make('redis')->get('flash_url');
-        if ($flash_url) {
-            $url_array = explode(';', $flash_url);
-            $url_first = explode('/', trim($url_array[0]));
-            $count = count($url_first);
-            $this->flash_url_v = $url_first[$count - 1];
-        } else {
-            $this->flash_url_v = '';
-        }
-
-        if (Auth::check() && !$this->userInfo) {
-            // 通过用户服务去获取
-            $userServer = $this->make('userServer');
-
-            // 获取用户的信息 初始化了用户信息
-            $userInfo = $userServer->getUserByUid(Auth::id());
-            // 格式化用户信息 过滤掉用户的密码之类的敏感信息
-//            $userInfo = $this->getOutputUser($userInfo);
-            // 获取用户等级提升还需要的级别
-//            file_put_contents('log.txt', print_r($userInfo, 1), FILE_APPEND);
-            $levelInfo = $this->getLevelByRole($userInfo);
-            array_merge($userInfo, $levelInfo);
-//            $userInfo['lv_nums'] = $levelInfo['lv_nums'];
-//            $userInfo['lv_percent'] = $levelInfo['lv_percent'];
-
-            // 判断是否设置了地区的信息 设置就是初始化地区的信息
-            if (!$userInfo['province'] && !$userInfo['city']) {
-                $userInfo['DATAPCA'] = false;
-            } else {
-                $userInfo['DATAPCA'] = array(
-                    'province' => array('code' => $userInfo['province'], 'text' => $this->getArea($userInfo['province'])),
-                    'city' => array('code' => $userInfo['city'], 'text' => $this->getArea($userInfo['city'])),
-                    'area' => array('code' => $userInfo['county'], 'text' => $this->getArea($this->userInfo['county'])),
-                );
-            }
-            // 用户的图像的hsot 地址
-            $userInfo['imgHost'] = trim($this->container->config['config.REMOTE_PIC_URL'], '/') . '/';
-            $this->userInfo = $userInfo;
-        }
-    }
-
 
     /**
      * 移动端首页
@@ -87,7 +43,7 @@ class MobileController extends Controller
             'all' => [
                 'key' => 'all',
                 'num' => 4,
-            ]
+            ],
         ];
         $redis = $this->make('redis');
         foreach ($lists as $key => &$list) {
@@ -109,7 +65,7 @@ class MobileController extends Controller
      */
     public function rank()
     {
-        return $this->render('Mobile/rank', array());
+        return $this->render('Mobile/rank', []);
     }
 
     public function test()
@@ -143,7 +99,7 @@ class MobileController extends Controller
             return JsonResponse::create([
                 'status' => 0,
                 'msg' => '无效的用户',
-                'js_url' => $remote_js_url
+                'js_url' => $remote_js_url,
             ]);
         }
         return JsonResponse::create()->setContent(urldecode(json_encode([
@@ -259,18 +215,18 @@ class MobileController extends Controller
          */
         $goods = Goods::find($gid);
         if ($goods['gid'] < 120001 || $goods['gid'] > 121000) {
-            return array('status' => 2, 'msg' => '该道具限房间内使用,不能装备！');
+            return ['status' => 2, 'msg' => '该道具限房间内使用,不能装备！'];
         }
 
         /**
          * 使用Redis进行装备道具
-         * @todo目前道具道备只在Redis上实现，并未进行永久化存储。目前产品部【Antony】表示保持现状。
+         * @todo   目前道具道备只在Redis上实现，并未进行永久化存储。目前产品部【Antony】表示保持现状。
          * @update 2014.12.15 14:35 pm (Antony要求将道具改为同时只能装备一个道具！)
          */
         $redis = $this->make('redis');
         $redis->del('user_car:' . $uid);
         $redis->hset('user_car:' . $uid, $gid, $pack['expires']);
-        return array('status' => 1, 'msg' => '装备成功');
+        return ['status' => 1, 'msg' => '装备成功'];
     }
 
     /**
@@ -309,40 +265,25 @@ class MobileController extends Controller
      */
     public function loginCaptcha()
     {
-        $captcha = resolve('captcha');
-        $redis = resolve('redis');
-        $phrase = $captcha->Phrase();
-        $img = $captcha->GenerateImage($phrase);
-        ob_start();
-        imagepng($img);
-        $png = ob_get_contents();
-        ob_end_clean();
-        imagedestroy($img);
-        $cid = uniqid('m_login_captcha:', true);
-        $redis->setex($cid, 60, $phrase);
-        return JsonResponse::create(['captcha' => base64_encode($png), 'cid' => $cid]);
+        return $captcha = Captcha::create();
+//        $png = $captcha->getContent();
+//        return JsonResponse::create(['captcha' => base64_encode($png), Session::getName() => Session::getId()]);
     }
+
 
     /**
      * 移动端登录
      */
-    public function login()
+    public function login(Request $request)
     {
-        $request = request();
-        $username = $request->input('username');
-        $password = $request->input('password');
-        $captcha = $request->input('captcha');
-        $cid = $request->input('cid');
-        if (!config('app.SKIP_CAPTCHA_LOGIN')) {
-            if (empty($captcha) || empty($cid)) {
+        $username = $request->get('username');
+        $password = $request->get('password');
+        $captcha = $request->get('captcha');
+        if (app(SiteService::class)->config()) {
+            if (empty($captcha)) {
                 return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
             }
-            $redis = resolve('redis');
-            $phrase = $redis->multi()
-                ->get($cid)
-                ->del($cid)
-                ->exec()[0];
-            if (strtoupper($captcha) !== strtoupper($phrase)) {
+            if (!Captcha::check($captcha)) {
                 return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
             }
         }
@@ -356,15 +297,15 @@ class MobileController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => '用户名密码错误']);
         }
         $user = $jwt->user();
-        if ($user->banned()){
+        if ($user->banned()) {
             return JsonResponse::create(['status' => 0, 'msg' => '您的账号已经被禁止登录，请联系客服！']);
         }
         $statis_date = date('Y-m-d');
         MobileUseLogs::create([
-            'imei' => $request->input('imei'),
+            'imei' => $request->get('imei'),
             'uid' => $user->getAuthIdentifier(),
             'ip' => $request->getClientIp(),
-            'statis_date' => $statis_date
+            'statis_date' => $statis_date,
         ]);
         return JsonResponse::create(['status' => 1, 'jwt' => (string)$jwt->getToken()]);
     }
@@ -380,7 +321,7 @@ class MobileController extends Controller
      */
     public function register()
     {
-        return $this->render('Mobile/register', array());
+        return $this->render('Mobile/register', []);
     }
 
     /**
@@ -427,12 +368,12 @@ class MobileController extends Controller
          }*/
         $activity = ImagesText::where('dml_flag', '<>', 3)->where('pid', $id)->selectRaw($id . ' id,temp_name,init_time')->first();
         //如果为空，返回默认json数据
-        $is_array = array(
+        $is_array = [
             'id' => $id,
             'init_time' => '',
             'title' => '',
-            'url' => array()
-        );
+            'url' => [],
+        ];
         if (!$activity) return JsonResponse::create($is_array);
         $parent = ImagesText::where('dml_flag', '<>', 3)->select('title')->find($id);
         $activity->title = $parent->title;
@@ -464,7 +405,7 @@ class MobileController extends Controller
 //        $page = $this->request()->input('page', 1);
 //        $userServer = $this->make('userServer');
         $arr = include(BASEDIR . '/app/cache/cli-files/anchor-search-data.php');
-        $hasharr = array();
+        $hasharr = [];
         foreach ($arr as $value) {
             $hasharr[$value['uid']] = $value;
         }
@@ -497,12 +438,12 @@ class MobileController extends Controller
         $ip = $request->input('ip') ?: '';
         if (!$imei) return JsonResponse::create([
             'status' => 0,
-            'msg' => '请求参数错误'
+            'msg' => '请求参数错误',
         ]);
         if ($uid && !Users::find($uid)) {
             return JsonResponse::create([
                 'status' => 0,
-                'msg' => '请求参数错误'
+                'msg' => '请求参数错误',
             ]);
         }
         $statis_date = date('Y-m-d');
@@ -510,7 +451,7 @@ class MobileController extends Controller
             'imei' => $imei,
             'uid' => $uid,
             'ip' => $ip,
-            'statis_date' => $statis_date
+            'statis_date' => $statis_date,
         ]);
         return JsonResponse::create(['status' => 1, 'data' => '成功']);
     }
@@ -529,7 +470,7 @@ class MobileController extends Controller
         if (!in_array($ret, [0, 1, 2]) || !$pid) {
             return JsonResponse::create([
                 'status' => 0,
-                'msg' => '请求参数错误'
+                'msg' => '请求参数错误',
             ]);
         };
         //获取当前用户id
@@ -542,16 +483,16 @@ class MobileController extends Controller
         if (!is_array($userInfo)) {
             return JsonResponse::create([
                 'status' => 0,
-                'msg' => '请求参数错误'
+                'msg' => '请求参数错误',
             ]);
         };
 
         //查询关注操作
         if ($ret == 0) {
             if ($userService->checkFollow($uid, $pid)) {
-                return new JsonResponse(array('status' => 1, 'msg' => '已关注'));
+                return new JsonResponse(['status' => 1, 'msg' => '已关注']);
             } else {
-                return new JsonResponse(array('status' => 0, 'msg' => '未关注'));
+                return new JsonResponse(['status' => 0, 'msg' => '未关注']);
             }
         }
 
@@ -559,22 +500,22 @@ class MobileController extends Controller
         if ($ret == 1) {
             $follows = intval($this->getUserAttensCount($uid));
             if ($follows >= 1000) {
-                return new JsonResponse(array('status' => 3, 'msg' => '您已经关注了1000人了，已达上限，请清理一下后再关注其他人吧'));
+                return new JsonResponse(['status' => 3, 'msg' => '您已经关注了1000人了，已达上限，请清理一下后再关注其他人吧']);
             }
 
             if ($userService->setFollow($uid, $pid)) {
-                return new JsonResponse(array('status' => 1, 'msg' => '关注成功'));
+                return new JsonResponse(['status' => 1, 'msg' => '关注成功']);
             } else {
-                return new JsonResponse(array('status' => 0, 'msg' => '请勿重复关注'));
+                return new JsonResponse(['status' => 0, 'msg' => '请勿重复关注']);
             }
         }
 
         //取消关注操作
         if ($ret == 2) {
             if ($userService->delFollow($uid, $pid)) {
-                return new JsonResponse(array('status' => 1, 'msg' => '取消关注成功'));
+                return new JsonResponse(['status' => 1, 'msg' => '取消关注成功']);
             } else {
-                return new JsonResponse(array('status' => 0, 'msg' => '取消关注失败'));
+                return new JsonResponse(['status' => 0, 'msg' => '取消关注失败']);
             }
         }
 
@@ -652,7 +593,7 @@ class MobileController extends Controller
             $pageEnd = $pageStart * $pageLimit;
             $pageStart = ($pageStart - 1) * $pageLimit;
             $i = 0;
-            $data = array();
+            $data = [];
             foreach ($arr as $key => $item) {
                 if ((mb_strpos($item['username'], $uname) !== false) || (mb_strpos($item['uid'], $uname) !== false)) {
                     if ($i >= $pageStart && $i < $pageEnd) {
@@ -662,7 +603,7 @@ class MobileController extends Controller
                 }
             }
         }
-        return new JsonResponse(array('data' => $data, 'status' => 1, 'total' => $i));
+        return new JsonResponse(['data' => $data, 'status' => 1, 'total' => $i]);
     }
 
     public function saveCrash()

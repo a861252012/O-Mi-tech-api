@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\UserDomain;
 use App\Models\UserLoginLog;
 use App\Models\Users;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
-use Illuminate\Foundation\Auth\ThrottlesLogins;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
+use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -387,7 +387,7 @@ class LoginController extends Controller
         //if (!isset($_REQUEST['_m']) && $times >= 5 && !$skipCaptcha && !$this->make('captcha')->Verify($this->make('request')->get('sCode'))) {
         $times = 0;
         //todo 验证码是否更换
-        if (!isset($_REQUEST['_m']) && !$skipCaptcha && !$this->make('captcha')->Verify($this->make('request')->get('sCode'))) {
+        if (!$skipCaptcha && !Captcha::check(request('sCode'))) {
             return [
                 "status" => 0,
                 "msg" => "验证码错误，请重新输入！",
@@ -428,36 +428,18 @@ class LoginController extends Controller
     /**
      * 会员注销操作
      *
+     * @param Request $request
      * @return Response
      */
-    public function logout()
+    public function logout(Request $request)
     {
-        if (Auth::guest()) {
-            return new RedirectResponse('/');
+        if (Auth::check()) {
+            Redis::hdel('huser_sid', Auth::id(), $request->session()->getId());
+            Auth::logout();
         }
-        // 从cookie里面获取A域名地址irwin
-        $_reqCookie = $this->request()->cookies->all();
-
-        // 删除B域名上的session 踢出用户
-        $sid = $this->make('redis')->hget('huser_sid', Auth::id());
-        $this->make('redis')->del('PHPREDIS_SESSION:' . $sid);
-
-        // 检查cookie
-        $this->_clearCookie();
-        $this->make('request')->getSession()->invalidate();//销毁session,生成新的sesssID
-
-        if ($_reqCookie && isset($_reqCookie[self::CLIENT_ENCRY_FIELD]) && $_reqCookie[self::CLIENT_ENCRY_FIELD] != null) {
-            // A域名取数组第三个值
-            $cookiestr = explode('|', $_reqCookie[self::CLIENT_ENCRY_FIELD]);
-
-            if ((count($cookiestr) != 3) || !isset($cookiestr[2])) {
-                return Auth::id();
-            }
-            return new RedirectResponse('/');
-        }
-
+        $request->session()->invalidate();
         // 清除redis
-        return new RedirectResponse('/');
+        return JsonResponse::create(['status' => 1, 'msg' => '您已退出登录']);
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Conf;
 use App\Models\Users;
+use App\Services\SiteService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -33,7 +34,8 @@ class SafeMailVerify extends Mailable implements ShouldQueue
         $this->queue = 'mail:safeMailVerify';
 
         $this->to($email);
-        $siteConfig = resolve('siteService')->config();
+        $siteConfig = app(SiteService::class)->config();
+        dd($siteConfig);
         $siteName = $siteConfig->get('name', '');
         $subject = $siteName . '安全邮箱验证';
         $mail_from = $siteConfig->get('mail_from', config('mail.from.address'));

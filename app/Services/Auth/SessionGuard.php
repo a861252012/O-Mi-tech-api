@@ -6,7 +6,6 @@ use Illuminate\Auth\GuardHelpers;
 use Illuminate\Auth\SessionGuard as Guard;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Session;
 
 /**
  * Created by PhpStorm.

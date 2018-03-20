@@ -10,7 +10,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 });
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 
-Route::get('/captcha', ['name' => 'captcha', 'uses' => 'Controller@captcha']);
+Route::get('/captcha', 'Controller@captcha');
 
 /** 用户中心路由组 */
 Route::group(['prefix' => 'member'], function () {
@@ -402,7 +402,7 @@ Route::get('/passport', ['name' => 'passport', 'uses' => 'LoginController@passpo
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 Route::get('/synlogin', ['name' => 'synlogin', 'uses' => 'LoginController@synLogin']);
 Route::get('/reload', ['name' => 'reload', 'uses' => 'LoginController@reloadLogin']);
-Route::match(['POST', 'GET'], '/logout', ['name' => 'logout', 'uses' => 'LoginController@logout']);
+Route::any('/logout', 'LoginController@logout');
 //Route::match(['POST', 'GET'], '/peachReg', ['name' => 'peachReg', 'uses' => 'LoginController@mitaoReg']);
 Route::match(['POST', 'GET'], '/api/register', ['name' => 'api_register', 'uses' => 'ApiController@register']);
 Route::match(['POST', 'GET'], '/api/register_agents', ['name' => 'api_agents', 'uses' => 'ApiController@registerAgents']);

@@ -35,16 +35,16 @@ class ChargeService extends Service
         parent::__construct();
 
         //渠道转化为数字入库
-        $this->serviceCode = resolve('site')->config('pay_service_code');
-        $this->version = resolve('site')->config('pay_version');
-        $this->serviceType = resolve('site')->config('pay_service_type');
-        $this->signType = resolve('site')->config('pay_signtype');
-        $this->sysPlatCode = resolve('site')->config('pay_sysplatcode');
-        $this->charset = resolve('site')->config('pay_charset');
-        $this->priviteKey = resolve('site')->config('pay_privatekey');
-        $this->remoteUrl = resolve('site')->config('pay_call_url');
-        $this->noticeUrl = resolve('site')->config('pay_notice_url');
-        $this->returnUrl = resolve('site')->config('pay_reback_url');
+        $this->serviceCode = resolve(SiteService::class)->config('pay_service_code');
+        $this->version = resolve(SiteService::class)->config('pay_version');
+        $this->serviceType = resolve(SiteService::class)->config('pay_service_type');
+        $this->signType = resolve(SiteService::class)->config('pay_signtype');
+        $this->sysPlatCode = resolve(SiteService::class)->config('pay_sysplatcode');
+        $this->charset = resolve(SiteService::class)->config('pay_charset');
+        $this->priviteKey = resolve(SiteService::class)->config('pay_privatekey');
+        $this->remoteUrl = resolve(SiteService::class)->config('pay_call_url');
+        $this->noticeUrl = resolve(SiteService::class)->config('pay_notice_url');
+        $this->returnUrl = resolve(SiteService::class)->config('pay_reback_url');
         $this->randId();
         $this->dataNo = $this->getDataNo();
     }
