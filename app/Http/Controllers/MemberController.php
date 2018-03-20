@@ -2150,12 +2150,13 @@ class MemberController extends Controller
     public function buyVip()
     {
         $msg = array(
-            'code' => 0,
+            'status' => 1,
             'msg' => ''
         );
-        if (!$this->userInfo) {
+
+        if (!Auth::user()) {
             $msg = array(
-                'code' => 101,
+                'status' => 101,
                 'msg' => '亲，请先登录哦！'
             );
             return (new JsonResponse($msg))->setCallback('cb');
@@ -2168,30 +2169,30 @@ class MemberController extends Controller
         // 如果在房间内 就会有roomid即为主播uid，默认为0不在房间开通， 用于佣金方面的问题
         $roomId = $this->request()->get('roomId') ? $this->request()->get('roomId') : 0;
 
-        $user = DB::table('video_user')->where('uid', $this->userInfo['uid'])->first();
+        $user = DB::table('video_user')->where('uid', Auth::user()->uid)->first();
         // 用户组服务
         $userGroup = $this->make('userGroupServer')->getGroupById($gid);
         if (!$userGroup || $userGroup['dml_flag'] == 3) {
-            $msg['code'] = 1002;
+            $msg['status'] = 1002;
             $msg['msg'] = '该贵族状态异常,请联系客服！';
             return (new JsonResponse($msg))->setCallback('cb');
         }
 
         // 钱不够
         if ($userGroup['system']['open_money'] > $user->points) {
-            $msg['code'] = 102;
+            $msg['status'] = 102;
             $msg['msg'] = '亲,你的钻石不够啦！赶快充值吧！';
             return (new JsonResponse($msg))->setCallback('cb');
         }
 
         // 已经开通了高等级的 不能再开通低等级的
         if ($userGroup['level_id'] == $user->vip) {
-            $msg['code'] = 1004;
+            $msg['status'] = 1004;
             $msg['msg'] = '你已开通过此贵族，你可以保级或者开通高级贵族！';
             return (new JsonResponse($msg))->setCallback('cb');
         }
         if ($userGroup['level_id'] < $user->vip) {
-            $msg['code'] = 1005;
+            $msg['status'] = 1005;
             $msg['msg'] = '请现有等级过期后再开通，或开通高等级的贵族！';
             return (new JsonResponse($msg))->setCallback('cb');
         }
@@ -2238,7 +2239,7 @@ class MemberController extends Controller
                 // 赠送后 发送给用户通知消息
                 $message = array(
                     'mail_type' => 3,
-                    'rec_uid' => $this->userInfo['uid'],
+                    'rec_uid' => $user->uid,
                     'content' => '您首次开通 ' . $userGroup['level_name'] . ' 贵族，获得了赠送礼包的' . $userGroup['system']['gift_money'] . '钻石'
                 );
                 $this->make('messageServer')->sendSystemToUsersMessage($message);
@@ -2278,7 +2279,7 @@ class MemberController extends Controller
             // 开通成功后 发送给用户通知消息
             $message = array(
                 'mail_type' => 3,
-                'rec_uid' => $this->userInfo['uid'],
+                'rec_uid' => $user->uid,
                 'content' => '贵族开通成功提醒：您已成功开通 ' . $userGroup['level_name'] . ' 贵族，到期日：' . $exp
             );
             $this->make('messageServer')->sendSystemToUsersMessage($message);
@@ -2317,11 +2318,11 @@ class MemberController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             //记录下日志
-            $logPath = BASEDIR . '/app/logs/test_' . date('Y-m-d') . '.log';
+            $logPath =  base_path() . '/storage/logs/test_' . date('Y-m-d') . '.log';
             $loginfo = date('Y-m-d H:i:s') . ' uid' . Auth::id() . "\n 购买贵族 事务结果: \n" . $e->getMessage() . "\n";
             $this->logResult($loginfo, $logPath);
 
-            $msg['code'] = 1003;
+            $msg['status'] = 1003;
             $msg['msg'] = '可能由于网络原因，开通失败！';
             return (new JsonResponse($msg))->setCallback('cb');
         }
@@ -2331,7 +2332,7 @@ class MemberController extends Controller
             'roomid' => $roomId,
             'vip' => $userGroup['level_id'],
             'cashback' => $casheback,
-            'name' => $this->userInfo['nickname']
+            'name' => Auth::id()
         );
 
         return (new JsonResponse($msg))->setCallback('cb');
