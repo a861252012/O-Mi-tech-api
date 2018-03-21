@@ -4,7 +4,7 @@ namespace App\Http;
 
 use App\Http\Middleware\LoginAuth;
 use App\Http\Middleware\MobileSession;
-use App\Services\Task\TaskScript\Charge;
+use App\Http\Middleware\Charge;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Session\Middleware\StartSession;
 

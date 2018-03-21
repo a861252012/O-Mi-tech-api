@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Support\Facades\Auth;
 
 class Charge
 {
@@ -15,10 +16,10 @@ class Charge
      */
     public function handle($request, Closure $next)
     {
-        if(!\Auth::check())  return $next($request);
+        if(Auth::guest())  return $next($request);
 
-        $user = \Auth::getUser();
-        $origin = $user['origin'];
+        $user = Auth::getUser();
+        $origin = $user['origin']??0;
         if ($origin >= 50) {
             $rs = app('roomService');
             header('Location:' . $rs->getPlatUrl($origin)['pay']);

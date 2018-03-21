@@ -232,4 +232,5 @@ return [
         'Captcha' => Mews\Captcha\Facades\Captcha::class,
 
     ],
+    'SKIP_CAPTCHA_LOGIN'=>env('SKIP_CAPTCHA_LOGIN',false),
 ];

@@ -37,11 +37,12 @@ class AnchorList extends Command
      *
      * @return mixed
      */
-    public function handle(SiteService $siteService)
+    public function handle()
     {
         //
         define('APP_DIR', public_path());
        // $_redisInstance = resolve('redis')->connections();
+       // dd(Redis::connection());
         $flashVer = Redis::get('flash_version');
         echo $flashVer;
         die;
