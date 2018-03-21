@@ -233,4 +233,5 @@ return [
         'Site'=>\App\Facades\Site::class,
         'UserSer'=>\App\Facades\UserSer::class
     ],
+    'SKIP_CAPTCHA_LOGIN'=>env('SKIP_CAPTCHA_LOGIN',false),
 ];

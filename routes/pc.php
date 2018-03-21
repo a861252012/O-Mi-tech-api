@@ -374,25 +374,23 @@ Route::get('/m/login', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@
 Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp', 'uses' => 'RoomController@get']);
 
 // 充值类 TODO 登录验证
-
-
 // 验证是否登录
 Route::group(['prefix' => 'charge','middleware'=>['charge','login_auth']], function () {
-    Route::match(['POST', 'GET'], '/pay', ['name' => 'charge', 'uses' => 'ChargeController@pay']);
-    Route::match(['POST', 'GET'], '/order', ['name' => 'charge', 'uses' => 'ChargeController@order']);
-    Route::match(['POST', 'GET'], '/order2', ['name' => 'charge', 'uses' => 'ChargeController@order2']);
-    Route::match(['POST', 'GET'], '/pay2', ['name' => 'charge', 'uses' => 'ChargeController@pay2']);
+    Route::match(['POST', 'GET'], 'pay', ['name' => 'charge_pay', 'uses' => 'ChargeController@pay']);
+    Route::match(['POST', 'GET'], '/order', ['name' => 'charge_order', 'uses' => 'ChargeController@order']);
+    Route::match(['POST', 'GET'], '/order2', ['name' => 'charge_order2', 'uses' => 'ChargeController@order2']);
+    Route::match(['POST', 'GET'], '/pay2', ['name' => 'charge_pay2', 'uses' => 'ChargeController@pay2']);
     Route::match(['POST', 'GET'], '/translate', ['name' => 'translate', 'uses' => 'ChargeController@translate']);
 
 });
 //通知
 Route::group(['prefix' => 'charge','middleware'=>['charge']], function () {
-    Route::match(['POST', 'GET'], 'notice2', ['name' => 'charge', 'uses' => 'ChargeController@notice2']);
+    Route::match(['POST', 'GET'], 'notice2', ['name' => 'notice2', 'uses' => 'ChargeController@notice2']);
     Route::match(['POST', 'GET'], 'notice', ['name' => 'charge_notice', 'uses' => 'ChargeController@notice'])->name('charge_notice');
-    Route::match(['POST', 'GET'], 'checkKeepVip', ['name' => 'charge', 'uses' => 'ChargeController@checkKeepVip']);
-    Route::match(['POST', 'GET'], 'callFailOrder', ['name' => 'charge', 'uses' => 'ChargeController@callFailOrder']);
+    Route::match(['POST', 'GET'], 'checkKeepVip', ['name' => 'checkKeepVip', 'uses' => 'ChargeController@checkKeepVip']);
+    Route::match(['POST', 'GET'], 'callFailOrder', ['name' => 'callFailOrder', 'uses' => 'ChargeController@callFailOrder']);
 //    Route::post( 'moniCharge', ['name' => 'charge', 'uses' => 'ChargeController@moniCharge']);
-    Route::match(['POST', 'GET'], 'moniHandler', ['name' => 'charge', 'uses' => 'ChargeController@moniHandler']);
+    Route::match(['POST', 'GET'], 'moniHandler', ['name' => 'moniHandler', 'uses' => 'ChargeController@moniHandler']);
     Route::post('del', ['name' => 'charge', 'uses' => 'ChargeController@del']);
 });
 
