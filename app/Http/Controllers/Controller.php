@@ -46,7 +46,6 @@ class Controller extends BaseController
     //const DOMAIN_A = 'domain_a';
     const SEVER_SESS_ID = 'webonline';//在线用户id
     const  TOKEN_CONST = 'auth_key';
-    const WEB_UID = 'webuid';
     const  WEB_SECRET_KEY = 'c5ff645187eb7245d43178f20607920e456';
     protected $_online; // 在线用户的uid
     protected $userInfo; // 在线用户的信息
@@ -62,48 +61,6 @@ class Controller extends BaseController
     {
         config()->set('auth.defaults.guard', 'pc');
         $this->container = app();
-    }
-
-    /**
-     * b域名用户登录后，进行的redis的写入，和a域名最大的区别是写入的redis的key是不一样的
-     *
-     * a : huser_sid_a
-     * b ：huser_sid
-     *
-     * 写入redis
-     **/
-    public function writeRedis($userInfo, $huser_sid = "")
-    {
-        try {
-            $userInfo = json_decode(Auth::guard()->user());
-            //判断当前用户session是否是最新登陆
-            //设置新session
-            $_SESSION['_sf2_attributes'][self::SEVER_SESS_ID] = $userInfo['uid'];           //TODO 只根据session的webonline有无uid判断是否登录成功
-            setcookie(self::WEB_UID, $userInfo['uid'], 0, '/');//用于首页判断
-            $this->_sess_id = session_id();
-
-            if (empty($huser_sid)) { //说明以前没登陆过，没必要检查重复登录
-                $this->make('redis')->hset('huser_sid', $userInfo['uid'], $this->_sess_id);
-            } elseif ($huser_sid != $this->_sess_id) {//有可能重复登录了
-                //更新用户对应的sessid
-                $this->make('redis')->hset('huser_sid', $userInfo['uid'], $this->_sess_id);
-                //删除旧session，踢出用户在上一个浏览器的登录状态
-                $this->make('redis')->del('PHPREDIS_SESSION:' . $huser_sid);
-            }
-            if ($this->_isGetCache == false) {
-                $userArr = [];
-                $userArr = explode("@", $userInfo['username']);
-                $this->make('redis')->hset('husername_to_id', (count($userArr) == 2) ? $userArr[0] . "@" . strtolower($userArr[1]) : $userInfo['username'], $userInfo['uid']);
-                $this->make('redis')->hset('hnickname_to_id', $userInfo['nickname'], $userInfo['uid']);
-                $this->make('redis')->hmset('huser_info:' . $userInfo['uid'], $userInfo);
-            }
-            $this->_points = $userInfo['points'];
-        } catch (\Exception $e) {
-            unset($_SESSION['_sf2_attributes'][self::SEVER_SESS_ID]);
-            setcookie(self::WEB_UID, null, time() - 31536000, '/', $GLOBALS['CUR_DOMAIN']);
-            $logPath = BASEDIR . '/app/logs/business_' . date('Y-m-d') . '.log';
-            $this->logResult("用户登录写redis异常：" . $e->getMessage(), $logPath);
-        }
     }
 
     /**

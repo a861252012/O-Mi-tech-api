@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Facades\Site;
 use App\Models\Complaints;
-use App\Models\Pack;
 use App\Models\RoomDuration;
 use App\Models\RoomStatus;
 use App\Models\UserBuyOneToMore;
 use App\Models\Users;
-use App\Services\Message\MessageService;
-use App\Services\User\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
@@ -21,79 +19,7 @@ class IndexController extends Controller
 
     public function indexAction()
     {
-        //如果登陆了显示登陆数据
-//        $userInfo = array();
-//        if ($this->checkLogin()) {
-//            $session = $this->get('Request')->getSession();
-//            $uid = $session->get(self::SEVER_SESS_ID);
-//            $userInfo = $this->getRedis()->hgetall('huser_info:' . $uid);
-//        }
-//        $baseUrl = $this->get('Request')->getRequestUri();
-//        $baseUrl = explode('/', substr($baseUrl, 1));
-//        $rtnArr = array(
-//            'baseUrl' => $baseUrl[0],
-//            'userInfo' => $this->getOutputUser($userInfo),
-//            'remoteUrl' => $GLOBALS['REMOTE_JS_URL']
-//        );
-        // echo '这是新首页';
-
-        //等待halin优化
-        $uid = session(self::SEVER_SESS_ID);
-        $userinfo = $uid ? Users::find($uid)->toArray() : [];
-        $ads = Redis::hget('img_cache', 1);
-        $ads = json_decode($ads, true);
-        $slider = [];
-        if ($ads) {
-            foreach ($ads as $ad) {
-                if (filter_var($ad['url'], FILTER_VALIDATE_INT)) {
-                    $ad['url'] = 'http://' . rtrim(str_replace('www', 'v', $this->request()->getHost()), '/') . '/' . $ad['url'];
-                } else if (strstr($ad['url'], 'http://') || strstr($ad['url'], 'www.')) {
-                    $ad['url'] = 'http://' . ltrim($ad['url'], 'http://');
-                } else {
-                    $ad['url'] = '/' . ltrim($ad['url'], '/');
-                }
-                $slider[] = $ad;
-            }
-        }
-        $this->assign('ad_1', $slider);
-
-        $ad_2 = Redis::hget('img_cache', 2);
-        $ad_2 = json_decode($ad_2, true);
-        $this->assign('ad_2', $ad_2);
-        //$userinfo['headimg'];
-        //视频路径
-        $video_info = Redis::hget('img_cache', '5');
-        if ($video_info) {
-            if (json_decode($video_info)) {
-                $video_info = json_decode($video_info, true);
-            } else {
-                $downloadpcurl = null;
-                $res = [
-                    'name' => '',
-                    'temp_name' => '',
-                    'url' => '',
-
-                ];
-                $video_info = json_encode($res);
-            }
-            //从一到十随机取数，
-            $nums_video = rand(0, count($video_info));
-            if (isset($video_info[$nums_video])) {
-                $video_url = "http://" . $_SERVER['HTTP_HOST'] . '/public/file/' . $video_info[$nums_video]['temp_name'];
-                $jump_url = $video_info[$nums_video]['url'];
-            } else {
-                $video_url = "http://" . $_SERVER['HTTP_HOST'] . '/public/file/' . $video_info[0]['temp_name'];
-                $jump_url = $video_info[0]['url'];
-            }
-
-            //返回视频地址和视频超链接
-            $this->assign('video_url', $video_url);
-            $this->assign('jump_url', $jump_url);
-
-        }
-
-        return $this->render('Index/index', $userinfo);
-
+        return '移除';
     }
 
     /**
@@ -356,7 +282,6 @@ class IndexController extends Controller
     {
         $return = [];
         $uid = Auth::id();
-        $userinfo = Auth::user();
         $ads = Redis::hget('img_cache', 1);
         $ads = json_decode($ads, true);
         $slider = [];
@@ -417,162 +342,86 @@ class IndexController extends Controller
             $downloadUrl = json_encode($res);
         }
 
-        if (!Auth::guard('pc')->check()) {
-            return JsonResponse::create(array_merge($return, [
-                'ret' => false,
-                'info' => '没有登录！',
-                'downloadAppurl' => $downloadUrl,
-                'downloadUrl' => $downloadpcurl,
-                'qrcode_img' => $qrcode,
-            ]));
+        $flashVersion=Site::config('flash_version');
+        // 获取我的关注的数据主播的数据
+        $myfav = [];
+        if ($uid) {
+            //主播列表
+            $arr = include Storage::path('cache/anchor-search-data.php');
+            $hasharr = [];
+            foreach ($arr as $value) {
+                $hasharr[$value['uid']] = $value;
+            }
+            unset($arr);
+            $myfavArr = $this->getUserAttensBycuruid($uid);
+            if (!!$myfavArr) {
+                //过滤出主播
+                foreach ($myfavArr as $item) {
+                    if (isset($hasharr[$item])) {
+                        $myfav[] = $hasharr[$item];
+                    }
+                }
+            }
         }
-        //TODO 优化
-        //获取用户关注的信息
-        if (!$userinfo) {
-            return JsonResponse::create([
-                'ret' => false,
-                'info' => '无效的用户',
-            ]);
-        }
-        $uinfo = [
-            'uid' => $userinfo['uid'],
-            'nickname' => $userinfo['nickname'],
-            'headimg' => $this->getHeadimg($userinfo['headimg']),
-            'points' => $userinfo['points'],
-            'roled' => $userinfo['roled'],
-            'rid' => $userinfo['rid'],
-            'vip' => $userinfo['vip'],
-            'vip_end' => $userinfo['vip_end'],
-            'lv_rich' => $userinfo['lv_rich'],
-            'lv_exp' => $userinfo['lv_exp'],
-            'safemail' => $userinfo['safemail'] ?? '',
-            'mails' => resolve(MessageService::class)->getMessageNotReadCount($userinfo['uid'], $userinfo['lv_rich']),// 通过服务取到数量
-            'icon_id' => intval($userinfo['icon_id']),
-            'new_user' => $userinfo['created'] > config('config.USER_TIME_DIVISION') ? 1 : 0,
-        ];
-
-        /**
-         * @author dc 修改，判断用户是否有隐身权限
-         */
-        if (resolve(UserService::class)->getUserHiddenPermission($userinfo)) {
-            $uinfo['hidden'] = $userinfo['hidden'];
-        }
-
-
-        if (isset($_COOKIE[self::WEB_UID]) && $uid != $_COOKIE[self::WEB_UID]) {
-            $this->setCookieByDomain(self::WEB_UID, $uid);
-        } elseif (!isset($_COOKIE[self::WEB_UID])) {
-            $this->setCookieByDomain(self::WEB_UID, $uid);
-        }
-
-        // 是贵族才验证 下掉贵族状态
-        if ($uinfo['vip'] && ($uinfo['vip_end'] < date('Y-m-d H:i:s'))) {
-            $vip_user = Users::find($uinfo['uid']);
-            $vip_user->vip = 0;
-            $vip_user->vip_end = '0000-00-00 00:00:00';
-            $vip_user->save();
-
-            // 删除坐骑
-            Pack::where('uid', $uid)->where('gid', '<=', 120107)->where('gid', '>=', 120101)->delete();
-            Redis::hSet('huser_info:' . $uid, 'vip', 0);
-            Redis::hSet('huser_info:' . $uid, 'vip_end', '');
-            Redis::del('user_car:' . $uid);
-            $uinfo['vip'] = 0;
-            $uinfo['vip_end'] = '';
-        }
-
-        //主播列表
-        $arr = include Storage::path('cache/anchor-search-data.php');
-        $hasharr = [];
-        foreach ($arr as $value) {
-            $hasharr[$value['uid']] = $value;
-        }
-        unset($arr);
-
-        // 获得房间地址
-        $flashVersion = Redis::get('flash_version');
-        !$flashVersion && $flashVersion = 'v201504092044';
-        $flashVer = Redis::get('home_js_data_' . $flashVersion);
-        if (!$flashVer) {
-            return JsonResponse::create([
-                'ret' => false,
-                'info' => 'flashverison',
-            ]);
-        };
-        $flashVer = str_replace(['cb(', ');'], ['', ''], $flashVer);
-        $flashVer = json_decode($flashVer, true);
-        $room_url = $flashVer['room_url'];//考虑做个redis的配置
-        unset($flashVer);
 
         // 获取我的预约的房间
         $myres = [];
-        $myReservation = RoomDuration::where('reuid', $uid)
-            ->where('starttime', '>', date('Y-m-d H:i:s', time() - 3600))
-            ->orderBy('starttime', 'desc')
-            ->get();
+        if ($uid) {
+            $myReservation = RoomDuration::where('reuid', $uid)
+                ->where('starttime', '>', date('Y-m-d H:i:s', time() - 3600))
+                ->orderBy('starttime', 'desc')
+                ->get();
 
+            if (!empty($myReservation)) {
+                // 从redis 获取一对一预约数据
+                $ordRooms = Redis::get('home_ord_' . $flashVersion);
+                $ordRooms = str_replace(['cb(', ');'], ['', ''], $ordRooms);
+                $ordRooms = json_decode($ordRooms, true);
+                $rooms = $ordRooms['rooms'];//考虑做个redis的配置
 
-        if (!empty($myReservation)) {
-            // 从redis 获取一对一预约数据
-            $ordRooms = Redis::get('home_ord_' . $flashVersion);
-            $ordRooms = str_replace(['cb(', ');'], ['', ''], $ordRooms);
-            $ordRooms = json_decode($ordRooms, true);
-            $rooms = $ordRooms['rooms'];//考虑做个redis的配置
-
-            foreach ($myReservation as $item) {
-                foreach ($rooms as $room) {
-                    if (($item->starttime) > date('Y-m-d H:i:s', time() - ($item->duration))) {
-                        if ($item->uid == $room['uid'] && $item->id == $room['id']) {
-                            $room['listType'] = 'myres';
-                            $myres[] = $room;
-                        }
-                    }
-                }
-            }
-        }
-
-
-        $myticket = [];
-        $oneToMore = UserBuyOneToMore::where('uid', $uid)->orderBy('starttime', 'desc')->get();//@TODO 时间过滤
-        if (!empty($oneToMore)) {
-            // 从redis 获取一对一预约数据
-            $oneManyRooms = Redis::get('home_one_many_' . $flashVersion);
-            $oneManyRooms = str_replace(['cb(', ');'], ['', ''], $oneManyRooms);
-            $oneManyRooms = json_decode($oneManyRooms, true);
-            $rooms = $oneManyRooms['rooms'];//考虑做个redis的配置
-            if ($rooms) {
-                foreach ($oneToMore as $item) {
+                foreach ($myReservation as $item) {
                     foreach ($rooms as $room) {
-                        if ($item->rid == $room['uid'] && $item->onetomore == $room['id']) {
-                            $room['listType'] = 'myticket';
-                            //$room['tid'] = 1;
-                            //$room['live_time'] = $room['start_time'];
-                            $myticket[] = $room;
+                        if (($item->starttime) > date('Y-m-d H:i:s', time() - ($item->duration))) {
+                            if ($item->uid == $room['uid'] && $item->id == $room['id']) {
+                                $room['listType'] = 'myres';
+                                $myres[] = $room;
+                            }
                         }
                     }
                 }
             }
         }
 
-        // 获取我的关注的数据主播的数据
-        $myfavArr = $this->getUserAttensBycuruid($uid);
-        $myfav = [];
-        if (!!$myfavArr) {
-            //过滤出主播
-            foreach ($myfavArr as $item) {
-                if (isset($hasharr[$item])) {
-                    $myfav[] = $hasharr[$item];
+        // 从redis 获取一对一预约数据
+        $myticket = [];
+        if ($uid) {
+            $oneToMore = UserBuyOneToMore::where('uid', $uid)->orderBy('starttime', 'desc')->get();//@TODO 时间过滤
+            if (!empty($oneToMore)) {
+                $oneManyRooms = Redis::get('home_one_many_' . $flashVersion);
+                $oneManyRooms = str_replace(['cb(', ');'], ['', ''], $oneManyRooms);
+                $oneManyRooms = json_decode($oneManyRooms, true);
+                $rooms = $oneManyRooms['rooms'];//考虑做个redis的配置
+                if ($rooms) {
+                    foreach ($oneToMore as $item) {
+                        foreach ($rooms as $room) {
+                            if ($item->rid == $room['uid'] && $item->onetomore == $room['id']) {
+                                $room['listType'] = 'myticket';
+                                //$room['tid'] = 1;
+                                //$room['live_time'] = $room['start_time'];
+                                $myticket[] = $room;
+                            }
+                        }
+                    }
                 }
             }
         }
 
         return JsonResponse::create([
             'ret' => true,
-            'info' => $uinfo,
+            'status' => 1,
             'myfav' => $myfav,
             'myres' => $myres,
             'myticket' => $myticket,
-            'room_url' => $room_url,
             'downloadAppurl' => $downloadUrl,
             'downloadUrl' => $downloadpcurl,
             'qrcode_img' => $qrcode,
@@ -680,27 +529,6 @@ class IndexController extends Controller
         //邀请成功，发送消息通知
         $this->make('messageServer')->sendSystemToUsersMessage(['rec_uid' => $invitation_uid, 'content' => '恭喜您成功邀请了一位新伙伴加入了蜜桃儿，并获得100个钻石的邀请奖励，要想获得更多奖励，请继续邀请您的亲朋好友们加入我们吧。']);
         return true;
-    }
-
-
-    /**
-     * 验证码方法
-     * 获取输出图形验证码
-     * @author D.C
-     * @return Response
-     */
-    public function captchaAction()
-    {
-        $captcha = resolve('captcha');
-        $captcha->width = 90;
-        $captcha->height = 28;
-        $image = $captcha->Generate();
-        $headers = [
-            'Content-Type' => 'image/png',
-            'Content-Disposition' => 'inline; filename="' . $image . '"',
-        ];
-        $this->get('session')->set('CAPTCHA_KEY', $captcha->phrase);
-        return new Response($captcha->phrase . '.png', 200, $headers);
     }
 
     /**

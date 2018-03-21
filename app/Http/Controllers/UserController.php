@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Pack;
 use App\Models\Users;
 use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
@@ -15,20 +16,38 @@ class UserController extends Controller
         if (Auth::check()) {
             // 通过用户服务去获取
             /** @var Users $user */
-            $user=Auth::user();
+            $user = Auth::user();
             // 格式化用户信息 过滤掉用户的密码之类的敏感信息
-            $userInfo = $this->getOutputUser($user);
+            $userInfo = collect($this->getOutputUser($user));
             if (resolve(UserService::class)->getUserHiddenPermission($userInfo)) {
                 $userInfo['hidden'] = $user['hidden'];
             }
             // 获取用户等级提升还需要的级别
             $levelInfo = $this->getLevelByRole($user);
-            $userInfo['lv_current_exp'] = $levelInfo['lv_current_exp'];
-            $userInfo['lv_next_exp'] = $levelInfo['lv_next_exp'];
-            $userInfo['lv_percent'] = $levelInfo['lv_percent'];
-            $userInfo['lv_sub'] = $levelInfo['lv_sub'];
+            $userInfo=$userInfo->union($levelInfo);
+
             $userInfo['mails'] = resolve('messageService')->getMessageNotReadCount($user['uid'], $user['lv_rich']);
+
+            // 是贵族才验证 下掉贵族状态
+            if ($user['vip'] && ($user['vip_end'] < date('Y-m-d H:i:s'))) {
+                $user->vip = 0;
+                $user->vip_end = '0000-00-00 00:00:00';
+                $user->save();
+                // 删除坐骑
+                Pack::where('uid', $user->uid)->where('gid', '<=', 120107)->where('gid', '>=', 120101)->delete();
+                Redis::hSet('huser_info:' . $user->uid, 'vip', 0);
+                Redis::hSet('huser_info:' . $user->uid, 'vip_end', '');
+                Redis::del('user_car:' . $user->uid);
+                $userInfo['vip'] = 0;
+                $userInfo['vip_end'] = '';
+            }
+
         }
         return JsonResponse::create(['status' => 1, 'data' => $userInfo]);
+    }
+
+    public function following()
+    {
+        return JsonResponse::create(Redis::zrevrange('zuser_attens:' . Auth::id(), 0, -1));
     }
 }

@@ -24,6 +24,7 @@ Route::group(['prefix' => 'member'], function () {
 Route::group(['prefix' => 'user'], function () {
     Route::group(['middleware' => 'login_auth'], function () {
         Route::get('current', 'UserController@getCurrentUser')->name('user_current');
+        Route::get('following', 'UserController@following')->name('user_current');
     });
 });
 

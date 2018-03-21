@@ -1,7 +1,7 @@
 <?php
 /**
  * A helper file for Laravel 5, to provide autocomplete information to your IDE
- * Generated for Laravel 5.5.39 on 2018-03-19 14:53:07.
+ * Generated for Laravel 5.5.39 on 2018-03-21 12:32:36.
  *
  * This file should not be included in your code, only analyzed by your IDE!
  *
@@ -12458,6 +12458,555 @@ namespace Mews\Captcha\Facades {
  
 }
 
+namespace App\Facades { 
+
+    class Site {
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function isValid()
+        {
+            return \App\Services\SiteService::isValid();
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function booted()
+        {
+            return \App\Services\SiteService::booted();
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function fromRequest($request)
+        {
+            return \App\Services\SiteService::fromRequest($request);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function domain()
+        {
+            return \App\Services\SiteService::domain();
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function siteId()
+        {
+            return \App\Services\SiteService::siteId();
+        }
+        
+        /**
+         * 
+         *
+         * @param null $name
+         * @return \App\Services\Collection|mixed 
+         * @static 
+         */ 
+        public static function config($name = null)
+        {
+            return \App\Services\SiteService::config($name);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function checkDomainValidity($domain)
+        {
+            return \App\Services\SiteService::checkDomainValidity($domain);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function checkConfigValidity($siteId)
+        {
+            return \App\Services\SiteService::checkConfigValidity($siteId);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function shareConfigWithViews()
+        {
+            return \App\Services\SiteService::shareConfigWithViews();
+        }
+        
+        /**
+         * 
+         *
+         * @return mixed 
+         * @static 
+         */ 
+        public static function getDomain()
+        {
+            return \App\Services\SiteService::getDomain();
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function getMsg()
+        {
+            return \App\Services\SiteService::getMsg();
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function getPublicPath()
+        {
+            return \App\Services\SiteService::getPublicPath();
+        }
+        
+        /**
+         * 
+         *
+         * @return \App\Services\MessageBag 
+         * @static 
+         */ 
+        public static function errors()
+        {
+            return \App\Services\SiteService::errors();
+        }
+         
+    }
+
+    class UserSer {
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function setUser($user)
+        {
+            return \App\Services\User\UserService::setUser($user);
+        }
+        
+        /**
+         * 
+         *
+         * @param array $user
+         * @param array $gift
+         * @param int $agent
+         * @param int $invite_code
+         * @return bool|int 
+         * @static 
+         */ 
+        public static function register($user, $gift = array(), $agent = 0, $invite_code = 0)
+        {
+            return \App\Services\User\UserService::register($user, $gift, $agent, $invite_code);
+        }
+        
+        /**
+         * [updateUserOfPoints 更新用户钻石]
+         *
+         * @see src\Video\ProjectBundle\Controller\VideoBaseController.php addUserPoints function
+         * @author dc <dc@wisdominfo.my>
+         * @version 2015-11-05
+         * @param integer $uid [用户id]
+         * @param string $operation [操作符，只能是+ -符号]
+         * @param integer $points [更新钻石数]
+         * @param integer $pay_type [充值方式：1 银行转账、2 抽奖  3 （未使用）   4后台充值 5充值赠送 6任务和签到奖励 7转帐记录]
+         * @return bool [成功true 失败false]
+         * @throws \ErrorException
+         * @static 
+         */ 
+        public static function updateUserOfPoints($uid, $operation, $points, $pay_type)
+        {
+            return \App\Services\User\UserService::updateUserOfPoints($uid, $operation, $points, $pay_type);
+        }
+        
+        /**
+         * 
+         *
+         * @param int $uid
+         * @param int $points
+         * @return bool 
+         * @static 
+         */ 
+        public static function addPoint($uid = 0, $points = 0)
+        {
+            return \App\Services\User\UserService::addPoint($uid, $points);
+        }
+        
+        /**
+         * 从redis中读取，读取不到就读db,再写redis
+         *
+         * @param $uid
+         * @return mixed 
+         * @static 
+         */ 
+        public static function getUserByUid($uid)
+        {
+            return \App\Services\User\UserService::getUserByUid($uid);
+        }
+        
+        /**
+         * [userReset 重置用户redis并获取数据]
+         *
+         * @author dc <dc@wisdominfo.my>
+         * @version 2015-11-10
+         * @param int $uid 用户id
+         * @return array 用户数据
+         * @static 
+         */ 
+        public static function getUserReset($uid)
+        {
+            return \App\Services\User\UserService::getUserReset($uid);
+        }
+        
+        /**
+         * [updateUserOfVip 开通贵族及延长贵族时间]
+         *
+         * @param $uid [用户ID]
+         * @param $level_id [贵族id]
+         * @param $type [开通类型]
+         * @param $days [天数]
+         * @param bool $fill_expires [已经是贵族,是否延长贵族时间]
+         * @return \App\Services\User\bool[成功true 失败false]
+         * @static 
+         */ 
+        public static function updateUserOfVip($uid, $level_id, $type, $days = 30, $fill_expires = false)
+        {
+            return \App\Services\User\UserService::updateUserOfVip($uid, $level_id, $type, $days, $fill_expires);
+        }
+        
+        /**
+         * [checkVipStatus 检查vip状态]
+         *
+         * @author dc <dc#wisdominfo.my>
+         * @version 2015-11-11
+         * @param int $uid 用户id
+         * @return object|false 
+         * @static 
+         */ 
+        public static function checkUserVipStatus($uid)
+        {
+            return \App\Services\User\UserService::checkUserVipStatus($uid);
+        }
+        
+        /**
+         * 添加用户代理方法
+         *
+         * @param $uid
+         * @param $aid
+         * @return mixed 
+         * @static 
+         */ 
+        public static function setUserAgents($uid, $aid)
+        {
+            return \App\Services\User\UserService::setUserAgents($uid, $aid);
+        }
+        
+        /**
+         * [getUserByUsername 通过帐号获取用户]
+         *
+         * @author dc <dc#wisdominfo.my>
+         * @version 2015-11-13
+         * @param string $username [用户帐号]
+         * @return array|bool 返回用户数据
+         * @static 
+         */ 
+        public static function getUserByUsername($username)
+        {
+            return \App\Services\User\UserService::getUserByUsername($username);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function getUidByUsername($username)
+        {
+            return \App\Services\User\UserService::getUidByUsername($username);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function addPoints($uid = 0, $points = 0)
+        {
+            return \App\Services\User\UserService::addPoints($uid, $points);
+        }
+        
+        /**
+         * 获取当前用户被别人关注的用户信息/当前用户关注别人的用户信息 TODO 优化
+         *
+         * @param $uid
+         * @param bool $fid
+         * @param $end
+         * @param int $start
+         * @param bool $getScores
+         * @return mixed 
+         * @Author Orino
+         * @static 
+         */ 
+        public static function getUserAttens($uid, $pageStart = 1, $fid = true, $pageLimit = 12)
+        {
+            return \App\Services\User\UserService::getUserAttens($uid, $pageStart, $fid, $pageLimit);
+        }
+        
+        /**
+         * 获取自己被别人关注的数量/获取自己关注别人的数量
+         *
+         * @param $uid
+         * @param bool $flag
+         * @return mixed 
+         * @Author Orino
+         * @static 
+         */ 
+        public static function getUserAttensCount($uid, $flag = true)
+        {
+            return \App\Services\User\UserService::getUserAttensCount($uid, $flag);
+        }
+        
+        /**
+         * 获取头像地址 默认头像 TODO 优化
+         *
+         * @param $headimg
+         * @param string $size
+         * @return string 
+         * @static 
+         */ 
+        public static function getHeadimg($headimg, $size = 180)
+        {
+            return \App\Services\User\UserService::getHeadimg($headimg, $size);
+        }
+        
+        /**
+         * 检查用户登录权限
+         *
+         * @param $uid
+         * @return bool 
+         * @static 
+         */ 
+        public static function checkUserLoginAsset($uid)
+        {
+            return \App\Services\User\UserService::checkUserLoginAsset($uid);
+        }
+        
+        /**
+         * 修改用户的信息
+         * <p>
+         *  修改用户表的信息 牵涉到redis的更新 都集成到这里
+         * </p>
+         *
+         * @param $data array
+         * @return object 
+         * @static 
+         */ 
+        public static function updateUser($data = array())
+        {
+            return \App\Services\User\UserService::updateUser($data);
+        }
+        
+        /**
+         * 检查nickname是否唯一
+         *
+         * @param $nickname
+         * @return bool 
+         * @static 
+         */ 
+        public static function checkNickNameUnique($nickname)
+        {
+            return \App\Services\User\UserService::checkNickNameUnique($nickname);
+        }
+        
+        /**
+         * 赠送给用户一个等级
+         * <p>
+         *  会判断等级是否比用户现有等级小，如果小就保留不变
+         * </p>
+         *
+         * @param int $lv_rich
+         * @return bool 
+         * @static 
+         */ 
+        public static function modLvRich($lv_rich)
+        {
+            return \App\Services\User\UserService::modLvRich($lv_rich);
+        }
+        
+        /**
+         * 检查用户是否有修改昵称的权限 和 状态
+         *
+         * @static 
+         */ 
+        public static function getModNickNameStatus()
+        {
+            return \App\Services\User\UserService::getModNickNameStatus();
+        }
+        
+        /**
+         * 
+         *
+         * @todo 原方法未写数据库，侍确认。
+         * @param $uid [用户id]
+         * @param $pid [被关注用户id]
+         * @return bool 
+         * @author dc
+         * @description 迁移原方法setUserAttens
+         * @static 
+         */ 
+        public static function setFollow($uid, $pid)
+        {
+            return \App\Services\User\UserService::setFollow($uid, $pid);
+        }
+        
+        /**
+         * 
+         *
+         * @param null $uid 本身用户id
+         * @param null $pid 被关注的用户id
+         * @param bool|true $flag
+         * @param bool|false $reservation
+         * @return bool 
+         * @author dc
+         * @version 20151022
+         * @description 因迁移过来，目前所涉及的参数解释 暂时未知。 原方法名 @checkUserAttensExists
+         * @static 
+         */ 
+        public static function checkFollow($uid = null, $pid = null, $flag = true, $reservation = false)
+        {
+            return \App\Services\User\UserService::checkFollow($uid, $pid, $flag, $reservation);
+        }
+        
+        /**
+         * 
+         *
+         * @todo 原方法未写数据库，侍确认。
+         * @param $uid [用户id]
+         * @param $pid [被关注用户id]
+         * @return bool 
+         * @author dc
+         * @version 20151022
+         * @description 迁移原方法delUserAttens
+         * @static 
+         */ 
+        public static function delFollow($uid, $pid)
+        {
+            return \App\Services\User\UserService::delFollow($uid, $pid);
+        }
+        
+        /**
+         * 
+         *
+         * @param $uid [发信用户id]
+         * @param int $limit [发信数量限制 由调用方定]
+         * @param $table [信息类型]
+         * @return bool [返回true表示未达到上限]
+         * @author dc
+         * @version 20151023
+         * @description 该含数迁移自原来 VideoBaseController中的 checkAstrictUidDay方法
+         * @static 
+         */ 
+        public static function checkUserSmsLimit($uid, $limit, $table)
+        {
+            return \App\Services\User\UserService::checkUserSmsLimit($uid, $limit, $table);
+        }
+        
+        /**
+         * 
+         *
+         * @param $uid [用户id]
+         * @param $num [数量]
+         * @param $table [私信类型]
+         * @return bool [更新结果]
+         * @author dc
+         * @version 20151023
+         * @description 迁移自原 VideoBaseController中的 setAstrictUidDay方法。主要功能更新用户发送私信数量
+         * @static 
+         */ 
+        public static function updateUserSmsTotal($uid, $num, $table)
+        {
+            return \App\Services\User\UserService::updateUserSmsTotal($uid, $num, $table);
+        }
+        
+        /**
+         * [getUserHiddenPermission 根据id获取该用户是否有隐身权限]
+         *
+         * @todo 优化查询，迁移到redis
+         * @param array $user [用户信息,要包含uid,lv_rich, vip, vip_end等字段]
+         * @return mixed 
+         * @author dc@wisdominfo.my
+         * @version 20151127
+         * @static 
+         */ 
+        public static function getUserHiddenPermission($user)
+        {
+            return \App\Services\User\UserService::getUserHiddenPermission($user);
+        }
+        
+        /**
+         * todo
+         *
+         * @param $userinfo [用户信息,常为获取到的信息数组]
+         * @param $des_key [加密密钥]
+         * @return string [返回加密代码]
+         * @author dc
+         * @description 加密用户信息
+         * @static 
+         */ 
+        public static function get3Des($userinfo, $des_key)
+        {
+            return \App\Services\User\UserService::get3Des($userinfo, $des_key);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function getRank($key, $offset, $limit)
+        {
+            return \App\Services\User\UserService::getRank($key, $offset, $limit);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function deleteUserSession($user)
+        {
+            return \App\Services\User\UserService::deleteUserSession($user);
+        }
+         
+    }
+ 
+}
+
 namespace Intervention\Image\Facades { 
 
     class Image {
@@ -14658,6 +15207,10 @@ namespace  {
     class View extends \Illuminate\Support\Facades\View {}
 
     class Captcha extends \Mews\Captcha\Facades\Captcha {}
+
+    class Site extends \App\Facades\Site {}
+
+    class UserSer extends \App\Facades\UserSer {}
 
     class Image extends \Intervention\Image\Facades\Image {}
  

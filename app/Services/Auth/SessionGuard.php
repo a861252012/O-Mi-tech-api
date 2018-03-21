@@ -24,7 +24,6 @@ class SessionGuard extends Guard
     const CLIENT_ENCRY_FIELD = 'v_remember_encrypt';
     const SEVER_SESS_ID = 'webonline';//在线用户id
     const  TOKEN_CONST = 'auth_key';
-    const WEB_UID = 'webuid';
     const  WEB_SECRET_KEY = 'c5ff645187eb7245d43178f20607920e456';
 
     /**
@@ -76,8 +75,7 @@ class SessionGuard extends Guard
         $this->session->put($this->getName(), $id);
         $this->session->migrate(true);
 
-        $this->session->put(self::SEVER_SESS_ID, $id);           //TODO 只根据session的webonline有无uid判断是否登录成功
-        $this->getCookieJar()->queue(self::WEB_UID, $id, 0);
+        $this->session->put(self::SEVER_SESS_ID, $id);
 
         $sid = $this->session->getId();
 
