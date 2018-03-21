@@ -8,9 +8,11 @@ use App\Models\RoomDuration;
 use App\Models\RoomStatus;
 use App\Models\UserBuyOneToMore;
 use App\Models\Users;
+use App\Services\Message\MessageService;
 use App\Services\User\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -38,9 +40,9 @@ class IndexController extends Controller
         //等待halin优化
         $uid = session(self::SEVER_SESS_ID);
         $userinfo = $uid ? Users::find($uid)->toArray() : [];
-        $ads = $this->make('redis')->hget('img_cache', 1);
+        $ads = Redis::hget('img_cache', 1);
         $ads = json_decode($ads, true);
-        $slider = array();
+        $slider = [];
         if ($ads) {
             foreach ($ads as $ad) {
                 if (filter_var($ad['url'], FILTER_VALIDATE_INT)) {
@@ -55,23 +57,23 @@ class IndexController extends Controller
         }
         $this->assign('ad_1', $slider);
 
-        $ad_2 = $this->make('redis')->hget('img_cache', 2);
+        $ad_2 = Redis::hget('img_cache', 2);
         $ad_2 = json_decode($ad_2, true);
         $this->assign('ad_2', $ad_2);
         //$userinfo['headimg'];
         //视频路径
-        $video_info = $this->make('redis')->hget('img_cache', '5');
+        $video_info = Redis::hget('img_cache', '5');
         if ($video_info) {
             if (json_decode($video_info)) {
                 $video_info = json_decode($video_info, true);
             } else {
                 $downloadpcurl = null;
-                $res = array(
+                $res = [
                     'name' => '',
                     'temp_name' => '',
-                    'url' => ''
+                    'url' => '',
 
-                );
+                ];
                 $video_info = json_encode($res);
             }
             //从一到十随机取数，
@@ -103,18 +105,18 @@ class IndexController extends Controller
     public function videoList()
     {
         //$type 判断
-        $type = $this->make('request')->get('type', 'all');
+        $type = request()->get('type', 'all');
 
         //为什么总在$flashVer??
         //updata by Young
         //获取flash版本
-        $flashVer = $this->make('redis')->get('flash_version');
+        $flashVer = Redis::get('flash_version');
         !$flashVer && $flashVer = 'v201504092044';
 
         //初始化$list数据
-        $list = array(
-            'rooms' => array()
-        );
+        $list = [
+            'rooms' => [],
+        ];
 
         /**
          * 首页中排行榜数据 TODO 修改调取接口
@@ -122,22 +124,22 @@ class IndexController extends Controller
         switch ($type) {
 
             case 'rank':
-                $list = $this->make('redis')->get('home_js_data_' . $flashVer);
-                $list = str_replace(array('cb(', ');'), array('', ''), $list);
+                $list = Redis::get('home_js_data_' . $flashVer);
+                $list = str_replace(['cb(', ');'], ['', ''], $list);
                 break;
 
             case 'fav':
                 $uid = Auth::id();
                 $myfavArr = $this->getUserAttensBycuruid($uid);
-                $list = $this->make('redis')->get('home_all_' . $flashVer);
-                $list = str_replace(array('cb(', ');'), array('', ''), $list);
+                $list = Redis::get('home_all_' . $flashVer);
+                $list = str_replace(['cb(', ');'], ['', ''], $list);
                 $data = json_decode($list, true);
 
                 //echo $data; die;
-                $myfav = array();
+                $myfav = [];
                 if ($myfavArr) {
                     //过滤出主播
-                    $hasharr = array();
+                    $hasharr = [];
                     foreach ($data['rooms'] as $value) {
                         $hasharr[$value['uid']] = $value;
                     }
@@ -153,8 +155,8 @@ class IndexController extends Controller
                 break;
 
             default:
-                $list = $this->make('redis')->get('home_' . $type . '_' . $flashVer);
-                $list = str_replace(array('cb(', ');'), '', $list);
+                $list = Redis::get('home_' . $type . '_' . $flashVer);
+                $list = str_replace(['cb(', ');'], '', $list);
         }
 
 //        $list = json_decode($list, true);
@@ -165,73 +167,73 @@ class IndexController extends Controller
     {
         if (Auth::check()) {
             return new Response(
-                json_encode(array(
+                json_encode([
                     "data" => 0,
-                    "msg" => "已经在登录状态中！"
-                )));
+                    "msg" => "已经在登录状态中！",
+                ]));
         }
         $sCode = $this->request()->get('sCode');
         if (!$this->container->config['config.SKIP_CAPTCHA_REG'] && (!$sCode || strtolower($sCode) != strtolower($this->_reqSession->get('CAPTCHA_KEY')))) {
             return new Response(
-                json_encode(array(
+                json_encode([
                     "data" => 0,
-                    "msg" => "验证码错误！请重新刷新"
-                )));
+                    "msg" => "验证码错误！请重新刷新",
+                ]));
         }
         //表单验证
         $username = $this->request()->get('username');
         if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $username) || strlen($username) < 5 || strlen($username) > 30) {
-            return new Response(json_encode(array(
+            return new Response(json_encode([
                 "data" => 0,
-                "msg" => "注册邮箱不符合格式！(5-30位的邮箱)"
-            )));
+                "msg" => "注册邮箱不符合格式！(5-30位的邮箱)",
+            ]));
         }
-        if (!!$this->_findByUserName(array('username' => $username))) {
-            return new Response(json_encode(array(
+        if (!!$this->_findByUserName(['username' => $username])) {
+            return new Response(json_encode([
                 "data" => 0,
-                "msg" => "注册邮箱重复，请换一个试试！"
-            )));
+                "msg" => "注册邮箱重复，请换一个试试！",
+            ]));
         }
         $nickname = $this->request()->get('nickname');
         //if( strlen($nickname) < 2 || strlen($nickname) > 16 || !preg_match("/^[A-Za-z0-9_".chr(0xa1)."-".chr(0xff)."]+[^_]$/",$nickname)|| !!$this->_findByUserName(array('nickname'=>$nickname)) ){
         $len = $this->count_chinese_utf8($nickname);
         //昵称不能使用/:;\空格,换行等符号。
         if ($len < 2 || $len > 8 || !preg_match("/^[^\s\/\:;]+$/", $nickname)) {
-            return new Response(json_encode(array(
+            return new Response(json_encode([
                 "data" => 0,
-                "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)"
-            )));
+                "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)",
+            ]));
         }
 
-        if (!!$this->_findByUserName(array('nickname' => $nickname))) {
-            return new Response(json_encode(array(
+        if (!!$this->_findByUserName(['nickname' => $nickname])) {
+            return new Response(json_encode([
                 "data" => 0,
-                "msg" => "注册昵称重复，请换一个试试！"
-            )));
+                "msg" => "注册昵称重复，请换一个试试！",
+            ]));
         }
         $password = $this->request()->get('password');
         $repassword = $this->request()->get('repassword');
         if ($password != $repassword) {
-            return new Response(json_encode(array(
+            return new Response(json_encode([
                 "data" => 0,
-                "msg" => "两次输入的密码不相同！"
-            )));
+                "msg" => "两次输入的密码不相同！",
+            ]));
         }
         if (strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
-            return new Response(json_encode(array(
+            return new Response(json_encode([
                 "data" => 0,
-                "msg" => "注册密码不符合格式！"
-            )));
+                "msg" => "注册密码不符合格式！",
+            ]));
         }
-        $uid = $this->_addUserInfo(array(
+        $uid = $this->_addUserInfo([
             'username' => $username,
             'nickname' => $nickname,
             'password' => md5($password),
-            'created' => date('Y-m-d H:i:s')
-        ));
-        $userInfo = $this->_findByUserName(array(
-            'uid' => $uid
-        ));
+            'created' => date('Y-m-d H:i:s'),
+        ]);
+        $userInfo = $this->_findByUserName([
+            'uid' => $uid,
+        ]);
         $this->writeRedis($userInfo);
         // $this->_setIndexCookie($userInfo,true);
         $this->_sendGift($uid, false, $this->container->config['config.REGISTER_SEND_POINT']);
@@ -239,10 +241,10 @@ class IndexController extends Controller
         $this->_userRegisterByInvitation($uid);
 
 
-        return new Response(json_encode(array(
+        return new Response(json_encode([
             "data" => 1,
-            "msg" => "恭喜您注册成功！"
-        )));
+            "msg" => "恭喜您注册成功！",
+        ]));
     }
 
     /**
@@ -252,14 +254,14 @@ class IndexController extends Controller
     public function setInRoomStat()
     {
         $roomid = $this->make('request')->get('roomid');
-        if (!$roomid) return new JsonResponse(array('code' => 2, 'msg' => '无效的参数'));
+        if (!$roomid) return new JsonResponse(['code' => 2, 'msg' => '无效的参数']);
 
         $data = RoomStatus::where('uid', $roomid)
             ->where('tid', 6)->where('status', 1)->first();
-        if (!$data) return new JsonResponse(array('code' => 3, 'msg' => '不是时长房间'));
+        if (!$data) return new JsonResponse(['code' => 3, 'msg' => '不是时长房间']);
 
-        $this->make('redis')->hset('htimecost_watch:' . $roomid, Auth::id(), $roomid);
-        return new JsonResponse(array('code' => 1, 'msg' => '设置状态成功'));
+        Redis::hset('htimecost_watch:' . $roomid, Auth::id(), $roomid);
+        return new JsonResponse(['code' => 1, 'msg' => '设置状态成功']);
     }
 
     /**
@@ -268,58 +270,58 @@ class IndexController extends Controller
     public function checkUniqueName()
     {
         $type = $this->request()->get('type');
-        $limitData = array('username', 'nickname');
+        $limitData = ['username', 'nickname'];
         if (!in_array($type, $limitData)) {
-            return new Response(json_encode(array(
+            return new Response(json_encode([
                 'msg' => '传递的参数非法！',
-                'data' => 0
-            )));
+                'data' => 0,
+            ]));
         }
         $username = $this->request()->get('username');
         if ($type == 'username') {
             if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $username) || strlen($username) < 5 || strlen($username) > 30) {
-                return new Response(json_encode(array(
+                return new Response(json_encode([
                     "data" => 0,
-                    "msg" => "注册邮箱不符合格式！(5-30位的邮箱)"
-                )));
+                    "msg" => "注册邮箱不符合格式！(5-30位的邮箱)",
+                ]));
             }
             $msg0 = '该邮箱已被使用，请换一个试试！';
             $msg1 = '恭喜该邮箱可以使用。';
-            $userArr = array();
+            $userArr = [];
             $userArr = explode("@", $username);
-            if ($this->make('redis')->hExists('husername_to_id', (count($userArr) == 2) ? $userArr[0] . "@" . strtolower($userArr[1]) : $username)) {
-                return new Response(json_encode(array(
+            if (Redis::hExists('husername_to_id', (count($userArr) == 2) ? $userArr[0] . "@" . strtolower($userArr[1]) : $username)) {
+                return new Response(json_encode([
                     'msg' => $msg0,
-                    'data' => 0
-                )));
+                    'data' => 0,
+                ]));
             } else {
-                return new Response(json_encode(array(
+                return new Response(json_encode([
                     'msg' => $msg1,
-                    'data' => 1
-                )));
+                    'data' => 1,
+                ]));
             }
         } else {
             $len = $this->count_chinese_utf8($username);
             if ($len < 2 || $len > 8 || !preg_match("/^[^\s\/\:;]+$/", $username)) {
-                return new Response(json_encode(array(
+                return new Response(json_encode([
                     "data" => 0,
-                    "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)"
-                )));
+                    "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)",
+                ]));
             }
             $msg0 = '该昵称已被使用，请换一个试试！';
             $msg1 = '恭喜该昵称可以使用。';
         }
-        $row = $this->_findByUserName(array($type => $username));
+        $row = $this->_findByUserName([$type => $username]);
         if (!!$row) {
-            return new Response(json_encode(array(
+            return new Response(json_encode([
                 'msg' => $msg0,
-                'data' => 0
-            )));
+                'data' => 0,
+            ]));
         } else {
-            return new Response(json_encode(array(
+            return new Response(json_encode([
                 'msg' => $msg1,
-                'data' => 1
-            )));
+                'data' => 1,
+            ]));
         }
     }
 
@@ -331,7 +333,7 @@ class IndexController extends Controller
     private function _findByUserName($criteria)
     {
         $data = Users::where($criteria)->first();
-        return $data ? $data->toArray() : array();
+        return $data ? $data->toArray() : [];
     }
 
 
@@ -357,13 +359,13 @@ class IndexController extends Controller
         $userinfo = Auth::user();
         $ads = Redis::hget('img_cache', 1);
         $ads = json_decode($ads, true);
-        $slider = array();
+        $slider = [];
         if ($ads) {
-            foreach ($ads as $ad){
-                if(filter_var($ad['url'], FILTER_VALIDATE_INT)){
-                    $ad['url'] = '/'.$ad['url'];
-                }else{
-                    $ad['url'] = '/'.ltrim($ad['url'], '/');
+            foreach ($ads as $ad) {
+                if (filter_var($ad['url'], FILTER_VALIDATE_INT)) {
+                    $ad['url'] = '/' . $ad['url'];
+                } else {
+                    $ad['url'] = '/' . ltrim($ad['url'], '/');
                 }
                 $slider[] = $ad;
             }
@@ -379,20 +381,20 @@ class IndexController extends Controller
                 $video_info = json_decode($video_info, true);
             } else {
                 $downloadpcurl = null;
-                $res = array(
+                $res = [
                     'name' => '',
                     'temp_name' => '',
-                    'url' => ''
-                );
+                    'url' => '',
+                ];
                 $video_info = json_encode($res);
             }
             //从一到十随机取数，
             $nums_video = rand(0, count($video_info));
             if (isset($video_info[$nums_video])) {
-                $video_url = request()->getSchemeAndHttpHost(). '/public/file/' . $video_info[$nums_video]['temp_name'];
+                $video_url = request()->getSchemeAndHttpHost() . '/public/file/' . $video_info[$nums_video]['temp_name'];
                 $jump_url = $video_info[$nums_video]['url'];
             } else {
-                $video_url = request()->getSchemeAndHttpHost(). '/public/file/' . $video_info[0]['temp_name'];
+                $video_url = request()->getSchemeAndHttpHost() . '/public/file/' . $video_info[0]['temp_name'];
                 $jump_url = $video_info[0]['url'];
             }
 
@@ -407,11 +409,11 @@ class IndexController extends Controller
             $downloadpcurl = json_decode($downloadUrl)->PC;
         } else {
             $downloadpcurl = null;
-            $res = array(
+            $res = [
                 'PC' => '',
                 'ANDROID' => '',
-                'IOS' => ''
-            );
+                'IOS' => '',
+            ];
             $downloadUrl = json_encode($res);
         }
 
@@ -421,19 +423,18 @@ class IndexController extends Controller
                 'info' => '没有登录！',
                 'downloadAppurl' => $downloadUrl,
                 'downloadUrl' => $downloadpcurl,
-                'qrcode_img' => $qrcode
+                'qrcode_img' => $qrcode,
             ]));
         }
-//        $this->_data_model = new DataModel($this);
         //TODO 优化
         //获取用户关注的信息
         if (!$userinfo) {
-            return new Response(json_encode(array(
+            return JsonResponse::create([
                 'ret' => false,
                 'info' => '无效的用户',
-            )));
+            ]);
         }
-        $uinfo = array(
+        $uinfo = [
             'uid' => $userinfo['uid'],
             'nickname' => $userinfo['nickname'],
             'headimg' => $this->getHeadimg($userinfo['headimg']),
@@ -444,22 +445,12 @@ class IndexController extends Controller
             'vip_end' => $userinfo['vip_end'],
             'lv_rich' => $userinfo['lv_rich'],
             'lv_exp' => $userinfo['lv_exp'],
-            'safemail' => isset($userinfo['safemail']) ? urlencode($userinfo['safemail']) : '',
-            'mails' => resolve('messageService')->getMessageNotReadCount($userinfo['uid'], $userinfo['lv_rich']),// 通过服务取到数量
+            'safemail' => $userinfo['safemail'] ?? '',
+            'mails' => resolve(MessageService::class)->getMessageNotReadCount($userinfo['uid'], $userinfo['lv_rich']),// 通过服务取到数量
             'icon_id' => intval($userinfo['icon_id']),
             'new_user' => $userinfo['created'] > config('config.USER_TIME_DIVISION') ? 1 : 0,
-        );
+        ];
 
-        // 判断权限 隐身 贵族才有
-        /*
-        $groupServer = $this->make('userGroupServer');
-        if ($uinfo['vip'] && $uinfo['roled']==0) {
-            $group = $groupServer->getGroupByLevelIdAndType($uinfo['vip'], 'special');
-            if ($group['permission']['allowstealth']) {
-                $uinfo['hidden'] = $userinfo->hidden;
-            }
-        }
-        */
         /**
          * @author dc 修改，判断用户是否有隐身权限
          */
@@ -483,38 +474,38 @@ class IndexController extends Controller
 
             // 删除坐骑
             Pack::where('uid', $uid)->where('gid', '<=', 120107)->where('gid', '>=', 120101)->delete();
-            $this->make('redis')->hSet('huser_info:' . $uid, 'vip', 0);
-            $this->make('redis')->hSet('huser_info:' . $uid, 'vip_end', '');
-            $this->make('redis')->del('user_car:' . $uid);
+            Redis::hSet('huser_info:' . $uid, 'vip', 0);
+            Redis::hSet('huser_info:' . $uid, 'vip_end', '');
+            Redis::del('user_car:' . $uid);
             $uinfo['vip'] = 0;
             $uinfo['vip_end'] = '';
         }
 
         //主播列表
-        $arr = include(BASEDIR . '/app/cache/cli-files/anchor-search-data.php');
-        $hasharr = array();
+        $arr = include Storage::path('cache/anchor-search-data.php');
+        $hasharr = [];
         foreach ($arr as $value) {
             $hasharr[$value['uid']] = $value;
         }
         unset($arr);
 
         // 获得房间地址
-        $flashVersion = $this->make('redis')->get('flash_version');
+        $flashVersion = Redis::get('flash_version');
         !$flashVersion && $flashVersion = 'v201504092044';
-        $flashVer = $this->make('redis')->get('home_js_data_' . $flashVersion);
+        $flashVer = Redis::get('home_js_data_' . $flashVersion);
         if (!$flashVer) {
-            return new Response(json_encode(array(
+            return JsonResponse::create([
                 'ret' => false,
                 'info' => 'flashverison',
-            )));
+            ]);
         };
-        $flashVer = str_replace(array('cb(', ');'), array('', ''), $flashVer);
+        $flashVer = str_replace(['cb(', ');'], ['', ''], $flashVer);
         $flashVer = json_decode($flashVer, true);
         $room_url = $flashVer['room_url'];//考虑做个redis的配置
         unset($flashVer);
 
         // 获取我的预约的房间
-        $myres = array();
+        $myres = [];
         $myReservation = RoomDuration::where('reuid', $uid)
             ->where('starttime', '>', date('Y-m-d H:i:s', time() - 3600))
             ->orderBy('starttime', 'desc')
@@ -523,8 +514,8 @@ class IndexController extends Controller
 
         if (!empty($myReservation)) {
             // 从redis 获取一对一预约数据
-            $ordRooms = $this->make('redis')->get('home_ord_' . $flashVersion);
-            $ordRooms = str_replace(array('cb(', ');'), array('', ''), $ordRooms);
+            $ordRooms = Redis::get('home_ord_' . $flashVersion);
+            $ordRooms = str_replace(['cb(', ');'], ['', ''], $ordRooms);
             $ordRooms = json_decode($ordRooms, true);
             $rooms = $ordRooms['rooms'];//考虑做个redis的配置
 
@@ -541,12 +532,12 @@ class IndexController extends Controller
         }
 
 
-        $myticket = array();
+        $myticket = [];
         $oneToMore = UserBuyOneToMore::where('uid', $uid)->orderBy('starttime', 'desc')->get();//@TODO 时间过滤
         if (!empty($oneToMore)) {
             // 从redis 获取一对一预约数据
-            $oneManyRooms = $this->make('redis')->get('home_one_many_' . $flashVersion);
-            $oneManyRooms = str_replace(array('cb(', ');'), array('', ''), $oneManyRooms);
+            $oneManyRooms = Redis::get('home_one_many_' . $flashVersion);
+            $oneManyRooms = str_replace(['cb(', ');'], ['', ''], $oneManyRooms);
             $oneManyRooms = json_decode($oneManyRooms, true);
             $rooms = $oneManyRooms['rooms'];//考虑做个redis的配置
             if ($rooms) {
@@ -565,7 +556,7 @@ class IndexController extends Controller
 
         // 获取我的关注的数据主播的数据
         $myfavArr = $this->getUserAttensBycuruid($uid);
-        $myfav = array();
+        $myfav = [];
         if (!!$myfavArr) {
             //过滤出主播
             foreach ($myfavArr as $item) {
@@ -575,18 +566,17 @@ class IndexController extends Controller
             }
         }
 
-        return new Response(urldecode(json_encode(array(
-                'ret' => true,
-                'info' => $uinfo,
-                'myfav' => $myfav,
-                'myres' => $myres,
-                'myticket' => $myticket,
-                'room_url' => $room_url,
-                'downloadAppurl' => $downloadUrl,
-                'downloadUrl' => $downloadpcurl,
-                'qrcode_img' => $qrcode
-            )))
-        );
+        return JsonResponse::create([
+            'ret' => true,
+            'info' => $uinfo,
+            'myfav' => $myfav,
+            'myres' => $myres,
+            'myticket' => $myticket,
+            'room_url' => $room_url,
+            'downloadAppurl' => $downloadUrl,
+            'downloadUrl' => $downloadpcurl,
+            'qrcode_img' => $qrcode,
+        ]);
 
     }
 
@@ -650,7 +640,7 @@ class IndexController extends Controller
         }
         */
 
-        $redis->hset('invitation', $invitation_uid, serialize(array('time' => time(), 'ips' => $ips)));
+        $redis->hset('invitation', $invitation_uid, serialize(['time' => time(), 'ips' => $ips]));
 
         //奖励点数
         $addPoints = 100;
@@ -659,7 +649,7 @@ class IndexController extends Controller
          * 进行赠送奖励流程处理,调用【Gesila】接口。目的：实时更新数据库、Redis、房间状态。
          * @example /video_gs/web_api/add_point?uid=10000&points=1&act_name=invitation_user
          * @param uid = 用户ID，points=增加点数，act_name=活动名称
-         * @return 1=成功，-102=增加失败，-103=来源IP没有权限，-104=用户不存在
+         * @return  1=成功，-102=增加失败，-103=来源IP没有权限，-104=用户不存在
          */
         $apiURL = rtrim($GLOBALS['REMOTE_JS_URL'], '/') . '/video_gs/web_api/add_point?uid=' . $invitation_uid . '&points=' . $addPoints . '&act_name=invitation_user';
         $getPointsStatus = null;
@@ -678,17 +668,17 @@ class IndexController extends Controller
         //数据库记录操作处理
         //为了优化性能不查询已存在用户
 
-        UserInvitation::create(array(
+        UserInvitation::create([
             'pid' => $invitation_uid,
             'uid' => $register_uid,
             'reward' => $addPoints,
             'fromip' => $ips,
             'fromtime' => date('Y-m-d H:i:s', time()),
-            'fromlink' => $this->request()->cookies->get('invitation_refer')
-        ));
+            'fromlink' => $this->request()->cookies->get('invitation_refer'),
+        ]);
 
         //邀请成功，发送消息通知
-        $this->make('messageServer')->sendSystemToUsersMessage(array('rec_uid' => $invitation_uid, 'content' => '恭喜您成功邀请了一位新伙伴加入了蜜桃儿，并获得100个钻石的邀请奖励，要想获得更多奖励，请继续邀请您的亲朋好友们加入我们吧。'));
+        $this->make('messageServer')->sendSystemToUsersMessage(['rec_uid' => $invitation_uid, 'content' => '恭喜您成功邀请了一位新伙伴加入了蜜桃儿，并获得100个钻石的邀请奖励，要想获得更多奖励，请继续邀请您的亲朋好友们加入我们吧。']);
         return true;
     }
 
@@ -705,10 +695,10 @@ class IndexController extends Controller
         $captcha->width = 90;
         $captcha->height = 28;
         $image = $captcha->Generate();
-        $headers = array(
+        $headers = [
             'Content-Type' => 'image/png',
-            'Content-Disposition' => 'inline; filename="' . $image . '"'
-        );
+            'Content-Disposition' => 'inline; filename="' . $image . '"',
+        ];
         $this->get('session')->set('CAPTCHA_KEY', $captcha->phrase);
         return new Response($captcha->phrase . '.png', 200, $headers);
     }
@@ -721,53 +711,53 @@ class IndexController extends Controller
     {
         if (Auth::guest()) {
             return new Response(json_encode(
-                array(
+                [
                     'ret' => false,
-                    'msg' => '还没有登录，请登录'
-                )
+                    'msg' => '还没有登录，请登录',
+                ]
             ));
         }
         $date = date('Y-m-d H:i:s');
         $today_nu = date('Ymd');
         $uid = $this->request()->getSession()->get(self::SEVER_SESS_ID);
         $hname = 'keys_complaints_flag:' . $uid . ':' . $today_nu;
-        $times = $this->make('redis')->get($hname);
+        $times = Redis::get($hname);
         if (empty($times)) {
-            $this->make('redis')->set($hname, 1);
+            Redis::set($hname, 1);
         } else {
             if ($times >= 10) return new Response(json_encode(
-                array(
+                [
                     'ret' => false,
                     'times' => $times,
-                    'msg' => '处理成功！'
-                )
+                    'msg' => '处理成功！',
+                ]
             ));
-            $this->make('redis')->set($hname, $times + 1);
+            Redis::set($hname, $times + 1);
         }
-        $data = array(
+        $data = [
             'cid' => $this->request()->get('sername'),
             'uid' => $this->getCurUid($this->request()),
             'type' => intval($this->request()->get('sertype')),
             'content' => $this->request()->get('sercontent'),
             'created' => $date,
-            'edit_time' => $date
-        );
+            'edit_time' => $date,
+        ];
         if (!$data['content']) {
             return new Response(json_encode(
-                array(
+                [
                     'ret' => false,
                     'times' => $times,
-                    'msg' => '缺少投诉内容'
-                )
+                    'msg' => '缺少投诉内容',
+                ]
             ));
         }
         Complaints::create($data);
         return new Response(json_encode(
-            array(
+            [
                 'ret' => true,
                 'times' => $times,
-                'msg' => '处理成功！'
-            )
+                'msg' => '处理成功！',
+            ]
         ));
     }
 
@@ -780,20 +770,20 @@ class IndexController extends Controller
         if ($action == null || !isset($_REQUEST['vsign']) || $this->container->config['config.VFPHP_SIGN'] != $_REQUEST['vsign'] ||
             !method_exists($this, $action)
         ) {
-            return new JsonResponse(array('status' => 1, 'data' => 'data is not available!'));
+            return new JsonResponse(['status' => 1, 'data' => 'data is not available!']);
         }
-        $data = array();
+        $data = [];
         /*批量出来获取主播房间类型*/
         if ($action == 'getAnchorRoomType' && isset($_REQUEST['ridlists'])) {
             $ridlists = explode(',', $_REQUEST['ridlists']);
             if (!$ridlists) {
-                return new JsonResponse(array('status' => 2, 'data' => 'data is not available!'));
+                return new JsonResponse(['status' => 2, 'data' => 'data is not available!']);
             }
 
             foreach ($ridlists as $item) {
                 $data[$item] = $this->getAnchorRoomType($item);
             }
         }
-        return new JsonResponse(array('status' => 0, 'data' => $data));
+        return new JsonResponse(['status' => 0, 'data' => $data]);
     }
 }

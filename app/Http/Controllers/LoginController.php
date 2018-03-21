@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\UserDomain;
 use App\Models\UserLoginLog;
 use App\Models\Users;
+use App\Services\SiteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
@@ -252,7 +253,7 @@ class LoginController extends Controller
         if (!isset($_REQUEST['_m'])) {
             $password = $this->decode($password); // 密码传递解密
         }
-        $retval = $this->solveUserLogin($user_name, $password, config('app.SKIP_CAPTCHA_LOGIN'));
+        $retval = $this->solveUserLogin($user_name, $password, app(SiteService::class)->config('SKIP_CAPTCHA_LOGIN'));
 
 
         return JsonResponse::create($retval);

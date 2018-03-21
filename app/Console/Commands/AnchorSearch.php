@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
 
 class AnchorSearch extends Command
 {
@@ -106,9 +107,7 @@ class AnchorSearch extends Command
         }
         usort($myfav_arr, make_comparer(['live_status', SORT_DESC], ['attens', SORT_DESC], ['lv_exp', SORT_DESC]));
 
-
-        file_put_contents(storage_path('app') . '/public/anchor-search-data.php',
-            '<?php ' . PHP_EOL . 'return ' . preg_replace('/[\s' . PHP_EOL . ']+/m', '', var_export($myfav_arr, true)) . ';'
-        );
+        Storage::put('cache/anchor-search-data.php',
+            '<?php ' . PHP_EOL . 'return ' . preg_replace('/[\s' . PHP_EOL . ']+/m', '', var_export($myfav_arr, true)) . ';');
     }
 }

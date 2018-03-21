@@ -16,6 +16,7 @@ use App\Services\SiteService;
 use App\Services\User\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -106,7 +107,7 @@ class MobileController extends Controller
         return JsonResponse::create()->setContent(urldecode(json_encode([
                 'status' => 1,
                 'uid' => $userinfo->uid,
-                'nickname' => urlencode($userinfo->nickname),
+                'nickname' => $userinfo->nickname,
                 'headimg' => $this->getHeadimg($userinfo->headimg),
                 'points' => $userinfo->points,
                 'roled' => $userinfo->roled,
@@ -115,7 +116,7 @@ class MobileController extends Controller
                 'vip_end' => $userinfo->vip_end,
                 'lv_rich' => $userinfo->lv_rich,
                 'lv_exp' => $userinfo->lv_exp,
-                'safemail' => isset($userinfo->safemail) ? urlencode($userinfo->safemail) : '',
+                'safemail' => $userinfo->safemail ?? '',
 //                'mails' => $this->make('messageServer')->getMessageNotReadCount($userinfo->uid, $userinfo->lv_rich),// 通过服务取到数量
                 'icon_id' => intval($userinfo->icon_id),
             ]))
@@ -280,7 +281,7 @@ class MobileController extends Controller
         $username = $request->get('username');
         $password = $request->get('password');
         $captcha = $request->get('captcha');
-        if (app(SiteService::class)->config()) {
+        if (!app(SiteService::class)->config('SKIP_CAPTCHA_LOGIN')) {
             if (empty($captcha)) {
                 return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
             }
@@ -317,21 +318,11 @@ class MobileController extends Controller
     }
 
     /**
-     * 移动端注册
-     * @author Young <Young@wisdominfo.my>
-     */
-    public function register()
-    {
-        return $this->render('Mobile/register', []);
-    }
-
-    /**
      *移动端轮播图获取
      */
     public function sliderList()
     {
-        $redis = $this->make('redis');
-        $list = $redis->get('vbos.images:type:' . $this->request()->input('type', 1));
+        $list = Redis::get('vbos.images:type:' . $this->request()->input('type', 1));
         $list = collect(json_decode($list))->map(function ($img) {
             return [
                 'id' => $img->id,
