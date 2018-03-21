@@ -23,6 +23,12 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(SiteService::class);
         $this->app->singleton(MobileSession::class);
+        $this->app->singleton(UserGroupService::class);
+        $this->app->singleton(ActiveService::class);
+        $this->app->singleton(ChargeService::class);
+        $this->app->singleton(ChargeGroupService::class);
+        $this->app->singleton(MessageService::class);
+
         $this->app->singleton('userGroupServer', function () {
             return new UserGroupService();
         });
