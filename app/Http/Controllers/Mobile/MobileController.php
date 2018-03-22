@@ -299,9 +299,6 @@ class MobileController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => '用户名密码错误']);
         }
         $user = $jwt->user();
-        if ($user->banned()) {
-            return JsonResponse::create(['status' => 0, 'msg' => '您的账号已经被禁止登录，请联系客服！']);
-        }
         $statis_date = date('Y-m-d');
         MobileUseLogs::create([
             'imei' => $request->get('imei'),

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
@@ -26,8 +27,10 @@ class LoginAuth
         if (Auth::guest()) {
             return JsonResponse::create(['status' => 0, 'msg' => '未登录']);
         }
-
+        if (Auth::user()->banned()) {
+            Auth::logout();
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => 'banned']));
+        }
         return $next($request);
     }
-
 }

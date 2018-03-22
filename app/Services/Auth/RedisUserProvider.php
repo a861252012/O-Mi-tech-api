@@ -12,6 +12,8 @@ namespace App\Services\Auth;
 use App\Services\User\UserService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Redis\RedisManager;
 
 class RedisUserProvider implements UserProvider
@@ -33,13 +35,17 @@ class RedisUserProvider implements UserProvider
      */
     public function retrieveById($identifier)
     {
-        return resolve(UserService::class)->getUserByUid($identifier);
+        $user = resolve(UserService::class)->getUserByUid($identifier);
+        if ($user->banned()) {
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '您的账号已经被禁止登录，请联系客服！']));
+        }
+        return $user;
     }
 
     /**
      * Retrieve a user by their unique identifier and "remember me" token.
      *
-     * @param  mixed $identifier
+     * @param  mixed  $identifier
      * @param  string $token
      * @return \Illuminate\Contracts\Auth\Authenticatable|null
      */
@@ -52,7 +58,7 @@ class RedisUserProvider implements UserProvider
      * Update the "remember me" token for the given user in storage.
      *
      * @param  \Illuminate\Contracts\Auth\Authenticatable $user
-     * @param  string $token
+     * @param  string                                     $token
      * @return void
      */
     public function updateRememberToken(Authenticatable $user, $token)
@@ -73,14 +79,18 @@ class RedisUserProvider implements UserProvider
                 array_key_exists('password', $credentials))) {
             return;
         }
-        return resolve(UserService::class)->getUserByUsername($credentials['username']);
+        $user = resolve(UserService::class)->getUserByUsername($credentials['username']);
+        if ($user->banned()) {
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '您的账号已经被禁止登录，请联系客服！']));
+        }
+        return $user;
     }
 
     /**
      * Validate a user against the given credentials.
      *
      * @param  \Illuminate\Contracts\Auth\Authenticatable $user
-     * @param  array $credentials
+     * @param  array                                      $credentials
      * @return bool
      */
     public function validateCredentials(Authenticatable $user, array $credentials)

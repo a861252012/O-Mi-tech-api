@@ -18,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use Mockery\Exception;
 
@@ -212,7 +213,7 @@ class UserService extends Service
     /**
      * 从redis中读取，读取不到就读db,再写redis
      * @param $uid
-     * @return mixed
+     * @return Users|null
      */
     public function getUserByUid($uid)
     {
@@ -225,14 +226,9 @@ class UserService extends Service
             $user = (new Users())->forceFill($this->redis->hgetall($hashtable));
         } else {
             $user = Users::find($uid);
-            $this->redis->hmset($hashtable, $user);
+            $this->redis->hmset($hashtable, $user->toArray());
         }
-        //已禁止账号不写redis
-       if ($user && $user->banned()) {
-            $this->deleteUserSession($user);
-            if ($user->uid===Auth::id())throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => 'banned']));
-        }
-        return $user;
+        return $this->user=$user;
     }
 
     /**
@@ -590,9 +586,7 @@ class UserService extends Service
     public function getModNickNameStatus()
     {
         /** 先查询购买的权限 */
-        //查询购买记录
-        $redis = $this->make('redis');
-        $flag = intval($redis->hget('modify.nickname', $this->user['uid']));
+        $flag = intval(Redis::hget('modify.nickname', $this->user['uid']));
         if ($flag >= 1) {
             return ['num' => $flag];
         }

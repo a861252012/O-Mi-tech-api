@@ -27,18 +27,6 @@ class SessionGuard extends Guard
     const  WEB_SECRET_KEY = 'c5ff645187eb7245d43178f20607920e456';
 
     /**
-     * Determine if the user matches the credentials.
-     *
-     * @param  mixed $user
-     * @param  array $credentials
-     * @return bool
-     */
-    protected function hasValidCredentials($user, $credentials)
-    {
-        return !is_null($user) && $this->provider->validateCredentials($user, $credentials);
-    }
-
-    /**
      * Log a user into the application.
      *
      * @param  \Illuminate\Contracts\Auth\Authenticatable $user
@@ -66,6 +54,11 @@ class SessionGuard extends Guard
         $this->setUser($user);
     }
 
+    public function logout()
+    {
+        Redis::hdel('huser_sid', $this->id());
+        parent::logout();
+    }
 
     /**
      * @param $id
