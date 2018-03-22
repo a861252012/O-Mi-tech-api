@@ -1,7 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
-use App;
+
+use App\Facades\Site;
 use App\Models\AgentsPriv;
 use App\Models\AgentsRelationship;
 use App\Models\Anchor;
@@ -25,146 +26,149 @@ use App\Models\UserCommission;
 use App\Models\UserGroup;
 use App\Models\Users;
 use App\Models\WithDrawalList;
+use App\Services\Message\MessageService;
+use App\Services\User\UserService;
 use Core\Exceptions\NotFoundHttpException;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Input;
+use Illuminate\Support\Facades\Redis;
 use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Illuminate\Support\Facades\Auth;
 
 
 class MemberController extends Controller
 {
-    private $_menus = array(
+    private $_menus = [
         /**
          * role: 0: 所有角色都有， 1, 普通用户才有， 2, 主播才有, 3, 需要后台人工设置
          */
-        array(
+        [
             'role' => 0,
             'action' => 'index',
             'name' => '基本信息',
-        ),
+        ],
         // array(
         //     'action' => 'invite',
         //     'name' => '推广链接',
         //     'ico' => 7,
         // ),
-        array(
+        [
             'role' => 0,
             'action' => 'attention',
             'name' => '我的关注',
             'ico' => 6,
-        ),
-        array(
+        ],
+        [
             'role' => 0,
             'action' => 'scene',
             'name' => '我的道具',
             'ico' => 3,
-        ),
-        array(
+        ],
+        [
             'role' => 0,
             'action' => 'charge',
             'name' => '充值记录',
             'ico' => 5,
-        ),
-        array(
+        ],
+        [
             'role' => 0,
             'action' => 'consumerd',
             'name' => '消费记录',
             'ico' => 8,
-        ),
+        ],
         //消费统计，用户
-        array(
+        [
             'role' => 1,
             'action' => 'count',
             'name' => '消费统计',
             'ico' => 7,
-        ),
+        ],
         //收入统计，主播
-        array(
+        [
             'role' => 2,
             'action' => 'count',
             'name' => '收入统计',
             'ico' => 7,
-        ),
-        array(
+        ],
+        [
             'role' => 0,
             'action' => 'vip',
             'name' => '贵族体系',
             'ico' => 8,
-        ),
-        array(
+        ],
+        [
             'role' => 0,
             'action' => 'password',
             'name' => '密码管理',
             'ico' => 2,
-        ),//主播才有
-        array(
+        ],//主播才有
+        [
             'role' => 0,
             'action' => 'myReservation',
             'name' => '我的预约',
             'ico' => 2,
-        ),//主播才有
-        array(
+        ],//主播才有
+        [
             'role' => 2,
             'action' => 'roomset',
             'name' => '房间管理',//房间管理员
             'ico' => 2,
-        ),//主播才有
-        array(
+        ],//主播才有
+        [
             'role' => 3,
             'action' => 'transfer',
             'name' => '转账',
             'ico' => 8,
-        ),//主播才有
-        array(
+        ],//主播才有
+        [
             'role' => 2,
             'action' => 'withdraw',
             'name' => '提现',
             'ico' => 9,
-        ),
-        array(
+        ],
+        [
             'role' => 2,
             'action' => 'anchor',
             'name' => '主播中心',
             'ico' => 4,
-        ),//主播才有
-        array(
+        ],//主播才有
+        [
             'role' => 0,
             'action' => 'gamelist',
             'name' => '房间游戏',
             'ico' => 4,
-        ),//主播才有
-        array(
+        ],//主播才有
+        [
             'role' => 2,
             'action' => 'commission',
             'name' => '佣金统计',
             'ico' => 7,
-        ),//主播才有
-        array(
+        ],//主播才有
+        [
             'role' => 2,
             'action' => 'live',
             'name' => '直播记录',
             'ico' => 8,
-        ),//主播才有
-        array(
+        ],//主播才有
+        [
             'role' => 0,
             'action' => 'msglist',
             'name' => '消息',
             'ico' => '0',
-        ),
-        array(
+        ],
+        [
             'role' => 0,
             'action' => 'agents',
             'name' => '代理数据',
             'ico' => '0',
-        )
-    );
+        ],
+    ];
 
     /**
      * 用户中心需要的信息初始化
@@ -187,7 +191,7 @@ class MemberController extends Controller
      * [assignMenu 分配用户中心菜单到模板]
      *
      * 添加转帐权限功能做了重构
-     * @author dc <dc#wisdominfo.my> && young
+     * @author  dc <dc#wisdominfo.my> && young
      * @version 2016-9-8 显示权限做了重构
      * @return  Response
      */
@@ -198,7 +202,7 @@ class MemberController extends Controller
         //$anchor = array('anchor', 'live', 'withdraw', 'roomset', 'commission', 'roomadmin');
         $hasAgentsPriv = AgentsPriv::where('uid', $this->userInfo['uid'])->count();
 
-        $params['menus_list'] = array();
+        $params['menus_list'] = [];
 
         foreach ($this->_menus as $key => $item) {
 
@@ -259,46 +263,39 @@ class MemberController extends Controller
         $userService = resolve(UserService::class);
         $modNickName = $userService->setUser((new Users)->forceFill($userService->getUserByUid(Auth::id())))->getModNickNameStatus();//2017-05-12 nicholas 优化，不直接读库
         //print_r($modNickName);die();
-        return $this->render('Member/index', array('modNickName' => $modNickName));
+        return $this->render('Member/index', ['modNickName' => $modNickName]);
     }
 
     /**
      * 用户中心 消息 列表页面
      *
-     * @param int $type 消息类型 默认2为私信
-     *  1 系统消息
-     *  2 私信
-     * @return \Core\Response
-     * @author TX
+     * @param int $type 消息类型
+     *                  1 系统消息
+     *                  2 私信
+     * @return JsonResponse
+     * @author Nicholas
      */
     public function msglist($type = 1)
     {
-        // v2项目中只限制为系统消息
-        if ($type != 1) {
-            throw new NotFoundHttpException('not found!');
-        }
         // 调用消息服务
-        $msg = $this->container->make('messageServer');
+        $msg = resolve(MessageService::class);
 
         // 根据用户登录的uid或者用户消息的分页数据
-        $ms = $msg->getMessageByUidAndType(Auth::id(), $type, '', $this->userInfo['lv_rich']);
+        $ms = $msg->getMessageByUidAndType(Auth::id(), $type, '', Auth::user()->lv_rich);
 
         // 更新读取的状态
-        $msg->updateMessageStatus(Auth::id(), $type);
+        $msg->updateMessageStatus(Auth::id());
 
-        // 不同的消息类型做不同的模板 （移除私信 by Young）
-        //$tpl = 'Member/msglist' . $type;
-        $tpl = 'Member/msglist';
-
-        //移除私信 By Young
-        //return $this->render($tpl, array('data' => $ms, 'msglist1' => '系统消息', 'msglist2' => '私信'));
-        return $this->render($tpl, array('data' => $ms, 'msglist' => '系统消息'));
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => $ms,
+        ]);
     }
 
     /**
      * [transfer 转帐功能]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-13
      * @return  JsonResponse
      */
@@ -332,24 +329,24 @@ class MemberController extends Controller
          * 转帐处理过程
          * @todo 待优化
          */
-        if (!Captcha::check($request->get('code'))) return new JsonResponse(array('status' => 0, 'message' => '验证码错误!'));;
+        if (!Captcha::check($request->get('code'))) return new JsonResponse(['status' => 0, 'message' => '验证码错误!']);;
         //收款人信息
         $username = $request->get('username');
         $points = $request->get('points');
         $content = $request->get('content');
 
-        if ($username == $this->userInfo['username']) return new JsonResponse(array('status' => 0, 'message' => '不能转给自己!'));
+        if ($username == $this->userInfo['username']) return new JsonResponse(['status' => 0, 'message' => '不能转给自己!']);
 
-        if (intval($points) < 1) return new JsonResponse(array('status' => 0, 'message' => '转帐金额错误!'));
+        if (intval($points) < 1) return new JsonResponse(['status' => 0, 'message' => '转帐金额错误!']);
 
         //获取转到用户信息
         $user = resolve(UserService::class)->getUserByUsername($username);
 
-        if (!$user) return new JsonResponse(array('status' => 0, 'message' => '对不起！该用户不存在'));
+        if (!$user) return new JsonResponse(['status' => 0, 'message' => '对不起！该用户不存在']);
 
-        if (!$this->userInfo['transfer']) return new JsonResponse(array('status' => 0, 'message' => '对不起！您没有该权限！'));
+        if (!$this->userInfo['transfer']) return new JsonResponse(['status' => 0, 'message' => '对不起！您没有该权限！']);
 
-        if ($this->userInfo['points'] < $points) return new JsonResponse(array('status' => 0, 'message' => '对不起！您的钻石余额不足!'));
+        if ($this->userInfo['points'] < $points) return new JsonResponse(['status' => 0, 'message' => '对不起！您的钻石余额不足!']);
 
         //开始转帐事务处理
         DB::beginTransaction();
@@ -361,18 +358,18 @@ class MemberController extends Controller
             //update(array('points' => $user['points'] + $points));
 
             //记录转帐
-            DB::table((new Transfer)->getTable())->insert(array('by_uid' => $uid, 'by_nickname' => $this->userInfo['nickname'], 'to_uid' => $user['uid'], 'to_nickname' => $user['nickname'], 'points' => $points, 'content' => $content, 'datetime' => date('Y-m-d H:i:s'), 'status' => 1));
+            DB::table((new Transfer)->getTable())->insert(['by_uid' => $uid, 'by_nickname' => $this->userInfo['nickname'], 'to_uid' => $user['uid'], 'to_nickname' => $user['nickname'], 'points' => $points, 'content' => $content, 'datetime' => date('Y-m-d H:i:s'), 'status' => 1]);
 
             //写入recharge表方便保级运算
-            DB::table((new Recharge)->getTable())->insert(array('uid' => $user['uid'], 'points' => $points, 'paymoney' => round($points/10,2), 'created' => date('Y-m-d H:i:s'), 'order_id' => 'transfer_' . $uid . '_to_' . $user['uid'] . '_' . uniqid(), 'pay_type' => 7, 'pay_status' => 2, 'nickname' => $user['nickname']));
+            DB::table((new Recharge)->getTable())->insert(['uid' => $user['uid'], 'points' => $points, 'paymoney' => round($points / 10, 2), 'created' => date('Y-m-d H:i:s'), 'order_id' => 'transfer_' . $uid . '_to_' . $user['uid'] . '_' . uniqid(), 'pay_type' => 7, 'pay_status' => 2, 'nickname' => $user['nickname']]);
 
 
             //发送成功消息给转帐人
-            $from_user_transfer_message = array('mail_type' => 3, 'rec_uid' => $uid, 'content' => '您成功转出' . $points . '钻石到 ' . $username . ' 帐户');
+            $from_user_transfer_message = ['mail_type' => 3, 'rec_uid' => $uid, 'content' => '您成功转出' . $points . '钻石到 ' . $username . ' 帐户'];
             $this->make('messageServer')->sendSystemToUsersMessage($from_user_transfer_message);
 
             //发送成功消息给收帐人
-            $to_user_transfer_message = array('mail_type' => 3, 'rec_uid' => $user['uid'], 'content' => '您成功收到由 "' . $this->userInfo['nickname'] . '" 转到您帐户' . $points . '钻石');
+            $to_user_transfer_message = ['mail_type' => 3, 'rec_uid' => $user['uid'], 'content' => '您成功收到由 "' . $this->userInfo['nickname'] . '" 转到您帐户' . $points . '钻石'];
             $this->make('messageServer')->sendSystemToUsersMessage($to_user_transfer_message);
 
             DB::commit();//事务提交
@@ -386,10 +383,10 @@ class MemberController extends Controller
             resolve(UserService::class)->getUserReset($user['uid']);
 
 
-            return new JsonResponse(array('status' => 1, 'message' => '您成功转出' . $points . '钻石'));
+            return new JsonResponse(['status' => 1, 'message' => '您成功转出' . $points . '钻石']);
         } catch (\Exception $e) {
             DB::rollBack();//事务回滚
-            return new JsonResponse(array('status' => 0, 'message' => '对不起！转帐失败!'));
+            return new JsonResponse(['status' => 0, 'message' => '对不起！转帐失败!']);
         }
     }
 
@@ -417,28 +414,28 @@ class MemberController extends Controller
             ->where('pay_status', 1)
             ->whereIn('pay_type', [1, 4, 7])
             ->sum('paymoney');
-        $recharge_points = $recharge_points*10;
+        $recharge_points = $recharge_points * 10;
         $rebate_points = ($recharge_points * $agentsPriv->agents->rebate) / 100;
 
         $agent_members = AgentsRelationship::where('aid', $agentsPriv->aid)->count();
 
-        $list = array(
-            array(
+        $list = [
+            [
                 'aid' => $agentsPriv->aid,
                 'username' => $agentsPriv->agents->agentaccount,
                 'nickname' => $agentsPriv->agents->nickname,
                 'members' => $agent_members,
                 'recharge_points' => $recharge_points,
                 'rebate_points' => $rebate_points,
-            )
-        );
+            ],
+        ];
         return $this->render('Member/agents', ['data' => $list, 'mintimeDate' => $mintimeDate, 'maxtimeDate' => $maxtimeDate]);
     }
 
     /**
      * [roomadmin 个人中心房间管理员管理]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-17
      * @return  JsonResponse
      */
@@ -451,10 +448,10 @@ class MemberController extends Controller
         if ($request->getMethod() == 'POST' && $request->get('type') == 'delete') {
             $uid = $request->get('uid');
             //管理员软删除操作
-            RoomAdmin::where('rid', $rid)->where('uid', $uid)->update(array('dml_flag' => 3));
+            RoomAdmin::where('rid', $rid)->where('uid', $uid)->update(['dml_flag' => 3]);
             //删除redis管理员记录
             $this->make('redis')->srem('video:manage:' . $rid, $uid);
-            return new JsonResponse(array('status' => 1, 'message' => '删除成功!'));
+            return new JsonResponse(['status' => 1, 'message' => '删除成功!']);
         }
 
         //管理员数据列表
@@ -472,7 +469,7 @@ class MemberController extends Controller
         /**
          * 获取开通过的日志 最新一条就是当前
          */
-        $log = array();
+        $log = [];
         // 如果用户还是贵族状态的话  就判断充值的情况用于保级
         $startTime = strtotime($this->userInfo['vip_end']) - 30 * 24 * 60 * 60;
         if ($this->userInfo['vip']) {
@@ -512,7 +509,7 @@ class MemberController extends Controller
             //dc修改容错处理
             if ($log) $log->charge = $charge;
         }
-        $data = array();
+        $data = [];
         $data['item'] = $log;
 
         return $this->render('Member/vip', $data);
@@ -521,7 +518,7 @@ class MemberController extends Controller
     /**
      * 用户中心 主播佣金统计
      * @author raby
-     * @date 2019-9-29
+     * @date   2019-9-29
      */
     public function commission()
     {
@@ -577,17 +574,17 @@ class MemberController extends Controller
         $short_url = $this->_buildWeiboShortUrl($userUrl);
         $inviteUrl = $short_url ?: $userUrl;
 
-        return $this->render('Member/invite', array('inviteurl' => $inviteUrl));
+        return $this->render('Member/invite', ['inviteurl' => $inviteUrl]);
     }
 
     /**
      * 通过新浪微薄平台生成短网址
      * @param $url
      * @return bool|string
-     * @author D.C
-     * @update 2015-02-05
+     * @author  D.C
+     * @update  2015-02-05
      * @version 1.0
-     * @todo目前由于该api-key身份验证问题，新浪有一定的流量限制，无法保证所有用户都能生成短网址
+     * @todo    目前由于该api-key身份验证问题，新浪有一定的流量限制，无法保证所有用户都能生成短网址
      */
     private function _buildWeiboShortUrl($url)
     {
@@ -638,18 +635,18 @@ class MemberController extends Controller
         $data = $userServer->getUserAttens(Auth::id(), $curpage);
 
         return $this->render('Member/attention',
-            array(
+            [
                 'curmenu' => 'attention',
                 'attenlist' => $data['data'],
-                'pagination' => $data['pagination']
-            ));
+                'pagination' => $data['pagination'],
+            ]);
     }
 
     /**
      * 用户中心 我的道具
      * scene Action
-     * @author D.C
-     * @update 2014.11.07
+     * @author  D.C
+     * @update  2014.11.07
      * @version 1.1
      * @return Response
      */
@@ -663,7 +660,7 @@ class MemberController extends Controller
             if (is_array($handle)) {
                 return new JsonResponse($handle);
             } else {
-                $result = json_encode(array('status' => 101, 'messages' => '操作出现未知错误！'));
+                $result = json_encode(['status' => 101, 'messages' => '操作出现未知错误！']);
             }
         }
         $data = Pack::with('mountGroup')->where('uid', $uid)->paginate();
@@ -706,18 +703,18 @@ class MemberController extends Controller
          */
         $goods = Goods::find($gid);
         if ($goods['gid'] < 120001 || $goods['gid'] > 121000) {
-            return array('status' => 2, 'messages' => '对不起！该道具限房间内使用,不能装备！');
+            return ['status' => 2, 'messages' => '对不起！该道具限房间内使用,不能装备！'];
         }
 
         /**
          * 使用Redis进行装备道具
-         * @todo目前道具道备只在Redis上实现，并未进行永久化存储。目前产品部【Antony】表示保持现状。
+         * @todo   目前道具道备只在Redis上实现，并未进行永久化存储。目前产品部【Antony】表示保持现状。
          * @update 2014.12.15 14:35 pm (Antony要求将道具改为同时只能装备一个道具！)
          */
         $redis = $this->make('redis');
         $redis->del('user_car:' . $uid);
         $redis->hset('user_car:' . $uid, $gid, $pack['expires']);
-        return array('status' => 1, 'messages' => '装备成功');
+        return ['status' => 1, 'messages' => '装备成功'];
     }
 
     /**
@@ -736,19 +733,19 @@ class MemberController extends Controller
             ->orderBy('id', 'DESC')->paginate();
 
         $userInfo = $this->userInfo;
-        $rtn = array(
+        $rtn = [
             'chargelist' => $chargelist,
             'user' => $userInfo,
-        );
+        ];
         return $this->render('Member/charge', $rtn);
     }
 
     /**
      * 用户中心 消费记录 TODO 优化用户的获取
      *
-     * @author D.C
+     * @author  D.C
      * @version 1.0
-     * @update 2014.11.7
+     * @update  2014.11.7
      * @return Response
      */
     public function consumerd()
@@ -765,7 +762,7 @@ class MemberController extends Controller
     /**
      * 用户中心 密码管理
      * @name password
-     * @author D.C
+     * @author  D.C
      * @version 1.0
      * @return Response
      */
@@ -779,40 +776,40 @@ class MemberController extends Controller
         if ($this->make('request')->getMethod() === 'POST') {
             $post = $this->make('request')->request->all();
             if (!Captcha::check(Input::get('captcha'))) {
-                return new JsonResponse(array('code' => 300, 'msg' => '对不起，验证码错误!'));
+                return new JsonResponse(['code' => 300, 'msg' => '对不起，验证码错误!']);
             }
 
             if (empty($post['password'])) {
-                return new JsonResponse(array('code' => 301, 'msg' => '原始密码不能为空！'));
+                return new JsonResponse(['code' => 301, 'msg' => '原始密码不能为空！']);
             }
 
 
             if (strlen($post['password1']) < 6 || strlen($post['password2']) < 6) {
-                return new JsonResponse(array('code' => 302, 'msg' => '请输入大于或等于6位字符串长度'));
+                return new JsonResponse(['code' => 302, 'msg' => '请输入大于或等于6位字符串长度']);
             }
 
             if ($post['password1'] != $post['password2']) {
-                return new JsonResponse(array('code' => 303, 'msg' => '新密码两次输入不一致!'));
+                return new JsonResponse(['code' => 303, 'msg' => '新密码两次输入不一致!']);
             }
 
             $old_password = $this->make('redis')->hget('huser_info:' . $uid, 'password');
             $new_password = md5($post['password2']);
             if (md5($post['password']) != $old_password) {
-                return new JsonResponse(array('code' => 303, 'msg' => '原始密码错误!'));
+                return new JsonResponse(['code' => 303, 'msg' => '原始密码错误!']);
             }
             if ($old_password == $new_password) {
-                return new JsonResponse(array('code' => 305, 'msg' => '新密码和原密码相同'));
+                return new JsonResponse(['code' => 305, 'msg' => '新密码和原密码相同']);
             }
 
             $user = Users::find($uid);
             $user->password = $new_password;
             if (!$user->save()) {
-                return new JsonResponse(array('code' => 304, 'msg' => '修改失败!'));
+                return new JsonResponse(['code' => 304, 'msg' => '修改失败!']);
             }
 
             // 删除A域名上的session 踢出用户
-           // $sid_a = $this->make('redis')->hget('huser_sid_a', Auth::id());
-           // $this->make('redis')->del('PHPREDIS_SESSION:' . $sid_a);
+            // $sid_a = $this->make('redis')->hget('huser_sid_a', Auth::id());
+            // $this->make('redis')->del('PHPREDIS_SESSION:' . $sid_a);
 
             // 删除B域名上的session 踢出用户
             $sid = $this->make('redis')->hget('huser_sid', Auth::id());
@@ -822,7 +819,7 @@ class MemberController extends Controller
             $this->_reqSession->invalidate();//销毁session,生成新的sesssID
             //更新用户redis
             resolve(UserService::class)->getUserReset($uid);
-            return new JsonResponse(array('code' => 0, 'msg' => '修改成功!请重新登录'));
+            return new JsonResponse(['code' => 0, 'msg' => '修改成功!请重新登录']);
         }
 
         return $this->render('Member/password');
@@ -840,7 +837,7 @@ class MemberController extends Controller
         $page1 = $this->request()->input('page1', 1);
         $page2 = $this->request()->input('page2', 1);
         $tab = $this->request()->input('tab', 'one2one');
-        $status = array();
+        $status = [];
         for ($i = 1; $i <= 7; $i++) {//获取房间状态，从2到7的状态
             $ROOM = $this->getRoomStatus(Auth::id(), $i);//获取对应的房间权限状态
             if (!empty($ROOM)) {
@@ -880,8 +877,8 @@ class MemberController extends Controller
 
     /**
      * @description 获取房间权限
-     * @author TX
-     * @date 2015.4.20
+     * @author      TX
+     * @date        2015.4.20
      */
     public function getRoomStatus($uid, $tid)
     {
@@ -944,7 +941,7 @@ class MemberController extends Controller
             $user = $userService->getUserByUid($item->uid);
             $item->nickname = isset($user['nickname']) ? $user['nickname'] : '';
         });
-        return new JsonResponse(array('code' => 1, 'msg' => $buyOneToMore));
+        return new JsonResponse(['code' => 1, 'msg' => $buyOneToMore]);
     }
 
     /**
@@ -961,27 +958,27 @@ class MemberController extends Controller
     public function roomOneToMore()
     {
 
-       $start_time = $this->make('request')->get('mintime');
+        $start_time = $this->make('request')->get('mintime');
         $hour = $this->make('request')->get('hour');
         $minute = $this->make('request')->get('minute');
         $tid = $this->make('request')->get('tid');
         $duration = $this->make('request')->get('duration');
         $points = $this->make('request')->get('points');
 
-        if (!in_array($duration, array(20, 25, 30, 35, 40, 45, 50, 55, 60))) return new JsonResponse(array('code' => 9, 'msg' => '请求错误'));
+        if (!in_array($duration, [20, 25, 30, 35, 40, 45, 50, 55, 60])) return new JsonResponse(['code' => 9, 'msg' => '请求错误']);
 
-        if ($points > 99999 || $points <= 0) return new JsonResponse(array('code' => 3, 'msg' => '金额超出范围'));
+        if ($points > 99999 || $points <= 0) return new JsonResponse(['code' => 3, 'msg' => '金额超出范围']);
 
-        if (empty($tid) || empty($start_time) || empty($duration)) return new JsonResponse(array('code' => 4, 'msg' => '请求错误1'));
+        if (empty($tid) || empty($start_time) || empty($duration)) return new JsonResponse(['code' => 4, 'msg' => '请求错误1']);
 
         $start_time = date("Y-m-d H:i:s", strtotime($start_time . ' ' . $hour . ':' . $minute . ':00'));
 
-        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(array('code' => 6, 'msg' => '不能设置过去的时间'));
+        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(['code' => 6, 'msg' => '不能设置过去的时间']);
 
         //$room_config = $this->getRoomStatus(Auth::id(),7);
         $endtime = date('Y-m-d H:i:s', strtotime($start_time) + $duration * 60);
 
-        if (!$this->notSetRepeat($start_time, $endtime)) return new JsonResponse(array('code' => 2, 'msg' => '你这段时间和一对一或一对多有重复的房间'));
+        if (!$this->notSetRepeat($start_time, $endtime)) return new JsonResponse(['code' => 2, 'msg' => '你这段时间和一对一或一对多有重复的房间']);
 
         //添加
         /** @var \Redis $redis */
@@ -1021,8 +1018,8 @@ class MemberController extends Controller
                 }
             }
         }
-        if(empty($uids)){
-            return new JsonResponse(array('status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间'));
+        if (empty($uids)) {
+            return new JsonResponse(['status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间']);
         }
 
 
@@ -1038,7 +1035,6 @@ class MemberController extends Controller
         $oneToMoreRoom->tickets = $tickets;
         $oneToMoreRoom->points = $points;
         $oneToMoreRoom->save();
-
 
 
         if ($uids) {
@@ -1076,11 +1072,11 @@ class MemberController extends Controller
         ];
         $rs = $this->make('redis')->hmset('hroom_whitelist:' . $duroom['uid'] . ':' . $duroom->id, $temp);
 
-        $logPath =  base_path() . '/storage/logs/one2more_' . date('Ym') . '.log';
+        $logPath = base_path() . '/storage/logs/one2more_' . date('Ym') . '.log';
         $one2moreLog = 'hroom_whitelist:' . $duroom['uid'] . ':' . $duroom->id . ' ' . json_encode($temp) . "\n";
         $this->logResult('roomOneToMore  ' . $one2moreLog, $logPath);
 
-        return new JsonResponse(array('status' => 1, 'msg' =>'添加成功！'));
+        return new JsonResponse(['status' => 1, 'msg' => '添加成功！']);
     }
 
     /**
@@ -1092,16 +1088,16 @@ class MemberController extends Controller
     {
         return JsonResponse::create(['code' => 0, 'msg' => '非法操作']);//禁止用户修改
         $timecost = $this->make('request')->get('timecost');
-        if ($timecost <= 0 || $timecost > 999999) return new JsonResponse(array('code' => "301", 'msg' => '金额设置有误'));
+        if ($timecost <= 0 || $timecost > 999999) return new JsonResponse(['code' => "301", 'msg' => '金额设置有误']);
 
         //todo 时长房直播，并且开启时，不处理
         $timecost_status = $this->make("redis")->hget("htimecost:" . Auth::id(), "timecost_status");
-        if ($timecost_status == 1) return new JsonResponse(array('code' => "302", 'msg' => '时长房直播中,不能设置'));
+        if ($timecost_status == 1) return new JsonResponse(['code' => "302", 'msg' => '时长房直播中,不能设置']);
 
         RoomStatus::where("uid", Auth::id())->where("tid", 6)->where("status", 1)->update(['timecost' => $timecost]);
 
         $this->make("redis")->hset("hroom_status:" . Auth::id() . ":6", "timecost", $timecost);
-        return new JsonResponse(array('code' => 1, 'msg' => '设置成功'));
+        return new JsonResponse(['code' => 1, 'msg' => '设置成功']);
     }
 
     /**
@@ -1117,13 +1113,13 @@ class MemberController extends Controller
         $minute = $this->make('request')->get('minute');
         $tid = $this->make('request')->get('tid');
         $duration = $this->make('request')->get('duration');
-        if (!in_array($duration, array(25, 55))) return new JsonResponse(array('code' => 9, 'msg' => '请求错误'));
+        if (!in_array($duration, [25, 55])) return new JsonResponse(['code' => 9, 'msg' => '请求错误']);
 
         // 判断是否为手动输入 如果手动输入需要大于1万才行
         $select_points = $this->make('request')->get('select-points');
         $input_points = $this->make('request')->get('input-points');
         if (empty($select_points) && $input_points < 10000) {
-            return new JsonResponse(array('code' => 2, 'msg' => '手动设置的钻石数必须大于1万'));
+            return new JsonResponse(['code' => 2, 'msg' => '手动设置的钻石数必须大于1万']);
         } else {
             $points = $input_points;
         }
@@ -1131,13 +1127,13 @@ class MemberController extends Controller
             $points = $select_points;
         }
 
-        if (empty($tid) || empty($start_time) || empty($duration) || empty($points)) return new JsonResponse(array('code' => 4, 'msg' => '请求错误'));
+        if (empty($tid) || empty($start_time) || empty($duration) || empty($points)) return new JsonResponse(['code' => 4, 'msg' => '请求错误']);
         $start_time = date("Y-m-d H:i:s", strtotime($start_time . ' ' . $hour . ':' . $minute . ':00'));
         $theday = date("Y-m-d H:i:s", mktime(23, 59, 59, date("m"), date("d") + 7, date("Y")));
 
-        if ($theday < date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(array('code' => 5, 'msg' => '只能设置未来七天以内'));
+        if ($theday < date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(['code' => 5, 'msg' => '只能设置未来七天以内']);
 
-        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(array('code' => 6, 'msg' => '不能设置过去的时间'));
+        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(['code' => 6, 'msg' => '不能设置过去的时间']);
 
         $durationRoom = new RoomDuration();
         $durationRoom->created = date('Y-m-d H:i:s');
@@ -1152,9 +1148,9 @@ class MemberController extends Controller
         if ($this->notSetRepeat($start_time, $endtime)) {
             $durationRoom->save();
             $this->set_durationredis($durationRoom);
-            return new JsonResponse(array('code' => 1, 'msg' => '添加成功'));
+            return new JsonResponse(['code' => 1, 'msg' => '添加成功']);
         } else {
-            return new JsonResponse(array('code' => 2, 'msg' => '你这段时间有重复的房间'));
+            return new JsonResponse(['code' => 2, 'msg' => '你这段时间有重复的房间']);
         }
 
     }
@@ -1171,11 +1167,11 @@ class MemberController extends Controller
         $password = '';
         if ($room_radio == 'true') $password = $this->make('request')->get('password');
         if (empty($password) && $room_radio == 'true') {
-            return new JsonResponse(array('code' => 2, 'msg' => '密码不能为空'));
+            return new JsonResponse(['code' => 2, 'msg' => '密码不能为空']);
         }
         if ($room_radio == 'true')//判断密码格式,密码格式和用户注册的密码格式是一样的
             if ($room_radio == 'true' && strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
-                return new JsonResponse(array('code' => 3, 'msg' => '密码格式不对'));
+                return new JsonResponse(['code' => 3, 'msg' => '密码格式不对']);
             }
 //        $this->getRedis();
         $this->make('redis')->hset('hroom_status:' . Auth::id() . ':2', 'pwd', $password);
@@ -1185,8 +1181,8 @@ class MemberController extends Controller
 //        $em->persist($roomtype);
 //        $em->flush();
         $roomtype = RoomStatus::where('uid', Auth::id())->where('tid', 2)->update(['pwd' => $password]);
-        if ($room_radio == 'false') return new JsonResponse(array('code' => 1, 'msg' => '密码关闭成功'));
-        return new JsonResponse(array('code' => 1, 'msg' => '密码修改成功'));
+        if ($room_radio == 'false') return new JsonResponse(['code' => 1, 'msg' => '密码关闭成功']);
+        return new JsonResponse(['code' => 1, 'msg' => '密码修改成功']);
     }
 
     /**
@@ -1200,8 +1196,8 @@ class MemberController extends Controller
         $password = $this->request()->get('password');
         $rid = $this->request()->get('roomid');
         $type = $this->getAnchorRoomType($rid);
-        if ($type != 2) return new JsonResponse(array('code' => 0, 'msg' => '密码房异常,请联系运营重新开启一下密码房间的开关'));
-        if (empty($rid)) return new JsonResponse(array('code' => 0, 'msg' => '房间号错误!'));
+        if ($type != 2) return new JsonResponse(['code' => 0, 'msg' => '密码房异常,请联系运营重新开启一下密码房间的开关']);
+        if (empty($rid)) return new JsonResponse(['code' => 0, 'msg' => '房间号错误!']);
         if (empty($password)) {
             return $this->geterrorsAction();
         }
@@ -1214,18 +1210,18 @@ class MemberController extends Controller
         if ($times >= 5) {
             $captcha = $this->request()->get('captcha');
             if (empty($captcha)) {
-                return new JsonResponse(array('code' => 4, 'msg' => '请输入验证码!', 'times' => $times));
+                return new JsonResponse(['code' => 4, 'msg' => '请输入验证码!', 'times' => $times]);
             }
-            if (!Captcha::check($captcha)) return new JsonResponse(array('code' => 0, 'msg' => '验证码错误!', 'times' => $times));
+            if (!Captcha::check($captcha)) return new JsonResponse(['code' => 0, 'msg' => '验证码错误!', 'times' => $times]);
         }
         if (strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
             $this->make('redis')->set($keys_room, $times + 1);
             $this->make('redis')->expire($keys_room, 3600);
-            return new JsonResponse(array(
+            return new JsonResponse([
                 "code" => 0,
                 "msg" => "密码格式错误!",
-                'times' => $times + 1
-            ));
+                'times' => $times + 1,
+            ]);
         }
         if ($password != $roomstatus['pwd']) {
             if (empty($times)) {
@@ -1235,14 +1231,14 @@ class MemberController extends Controller
                 $this->make('redis')->set($keys_room, $times + 1);
                 $this->make('redis')->expire($keys_room, 3600);
             }
-            return new JsonResponse(array(
+            return new JsonResponse([
                 "code" => 0,
                 "msg" => "密码错误!",
-                'times' => $times + 1
-            ));
+                'times' => $times + 1,
+            ]);
         }
         $this->make('redis')->hset('keys_room_passwd:' . $rid . ':' . $sessionid, 'status', 1);
-        return new JsonResponse(array('code' => 1, 'msg' => '登陆成功'));
+        return new JsonResponse(['code' => 1, 'msg' => '登陆成功']);
     }
 
     /**
@@ -1254,7 +1250,7 @@ class MemberController extends Controller
     public function geterrorsAction()
     {
         $rid = $this->request()->get('roomid');
-        if (empty($rid)) return new JsonResponse(array('code' => 2, 'msg' => '房间号错误!'));
+        if (empty($rid)) return new JsonResponse(['code' => 2, 'msg' => '房间号错误!']);
 //        $this->get('session')->start();
         $session_name = $this->request()->getSession()->getName();
         if (isset($_POST[$session_name])) {
@@ -1264,7 +1260,7 @@ class MemberController extends Controller
         $keys_room = 'keys_room_errorpasswd:' . $sessionid . ':' . $rid;
         $times = $this->make('redis')->hget($keys_room, 'times');
         if (empty($times)) $times = 0;
-        return new JsonResponse(array('code' => 1, 'times' => $times));
+        return new JsonResponse(['code' => 1, 'times' => $times]);
     }
 
     /**
@@ -1278,7 +1274,7 @@ class MemberController extends Controller
     {
         $type = $this->make('request')->get('type') ?: 1;
         $rooms['type'] = $type;
-        $rooms['data'] = array();
+        $rooms['data'] = [];
         $userServer = resolve(UserService::class);
         switch ($type) {
             case 2:
@@ -1308,12 +1304,12 @@ class MemberController extends Controller
         $roomlists = $this->getReservation(Auth::id());
         $roomlist = array_slice($roomlists, ($thispage - 1) * 6, 6);
         $Count = count($roomlists);
-        $rooms['pagination'] = array(
+        $rooms['pagination'] = [
             'page' => $thispage,
             'count' => $Count,
             'pages' => ceil($Count / 6),
-        );
-        $rooms['room'] = array();
+        ];
+        $rooms['room'] = [];
 
         $redis = $this->make('redis');
         foreach ($roomlist as $keys => $value) {
@@ -1329,7 +1325,7 @@ class MemberController extends Controller
             $image_server = rtrim($this->container->config['config.REMOTE_PIC_URL'], '/') . '/';
             $rooms['room'][$keys]['cover'] = $cover ? $image_server . $cover : false;
         }
-        $rooms['uri'] = array();
+        $rooms['uri'] = [];
         $uriParammeters = $this->make('request')->query->all();
         foreach ($uriParammeters as $p => $v) {
             if (strstr($p, '?')) continue;
@@ -1350,17 +1346,17 @@ class MemberController extends Controller
     public function getReservation($uid)
     {
         $uids = $this->getRoomUid($uid);
-        $rooms = array();
-        $user_key = array();
+        $rooms = [];
+        $user_key = [];
         array_push($user_key, 'hroom_duration:' . $uid . ':4');
         $key = 'hroom_duration:*';
 //        $keys = array();
         $keys = $this->make('redis')->getKeys($key);
         if ($keys == false) {
-            $keys = array();
+            $keys = [];
         }
 
-        $room_reservation = array();
+        $room_reservation = [];
         foreach ($uids['reservation'] as $value) {
             array_push($user_key, 'hroom_duration:' . $value . ':4');
             $roomlist = $this->make('redis')->hGetAll('hroom_duration:' . $value . ':4');
@@ -1375,7 +1371,7 @@ class MemberController extends Controller
             }
             if (count($room_reservation) > 0) array_multisort($edition, SORT_ASC, $room_reservation);
         }
-        $room_attens = array();
+        $room_attens = [];
         foreach ($uids['attens'] as $value) {
             array_push($user_key, 'hroom_duration:' . $value . ':4');
             $roomlist = $this->make('redis')->hGetAll('hroom_duration:' . $value . ':4');
@@ -1391,7 +1387,7 @@ class MemberController extends Controller
             if (count($room_attens) > 0) array_multisort($edition_attens, SORT_ASC, $room_attens);
         }
         $keys = array_diff($keys, $user_key);
-        $room_list = array();
+        $room_list = [];
         foreach ($keys as $value) {
             array_push($user_key, $value);
             $roomlist = $this->make('redis')->hGetAll($value);
@@ -1429,20 +1425,20 @@ class MemberController extends Controller
         $roomid = $this->request()->get('duroomid');
         $flag = $this->request()->get('flag');
         if (empty($roomid) || empty($flag)) {
-            return new JsonResponse(array('code' => 408, 'msg' => '请求错误'));
+            return new JsonResponse(['code' => 408, 'msg' => '请求错误']);
         }
         /** @var  $duroom \Video\ProjectBundle\Entity\VideoRoomDuration */
 //        $duroom = $this->getDoctrine()->getManager()->getRepository('Video\ProjectBundle\Entity\VideoRoomDuration')->find($roomid);
         $duroom = RoomDuration::find($roomid);
-        if (empty($duroom)) return new JsonResponse(array('code' => 410, 'msg' => '请求错误'));
-        if (empty($duroom)) return new JsonResponse(array('code' => 401, 'msg' => '您预约的房间不存在'));
-        if ($duroom['status'] == 1) return new JsonResponse(array('code' => 402, 'msg' => '当前的房间已经下线了，请选择其他房间。'));
-        if ($duroom['reuid'] != '0') return new JsonResponse(array('code' => 403, 'msg' => '当前的房间已经被预定了，请选择其他房间。'));
-        if ($duroom['uid'] == Auth::id()) return new JsonResponse(array('code' => 404, 'msg' => '自己不能预约自己的房间'));
-        if ($this->userInfo['points'] < $duroom['points']) return new JsonResponse(array('code' => 405, 'msg' => '余额不足哦，请充值！'));
+        if (empty($duroom)) return new JsonResponse(['code' => 410, 'msg' => '请求错误']);
+        if (empty($duroom)) return new JsonResponse(['code' => 401, 'msg' => '您预约的房间不存在']);
+        if ($duroom['status'] == 1) return new JsonResponse(['code' => 402, 'msg' => '当前的房间已经下线了，请选择其他房间。']);
+        if ($duroom['reuid'] != '0') return new JsonResponse(['code' => 403, 'msg' => '当前的房间已经被预定了，请选择其他房间。']);
+        if ($duroom['uid'] == Auth::id()) return new JsonResponse(['code' => 404, 'msg' => '自己不能预约自己的房间']);
+        if ($this->userInfo['points'] < $duroom['points']) return new JsonResponse(['code' => 405, 'msg' => '余额不足哦，请充值！']);
         //关键点，这个时段内有没有其他的房间重复，标志位为flag 默认值为false 当用户确认后传入的值为true
         if (!$this->checkRoomUnique($duroom, Auth::id()) && $flag == 'false') {
-            return new JsonResponse(array('code' => 407, 'msg' => '您这个时间段有房间预约了，您确定要预约么'));
+            return new JsonResponse(['code' => 407, 'msg' => '您这个时间段有房间预约了，您确定要预约么']);
         }
         $duroom['reuid'] = Auth::id();
         $duroom->save();
@@ -1451,12 +1447,12 @@ class MemberController extends Controller
         if (!($this->checkUserAttensExists(Auth::id(), $duroom['uid'], true, true))) {
             $this->make('redis')->zadd('zuser_reservation:' . Auth::id(), time(), $duroom['uid']);
         }
-        Users::where('uid', Auth::id())->update(array('points' => ($this->userInfo['points'] - $duroom['points']), 'rich' => ($this->userInfo['rich'] + $duroom['points'])));
+        Users::where('uid', Auth::id())->update(['points' => ($this->userInfo['points'] - $duroom['points']), 'rich' => ($this->userInfo['rich'] + $duroom['points'])]);
         resolve(UserService::class)->getUserReset(Auth::id());// 更新redis TODO 好屌
         RoomDuration::where('id', $duroom['id'])
-            ->update(array('reuid' => Auth::id(), 'invitetime' => time()));
+            ->update(['reuid' => Auth::id(), 'invitetime' => time()]);
         //增加消费记录查询
-        MallList::create(array(
+        MallList::create([
             'send_uid' => Auth::id(),
             'rec_uid' => $duroom['uid'],
             'gid' => 410001,
@@ -1464,15 +1460,15 @@ class MemberController extends Controller
             'gnum' => 1,
             'created' => date('Y-m-d H:i:s'),
             'rid' => $duroom['uid'],
-            'points' => $duroom['points']
-        ));
+            'points' => $duroom['points'],
+        ]);
         // 用户增加预约排行榜的排名
         $this->make('redis')->zIncrBy('zrank_appoint_month' . date('Ym'), 1, $duroom['uid']);
         //修改用户日，周，月排行榜数据
         //zrank_rich_history: 用户历史消费    zrank_rich_week ：用户周消费   zrank_rich_day ：用户日消费  zrank_rich_month ：用户月消费
         $expire_day = strtotime(date('Y-m-d 00:00:00', strtotime('next day'))) - time();
         $expire_week = strtotime(date('Y-m-d 00:00:00', strtotime('next week'))) - time();
-        $zrank_user = array('zrank_rich_history', 'zrank_rich_week', 'zrank_rich_day', 'zrank_rich_month:' . date('Ym'));
+        $zrank_user = ['zrank_rich_history', 'zrank_rich_week', 'zrank_rich_day', 'zrank_rich_month:' . date('Ym')];
         foreach ($zrank_user as $value) {
             $this->make('redis')->zIncrBy($value, $duroom['points'], Auth::id());
             if ('zrank_rich_day' == $value) {
@@ -1484,7 +1480,7 @@ class MemberController extends Controller
         }
         //修改主播日，周，月排行榜数据
         //zrank_pop_history ：主播历史消费   zrank_pop_month  ：主播周消费 zrank_pop_week ：主播日消费 zrank_pop_day ：主播月消费
-        $zrank_pop = array('zrank_pop_history', 'zrank_pop_month:' . date('Ym'), 'zrank_pop_week', 'zrank_pop_day');
+        $zrank_pop = ['zrank_pop_history', 'zrank_pop_month:' . date('Ym'), 'zrank_pop_week', 'zrank_pop_day'];
         foreach ($zrank_pop as $value) {
             $this->make('redis')->zIncrBy($value, $duroom['points'], $duroom['uid']);
             if ('zrank_pop_day' == $value) {
@@ -1495,7 +1491,7 @@ class MemberController extends Controller
             }
         }
         $this->make('redis')->lPush('lanchor_is_sub:' . $duroom['uid'], date('YmdHis', strtotime($duroom['starttime'])));
-        return new JsonResponse(array('code' => 1, 'msg' => '预定成功'));
+        return new JsonResponse(['code' => 1, 'msg' => '预定成功']);
     }
 
     /**
@@ -1507,61 +1503,61 @@ class MemberController extends Controller
         // $fid = $this->get('request')->get('fid');
         $tid = $this->make('request')->get('tid');
         if (!Users::find($tid)) {
-            return new Response(json_encode(array(
+            return new Response(json_encode([
                 'ret' => false,
-                'info' => '接受者用户不存在！'
-            )));
+                'info' => '接受者用户不存在！',
+            ]));
         }
         if (Auth::id() == $tid) {
-            return new Response(json_encode(array(
+            return new Response(json_encode([
                 'ret' => false,
-                'info' => '不能给自己发私信！'
-            )));
+                'info' => '不能给自己发私信！',
+            ]));
         }
         $content = $this->make('request')->get('content');
         $len = $this->count_chinese_utf8($content);
         if ($len < 0 || $len > 200) {
-            return new Response(json_encode(array(
+            return new Response(json_encode([
                 'ret' => false,
-                'info' => '输入为空或者输入内容过长，字符长度请限制200以内！'
-            )));
+                'info' => '输入为空或者输入内容过长，字符长度请限制200以内！',
+            ]));
         }
         $userInfo = $this->userInfo;
         if ($userInfo['roled'] == 0 && $userInfo['lv_rich'] < 3) {
-            return new Response(json_encode(array(
+            return new Response(json_encode([
                 'ret' => false,
-                'info' => '财富等级达到二富才能发送私信哦，请先去给心爱的主播送礼物提升财富等级吧。'
-            )));
+                'info' => '财富等级达到二富才能发送私信哦，请先去给心爱的主播送礼物提升财富等级吧。',
+            ]));
         }
 
         $num = $this->checkAstrictUidDay(Auth::id(), 1000, 'video_mail');//验证每天发帖次数
         if ($num == 0) {
-            return new Response(json_encode(array(
+            return new Response(json_encode([
                 'ret' => false,
-                'info' => '本日发送私信数量已达上限，请明天再试！'
-            )));
+                'info' => '本日发送私信数量已达上限，请明天再试！',
+            ]));
         }
 
         $message = new Messages();
-        $res = $message->create(array(
+        $res = $message->create([
             'send_uid' => Auth::id(),
             'rec_uid' => $tid,
             'content' => htmlentities($content),
             'category' => 2,
             'status' => 0,
-            'created' => date('Y-m-d H:i:s')
-        ));
+            'created' => date('Y-m-d H:i:s'),
+        ]);
         if ($res) {
             $this->setAstrictUidDay(Auth::id(), $num, 'video_mail');//更新每天发帖次数
-            return new Response(json_encode(array(
+            return new Response(json_encode([
                 'ret' => true,
-                'info' => '私信发送成功！'
-            )));
+                'info' => '私信发送成功！',
+            ]));
         } else {
-            return new Response(json_encode(array(
+            return new Response(json_encode([
                 'ret' => false,
-                'info' => '私信发送失败！'
-            )));
+                'info' => '私信发送失败！',
+            ]));
         }
     }
 
@@ -1570,8 +1566,8 @@ class MemberController extends Controller
      *
      * @param
      * @return
-     * @author Young
-     * @update 2015-03-30
+     * @author  Young
+     * @update  2015-03-30
      * @version 1.0
      * @todo
      */
@@ -1615,11 +1611,11 @@ class MemberController extends Controller
         $result['user'] = $this->userInfo;
 //        $result['pagination'] = \Video\ProjectBundle\Service\Pagination::page($queryBuilder, $thispage, 10);
 //        $data = $queryBuilder->getResult();
-        $status_array = array(
+        $status_array = [
             '0' => '审批中',
             '1' => '已审批',
-            '2' => '拒绝'
-        );
+            '2' => '拒绝',
+        ];
         foreach ($data as $key => $item) {
             $result['data'][$key]['id'] = $item['id'];
             $result['data'][$key]['withdrawalnu'] = $item->withdrawalnu;
@@ -1630,7 +1626,7 @@ class MemberController extends Controller
 
         }
         $uriParammeters = $this->make('request')->query->all();
-        $result['uri'] = array();
+        $result['uri'] = [];
         foreach ($uriParammeters as $p => $v) {
             if (strstr($p, '?')) continue;
             if (!empty($v)) {
@@ -1638,15 +1634,15 @@ class MemberController extends Controller
             }
         }
         if (empty($result['data'])) {
-            $result['data'] = array();
+            $result['data'] = [];
         }
         return $this->render('Member/withdraw', $result);
     }
 
     /**
      * @description 提现申请
-     * @author TX
-     * @data2015.3.26
+     * @author      TX
+     * @data2015    .3.26
      */
     public function addwithdraw()
     {
@@ -1655,12 +1651,12 @@ class MemberController extends Controller
         }
         $money = $this->make('request')->get('withdrawnum');
         if (empty($money) || $money < 200) {
-            return new JsonResponse(array('code' => 309, 'msg' => '每次提现不能少于200！'));
+            return new JsonResponse(['code' => 309, 'msg' => '每次提现不能少于200！']);
         }
         $uid = Auth::id();
         $avila_points = $this->getAvailableBalance($uid);
         if ($money > $avila_points['availmoney']) {
-            return new JsonResponse(array('code' => 310, 'msg' => '提现金额不能大于可用余额！'));
+            return new JsonResponse(['code' => 310, 'msg' => '提现金额不能大于可用余额！']);
         }
         $wd = date('ymdhis') . substr(microtime(), 2, 4);
         $withrawal = new WithDrawalList();
@@ -1674,7 +1670,7 @@ class MemberController extends Controller
 //        $em ->persist($withrawal);
 //        $em->flush();
         $withrawal->save();
-        return new JsonResponse(array('code' => 0, 'msg' => '申请成功！请等待审核'));
+        return new JsonResponse(['code' => 0, 'msg' => '申请成功！请等待审核']);
     }
 
     /**
@@ -1691,17 +1687,17 @@ class MemberController extends Controller
         }
 
         //更新相册
-        if (in_array($this->make('request')->get('handle'), array('del', 'get', 'set'))) {
+        if (in_array($this->make('request')->get('handle'), ['del', 'get', 'set'])) {
             $id = sprintf("%u", $this->make('request')->get('id'));
             if (!$id) {
-                return new Response(json_encode(array('code' => 101, 'info' => '操作失败')));
+                return new Response(json_encode(['code' => 101, 'info' => '操作失败']));
             }
             $result = $this->_anchorHandle($this->make('request')->get('handle'), $id);
             if ($result) {
                 $result = is_array($result) ? json_encode($result) : $result;
-                return new Response(json_encode(array('code' => 0, 'info' => '操作成功', 'data' => $result)));
+                return new Response(json_encode(['code' => 0, 'info' => '操作成功', 'data' => $result]));
             } else {
-                return new Response(json_encode(array('code' => 103, 'info' => '操作失败', 'data' => $result)));
+                return new Response(json_encode(['code' => 103, 'info' => '操作失败', 'data' => $result]));
             }
         }
 
@@ -1718,11 +1714,11 @@ class MemberController extends Controller
 
     /**
      * @description 主播中心相册操作附加方法
-     * @author D.C
+     * @author      D.C
      * @param null $type
-     * @param int $id
+     * @param int  $id
      * @return array|bool
-     * @update 2014.11.7
+     * @update      2014.11.7
      */
     private function _anchorHandle($type = null, $id = 0)
     {
@@ -1742,7 +1738,7 @@ class MemberController extends Controller
                 $dm->setUserField(array('pic_used_size' => $pic_used_size), $user['uid']);
                 $gm->remove($anchor);*/
                 //将用户剩余图片空间同步更新数据库及redis
-                Users::find(Auth::id())->update(array('pic_used_size' => $pic_used_size));
+                Users::find(Auth::id())->update(['pic_used_size' => $pic_used_size]);
                 $this->make('redis')->hMset('huser_info:' . Auth::id(), Users::find(Auth::id())->toArray());
                 Anchor::find($id)->delete();
                 break;
@@ -1757,7 +1753,7 @@ class MemberController extends Controller
                 $anchor->setSummary($this->request()->get('summary'));
                 $gm->persist($anchor);*/
                 //更新图片名称与备注
-                Anchor::find($id)->update(array('name' => $this->make('request')->get('name'), 'summary' => $this->make('request')->get('summary')));
+                Anchor::find($id)->update(['name' => $this->make('request')->get('name'), 'summary' => $this->make('request')->get('summary')]);
                 break;
 
             default:
@@ -1778,7 +1774,7 @@ class MemberController extends Controller
         if (!in_array($type, [1, 2])) {
             throw new NotFoundHttpException();
         }
-        $data = array();
+        $data = [];
         // 我参与的
         if ($type == 1) {
 
@@ -1799,14 +1795,14 @@ class MemberController extends Controller
                 ->paginate();
         }
 
-        return $this->render('Member/gamelist' . $type, array('data' => $data));
+        return $this->render('Member/gamelist' . $type, ['data' => $data]);
     }
 
     /**
      * 用户中心 礼物统计
      * @description 礼物统计 TODO 优化可能性
-     * @author D.C
-     * @date 2015.2.6
+     * @author      D.C
+     * @date        2015.2.6
      */
     public function count()
     {
@@ -1823,7 +1819,7 @@ class MemberController extends Controller
 
         $selectTypeName = $type == 'send' ? 'send_uid' : 'rec_uid';
         $uriParammeters = $this->make('request')->query->all();
-        $var['uri'] = array();
+        $var['uri'] = [];
         foreach ($uriParammeters as $p => $v) {
             if (strstr($p, '?')) continue;
             if (!empty($v)) {
@@ -1910,7 +1906,7 @@ class MemberController extends Controller
      * 用户中心 直播时间 TODO 尼玛
      *
      * @author TX
-     * @date 2015.2.6
+     * @date   2015.2.6
      */
     public function live()
     {
@@ -1934,13 +1930,13 @@ class MemberController extends Controller
         } else {
             $this->_reqSession->set('live_end', $end);
         }
-        $result = array();
+        $result = [];
         $result['end'] = $end;
         $result['start'] = $start;
         $end = date('Y-m-d' . ' 23:59:59', strtotime($end));
         $start = date('Y-m-d' . ' 00:00:00', strtotime($start));
         $result['user'] = $this->userInfo;
-        $result['data'] = array();
+        $result['data'] = [];
         /**
          * 获取自播记录 运算时长
          */
@@ -1953,19 +1949,19 @@ class MemberController extends Controller
 //          order by start_time desc', ['uid' => $uid, 'end' => $end, 'start' => $start, 'start2' => $start, 'iEnd' => $iEnd, 'iStart' => $iStart]);
 
 
-        $data = (array)DB::select('select * from video_live_list where uid=:uid and ((start_time < :end and start_time > :start) or (
-          start_time < :start2 and UNIX_TIMESTAMP(start_time)+duration < :iEnd and UNIX_TIMESTAMP(start_time)+duration > :iStart))
-          order by start_time desc', ['uid' => $uid, 'end' => $end, 'start' => $start, 'start2' => $start, 'iEnd' => $iEnd, 'iStart' => $iStart]);
+        $data = (array)DB::select('SELECT * FROM video_live_list WHERE uid=:uid AND ((start_time < :end AND start_time > :start) OR (
+          start_time < :start2 AND UNIX_TIMESTAMP(start_time)+duration < :iEnd AND UNIX_TIMESTAMP(start_time)+duration > :iStart))
+          ORDER BY start_time DESC', ['uid' => $uid, 'end' => $end, 'start' => $start, 'start2' => $start, 'iEnd' => $iEnd, 'iStart' => $iStart]);
         $thispage = $this->make("request")->get('page') ?: 1;
         //我的预约推荐是从redis中取数据的，先全部取出数据，做排序
         $total_duration = $data;
         $Count = count($data);
         $data = array_slice($data, ($thispage - 1) * 15, 15);
-        $result['pagination'] = array(
+        $result['pagination'] = [
             'page' => $thispage,
             'count' => $Count,
             'pages' => ceil($Count / 15),
-        );
+        ];
         $total = 0;
         foreach ($total_duration as $key => $item) {
             /**
@@ -2020,7 +2016,7 @@ class MemberController extends Controller
         $result['data'] = new LengthAwarePaginator($result['data'], $Count, 15, '', ['path' => '/member/live', 'query' => ['start' => $result['start'], 'end' => $result['end']]]);
         //$result['totalTime'] = $this->getTotalTime($uid, $end, $start);
         if (empty($result['data'])) {
-            $result['data'] = array();
+            $result['data'] = [];
         }
         $result['totalTime'] = $this->_sec2time($total);
         return $this->render('Member/live', $result);
@@ -2041,26 +2037,26 @@ class MemberController extends Controller
         $duration = $this->make('request')->get('duration');
         $points = $this->make('request')->get('points');
         if (empty($durationid) || empty($start_time) || empty($duration) || empty($points)) {
-            return new JsonResponse(array('code' => 10, 'msg' => '请求错误'));
+            return new JsonResponse(['code' => 10, 'msg' => '请求错误']);
         }
-        if (!in_array($duration, array(25, 55))) {
-            return new JsonResponse(array('code' => 11, 'msg' => '请求错误'));
+        if (!in_array($duration, [25, 55])) {
+            return new JsonResponse(['code' => 11, 'msg' => '请求错误']);
         }
         /** @var  $durationRoom \Video\ProjectBundle\Entity\VideoRoomDuration */
         $durationRoom = RoomDuration::find($durationid);
         if ($durationRoom->reuid != 0) {
-            return new JsonResponse(array('code' => 8, 'msg' => '房间已经被预定，不能被修改'));
+            return new JsonResponse(['code' => 8, 'msg' => '房间已经被预定，不能被修改']);
         }
         if (empty($durationRoom)) {
-            return new JsonResponse(array('code' => 12, 'msg' => '请求错误'));
+            return new JsonResponse(['code' => 12, 'msg' => '请求错误']);
         }
         $theday = date("Y-m-d H:i:s", mktime(23, 59, 59, date("m"), date("d") + 7, date("Y")));
         $start_time = date("Y-m-d H:i:s", strtotime($start_time . ' ' . $hour . ':' . $minute . ':00'));
         if ($theday < date("Y-m-d H:i:s", strtotime($start_time))) {
-            return new JsonResponse(array('code' => 5, 'msg' => '只能设置未来七天以内'));
+            return new JsonResponse(['code' => 5, 'msg' => '只能设置未来七天以内']);
         }
         if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) {
-            return new JsonResponse(array('code' => 6, 'msg' => '不能设置过去的时间'));
+            return new JsonResponse(['code' => 6, 'msg' => '不能设置过去的时间']);
         }
         $durationRoom->starttime = $start_time;
         $durationRoom->duration = $duration * 60;
@@ -2069,9 +2065,9 @@ class MemberController extends Controller
             //$this->_data_model->updateByEntity('Video\ProjectBundle\Entity\VideoRoomDuration', array('id' => $durationid), array('starttime' => new \DateTime($start_time), 'duration' => $duration * 60, 'points' => $points));
             $durationRoom->save();
             $this->set_durationredis($durationRoom);
-            return new JsonResponse(array('code' => 1, 'msg' => '修改成功'));
+            return new JsonResponse(['code' => 1, 'msg' => '修改成功']);
         } else {
-            return new JsonResponse(array('code' => 9, 'msg' => '这一时段内有重复哦'));
+            return new JsonResponse(['code' => 9, 'msg' => '这一时段内有重复哦']);
         }
 
     }
@@ -2079,7 +2075,7 @@ class MemberController extends Controller
     /**
      * [avatarupload 头像上传方法]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-20
      * @return  JsonResponse
      */
@@ -2090,7 +2086,7 @@ class MemberController extends Controller
 
         if (!$result['ret']) return new JsonResponse($result);
         //更新用户头像
-        Users::where('uid', $user['uid'])->update(array('headimg' => $result['info']['md5']));
+        Users::where('uid', $user['uid'])->update(['headimg' => $result['info']['md5']]);
 
         //更新用户redis
         resolve(UserService::class)->getUserReset($user['uid']);
@@ -2101,7 +2097,7 @@ class MemberController extends Controller
     /**
      * [flashUpload 相册上传方法]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-20
      * @return JsonResponse
      */
@@ -2112,10 +2108,10 @@ class MemberController extends Controller
 
         if (!$result['ret']) return new JsonResponse($result);
 
-        $anchor = Anchor::create(array('uid' => Auth::id(), 'file' => $result['info']['md5'], 'size' => $result['info']['size'], 'jointime' => time()));
+        $anchor = Anchor::create(['uid' => Auth::id(), 'file' => $result['info']['md5'], 'size' => $result['info']['size'], 'jointime' => time()]);
 
         //更新用户空间
-        Users::where('uid', $user['uid'])->update(array('pic_used_size' => $user['pic_used_size'] + $result['info']['size']));
+        Users::where('uid', $user['uid'])->update(['pic_used_size' => $user['pic_used_size'] + $result['info']['size']]);
         //更新用户redis
         resolve(UserService::class)->getUserReset($user['uid']);
 
@@ -2133,7 +2129,7 @@ class MemberController extends Controller
     public function cancelScene()
     {
         $this->make('redis')->del('user_car:' . Auth::id());//检查过期直接删除对应的缓存key
-        return new JsonResponse(array('status' => 0, 'msg' => '操作成功'));
+        return new JsonResponse(['status' => 0, 'msg' => '操作成功']);
     }
 
     /**
@@ -2150,16 +2146,16 @@ class MemberController extends Controller
      */
     public function buyVip()
     {
-        $msg = array(
+        $msg = [
             'status' => 1,
-            'msg' => ''
-        );
+            'msg' => '',
+        ];
 
         if (!Auth::user()) {
-            $msg = array(
+            $msg = [
                 'status' => 101,
-                'msg' => '亲，请先登录哦！'
-            );
+                'msg' => '亲，请先登录哦！',
+            ];
             return (new JsonResponse($msg))->setCallback('cb');
         }
         // 取到开通的贵族的数据 判断价格
@@ -2209,7 +2205,7 @@ class MemberController extends Controller
             /**
              * 首开礼包 先判断是否已经开通过了此贵族的 TODO 为了解决mysqlnd_ms 的bug问题 强制读主库
              */
-            $isBuyThisGroup = DB::select('select * from video_user_buy_group where gid=? and uid=? limit 1', array($gid, Auth::id()));
+            $isBuyThisGroup = DB::select('SELECT * FROM video_user_buy_group WHERE gid=? AND uid=? LIMIT 1', [$gid, Auth::id()]);
 
             $userServer = resolve(UserService::class)->setUser(Users::find(Auth::id())); // 初始化用户服务
             $u['vip'] = $userGroup['level_id'];
@@ -2226,28 +2222,28 @@ class MemberController extends Controller
                 $us['points'] = ($user->points + $userGroup['system']['gift_money']);
                 DB::table('video_user')->where('uid', Auth::id())->update($us);
                 // 写入赠送日志
-                $arr = array(
+                $arr = [
                     'uid' => Auth::id(),
                     'created' => date('Y-m-d H:i:s'),
                     'points' => $userGroup['system']['gift_money'],
-                    'paymoney' => round($userGroup['system']['gift_money'],1),
+                    'paymoney' => round($userGroup['system']['gift_money'], 1),
                     'order_id' => time(),
                     'pay_type' => 5,//服务器送的钱pay_type=5
                     'pay_id' => null,
-                    'nickname' => $user->nickname
-                );
+                    'nickname' => $user->nickname,
+                ];
                 DB::table('video_recharge')->insert($arr);
                 // 赠送后 发送给用户通知消息
-                $message = array(
+                $message = [
                     'mail_type' => 3,
                     'rec_uid' => $user->uid,
-                    'content' => '您首次开通 ' . $userGroup['level_name'] . ' 贵族，获得了赠送礼包的' . $userGroup['system']['gift_money'] . '钻石'
-                );
+                    'content' => '您首次开通 ' . $userGroup['level_name'] . ' 贵族，获得了赠送礼包的' . $userGroup['system']['gift_money'] . '钻石',
+                ];
                 $this->make('messageServer')->sendSystemToUsersMessage($message);
             }
 
             // 写入购买用户组的记录 user_buy_group
-            $buyGroup = array(
+            $buyGroup = [
                 'uid' => Auth::id(),
                 'gid' => $gid,
                 'create_at' => date('Y-m-d H:i:s'),
@@ -2256,18 +2252,18 @@ class MemberController extends Controller
                 'status' => 1,
                 'open_money' => $userGroup['system']['open_money'],
                 'keep_level' => $userGroup['system']['keep_level'],
-            );
+            ];
             DB::table('video_user_buy_group')->insertGetId($buyGroup);
 
             /**
              * 购买贵族后自动送坐骑
              * [添加用户背包判断再进行赠送]
-             * @author dc
+             * @author  dc
              * @version 20151026
              */
             $userPack = Pack::whereUid(Auth::id())->whereGid($userGroup['mount'])->first();
             if (!$userPack) {
-                DB::insert('insert into `video_pack` (uid, gid, expires, num) values (?, ?, ?, ?)', [Auth::id(), $userGroup['mount'], strtotime($exp), 1]);
+                DB::insert('INSERT INTO `video_pack` (uid, gid, expires, num) VALUES (?, ?, ?, ?)', [Auth::id(), $userGroup['mount'], strtotime($exp), 1]);
                 /*@todo 待检查为何这个方法插入失败*/
                 //Pack::create(array('uid'=>Auth::id(),'gid'=>$userGroup['mount'],'expires'=>strtotime($exp),'num'=>1));
             }
@@ -2278,17 +2274,17 @@ class MemberController extends Controller
             }
 
             // 开通成功后 发送给用户通知消息
-            $message = array(
+            $message = [
                 'mail_type' => 3,
                 'rec_uid' => $user->uid,
-                'content' => '贵族开通成功提醒：您已成功开通 ' . $userGroup['level_name'] . ' 贵族，到期日：' . $exp
-            );
+                'content' => '贵族开通成功提醒：您已成功开通 ' . $userGroup['level_name'] . ' 贵族，到期日：' . $exp,
+            ];
             $this->make('messageServer')->sendSystemToUsersMessage($message);
 
             // 如果设置了房间属性 就给主播返现
             $casheback = 0;
             if ($roomId && DB::table('video_user')->where('uid', $roomId)->first()) {
-                $commission = array(
+                $commission = [
                     'uid' => $roomId,
                     'r_uid' => Auth::id(),
                     'r_id' => $gid,
@@ -2296,17 +2292,17 @@ class MemberController extends Controller
                     'title' => '房间内开通贵族返佣',
                     'points' => $userGroup['system']['host_money'],
                     'create_at' => date('Y-m-d H:i:s'),
-                    'data' => serialize(array(
-                        'gid' => $gid, 'vip_end' => $exp
-                    )),
+                    'data' => serialize([
+                        'gid' => $gid, 'vip_end' => $exp,
+                    ]),
                     'content' => $this->userInfo['nickname'] . '在您的房间' . date('Y-m-d H:i:s') . '开通了什么' . $userGroup['level_name'] . '，您得到' . $userGroup['system']['host_money'] . '佣金！',
                     'status' => 0,
-                    'dml_flag' => 1
-                );
+                    'dml_flag' => 1,
+                ];
                 DB::table('video_user_commission')->insertGetId($commission);
                 $casheback = $userGroup['system']['host_money'];
             }
-            $userinfo = DB::select('select * from video_user where uid=? limit 1', array(Auth::id()));
+            $userinfo = DB::select('SELECT * FROM video_user WHERE uid=? LIMIT 1', [Auth::id()]);
             //赠送完坐骑立即装备
             $redis = $this->make('redis');
             // 更新用户redis中的信息
@@ -2319,7 +2315,7 @@ class MemberController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             //记录下日志
-            $logPath =  base_path() . '/storage/logs/test_' . date('Y-m-d') . '.log';
+            $logPath = base_path() . '/storage/logs/test_' . date('Y-m-d') . '.log';
             $loginfo = date('Y-m-d H:i:s') . ' uid' . Auth::id() . "\n 购买贵族 事务结果: \n" . $e->getMessage() . "\n";
             $this->logResult($loginfo, $logPath);
 
@@ -2328,13 +2324,13 @@ class MemberController extends Controller
             return (new JsonResponse($msg))->setCallback('cb');
         }
         $msg['msg'] = '开通成功';
-        $msg['data'] = array(
+        $msg['data'] = [
             'uid' => Auth::id(),
             'roomid' => $roomId,
             'vip' => $userGroup['level_id'],
             'cashback' => $casheback,
-            'name' => $user->username
-        );
+            'name' => $user->username,
+        ];
 
         return (new JsonResponse($msg))->setCallback('cb');
     }
@@ -2346,10 +2342,10 @@ class MemberController extends Controller
     {
         // 获取vip坐骑的id
         $mid = $this->make('request')->get('mid');
-        $msg = array(
+        $msg = [
             'code' => 0,
-            'msg' => ''
-        );
+            'msg' => '',
+        ];
 
         // 判断是否已经领过了
         $pack = Pack::where('uid', Auth::id())->where('gid', $mid)->first();
@@ -2395,42 +2391,42 @@ class MemberController extends Controller
     public function getmoney()
     {
         return new JsonResponse(
-            array(
+            [
                 'code' => 0,
-                'info' => array(
+                'info' => [
                     'nickname' => $this->userInfo['nickname'],
-                    'money' => $this->userInfo['points']
-                )
-            )
+                    'money' => $this->userInfo['points'],
+                ],
+            ]
         );
     }
 
     /**
      * [hidden 用户在线、隐身接口]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-11
      * @param   int $status 要设置的状态1=隐身，0=在线
      * @return  json
      */
     public function hidden($status)
     {
-        if (!in_array($status, array('0', '1'))) return new JsonResponse(array('status' => 0, 'message' => '参数错误'));
+        if (!in_array($status, ['0', '1'])) return new JsonResponse(['status' => 0, 'message' => '参数错误']);
 
         $uid = Auth::id();
-        if (!$uid) return new JsonResponse(array('status' => 0, 'message' => '用户错误'));
+        if (!$uid) return new JsonResponse(['status' => 0, 'message' => '用户错误']);
         $user = Users::where('uid', $uid)->with('vipGroup')->first();
 
         //判断用户是否有隐身权限
-        if (!resolve(UserService::class)->getUserHiddenPermission($user)) return new JsonResponse(array('status' => 0, 'message' => '没有权限!'));
+        if (!resolve(UserService::class)->getUserHiddenPermission($user)) return new JsonResponse(['status' => 0, 'message' => '没有权限!']);
 
         //更新数据库隐身状态
-        $hidden = Users::where('uid', $uid)->update(array('hidden' => $status));
+        $hidden = Users::where('uid', $uid)->update(['hidden' => $status]);
 
         //更新用户redis
         resolve(UserService::class)->getUserReset($uid);
 
-        return new JsonResponse(array('status' => 1, 'message' => '操作成功'));
+        return new JsonResponse(['status' => 1, 'message' => '操作成功']);
     }
 
 
@@ -2446,13 +2442,13 @@ class MemberController extends Controller
             return new RedirectResponse('/', 301);
         }
 //        $this->_initUser();
-        $actions = array(
+        $actions = [
             'userinfo' => 'editUserinfo',
             'attenionCancel' => 'attenionCancel',
             'getfidinfo' => 'getfidinfo',
             'delmsg' => 'delmsg',
-            'equipHandle' => '_getEquipHandle'
-        );
+            'equipHandle' => '_getEquipHandle',
+        ];
         if ($act == 'userinfo') {
             $info = $this->$actions[$act]($this->request()->reques->all(), Auth::id());
             return new Response(json_encode($info));
@@ -2462,11 +2458,11 @@ class MemberController extends Controller
             $onlineId = $this->request()->getSession()->get(self::SEVER_SESS_ID);
             $uid = intval($this->request()->get('uid'));
             if ($uid == 0) {
-                return new Response(json_encode(array('ret' => false)));
+                return new Response(json_encode(['ret' => false]));
             }
             $data = $this->{$actions[$act]}($this->request()->get('uid'));
             if (!$data) {
-                return new Response(json_encode(array('ret' => false)));
+                return new Response(json_encode(['ret' => false]));
             } else {
                 $data = $this->getOutputUser($data, 80);
                 unset($data['safemail']);
@@ -2479,7 +2475,7 @@ class MemberController extends Controller
                 if ($data['roled'] == 3) {
                     $data['live_status'] = $this->make('redis')->hget('hvediosKtv:' . $data['uid'], 'status');
                 }
-                return new Response(json_encode(array('ret' => true, 'info' => $data)));
+                return new Response(json_encode(['ret' => true, 'info' => $data]));
             }
         } else if ($act == 'delmsg') {
             $data = $this->$actions[$act](Auth::id());
@@ -2487,7 +2483,7 @@ class MemberController extends Controller
         } else if ($act == 'equipHandle') {
             $this->$actions[$act]($this->request()->get('gid'));
         }
-        return new Response(json_encode(array('ret' => true, 'info' => '更新成功')));
+        return new Response(json_encode(['ret' => true, 'info' => '更新成功']));
     }
 
     /**
@@ -2497,16 +2493,16 @@ class MemberController extends Controller
     {
         $retData = null;
         if (!$this->buyGoods()) {
-            $retData = array(
+            $retData = [
                 'info' => '购买失败！可能钱不够',
-                'ret' => false
-            );
+                'ret' => false,
+            ];
         } else {
             //  $this->_getEquipHandle($this->get('request')->get('gid'));//分布
-            $retData = array(
+            $retData = [
                 'info' => '购买成功！',
-                'ret' => true
-            );
+                'ret' => true,
+            ];
         }
         return new Response(json_encode($retData));
     }
@@ -2519,11 +2515,11 @@ class MemberController extends Controller
         $rid = $this->request()->input('rid');
         if (!$rid) return JsonResponse::create(['code' => 401, 'msg' => '请求错误']);
         $room = RoomDuration::find($rid);
-        if (!$room) return new JsonResponse(array('code' => 402, 'msg' => '房间不存在'));
+        if (!$room) return new JsonResponse(['code' => 402, 'msg' => '房间不存在']);
         if ($room->uid != Auth::id()) return JsonResponse::create(['code' => 404, 'msg' => '非法操作']);//只能删除自己房间
-        if ($room->status == 1) return new JsonResponse(array('code' => 403, 'msg' => '房间已经删除'));
+        if ($room->status == 1) return new JsonResponse(['code' => 403, 'msg' => '房间已经删除']);
         if ($room->reuid != 0) {
-            return new JsonResponse(array('code' => 400, 'msg' => '房间已经被预定，不能删除！'));
+            return new JsonResponse(['code' => 400, 'msg' => '房间已经被预定，不能删除！']);
         }
         $this->make('redis')->hdel('hroom_duration:' . $room->uid . ':' . $room->roomtid, $room->id);//删除对应的redis
         $room->delete();
@@ -2539,11 +2535,11 @@ class MemberController extends Controller
         $rid = $this->request()->input('rid');
         if (!$rid) return JsonResponse::create(['status' => 401, 'msg' => '请求错误']);
         $room = RoomOneToMore::find($rid);
-        if (!$room) return new JsonResponse(array('status' => 402, 'msg' => '房间不存在'));
+        if (!$room) return new JsonResponse(['status' => 402, 'msg' => '房间不存在']);
         if ($room->uid != Auth::id()) return JsonResponse::create(['status' => 404, 'msg' => '非法操作']);//只能删除自己房间
-        if ($room->status == 1) return new JsonResponse(array('status' => 403, 'msg' => '房间已经删除'));
+        if ($room->status == 1) return new JsonResponse(['status' => 403, 'msg' => '房间已经删除']);
         if ($room->purchase()->exists()) {
-            return new JsonResponse(array('status' => 400, 'msg' => '房间已经被预定，不能删除！'));
+            return new JsonResponse(['status' => 400, 'msg' => '房间已经被预定，不能删除！']);
         }
         $redis = $this->make('redis');
         $redis->sRem('hroom_whitelist_key:' . $room->uid, $room->id);
@@ -2560,8 +2556,8 @@ class MemberController extends Controller
         $uid = Auth::id();
         $request = $this->request();
         $rid = intval($request->input('rid'));
-        $origin = intval($request->input('origin'))?:12;
-        if ($rid==$uid) return JsonResponse::create(['status'=>0,'msg'=>'不能购买自己房间亲']);
+        $origin = intval($request->input('origin')) ?: 12;
+        if ($rid == $uid) return JsonResponse::create(['status' => 0, 'msg' => '不能购买自己房间亲']);
         $onetomany = intval($request->input('onetomore'));
         if (empty($onetomany) || empty($uid)) return JsonResponse::create(['status' => 0, 'msg' => '参数错误']);
         /** @var \Redis $redis */
@@ -2581,34 +2577,32 @@ class MemberController extends Controller
                 'rid' => $rid,
                 'uid' => $uid,
                 'onetomore' => $onetomany,
-                'origin' => $origin
+                'origin' => $origin,
             ]));
         /** 检查购买状态 */
         $timeout = microtime(true) + 4;
         while (true) {
             if (microtime(true) > $timeout) break;
             $tickets = explode(',', $redis->hGet("hroom_whitelist:$rid:$onetomany", 'tickets'));
-            if (in_array($uid, $tickets)) return JsonResponse::create(['status' => 1, 'msg'=>'购买成功']);
+            if (in_array($uid, $tickets)) return JsonResponse::create(['status' => 1, 'msg' => '购买成功']);
             usleep(200000);
         }
-        return JsonResponse::create(['status' => 0, 'msg'=> '购买失败']);
+        return JsonResponse::create(['status' => 0, 'msg' => '购买失败']);
     }
 
     public function buyModifyNickname()
     {
+        $user = Auth::user();
         $uid = Auth::id();
-        $price = $this->make('config')['config.nickname_price'] ?: 200;
+        $price = Site::config('nickname_price');
         $userService = resolve(UserService::class);
-        $user = $userService->getUserByUid($uid);
         if ($user['points'] < $price) return JsonResponse::create(['status' => 0, 'msg' => '余额不足' . $price . '钻']);
-        $userService->setUser((new Users)->forceFill($user));
         $num = $userService->getModNickNameStatus()['num'];
         if ($num >= 1) return JsonResponse::create(['status' => 0, 'msg' => '已有修改昵称资格']);
-        $redis = $this->make('redis');
         /** 扣钱给资格 */
         if (Users::where('uid', $uid)->where('points', '>=', $price)->decrement('points', $price)) {
-            $redis->hIncrBy('huser_info:' . $uid, 'points', $price * -1);
-            $redis->hIncrBy('modify.nickname', $uid, 1);
+           Redis::hIncrBy('huser_info:' . $uid, 'points', $price * -1);
+           Redis::hIncrBy('modify.nickname', $uid, 1);
             return JsonResponse::create(['status' => 1, 'msg' => '购买成功']);
         } else {
             return JsonResponse::create(['status' => 0, 'msg' => '扣款失败']);
@@ -2616,8 +2610,8 @@ class MemberController extends Controller
     }
 
     /**添加用户到一对多
-     * @param $onetomany
-     * @param $uid
+     * @param     $onetomany
+     * @param     $uid
      * @param int $origin
      * @param int $points 0后台添加，-1使用房间价格全额
      * @return array
@@ -2673,7 +2667,7 @@ class MemberController extends Controller
             ]);
         return [
             1, '添加成功', 'data' =>
-                ['points' => $points]
+                ['points' => $points],
         ];
     }
 }

@@ -19,6 +19,7 @@ class UserController extends Controller
             $user = Auth::user();
             // 格式化用户信息 过滤掉用户的密码之类的敏感信息
             $userInfo = collect($this->getOutputUser($user));
+            $userInfo->put('points',$user->points);
             if (resolve(UserService::class)->getUserHiddenPermission($userInfo)) {
                 $userInfo['hidden'] = $user['hidden'];
             }

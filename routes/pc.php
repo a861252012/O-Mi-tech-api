@@ -5,7 +5,7 @@ Route::group(['middleware' => ['login_auth']], function () {
         echo "aaa";
     });
     Route::get('login/test', function () {
-        return [Auth::guard()->user(),session()->getId()];
+        return [Auth::guard()->user(), session()->getId()];
     });
 });
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
@@ -18,8 +18,13 @@ Route::group(['prefix' => 'member'], function () {
 
     Route::group(['middleware' => 'login_auth'], function () {
         Route::post('mail/verify/send', 'PasswordController@sendVerifyMail')->middleware('throttle:5:1')->name('mail_verify_send');
+        // 用户中心消息  type 是可有可无的 必须放到最后
+        Route::get('msglist/{type?}', 'MemberController@msglist')->where('type', '[0-9]+')->name('member_msglist');
+        //购买修改昵称
+        Route::post('buyModifyNickname', 'MemberController@buyModifyNickname')->name('buyModifyNickname');
     });
 });
+
 
 Route::group(['prefix' => 'user'], function () {
     Route::group(['middleware' => 'login_auth'], function () {
@@ -27,7 +32,6 @@ Route::group(['prefix' => 'user'], function () {
         Route::get('following', 'UserController@following')->name('user_current');
     });
 });
-
 
 
 // 所有路由都在这里配置
@@ -158,8 +162,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     // 用户中心 用户基本信息
     Route::get('/member', ['name' => 'member_index', 'uses' => 'MemberController@index']);
     Route::get('/member/index', ['name' => 'member_index', 'uses' => 'MemberController@index']);
-    // 用户中心消息  type 是可有可无的 必须放到最后
-    Route::get('/member/msglist[/{type:\d+}]', ['name' => 'member_msglist', 'uses' => 'MemberController@msglist']);
+
     // 用户中心 vip 贵族体系
     Route::get('/member/vip', ['name' => 'member_vip', 'uses' => 'MemberController@vip']);
     // 用户中心 vip 贵族体系主播佣金
@@ -328,8 +331,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::post('/member/domsg', ['uses' => 'MemberController@domsg']);
     // 用户中心 取消装备
     Route::get('/member/cancelscene', ['name' => 'member_cancelscene', 'uses' => 'MemberController@cancelScene']);
-    //购买修改昵称
-    Route::post('/member/buyModifyNickname', ['name' => 'buyModifyNickname', 'uses' => 'MemberController@buyModifyNickname']);
+
     //关注用户接口
     Route::get('/focus', ['name' => 'focus', 'uses' => 'ApiController@Follow']);
     //获取用户信息
@@ -346,7 +348,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/rank_list_gift', ['name' => 'json_rank_list_gift', 'uses' => 'ApiController@rankListGift']);
     // 获取主播房间内的礼物排行榜
     Route::get('/rank_list_gift_week', ['name' => 'json_rank_list_gift_week', 'uses' => 'ApiController@rankListGiftWeek']);
-    Route::get('/get_head_image', ['name' => 'get_head_image', 'uses' => 'ApiController@getUserHeadImage']);
 
 
     //flashCookie记录api
@@ -375,7 +376,7 @@ Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp
 
 // 充值类 TODO 登录验证
 // 验证是否登录
-Route::group(['prefix' => 'charge','middleware'=>['charge','login_auth']], function () {
+Route::group(['prefix' => 'charge', 'middleware' => ['charge', 'login_auth']], function () {
     Route::match(['POST', 'GET'], 'pay', ['name' => 'charge_pay', 'uses' => 'ChargeController@pay']);
     Route::match(['POST', 'GET'], '/order', ['name' => 'charge_order', 'uses' => 'ChargeController@order']);
     Route::match(['POST', 'GET'], '/order2', ['name' => 'charge_order2', 'uses' => 'ChargeController@order2']);
@@ -384,7 +385,7 @@ Route::group(['prefix' => 'charge','middleware'=>['charge','login_auth']], funct
 
 });
 //通知
-Route::group(['prefix' => 'charge','middleware'=>['charge']], function () {
+Route::group(['prefix' => 'charge', 'middleware' => ['charge']], function () {
     Route::match(['POST', 'GET'], 'notice2', ['name' => 'notice2', 'uses' => 'ChargeController@notice2']);
     Route::match(['POST', 'GET'], 'notice', ['name' => 'charge_notice', 'uses' => 'ChargeController@notice'])->name('charge_notice');
     Route::match(['POST', 'GET'], 'checkKeepVip', ['name' => 'checkKeepVip', 'uses' => 'ChargeController@checkKeepVip']);
@@ -488,11 +489,11 @@ Route::group(['middleware' => ['login_auth']], function () {
     //移动端购买一对多
     Route::post('/m/room/buyOneToMany', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@makeUpOneToMore']);
     //app删除一对多房间
-    Route::get('/m/OneToMore/delete', ['name' => 'm_onetomoredel','uses' => 'Mobile\RoomController@delRoomOne2More']);
+    Route::get('/m/OneToMore/delete', ['name' => 'm_onetomoredel', 'uses' => 'Mobile\RoomController@delRoomOne2More']);
     //app一对多房间列表
     Route::get('/m/OneToMore/list', ['as' => 'm_onetomorelist', 'uses' => 'Mobile\RoomController@listOneToMoreByHost']);
     //app判断是否开通一对多和一对一
-    Route::get('/m/oneToManyCompetence',['as'=>'competence','uses'=>'Mobile\RoomController@competence']);
+    Route::get('/m/oneToManyCompetence', ['as' => 'competence', 'uses' => 'Mobile\RoomController@competence']);
     //app直播记录表
     Route::get('/m/showlist', ['as' => 'm_showlist', 'uses' => 'Mobile\RoomController@showlist']);
 

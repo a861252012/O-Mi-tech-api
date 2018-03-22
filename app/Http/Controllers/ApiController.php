@@ -34,9 +34,9 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * Class ApiController
- * @package App\Controller
- * @author dc
- * @version 20151021
+ * @package     App\Controller
+ * @author      dc
+ * @version     20151021
  * @description 各API对应接口控制器
  */
 class ApiController extends Controller
@@ -55,9 +55,9 @@ class ApiController extends Controller
     /**
      * [获取用户加密信息]
      *
-     * @author dc
+     * @author      dc
      * @description 获取用户加密信息
-     * @version 20151021
+     * @version     20151021
      */
     public function getUserByDes($uid)
     {
@@ -65,12 +65,12 @@ class ApiController extends Controller
         $userInfo = $userService->getUserByUid($uid);
 
         //获取用户信息失败返回
-        if (!$userInfo) return new JsonResponse(array('ret' => false, 'info' => '无效用户'));
+        if (!$userInfo) return new JsonResponse(['ret' => false, 'info' => '无效用户']);
 
         $data = $this->getOutputUser($userInfo, 40, false);
         //加密输出结果
         $desData = $userService->get3Des($data, $this->container->config['config.DES_ENCRYT_KEY']);
-        return new JsonResponse(array('ret' => true, 'info' => $desData));
+        return new JsonResponse(['ret' => true, 'info' => $desData]);
     }
 
     /**
@@ -80,18 +80,18 @@ class ApiController extends Controller
     {
         $skipCaptcha = $this->container->config['config.SKIP_CAPTCHA_REG'];
         if (!$skipCaptcha && (strtolower($_POST['captcha']) != strtolower($_SESSION['CAPTCHA_KEY']))) {
-            die(json_encode(array(
+            die(json_encode([
                 "status" => 0,
-                "msg" => "验证码错误!"
-            )));
+                "msg" => "验证码错误!",
+            ]));
         }
 
         $username = isset($_REQUEST['username']) ? trim($_REQUEST['username']) : null;
         if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $username) || strlen($username) < 5 || strlen($username) > 30) {
-            die(json_encode(array(
+            die(json_encode([
                 "status" => 0,
-                "msg" => "注册邮箱不符合格式！(5-30位的邮箱)"
-            )));
+                "msg" => "注册邮箱不符合格式！(5-30位的邮箱)",
+            ]));
         }
 
         $nickname = isset($_REQUEST['nickname']) ? trim($_REQUEST['nickname']) : null;
@@ -100,42 +100,42 @@ class ApiController extends Controller
 
         //昵称不能使用/:;\空格,换行等符号。
         if ($len < 2 || $len > 8 || !preg_match("/^[^\s\/\:;]+$/", $nickname)) {
-            die(json_encode(array(
+            die(json_encode([
                 "status" => 0,
-                "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)"
-            )));
+                "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)",
+            ]));
         }
 
         if (trim($_POST['password1'] != trim($_POST['password2']))) {
-            die(json_encode(array(
+            die(json_encode([
                 "status" => 0,
-                "msg" => "两次密码输入不一致!"
-            )));
+                "msg" => "两次密码输入不一致!",
+            ]));
         }
 
         $password = $this->decode($_POST['password1']);
         if (strlen($password) < 6 || strlen($password) > 22 || preg_match('/^\d{6,22}$/', $password) || !preg_match('/^\w{6,22}$/', $password)) {
-            die(json_encode(array(
+            die(json_encode([
                 "status" => 0,
-                "msg" => "注册密码不符合格式!"
-            )));
+                "msg" => "注册密码不符合格式!",
+            ]));
         }
 
         $redis = $this->make('redis');
         if ($redis->hExists('husername_to_id', $username)) {
-            die(json_encode(array(
+            die(json_encode([
                 "status" => 0,
-                "msg" => "对不起, 该帐号不可用!"
-            )));
+                "msg" => "对不起, 该帐号不可用!",
+            ]));
         }
         if ($redis->hExists('hnickname_to_id', $nickname)) {
-            die(json_encode(array(
+            die(json_encode([
                 "status" => 0,
-                "msg" => "对不起, 该昵称已被使用!"
-            )));
+                "msg" => "对不起, 该昵称已被使用!",
+            ]));
         }
 
-        $newUser = array(
+        $newUser = [
             'username' => $username,
             'nickname' => $nickname,
             'password' => md5($password),
@@ -143,8 +143,8 @@ class ApiController extends Controller
             'pic_used_size' => 0,
             'rich' => 64143000,
             'lv_rich' => 28,
-            'origin' => isset($_REQUEST['origin']) ? $_REQUEST['origin'] : 12
-        );
+            'origin' => isset($_REQUEST['origin']) ? $_REQUEST['origin'] : 12,
+        ];
 
         //跳转过来的
         $newUser['aid'] = 0;
@@ -216,7 +216,7 @@ class ApiController extends Controller
         $agent = trim($request->get('agent'));
 
         if (!$username || !$password) {
-            return new JsonResponse(array('status' => 0, 'msg' => '对不起！帐号密码不能为空！'));
+            return new JsonResponse(['status' => 0, 'msg' => '对不起！帐号密码不能为空！']);
         }
 
         $token = $this->container->config['config.VFPHP_SIGN'];
@@ -226,12 +226,12 @@ class ApiController extends Controller
         $token = md5($token . $request->get('timestamp'));
 
         if ($request->get('token') != $token || $request->get('timestamp') + 60 < time()) {
-            return new JsonResponse(array('status' => 0, 'msg' => '对不起！验证失败！'));
+            return new JsonResponse(['status' => 0, 'msg' => '对不起！验证失败！']);
         }
 
         if (Users::where('username', $username)->exists()) {
 
-            return new JsonResponse(array('status' => 0, 'msg' => '对不起！该用户已存在！'));
+            return new JsonResponse(['status' => 0, 'msg' => '对不起！该用户已存在！']);
         }
 
         $user = $request->input();
@@ -246,7 +246,7 @@ class ApiController extends Controller
         $user['lv_rich'] = 28;
 
         $user['created'] = date('Y-m-d H:i:s');
-        $newUser = Arr::only($user, array('did', 'username', 'password', 'nickname', 'roled', 'exp', 'pop', 'created', 'status', 'province', 'city', 'county', 'video_status', 'rich', 'lv_exp', 'lv_rich', 'pic_total_size', 'pic_used_size', 'lv_type', 'icon_id'));
+        $newUser = Arr::only($user, ['did', 'username', 'password', 'nickname', 'roled', 'exp', 'pop', 'created', 'status', 'province', 'city', 'county', 'video_status', 'rich', 'lv_exp', 'lv_rich', 'pic_total_size', 'pic_used_size', 'lv_type', 'icon_id']);
         $vip = Arr::get($user, 'vip', 0);
         $vip_days = $vip ? 30 : 0;
         $invite = $gid = $code = 0;
@@ -271,7 +271,7 @@ class ApiController extends Controller
                     $newUser['points'] = $points;
                 }
             } else {
-                return new JsonResponse(array('status' => 0, 'msg' => '无效邀请码' . $gid . '|' . $code . '|' . $invite_code));
+                return new JsonResponse(['status' => 0, 'msg' => '无效邀请码' . $gid . '|' . $code . '|' . $invite_code]);
             }
         }
         //跳转过来的
@@ -283,8 +283,8 @@ class ApiController extends Controller
         $create = Users::create($newUser);
 
         if ($uid = $create->uid) {
-            if (!Users::where('uid', $uid)->update(array('rid' => $uid))) {
-                return new JsonResponse(array('status' => 0, 'msg' => '导入过程出现异常'));
+            if (!Users::where('uid', $uid)->update(['rid' => $uid])) {
+                return new JsonResponse(['status' => 0, 'msg' => '导入过程出现异常']);
             }
             $redis = $this->make('redis');
             resolve(UserService::class)->getUserReset($uid);
@@ -293,7 +293,7 @@ class ApiController extends Controller
 
             //更新邀请码
             if ($invite_code && $invite) {
-                InviteCodes::where(array('gid' => $gid, 'status' => 0, 'code' => $code))->update(array('uid' => $uid, 'used_at' => date('Y-m-d H:i:s'), 'status' => 1));
+                InviteCodes::where(['gid' => $gid, 'status' => 0, 'code' => $code])->update(['uid' => $uid, 'used_at' => date('Y-m-d H:i:s'), 'status' => 1]);
             }
 
             //赠送贵族
@@ -307,7 +307,7 @@ class ApiController extends Controller
 
             if ($aid) {
                 if (!Agents::find($aid)) {
-                    return new JsonResponse(array('status' => 1, 'msg' => '注册成功！但该用户所属代理不存在,导入代理失败！'));
+                    return new JsonResponse(['status' => 1, 'msg' => '注册成功！但该用户所属代理不存在,导入代理失败！']);
                 }
                 resolve(UserService::class)->setUserAgents($uid, $aid);
             }
@@ -319,14 +319,14 @@ class ApiController extends Controller
             $this->writeRedis($this->userInfo, $huser_sid);
             $domainA = isset($_SERVER['host']) ? $_SERVER['host'] : "peach.dev";
 
-            return JsonResponse::create(array(
+            return JsonResponse::create([
                 'status' => 1,
                 'msg' => '',
                 'synstr' => 'http://' . $domainA,
                 'redirect' => 'http://' . $domainA,
-            ));
+            ]);
         }
-        return new JsonResponse(array('status' => 0, 'msg' => '注册失败'));
+        return new JsonResponse(['status' => 0, 'msg' => '注册失败']);
     }
 
     /**
@@ -337,17 +337,17 @@ class ApiController extends Controller
         $vip = intval($this->userInfo['vip']);
         $userGroup = UserGroup::where('level_id', $vip)->with("permission")->first();
         if (!$userGroup) {
-            return new JsonResponse(array('code' => 1, 'info' => ['vip' => 0, 'vipName' => '', 'discount' => 10], 'message' => '非贵族'));
+            return new JsonResponse(['code' => 1, 'info' => ['vip' => 0, 'vipName' => '', 'discount' => 10], 'message' => '非贵族']);
         }
         if (!$userGroup->permission) {
-            return new JsonResponse(array('code' => 1, 'info' => ['vip' => $vip, 'vipName' => '', 'discount' => 10], 'message' => '无权限组'));
+            return new JsonResponse(['code' => 1, 'info' => ['vip' => $vip, 'vipName' => '', 'discount' => 10], 'message' => '无权限组']);
         }
         $info = [
             'vip' => $vip,
             'vipName' => $userGroup->level_name,
-            'discount' => $userGroup->permission->discount
+            'discount' => $userGroup->permission->discount,
         ];
-        return new JsonResponse(array('code' => 1, 'info' => $info, 'message' => ''));
+        return new JsonResponse(['code' => 1, 'info' => $info, 'message' => '']);
     }
 
     /**
@@ -359,15 +359,15 @@ class ApiController extends Controller
         $request = $this->make('request');
         $agents = $request->input();
         if (sizeof(array_filter(array_values($agents))) < 2) {
-            return new JsonResponse(array('status' => 0, 'message' => '参数不完整,请联系管理员修复同步代理'));
+            return new JsonResponse(['status' => 0, 'message' => '参数不完整,请联系管理员修复同步代理']);
         }
 
         $agents = Arr::only($agents, ['id', 'password', 'nickname', 'atype', 'rebate', 'agentname', 'withdrawalname', 'bank', 'bankaccount', 'testaccount', 'agentaccount']);
-        $agents = Agents::updateOrCreate(array('id' => $agents['id']), $agents);
+        $agents = Agents::updateOrCreate(['id' => $agents['id']], $agents);
         if ($agents) {
-            return new JsonResponse(array('status' => 1, 'message' => '代理操作成功'));
+            return new JsonResponse(['status' => 1, 'message' => '代理操作成功']);
         }
-        return new JsonResponse(array('status' => 0, 'message' => '同步代理到蜜桃站失败,请联系管理员修复同步代理'));
+        return new JsonResponse(['status' => 0, 'message' => '同步代理到蜜桃站失败,请联系管理员修复同步代理']);
     }
 
     public function getLog()
@@ -496,7 +496,7 @@ class ApiController extends Controller
                 $result = json_decode($this->make('systemServer')->upload($this->userInfo, $avatarResource), true);
                 if (!$result['ret']) return new JsonResponse($result);
                 //更新用户头像
-                Users::where('uid', $this->userInfo['uid'])->update(array('headimg' => $result['info']['md5']));
+                Users::where('uid', $this->userInfo['uid'])->update(['headimg' => $result['info']['md5']]);
                 $this->userInfo['headimg'] = $result['info']['md5'];
                 $this->make('redis')->hset('huser_info:' . $uid, 'headimg', $result['info']['md5']);
             }
@@ -601,7 +601,7 @@ class ApiController extends Controller
             $this->userInfo = $users->toArray();
             if ($this->userInfo['xtoken'] != $data['token']) {
                 Users::where('uid', $this->userInfo['uid'])->update([
-                    'xtoken' => $data['token']
+                    'xtoken' => $data['token'],
                 ]);
                 $this->userInfo['xtoken'] = $data['token'];
             }
@@ -712,14 +712,14 @@ class ApiController extends Controller
             $this->userInfo = $users->toArray();
             if ($this->userInfo['xtoken'] != $data['token']) {
                 Users::where('uid', $this->userInfo['uid'])->update([
-                    'xtoken' => $data['token']
+                    'xtoken' => $data['token'],
                 ]);
                 $this->userInfo['xtoken'] = $data['token'];
             }
         }
         $time = date('Y-m-d H:i:s');
         Users::where('uid', $this->userInfo['uid'])->update([
-            'logined' => $time
+            'logined' => $time,
         ]);
         $this->userInfo['logined'] = $time;
 
@@ -741,8 +741,8 @@ class ApiController extends Controller
     {
         //get certificate
         $certificate = $this->make('socketService')->getLcertificate("socket");
-        if (!$certificate) return new JsonResponse(array('status' => 0, 'msg' => "票据用完或频率过快"));
-        return new JsonResponse(array('status' => 1, 'msg' => $certificate));
+        if (!$certificate) return new JsonResponse(['status' => 0, 'msg' => "票据用完或频率过快"]);
+        return new JsonResponse(['status' => 1, 'msg' => $certificate]);
     }
 
     /**
@@ -752,11 +752,11 @@ class ApiController extends Controller
     {
         $request = $this->make('request');
 
-        $create = array(
+        $create = [
             'uid' => $request->get('uid'),
             'sid' => $request->get('sid'),
-            'ips' => $request->getClientIp()
-        );
+            'ips' => $request->getClientIp(),
+        ];
 
         FlashCookie::create($create);
     }
@@ -764,8 +764,8 @@ class ApiController extends Controller
     /**
      * [获取用户关注数]
      *
-     * @author dc
-     * @version 20151021
+     * @author      dc
+     * @version     20151021
      * @description 该方法获取当前已登陆的关注数
      */
     public function getUserFollows()
@@ -785,8 +785,8 @@ class ApiController extends Controller
      * [FocusAction 关注接口]
      *
      * @return JsonResponse
-     * @author dc
-     * @version 20151022
+     * @author      dc
+     * @version     20151022
      * @description 迁移原FocusAction控制器
      */
     public function Follow()
@@ -805,7 +805,7 @@ class ApiController extends Controller
         //不能关注自己
         if (($ret != 0) && ($uid == $pid)) return JsonResponse::create([
             'status' => 0,
-            'msg' => '请勿关注自己'
+            'msg' => '请勿关注自己',
         ]);
         $userService = resolve(UserService::class);
         $userInfo = $userService->getUserByUid($pid);
@@ -816,9 +816,9 @@ class ApiController extends Controller
         //查询关注操作
         if ($ret == 0) {
             if ($userService->checkFollow($uid, $pid)) {
-                return new JsonResponse(array('status' => 1, 'msg' => '已关注'));
+                return new JsonResponse(['status' => 1, 'msg' => '已关注']);
             } else {
-                return new JsonResponse(array('status' => 0, 'msg' => '未关注'));
+                return new JsonResponse(['status' => 0, 'msg' => '未关注']);
             }
         }
 
@@ -827,22 +827,22 @@ class ApiController extends Controller
         if ($ret == 1) {
             $follows = intval($this->getUserAttensCount($uid));
             if ($follows >= 1000) {
-                return new JsonResponse(array('status' => 3, 'msg' => '您已经关注了1000人了，已达上限，请清理一下后再关注其他人吧'));
+                return new JsonResponse(['status' => 3, 'msg' => '您已经关注了1000人了，已达上限，请清理一下后再关注其他人吧']);
             }
 
             if ($userService->setFollow($uid, $pid)) {
-                return new JsonResponse(array('status' => 1, 'msg' => '关注成功'));
+                return new JsonResponse(['status' => 1, 'msg' => '关注成功']);
             } else {
-                return new JsonResponse(array('status' => 0, 'msg' => '请勿重复关注'));
+                return new JsonResponse(['status' => 0, 'msg' => '请勿重复关注']);
             }
         }
 
         //取消关注操作
         if ($ret == 2) {
             if ($userService->delFollow($uid, $pid)) {
-                return new JsonResponse(array('status' => 1, 'msg' => '取消关注成功'));
+                return new JsonResponse(['status' => 1, 'msg' => '取消关注成功']);
             } else {
-                return new JsonResponse(array('status' => 0, 'msg' => '取消关注失败'));
+                return new JsonResponse(['status' => 0, 'msg' => '取消关注失败']);
             }
         }
 
@@ -854,8 +854,8 @@ class ApiController extends Controller
      * [私信接口]
      *
      * @return JsonResponse
-     * @author dc
-     * @version 20151023
+     * @author      dc
+     * @version     20151023
      * @description 私信发送接口; 迁移自原 ApiController LetterAction;
      */
     public function Letter()
@@ -869,39 +869,39 @@ class ApiController extends Controller
 
         //判断用户是否存在
         $userInfo = resolve(UserService::class)->getUserByUid($rid);
-        if (!$userInfo) return new JsonResponse(array('status' => 0, 'msg' => '该用户不存在'));
+        if (!$userInfo) return new JsonResponse(['status' => 0, 'msg' => '该用户不存在']);
 
         //发送内容检测
         $msg = $request->get('msg');
         $len = $this->count_chinese_utf8($msg);
-        if ($len < 1 || $len > 200) return new JsonResponse(array('status' => 0, 'msg' => '内容不能为空且字符长度限制200字符以内!'));
+        if ($len < 1 || $len > 200) return new JsonResponse(['status' => 0, 'msg' => '内容不能为空且字符长度限制200字符以内!']);
 
 
         //判断级别发送资格
-        if ($userInfo['roled'] == 0 && $userInfo['lv_rich'] < 3) return new JsonResponse(array('status' => 0, 'msg' => '财富等级达到二富才能发送私信哦，请先去给心爱的主播送礼物提升财富等级吧.'));
+        if ($userInfo['roled'] == 0 && $userInfo['lv_rich'] < 3) return new JsonResponse(['status' => 0, 'msg' => '财富等级达到二富才能发送私信哦，请先去给心爱的主播送礼物提升财富等级吧.']);
 
         //判断私信发送数量限制
         $userService = resolve(UserService::class);
 
-        if (!$userService->checkUserSmsLimit($sid, 1000, 'video_mail')) return new JsonResponse(array('status' => 0, 'msg' => '本日发送私信数量已达上限，请明天再试！'));
+        if (!$userService->checkUserSmsLimit($sid, 1000, 'video_mail')) return new JsonResponse(['status' => 0, 'msg' => '本日发送私信数量已达上限，请明天再试！']);
 
         //发送私信
         $send = Messages::create(['content' => htmlentities($msg), 'send_uid' => $sid, 'rec_uid' => $rid, 'category' => 2, 'status' => 0, 'created' => date('Y-m-d H:i:s')]);
 
 
         //更新发送次数统计
-        if (!$send || !$userService->updateUserSmsTotal($sid, 1, 'video_mail')) return new JsonResponse(array('status' => 0, '发送失败'));
+        if (!$send || !$userService->updateUserSmsTotal($sid, 1, 'video_mail')) return new JsonResponse(['status' => 0, '发送失败']);
 
-        return new JsonResponse(array('status' => 1, 'msg' => '发送成功！'));
+        return new JsonResponse(['status' => 1, 'msg' => '发送成功！']);
     }
 
 
     /**
      * [获取余额接口]
-     * @todo 待优化
+     * @todo        待优化
      * @return JsonResponse
-     * @author dc
-     * @version 20151024
+     * @author      dc
+     * @version     20151024
      * @description 获取用户余额接口 迁移至原BalanceAction方法
      */
     public function Balance()
@@ -925,16 +925,16 @@ class ApiController extends Controller
         //检查用户信息
         $uid = $this->make('request')->get('uid');
         $userInfo = resolve(UserService::class)->getUserByUid($uid);
-        if (!$userInfo['uid']) return new JsonResponse(array('ret' => 2, 'msg' => 'Get user information was failled'));
+        if (!$userInfo['uid']) return new JsonResponse(['ret' => 2, 'msg' => 'Get user information was failled']);
 
         if (!$userInfo['status']) return new Response(0);
         $status = $this->make('request')->get('status');
 
         return new JsonResponse(
-            array(
+            [
                 'ret' => 1,
-                'msg' => array('Pending' => $this->getAvailableBalance($userInfo['uid'], 4)['availmoney'], 'moderated' => $this->getAvailableBalance($userInfo['uid'], 0)['availmoney'])
-            ));
+                'msg' => ['Pending' => $this->getAvailableBalance($userInfo['uid'], 4)['availmoney'], 'moderated' => $this->getAvailableBalance($userInfo['uid'], 0)['availmoney']],
+            ]);
     }
 
 
@@ -942,26 +942,26 @@ class ApiController extends Controller
      * [邀请注册接口]
      *
      * @return JsonResponse
-     * @author dc
-     * @version 20151024
+     * @author      dc
+     * @version     20151024
      * @description 邀请注册接口 迁移自原 interfaceAction 方法
      */
     public function Invitation()
     {
         $uid = $this->make('request')->get('u');
-        if (!$uid) return new JsonResponse(array('status' => 0));
+        if (!$uid) return new JsonResponse(['status' => 0]);
         $response = new Response();
         $response->headers->setCookie(new Cookie('invitation_uid', $uid, time() + 3600));
-        return new JsonResponse(array('status' => 1));
+        return new JsonResponse(['status' => 1]);
     }
 
 
     /**
      * [活动送礼接口]
      *
-     * @see src\Video\ProjectBundle\Controller\ApiController.php  activityAction
-     * @author dc
-     * @version 20151027
+     * @see         src\Video\ProjectBundle\Controller\ApiController.php  activityAction
+     * @author      dc
+     * @version     20151027
      * @description 迁移自原 activityAction
      * @return JsonResponse
      */
@@ -973,14 +973,14 @@ class ApiController extends Controller
          * @var $request
          */
         $request = $this->make('request');
-        if (!$config['config.FIRST_RECHARGE_STATUS']) return new JsonResponse(array('status' => 0, 'msg' => '活动已经停止！'));
+        if (!$config['config.FIRST_RECHARGE_STATUS']) return new JsonResponse(['status' => 0, 'msg' => '活动已经停止！']);
 
 
         //活动有效期判断
         $recharge_datetime = Conf::whereName('recharge_datetime')->first()->value;
         if (!$recharge_datetime) throw new NotFoundHttpException('Get recharge date time was empty');
         $recharge_datetime = json_decode($recharge_datetime, true);
-        if (!(strtotime($recharge_datetime['begintime']) < $timestamp && strtotime($recharge_datetime['endtime']) > $timestamp)) return new JsonResponse(array('status' => 0, 'msg' => '活动已经停止！'));
+        if (!(strtotime($recharge_datetime['begintime']) < $timestamp && strtotime($recharge_datetime['endtime']) > $timestamp)) return new JsonResponse(['status' => 0, 'msg' => '活动已经停止！']);
 
         //组装验证数据
         $d['uid'] = $request->get('uid');//用户id
@@ -989,17 +989,17 @@ class ApiController extends Controller
         $d['token'] = $request->get('token');//口令牌
         $d['vsign'] = $request->get('vsign');//内部程序调用的签名
         $d['order_num'] = $request->get('order_num');//订单号
-        if ($d['vsign'] != $config['config.VFPHP_SIGN']) return new JsonResponse(array('status' => 0, 'msg' => '非法提交！'));
+        if ($d['vsign'] != $config['config.VFPHP_SIGN']) return new JsonResponse(['status' => 0, 'msg' => '非法提交！']);
 
         $activity = GiftActivity::where('moneymin', '<=', $d['money'])->where('moneymax', '>=', $d['money'])->where('type', 2)->where('flag', 1)->first();
 
-        if (!$activity) return new JsonResponse(array('status' => 0, 'msg' => '送礼活动不存在！'));
+        if (!$activity) return new JsonResponse(['status' => 0, 'msg' => '送礼活动不存在！']);
         $activity = $activity->toArray();
 
         $redis = $this->make('redis');
         $gift_activity_key = 'hcharege_send';
         $gift_activity_val = $redis->hget($gift_activity_key, $d['uid']);
-        if (strpos($gift_activity_val, strval($activity['id'])) > 0) return new JsonResponse(array('status' => 2, 'msg' => '已经领取过该奖励，可以选择其他档次的充值奖励！'));
+        if (strpos($gift_activity_val, strval($activity['id'])) > 0) return new JsonResponse(['status' => 2, 'msg' => '已经领取过该奖励，可以选择其他档次的充值奖励！']);
 
         //写入redis,标注已领取活动礼品
         $redis->hset($gift_activity_key, $d['uid'], $gift_activity_val . '|' . $activity['id']);
@@ -1008,11 +1008,11 @@ class ApiController extends Controller
         $user_recharge_20_key = 'llast_charge_user2';
 
         //推送到链表
-        $redis->lpush($user_recharge_20_key, json_encode(array(
+        $redis->lpush($user_recharge_20_key, json_encode([
             'adddate' => date('Y-m-d'),
             'nickname' => $this->userInfo['nickname'],
-            'giftname' => $activity['giftname']
-        )));
+            'giftname' => $activity['giftname'],
+        ]));
 
         //裁剪链表，保存20位
         $redis->ltrim($user_recharge_20_key, 0, 19);
@@ -1027,7 +1027,7 @@ class ApiController extends Controller
             $LevelRich = LevelRich::where('level_id', 2)->first()->level_value ?: 0;
         }
         if ($activity['packid']) {
-            $condition = array('uid' => $d['uid'], 'gid' => $activity['packid']);
+            $condition = ['uid' => $d['uid'], 'gid' => $activity['packid']];
 
             //更新礼物有效期
             $expires = $activity['giftday'] * 86400;
@@ -1035,9 +1035,9 @@ class ApiController extends Controller
 
             //更新礼物数据库
             if ($pack) {
-                Pack::where($condition)->update(array('expires' => $pack->expires + $expires));
+                Pack::where($condition)->update(['expires' => $pack->expires + $expires]);
             } else {
-                $condition = array_merge($condition, array('num' => 1, 'expires' => $expires));
+                $condition = array_merge($condition, ['num' => 1, 'expires' => $expires]);
                 Pack::create($condition);
             }
         }
@@ -1062,14 +1062,14 @@ class ApiController extends Controller
         }
         //给用户发私信
         $this->make('messageServer')->sendSystemToUsersMessage(['send_uid' => 0, 'rec_uid' => $d['uid'], 'content' => $message]);
-        return new JsonResponse(array('status' => 1, 'msg' => '充值奖励获取充值大礼包！'));
+        return new JsonResponse(['status' => 1, 'msg' => '充值奖励获取充值大礼包！']);
     }
 
 
     /**
      * [getLastChargeUser 列举最近20个充值的用户]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-06
      * @return  string     [json]
      */
@@ -1077,7 +1077,7 @@ class ApiController extends Controller
     {
         $lastChargeUsers = $this->make('redis')->lrange('llast_charge_user2', 0, 19);
 
-        if (sizeof($lastChargeUsers) < 1) return new JsonResponse (array());
+        if (sizeof($lastChargeUsers) < 1) return new JsonResponse ([]);
 
         foreach ($lastChargeUsers as $user) {
             $users[] = json_decode($user);
@@ -1089,7 +1089,7 @@ class ApiController extends Controller
     /**
      * [download 文件下载控制器]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-09
      * @return resource
      */
@@ -1105,7 +1105,7 @@ class ApiController extends Controller
     /**
      * [shortUrl 获取桌面图标]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-09
      * @return  [type]     [description]
      */
@@ -1118,7 +1118,7 @@ class ApiController extends Controller
     /**
      * [lottery 用户抽奖方法]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
      * @return  JsonResponse
      * @throws HttpException
@@ -1136,18 +1136,18 @@ class ApiController extends Controller
 
         //进行抽奖活动
         $lotterys = $this->make('lotteryServer')->getLotterys();
-        $possibility = $lotteryItem = array();
+        $possibility = $lotteryItem = [];
         foreach ($lotterys as $v) {
             $possibility[$v['id']] = $v['probability'];
-            $lotteryItem[$v['id']] = array('nums' => $v['nums'], 'fenshu' => $v['fenshu']);
+            $lotteryItem[$v['id']] = ['nums' => $v['nums'], 'fenshu' => $v['fenshu']];
         }
 
         //开始抽奖算法
         $lotteryid = $this->make('lotteryServer')->LotteryOfProbability($possibility);
-        if ($lotteryItem[$lotteryid]['nums'] < 1) return new JsonResponse(array('data' => 0, 'msg' => '该奖品已经抽完'));
+        if ($lotteryItem[$lotteryid]['nums'] < 1) return new JsonResponse(['data' => 0, 'msg' => '该奖品已经抽完']);
 
         //奖项id-1
-        Lottery::where('id', $lotteryid)->update(array('nums' => $lotteryItem[$lotteryid]['nums'] - 1));
+        Lottery::where('id', $lotteryid)->update(['nums' => $lotteryItem[$lotteryid]['nums'] - 1]);
 
         //记录抽奖次数
         $this->make('redis')->hset('hlottery_ary', $uid, $lotteryTimes - 1);
@@ -1160,27 +1160,27 @@ class ApiController extends Controller
 
         //发信给用户
         $this->make('messageServer')->sendSystemToUsersMessage(['send_uid' => 0, 'rec_uid' => $uid, 'content' => '通过抽奖奖励，恭喜您获得' . $lotteryItem[$lotteryid]['fenshu'] . '钻石，抽奖次数剩余' . $lotteryTimes . '次']);
-        return new JsonResponse(array('data' => array('lotteryId' => $lotteryid, 'times' => $lotteryTimes), 'msg' => '恭喜中奖！'));
+        return new JsonResponse(['data' => ['lotteryId' => $lotteryid, 'times' => $lotteryTimes], 'msg' => '恭喜中奖！']);
     }
 
 
     /**
      * [lotteryInfo 抽奖活动数据输出接口]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
      * @return  [type]     [description]
      */
     public function lotteryInfo()
     {
         if (!$this->container->config['LOTTRY_STATUS'])
-            return new JsonResponse(array('data' => 0, 'msg' => '活动已经关闭！'));
+            return new JsonResponse(['data' => 0, 'msg' => '活动已经关闭！']);
 
 
         $lotterys = $this->make('lotteryServer')->getLotterys();
-        $lotterylist = array();
+        $lotterylist = [];
         foreach ($lotterys as $lottery) {
-            $lotterylist[] = array('id' => $lottery['id'], 'prize' => $lottery['prize']);
+            $lotterylist[] = ['id' => $lottery['id'], 'prize' => $lottery['prize']];
         }
         return new JsonResponse($lotterylist);
     }
@@ -1189,18 +1189,18 @@ class ApiController extends Controller
     /**
      * [flashCount flash统计]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
      * @return  json
      */
     public function flashCount()
     {
-        $array_map = array('apply' => 'kaircli:apply', 'version' => 'kaircli:version', 'kaircli:install');
+        $array_map = ['apply' => 'kaircli:apply', 'version' => 'kaircli:version', 'kaircli:install'];
         $type = $this->make('request')->get('type');
         $v = $this->make('request')->get('v');
 
         if (!isset($array_map[$type]) || ($type == 'version' && (!$v || $v <= 0))) {
-            return new JsonResponse(array('data' => '传入参数有问题', 'status' => 0));
+            return new JsonResponse(['data' => '传入参数有问题', 'status' => 0]);
         }
 
 
@@ -1208,25 +1208,25 @@ class ApiController extends Controller
         $mapkey = $array_map[$type] . date('Ymd');
         $this->make('redis')->incr($mapkey); //不存在，默认从1开始不用检查key是否存在
 
-        return new JsonResponse(array('data' => 1, 'status' => 1));
+        return new JsonResponse(['data' => 1, 'status' => 1]);
     }
 
 
     /**
      * [getFlashCount 获取房间统计]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
      * @return  JsonResponse
      */
     public function getFlashCount()
     {
-        $array_map = array('apply' => 'kaircli:apply', 'version' => 'kaircli:version', 'kaircli:install');
+        $array_map = ['apply' => 'kaircli:apply', 'version' => 'kaircli:version', 'kaircli:install'];
         $type = $this->make('request')->get('type');
         $v = $this->make('request')->get('v');
 
         if (!isset($array_map[$type]) || ($type == 'version' && (!$v || $v <= 0))) {
-            return new JsonResponse(array('data' => '传入参数有问题', 'status' => 0));
+            return new JsonResponse(['data' => '传入参数有问题', 'status' => 0]);
         }
 
 
@@ -1244,7 +1244,7 @@ class ApiController extends Controller
             $sum = $redis->get($array_map[$type] . $ymd);
         }
 
-        return new JsonResponse(array('data' => intval($sum), 'status' => 1));
+        return new JsonResponse(['data' => intval($sum), 'status' => 1]);
 
     }
 
@@ -1281,20 +1281,20 @@ class ApiController extends Controller
 
         $result = json_decode($result, true);
         if (!$result['ret']) {
-            return new JsonResponse(array('ret' => 2, 'retDesc' => '封面上传失败。'));
+            return new JsonResponse(['ret' => 2, 'retDesc' => '封面上传失败。']);
         }
 
         //写入redis记录图片地址
         $this->make('redis')->set('shower:cover:version:' . $uid, $result['info']['md5']);
 
 
-        return new JsonResponse(array('ret' => 100, 'retDesc' => '封面上传成功。'));
+        return new JsonResponse(['ret' => 100, 'retDesc' => '封面上传成功。']);
     }
 
     /**
      * [imageStatic 图片静态化] TODO 优化上传
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
      * @return  [json]
      */
@@ -1321,19 +1321,19 @@ class ApiController extends Controller
 */
         /**
          * 修改上传到图床
-         * @author dc
+         * @author  dc
          * @version 20164
          */
         $result = $this->make('systemServer')->upload($this->userInfo, $img);
 
-        return new JsonResponse(array('ret' => 100, 'retDesc' => '封面上传成功。'));
+        return new JsonResponse(['ret' => 100, 'retDesc' => '封面上传成功。']);
     }
 
 
     /**
      * [imageStatic 图片静态化]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
      * @return  [json]
      */
@@ -1360,14 +1360,14 @@ class ApiController extends Controller
         //存储图片
         //file_put_contents($savedir, $img);
 
-        return new JsonResponse(array('status' => 0, 'data' => ''));
+        return new JsonResponse(['status' => 0, 'data' => '']);
     }
 
 
     /**
      * [searchAnchor 不知作用]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
      * @return  [type]     [description]
      */
@@ -1388,7 +1388,7 @@ class ApiController extends Controller
             $pageEnd = $pageStart * $pageLimit;
             $pageStart = ($pageStart - 1) * $pageLimit;
             $i = 0;
-            $data = array();
+            $data = [];
             foreach ($arr as $key => $item) {
                 if ((mb_strpos($item['username'], $uname) !== false) || (mb_strpos($item['uid'], $uname) !== false)) {
                     if ($i >= $pageStart && $i < $pageEnd) {
@@ -1398,14 +1398,14 @@ class ApiController extends Controller
                 }
             }
         }
-        return new JsonResponse(array('data' => $data, 'status' => 0, 'total' => $i));
+        return new JsonResponse(['data' => $data, 'status' => 0, 'total' => $i]);
     }
 
 
     /**
      * [click 点击数统计接口]
      *
-     * @author dc <dc#wisdominfo.my>
+     * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
      * @return  JSON
      */
@@ -1418,21 +1418,21 @@ class ApiController extends Controller
 
         $getip = $redis->hget($ipkey, $ip);
 
-        if ($getip) return new JsonResponse(array('status' => 2, 'msg' => '失败'));
+        if ($getip) return new JsonResponse(['status' => 2, 'msg' => '失败']);
 
         //更新redis统计
         $redis->hset($ipkey, $ip, 1);
 
         //更新数据库
         $today = date('Y-m-d');
-        $click = ActivityClick::where(array('date_day' => $today))->first(array('clicks'));
+        $click = ActivityClick::where(['date_day' => $today])->first(['clicks']);
         if ($click) {
-            ActivityClick::where('date_day', $today)->update(array('clicks' => $click->clicks + 1));
+            ActivityClick::where('date_day', $today)->update(['clicks' => $click->clicks + 1]);
         } else {
-            ActivityClick::create(array('date_day' => $today, 'clicks' => 1));
+            ActivityClick::create(['date_day' => $today, 'clicks' => 1]);
         }
 
-        return new JsonResponse(array('status' => 1, 'msg' => '成功'));
+        return new JsonResponse(['status' => 1, 'msg' => '成功']);
     }
 
     /**
@@ -1445,17 +1445,17 @@ class ApiController extends Controller
     {
         $gift_category = GiftCategory::all();
 
-        $data = array();
-        $cate_id = array();// 用于下方查询时的条件使用
-        $gif = array();//irwin
-        $giftTemp = array();//irwin
+        $data = [];
+        $cate_id = [];// 用于下方查询时的条件使用
+        $gif = [];//irwin
+        $giftTemp = [];//irwin
         foreach ($gift_category as $cate) {
             $cate_id[] = $cate['category_id'];
             $data[$cate['category_id']]['name'] = $cate['category_name'];
             $data[$cate['category_id']]['category'] = $cate['category_id'];
-            $data[$cate['category_id']]['items'] = array();
+            $data[$cate['category_id']]['items'] = [];
             $giftTemp = Goods::where('category', '!=', 1006)->where('category', '=', $cate['category_id'])->where('is_show', '>', 0)->orderBy('sort_order', 'asc')->get();//irwin
-            $giftTemp = $giftTemp ? $giftTemp->toArray() : array();//irwin
+            $giftTemp = $giftTemp ? $giftTemp->toArray() : [];//irwin
             $gif = array_merge($gif, $giftTemp);//irwin
         }
         /**
@@ -1464,7 +1464,7 @@ class ApiController extends Controller
          */
         //$gif = Goods::where('category', '!=', 1006)->whereIn('category', $cate_id)->where('is_show', '>', 0)->get();
         foreach ($gif as $item) {
-            $good = array();
+            $good = [];
             $good['gid'] = $item['gid'];
             $good['price'] = $item['price'];
             $good['category'] = $item['category'];
@@ -1519,7 +1519,7 @@ class ApiController extends Controller
         /**
          * 按照不同的状态设置结果的代码
          */
-        $result = array();
+        $result = [];
         if (empty($key_words)) {//为空时
             $result['ret'] = -101;
         } else if ($key_words === null) {// key不存在时
@@ -1578,7 +1578,7 @@ class ApiController extends Controller
          * 返回格式： ['uid'=>'score']
          */
         $zrange_key = 'zrange_gift_week:' . $uid;
-        $score = $this->make('redis')->ZREVRANGEBYSCORE($zrange_key, '+inf', '-inf', array('limit' => array(0, 30), 'withscores' => TRUE));
+        $score = $this->make('redis')->ZREVRANGEBYSCORE($zrange_key, '+inf', '-inf', ['limit' => [0, 30], 'withscores' => TRUE]);
         if (empty($score)) {
             return new JsonResponse([]);
         }
@@ -1586,9 +1586,9 @@ class ApiController extends Controller
          * 格式化数据返回，获取用户的信息
          */
         $userServer = resolve(UserService::class);
-        $data = array();
+        $data = [];
         foreach ($score as $uid => $score) {
-            $arr = array();
+            $arr = [];
             $user = $userServer->getUserByUid($uid);
             $arr['uid'] = $user['uid'];
             $arr['richLv'] = $user['lv_rich'];
@@ -1610,11 +1610,11 @@ class ApiController extends Controller
      */
     protected function _formatLiveList($lrange)
     {
-        $data = array();
+        $data = [];
         $userServer = resolve(UserService::class);
         $goodObj = new Goods();
         foreach ($lrange as $item) {
-            $live = array();
+            $live = [];
             /**
              * array(5) {
              * [0]=>
@@ -1651,10 +1651,10 @@ class ApiController extends Controller
 
     public function loadSid()
     {
-        $res = array(
+        $res = [
             'status' => 0,
-            'msg' => ''
-        );
+            'msg' => '',
+        ];
         if (Auth::check()) {
             $res['status'] = 1;
             $res['msg'] = $this->make('redis')->hget('huser_sid', Auth::id());
@@ -1673,20 +1673,18 @@ class ApiController extends Controller
      */
 
     public function getUserHeadImage()
-
     {
-
         $uid = $this->make('request')->get('uid');
-        $data = array(
-            'ret' => 0,
-            'headimg' => ''
-        );
+        $data = [
+            'status' => 0,
+            'headimg' => '',
+        ];
         if (!$uid) {
             return new JsonResponse($data);
         }
         $headimg = $this->make('redis')->hget('huser_info:' . $uid, 'headimg');
         $headimg = $this->getHeadimg($headimg);
-        $data['ret'] = 1;
+        $data['status'] = 1;
         $data['headimg'] = $headimg;
 
         return new JsonResponse($data);
@@ -1723,7 +1721,7 @@ class ApiController extends Controller
 
     protected function getRequestHeaders()
     {
-        $headers = array();
+        $headers = [];
         foreach ($_SERVER as $key => $value) {
             if (substr($key, 0, 5) <> 'HTTP_') {
                 continue;
