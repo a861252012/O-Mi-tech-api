@@ -14,9 +14,9 @@ use App\Models\RoomDuration;
 use App\Models\RoomStatus;
 use App\Models\UserBuyOneToMore;
 use App\Models\Users;
-use App\Service\Room\NoSocketChannelException;
-use App\Service\Room\RoomService;
-use App\Service\Room\SocketService;
+use App\Services\Room\NoSocketChannelException;
+use App\Services\Room\SocketService;
+use App\Services\Room\RoomService;
 use App\Services\User\UserService;
 use DB;
 use Illuminate\Http\Request;
@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\RoomOneToMore;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\LiveList;
+use Illuminate\Support\Facades\Log;
 
 class RoomController extends Controller
 {
@@ -589,121 +590,16 @@ class RoomController extends Controller
     /*
      * app创建一对多房间接口 by desmond
      */
-    public function createOne2More()
+    public function createOne2More(Request $request)
     {
 
-        $start_time = $this->make('request')->get('date');
-        $hour = $this->make('request')->get('hour');
-        $minute = $this->make('request')->get('minute');
-        //   $tid = $this->make('request')->get('tid');
-        $duration = $this->make('request')->get('duration');
-        $points = intval($this->make('request')->get('points'));
-        $origin = $this->make('request')->get('origin', 11);
+        $data = array();
+        $data = $request->only(['mintime','hour','minute','tid','duration','points','origin']);
 
-        if (!in_array($duration, array(20,25,30,35,40,45,50,55,60))) return new JsonResponse(array('status' => 9, 'msg' => '请求错误'));
-        if ($points>99999 || $points<=0) return new JsonResponse(array('status' => 3, 'msg' => '金额超出范围'));
-
-        if (empty($start_time) || empty($duration)) return new JsonResponse(array('status' => 4, 'msg' => '请求错误'));
-        $start_time = date("Y-m-d H:i:s", strtotime($start_time . ' ' . $hour . ':' . $minute . ':00'));
-
-        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(array('status' => 6, 'msg' =>'不能设置过去的时间'));
-
-        //$room_config = $this->getRoomStatus(Auth::id(),7);
-        $endtime = date('Y-m-d H:i:s',strtotime($start_time)+$duration * 60);
-
-        if(!$this->notSetRepeat($start_time,$endtime)) return new JsonResponse(array('status' => 2, 'msg' => '你这段时间和一对一或一对多有重复的房间'));
-
-        //添加
-        /** @var \Redis $redis */
-        $redis = $this->make('redis');
-
-        $uids = '';
-        $tickets = 0;
-
-        //如果结束时间在记录之前并且未结速，则处理。否则忽略
-        $now = date('Y-m-d H:i:s');
-        $lastRoom = RoomOneToMore::where('uid',Auth::id())->where('endtime','>',$now)->where('status',0)->orderBy('endtime','asc')->first();
-        //$preRoom = RoomOneToMore::where('starttime','>',$endtime)->where('uid',Auth::id())->where('endtime','>',$now)->where('status',0)->first();
-        if(!$lastRoom || strtotime($lastRoom->starttime)>strtotime($endtime)){
-            //当天消费,并且只能向后设置，固不用判断时间大于开始时间情况
-            $macro_starttime = strtotime($start_time);
-            $h = date('H');
-            $etime='';
-            if($h>6){
-                $etime = strtotime(date('Y-m-d'))+30*3600;
-            }else{
-                $etime = strtotime(date('Y-m-d'))+6*3600;
-            }
-            if($macro_starttime<$etime){
-                $user_send_gite = $redis->hGetAll('one2many_statistic:'.Auth::id());
-                if($user_send_gite){
-                    foreach ($user_send_gite as $k=>$v){
-                        if($v>=$points){
-                            $tickets +=1;   $uids .= $k.",";
-                        }
-                    }
-                    $uids = substr($uids, 0, -1);
-                }
-            }
-        }
-
-        if(empty($uids)){
-            return new JsonResponse(array('status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间'));
-        }
-
-        //$points = $room_config['timecost'];
-        $oneToMoreRoom = new RoomOneToMore();
-        $oneToMoreRoom->created = date('Y-m-d H:i:s');
-        //  $oneToMoreRoom->uid = Auth::id();
-        $oneToMoreRoom->uid = Auth::id();
-        /*    $oneToMoreRoom->roomtid = $tid;*/
-        $oneToMoreRoom->starttime = $start_time;
-        $oneToMoreRoom->duration = $duration * 60;
-        $oneToMoreRoom->endtime = $endtime;
-        $oneToMoreRoom->status = 0;
-        $oneToMoreRoom->tickets = $tickets;
-        $oneToMoreRoom->points = $points;
-        $oneToMoreRoom->origin = $origin;
-        $oneToMoreRoom->save();
-
-        if($uids){
-            $uidArr = explode(',',$uids);
-            $insertArr = [];
-            foreach ($uidArr as $k=>$v){
-                $temp = [];
-                $temp['onetomore']=$oneToMoreRoom->id;
-                $temp['rid']=Auth::id();
-                $temp['type']=2;
-                $temp['starttime']=$start_time;
-                $temp['endtime']=$endtime;
-                $temp['duration']=$duration*60;
-                $temp['points']=$points;
-                $temp['uid']=$v;
-                $temp['origin']=12;
-                array_push($insertArr,$temp);
-            }
-            DB::table('video_user_buy_one_to_more')->insert($insertArr);
-        }
-
-        //
-        $duroom = $oneToMoreRoom;
-        $redis->sAdd("hroom_whitelist_key:".$duroom['uid'],$duroom->id);
-
-        $temp = [
-            'starttime'=>$duroom['starttime'],
-            'endtime'=>$duroom['endtime'],
-            'uid'=>$duroom['uid'],
-            'nums'=>$tickets,
-            'uids'=>$uids,
-            'points'=>$points,
-        ];
-        $rs = $this->make('redis')->hmset('hroom_whitelist:'.$duroom['uid'].':'.$duroom->id,$temp);
-
-        $logPath = base_path() . '/storage/logs/one2more_' . date('Ym') . '.log';
-        $one2moreLog = 'hroom_whitelist:'.$duroom['uid'].':'.$duroom->id.' '.json_encode($temp)."\n";
-        $this->logResult('roomOneToMore  '.$one2moreLog,$logPath);
-
-        return new JsonResponse(array('status' =>1, 'msg' =>'添加成功'));
+        $data['uid'] =  Auth::guard()->id();
+        $roomservice  = resolve(RoomService::class);
+        $result  = $roomservice->addOnetomore($data);
+        return  new JsonResponse($result);
     }
 
     /**

@@ -7,7 +7,9 @@ use App\Services\User\UserService;
 use Core\Request;
 use App\Services\Service;
 use Illuminate\Container\Container;
-
+use App\Models\RoomDuration;
+use App\Models\RoomOneToMore;
+use Illuminate\Support\Facades\Auth;
 /**
  *  @desc 房间类
  */
@@ -323,5 +325,203 @@ class RoomService extends Service
             .((isset($parse_url['fragment'])) ? '#' . $parse_url['fragment'] : '')
             ;
     }
+
+    /*
+     * app和pc  添加一对多房间。
+     */
+    public function addOnetomore($data)
+    {
+
+        if (empty($data['origin']))    $data['origin'] = 11;
+        if (!in_array($data['duration'], array(20,25,30,35,40,45,50,55,60))) return ['status' => 9, 'msg' => '请求错误'];
+        if ($data['points']>99999 || $data['points']<=0) return ['status' => 3, 'msg' => '金额超出范围'];
+
+        if (empty($data['mintime']) || empty($data['duration'])) return ['status' => 4, 'msg' => '请求错误'];
+        $start_time = date("Y-m-d H:i:s", strtotime($data['mintime'] . ' ' . $data['hour'] . ':' . $data['minute'] . ':00'));
+
+        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return ['status' => 6, 'msg' => '不能设置过去的时间'];
+        $endtime = date('Y-m-d H:i:s', strtotime($start_time) + $data['duration'] * 60);
+
+        if (!$this->notSetRepeat($start_time, $endtime)) return ['status' => 2, 'msg' => '你这段时间和一对一或一对多有重复的房间'];
+
+
+        $redis = $this->make('redis');
+
+        $uids = '';
+        $tickets = 0;
+
+
+
+        //如果结束时间在记录之前并且未结速，则处理。否则忽略
+        $now = date('Y-m-d H:i:s');
+        $lastRoom = RoomOneToMore::where('uid', $data['uid'])->where('endtime', '>', $now)->where('status', 0)->orderBy('endtime', 'asc')->first();
+        if (!$lastRoom || strtotime($lastRoom->starttime) > strtotime($endtime)) {
+            //当天消费,并且只能向后设置，固不用判断时间大于开始时间情况
+            $macro_starttime = strtotime($start_time);
+            $h = date('H');
+            $etime = '';
+            if ($h >= 6) {
+                $etime = strtotime(date('Y-m-d')) + 30 * 3600;
+            } else {
+                $etime = strtotime(date('Y-m-d')) + 6 * 3600;
+            }
+            if ($macro_starttime < $etime) {
+                $user_send_gite = $redis->hGetAll('one2many_statistic:' . Auth::id());
+                if ($user_send_gite) {
+                    foreach ($user_send_gite as $k => $v) {
+                        if ($v >= $data['points']) {
+                            $tickets += 1;
+                            $uids .= $k . ",";
+                        }
+                    }
+                    $uids = substr($uids, 0, -1);
+                }
+            }
+        }
+       /* if (empty($uids)) {
+            return ['status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间'];
+        }*/
+
+
+        //$points = $room_config['timecost'];
+        $oneToMoreRoom = new RoomOneToMore();
+        $oneToMoreRoom->created = date('Y-m-d H:i:s');
+        $oneToMoreRoom->uid = $data['uid'];
+        $oneToMoreRoom->roomtid = $data['tid'];
+        $oneToMoreRoom->starttime = $start_time;
+        $oneToMoreRoom->duration = $data['duration'] * 60;
+        $oneToMoreRoom->endtime = $endtime;
+        $oneToMoreRoom->status = 0;
+        $oneToMoreRoom->tickets = $tickets;
+        $oneToMoreRoom->points = $data['points'];
+        $oneToMoreRoom->origin = $data['origin'];
+        $oneToMoreRoom->save();
+
+
+        if ($uids) {
+            $uidArr = explode(',', $uids);
+            $insertArr = [];
+            foreach ($uidArr as $k => $v) {
+                $temp = [];
+                $temp['onetomore'] = $oneToMoreRoom->id;
+                $temp['rid'] = $data['uid'];
+                $temp['type'] = 2;
+                $temp['starttime'] = $start_time;
+                $temp['endtime'] = $endtime;
+                $temp['duration'] = $data['duration'] * 60;
+                $temp['points'] = $data['points'];
+                $temp['uid'] = $v;
+                $temp['origin'] = $data['origin'];
+                array_push($insertArr, $temp);
+            }
+            DB::table('video_user_buy_one_to_more')->insert($insertArr);
+        }
+
+        $duroom = $oneToMoreRoom;
+        $redis->sAdd("hroom_whitelist_key:".$duroom['uid'],$duroom->id);
+
+        $temp = [
+            'starttime'=>$duroom['starttime'],
+            'endtime'=>$duroom['endtime'],
+            'uid'=>$duroom['uid'],
+            'nums'=>$tickets,
+            'uids'=>$uids,
+            'points'=>$data['points'],
+        ];
+        $rs = $this->make('redis')->hmset('hroom_whitelist:'.$duroom['uid'].':'.$duroom->id,$temp);
+
+        $logPath = base_path() . '/storage/logs/one2more_' . date('Ym') . '.log';
+        $one2moreLog = 'hroom_whitelist:'.$duroom['uid'].':'.$duroom->id.' '.json_encode($temp)."\n";
+        $this->logResult('roomOneToMore  '.$one2moreLog,$logPath);
+
+        return ['status' =>1, 'msg' =>'添加成功'];
+
+    }
+
+    /**
+     * 写充值的 日志 TODO 优化到充值服务中去
+     *
+     * @param string $word
+     * @param string $recodeurl
+     */
+    protected function logResult($word = '', $recodeurl = '')
+    {
+        if ($recodeurl) {
+            $recordLog = $recodeurl;
+        } else {
+            $recordLog = $this->container->config['config.PAY_LOG_FILE'];
+        }
+        $fp = fopen($recordLog, "a");
+        flock($fp, LOCK_EX);
+        fwrite($fp, "执行日期：" . date("Ymd H:i:s", time()) . "\n" . $word . "\n");
+        flock($fp, LOCK_UN);
+        fclose($fp);
+    }
+
+    /**
+     * 时段房间互拆（一对一，一对多）
+     * 返回 true 不重叠 false重叠
+     */
+    public function notSetRepeat($start_time, $endtime)
+    {
+        $now = date('Y-m-d H:i:s');
+        //时间，是否和一对一有重叠
+        $data = RoomDuration::where('status', 0)->where('uid', Auth::id())
+            ->orderBy('starttime', 'DESC')
+            ->get()->toArray();
+
+        $temp_data = $this->array_column_multi($data, ['starttime', 'endtime']);
+        if (!$this->checkActiveTime($start_time, $endtime, $temp_data)) return false;
+
+        //时间，是否和一对多有重叠
+        $data = RoomOneToMore::where('status', 0)->where('uid', Auth::id())->get()->toArray();
+        $temp_data = $this->array_column_multi($data, ['starttime', 'endtime']);
+        if (!$this->checkActiveTime($start_time, $endtime, $temp_data)) return false;
+        return true;
+    }
+
+
+    /**
+     * @param string $stime
+     * @param string $etime
+     * @param array  $data
+     * @return bool false重叠 true不重叠
+     */
+    public function checkActiveTime($stime = '', $etime = '', $data = [])
+    {
+        $stime = strtotime($stime);
+        $etime = strtotime($etime);
+
+        $flag = true;
+        foreach ($data as $k => $v) {
+            //开始时间在区间之内
+            if ($stime >= strtotime($v['starttime']) && $stime <= strtotime($v['endtime'])) {
+                $flag = false;
+                break;
+            }
+            //结束时间在区间之内
+            if ($etime >= strtotime($v['starttime']) && $etime <= strtotime($v['endtime'])) {
+                $flag = false;
+                break;
+            }
+            //包含
+            if ($stime <= strtotime($v['starttime']) && $etime >= strtotime($v['endtime'])) {
+                $flag = false;
+                break;
+            }
+        }
+        return $flag;
+    }
+
+    function array_column_multi(array $input, array $column_keys)
+    {
+        $result = [];
+        $column_keys = array_flip($column_keys);
+        foreach ($input as $key => $el) {
+            $result[$key] = array_intersect_key($el, $column_keys);
+        }
+        return $result;
+    }
+
 
 }
