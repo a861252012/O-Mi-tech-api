@@ -19,6 +19,7 @@ use App\Service\Room\RoomService;
 use App\Service\Room\SocketService;
 use App\Services\User\UserService;
 use DB;
+use Illuminate\Http\Request;
 use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Http\Controllers\Controller;
@@ -734,31 +735,21 @@ class RoomController extends Controller
     /*
     *  一对多房间记录接口by desmond
     */
-    public function  listOneToMoreByHost(){
+    public function  listOneToMoreByHost(Request $request){
 
-        //$this->isLogin() or die;
+        $start_date = $request->get('starttime') ? $request->get('starttime') . ' 00:00:00' : date('Y-m-d H:i:s');
+        $end_date = $request->get('endtime') ? $request->get('endtime') . ' 23:59:59' : date('Y-m-d 23:59:59');
 
-        $start_date = $this->request()->input('starttime') ? $this->request()->input('starttime') . ' 00:00:00' : date('0000-00-00 00:00:00');
-        $end_date = $this->request()->input('endtime') ? $this->request()->input('endtime') . ' 23:59:59' : date('Y-m-d 23:59:59');
-        $uid        =  Auth::id();
-
-        if(isset($_GET['page'])){
-            $pages = $_GET['page'];
-        }else{
-            $pages = 1;
-        }
-        $result['data'] = RoomOneToMore::where('uid','=',$uid)
-            ->where('status','=', 0)
-            ->where('starttime','>=',$start_date)
-            ->where('starttime','<=',$end_date)
-            ->orderBy('starttime','=', 'DESC')
-            ->paginate(15)
-            ->appends($_GET);
+        $result['data'] = RoomOneToMore::where('uid',Auth::id())
+            ->where('status',0)
+            ->whereBetween('starttime',[$start_date,$end_date])
+            ->orderBy('starttime', 'DESC')
+            ->paginate();
 
         return JsonResponse::create($result);
     }
 
-    /*
+  /*
    * 判断登录的主播是否开通一对多
    */
     public function competence(){
@@ -780,12 +771,12 @@ class RoomController extends Controller
     /*
     *  直播记录接口 by desmond
     */
-    public function showlist(){
+    public function showlist(Request $request ){
 
-        $start_time =  $this->request()->input('starttime') ? strtotime($this->request()->input('starttime') . ' 00:00:00') : strtotime('-1 month');
-        $end_time   =  $this->request()->input('endtime') ? strtotime($this->request()->input('endtime') . ' 23:59:59') : strtotime('tomorrow') - 1;
+        $start_time =  $request->get('starttime') ? strtotime($request->get('starttime') . ' 00:00:00') : strtotime('-1 month');
+        $end_time   =  $request->get('endtime') ? strtotime($request->get('endtime') . ' 23:59:59') : strtotime('tomorrow') - 1;
         $uid        =  Auth::id();
-
+        //Carbon::now()->addHours(1);
         $result = LiveList::where('uid','=',$uid)
             ->where('start_time','>=', date("Y-m-d H:i:s",$start_time))
             ->where('start_time','<=', date("Y-m-d H:i:s",$end_time))
