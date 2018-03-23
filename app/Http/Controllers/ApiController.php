@@ -782,36 +782,38 @@ class ApiController extends Controller
 
 
     /**
-     * [FocusAction 关注接口]
-     *
-     * @return JsonResponse
-     * @author      dc
-     * @version     20151022
-     * @description 迁移原FocusAction控制器
+     * 关注接口
      */
-    public function Follow()
+    public function Follow(Request $request)
     {
-        $request = $this->make('request');
-
         //获取操作类型  请求类型  0:查询 1:添加 2:取消
         $ret = $request->get('ret');
-
         //获取当前用户id
         $uid = Auth::id();
         //获取被关注用户uid
         $pid = $request->get('pid');
-
-        if (!$pid) throw new NotFoundHttpException();
+        if (!$pid) {
+            return JsonResponse::create([
+                'status' => 0,
+                'msg' => '参数错误',
+            ]);
+        };
         //不能关注自己
-        if (($ret != 0) && ($uid == $pid)) return JsonResponse::create([
-            'status' => 0,
-            'msg' => '请勿关注自己',
-        ]);
+        if (($ret != 0) && ($uid == $pid)) {
+            return JsonResponse::create([
+                'status' => 0,
+                'msg' => '请勿关注自己',
+            ]);
+        }
         $userService = resolve(UserService::class);
         $userInfo = $userService->getUserByUid($pid);
 
-        if (!is_array($userInfo)) throw new NotFoundHttpException();
-
+        if (!$userInfo) {
+            return JsonResponse::create([
+                'status' => 0,
+                'msg' => '用户不存在',
+            ]);
+        }
 
         //查询关注操作
         if ($ret == 0) {

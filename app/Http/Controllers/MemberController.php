@@ -624,22 +624,17 @@ class MemberController extends Controller
     }
 
     /**
-     *用户中心 我的关注 TODO 重写分页 优化分页
+     * 用户中心 我的关注接口
+     * @Author Nicholas
      * @return Response
      */
-    public function attention()
+    public function attention(Request $request)
     {
-        $curpage = $this->make("request")->get('page') ?: 1;
-
+        $page = $request->get('page', 1);
         $userServer = resolve(UserService::class);
-        $data = $userServer->getUserAttens(Auth::id(), $curpage);
-
-        return $this->render('Member/attention',
-            [
-                'curmenu' => 'attention',
-                'attenlist' => $data['data'],
-                'pagination' => $data['pagination'],
-            ]);
+        $data = $userServer->getUserAttens(Auth::id(), $page)
+            ->setPath($request->getPathInfo());
+        return JsonResponse::create($data);
     }
 
     /**
@@ -2601,8 +2596,8 @@ class MemberController extends Controller
         if ($num >= 1) return JsonResponse::create(['status' => 0, 'msg' => '已有修改昵称资格']);
         /** 扣钱给资格 */
         if (Users::where('uid', $uid)->where('points', '>=', $price)->decrement('points', $price)) {
-           Redis::hIncrBy('huser_info:' . $uid, 'points', $price * -1);
-           Redis::hIncrBy('modify.nickname', $uid, 1);
+            Redis::hIncrBy('huser_info:' . $uid, 'points', $price * -1);
+            Redis::hIncrBy('modify.nickname', $uid, 1);
             return JsonResponse::create(['status' => 1, 'msg' => '购买成功']);
         } else {
             return JsonResponse::create(['status' => 0, 'msg' => '扣款失败']);

@@ -1,7 +1,7 @@
 <?php
 /**
  * A helper file for Laravel 5, to provide autocomplete information to your IDE
- * Generated for Laravel 5.5.39 on 2018-03-21 12:32:36.
+ * Generated for Laravel 5.5.39 on 2018-03-22 18:20:34.
  *
  * This file should not be included in your code, only analyzed by your IDE!
  *
@@ -1662,6 +1662,16 @@ namespace Illuminate\Support\Facades {
          *
          * @static 
          */ 
+        public static function logout()
+        {
+            return \App\Services\Auth\SessionGuard::logout();
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
         public static function getName()
         {
             return \App\Services\Auth\SessionGuard::getName();
@@ -1783,18 +1793,6 @@ namespace Illuminate\Support\Facades {
         {
             //Method inherited from \Illuminate\Auth\SessionGuard            
             return \App\Services\Auth\SessionGuard::loginUsingId($id, $remember);
-        }
-        
-        /**
-         * Log the user out of the application.
-         *
-         * @return void 
-         * @static 
-         */ 
-        public static function logout()
-        {
-            //Method inherited from \Illuminate\Auth\SessionGuard            
-            \App\Services\Auth\SessionGuard::logout();
         }
         
         /**
@@ -12661,7 +12659,7 @@ namespace App\Facades {
          * 从redis中读取，读取不到就读db,再写redis
          *
          * @param $uid
-         * @return mixed 
+         * @return \App\Services\User\Users|null 
          * @static 
          */ 
         public static function getUserByUid($uid)
@@ -12763,18 +12761,17 @@ namespace App\Facades {
         /**
          * 获取当前用户被别人关注的用户信息/当前用户关注别人的用户信息 TODO 优化
          *
-         * @param $uid
+         * @param int $uid
+         * @param int $currentPage
          * @param bool $fid
-         * @param $end
-         * @param int $start
-         * @param bool $getScores
+         * @param int $perPage
          * @return mixed 
-         * @Author Orino
+         * @Author nicholas
          * @static 
          */ 
-        public static function getUserAttens($uid, $pageStart = 1, $fid = true, $pageLimit = 12)
+        public static function getUserAttens($uid, $currentPage = 1, $fid = true, $perPage = 12)
         {
-            return \App\Services\User\UserService::getUserAttens($uid, $pageStart, $fid, $pageLimit);
+            return \App\Services\User\UserService::getUserAttens($uid, $currentPage, $fid, $perPage);
         }
         
         /**

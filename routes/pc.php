@@ -22,6 +22,8 @@ Route::group(['prefix' => 'member'], function () {
         Route::get('msglist/{type?}', 'MemberController@msglist')->where('type', '[0-9]+')->name('member_msglist');
         //购买修改昵称
         Route::post('buyModifyNickname', 'MemberController@buyModifyNickname')->name('buyModifyNickname');
+        // 用户中心 我的关注
+        Route::get('attention', ['name' => 'member_attention', 'uses' => 'MemberController@attention']);
     });
 });
 
@@ -37,7 +39,7 @@ Route::group(['prefix' => 'user'], function () {
 // 所有路由都在这里配置
 /** 代理改造，开放游客 */
 //rtmp地址
-Route::get('/room/rtmp/{rid:\d+}', ['name' => 'room_rtmp', 'uses' => 'RoomController@getRTMP']);
+Route::get('/room/rtmp/{rid}', 'RoomController@getRTMP')->where('rid', '[0-9]+')->name('room_rtmp');
 /****** 合作平台接口 ******/
 Route::get('/recvSskey', ['name' => 'recvSskey', 'uses' => 'ApiController@platform']);
 //直播间
@@ -91,8 +93,6 @@ Route::post('/reg', ['name' => 'api_reg', 'uses' => 'ApiController@reg']);
 // PageController
 Route::get('/search', ['name' => 'search', 'uses' => 'PageController@search']);
 
-//rtmp地址
-Route::get('/m/room/rtmp/{rid:\d+}', ['name' => 'm_room_rtmp', 'uses' => 'RoomController@getRTMP']);
 
 Route::get('/find', ['name' => 'find', 'uses' => 'ApiController@searchAnchor']);
 
@@ -333,7 +333,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/member/cancelscene', ['name' => 'member_cancelscene', 'uses' => 'MemberController@cancelScene']);
 
     //关注用户接口
-    Route::get('/focus', ['name' => 'focus', 'uses' => 'ApiController@Follow']);
+    Route::any('/focus', ['name' => 'focus', 'uses' => 'ApiController@Follow']);
     //获取用户信息
     Route::get('/getuser/{id:\d+}', ['name' => 'getuser', 'uses' => 'ApiController@getUserByDes']);
 

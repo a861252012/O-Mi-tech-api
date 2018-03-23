@@ -2,6 +2,8 @@
 
 namespace App\Services\User;
 
+use App\Facades\Site;
+use App\Facades\UserSer;
 use App\Models\Agents;
 use App\Models\AgentsRelationship;
 use App\Models\InviteCodes;
@@ -13,11 +15,9 @@ use App\Models\UserModNickName;
 use App\Models\Users;
 use App\Services\Service;
 use DB;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use Mockery\Exception;
@@ -200,7 +200,8 @@ class UserService extends Service
      * @param int $points
      * @return bool
      */
-    public function addPoint($uid=0, $points=0):bool {
+    public function addPoint($uid = 0, $points = 0): bool
+    {
         if (!$this->getUserByUid($uid)) return false;
 
         if (!Users::where('uid', $uid)->increment('points', $points)) return false;
@@ -226,9 +227,11 @@ class UserService extends Service
             $user = (new Users())->forceFill($this->redis->hgetall($hashtable));
         } else {
             $user = Users::find($uid);
-            $this->redis->hmset($hashtable, $user->toArray());
+            if ($user&&$user->exists) {
+                $this->redis->hmset($hashtable, $user->toArray());
+            }
         }
-        return $this->user=$user;
+        return $this->user = $user;
     }
 
     /**
@@ -390,76 +393,48 @@ class UserService extends Service
     /**
      *
      */
-    public function addPoints($uid=0,$points=0){
+    public function addPoints($uid = 0, $points = 0)
+    {
 
     }
 
     /**
-     * 获取当前用户被别人关注的用户信息/当前用户关注别人的用户信息 TODO 优化
-     * @param      $uid
-     * @param bool $fid
-     * @param      $end
-     * @param int  $start
-     * @param bool $getScores
-     * @return mixed
-     * @Author Orino
+     * 获取当前用户被别人关注的用户信息/当前用户关注别人的用户信息
+     * @Author  Nicholas 优化
+     * @param   int  $uid
+     * @param   int  $currentPage
+     * @param   bool $fid
+     * @param   int  $perPage
+     * @Author  nicholas
+     * @return LengthAwarePaginator
      */
-    public function getUserAttens($uid, $pageStart = 1, $fid = true, $pageLimit = 12)
+    public function getUserAttens($uid, $currentPage = 1, $fid = true, $perPage = 12)
     {
-        if (!$uid || !is_numeric($uid)) {
-            throw new Exception('Please make sure $uid is a numeric');
-        }
-        $pageTotal = $this->getUserAttensCount($uid);
-        if ($pageTotal == 0 || $pageTotal < $pageStart) {
-            return [
-                'pagination' => [
-                    'page' => 0,
-                    'count' => 0,
-                    "pages" => 0,
-                ],
-                'data' => [],
-            ];
-        }
-        if ($pageStart < 1) {
-            $pageStart = 1;
-        }
+        $items = collect();
+
+        $total = $this->getUserAttensCount($uid);
 
         if ($fid) {
             //ZREVRANGE
-            $uids = $this->container->make('redis')->zrevrange('zuser_attens:' . $uid, ($pageStart - 1) * $pageLimit, $pageStart * $pageLimit - 1);
+            $uids = $this->redis->zrevrange('zuser_attens:' . $uid, ($currentPage - 1) * $perPage, $currentPage * $perPage - 1);
         } else {
-            $uids = $this->container->make('redis')->zrevrange('zuser_byattens:' . $uid, ($pageStart - 1) * $pageLimit, $pageStart * $pageLimit - 1);
+            $uids = $this->redis->zrevrange('zuser_byattens:' . $uid, ($currentPage - 1) * $perPage, $currentPage * $perPage - 1);
         }
-        if (!$uids) {
-            return [
-                'pagination' => [
-                    'page' => 0,
-                    'count' => 0,
-                    "pages" => 0,
-                ],
-                'data' => [],
-            ];
+        foreach ($uids as $uid) {
+            $user = UserSer::getUserByUid($uid);
+            $items->push([
+                'headimg' => $this->getHeadimg($user['headimg'], 80),
+                'uid' => $user->uid,
+                'nickname' => $user->nickname,
+                'roled' => $user->roled,
+                'lv_exp' => $user->lv_exp,
+                'lv_rich' => $user->lv_rich,
+                'fid' => $uid,
+            ]);
         }
-        //查询用户信息数据
-        $data = Users::findMany($uids);
-        $result['data'] = [];
-        $result['pagination'] = [
-            'page' => $pageStart,
-            'count' => $pageTotal,
-            "pages" => ceil($pageTotal / $pageLimit),
-        ];
-        //fid
-        foreach ($data as $key => $item) {
 
-            $result['data'][$key]['headimg'] = $this->getHeadimg($item['headimg'], 80);
-            $result['data'][$key]['uid'] = $item['uid'];
-            $result['data'][$key]['nickname'] = $item['nick_name'];
-            $result['data'][$key]['roled'] = $item['roled'];
-            $result['data'][$key]['lvExp'] = $item['lv_exp'];
-            $result['data'][$key]['lvRich'] = $item['lv_rich'];
-            $result['data'][$key]['fid'] = $uid;
-        }
-        return $result;
+        $paginator = new LengthAwarePaginator($items, $total, $perPage, $currentPage);
+        return $paginator;
     }
 
     /**
@@ -471,14 +446,10 @@ class UserService extends Service
      */
     public function getUserAttensCount($uid, $flag = true)
     {
-        if (!$uid || !is_numeric($uid)) {
-            throw new Exception('Please make sure $uid is a numeric');
-        }
-
         if ($flag) {
-            return $this->container->make('redis')->zcard('zuser_attens:' . $uid);//获取自己关注别人的数量
+            return $this->redis->zcard('zuser_attens:' . $uid);//获取自己关注别人的数量
         } else {
-            return $this->container->make('redis')->zcard('zuser_byattens:' . $uid);//获取自己被别人关注的数量
+            return $this->redis->zcard('zuser_byattens:' . $uid);//获取自己被别人关注的数量
         }
     }
 
@@ -486,12 +457,13 @@ class UserService extends Service
      * 获取头像地址 默认头像 TODO 优化
      *
      * @param        $headimg
-     * @param string $size
+     * @param int    $size
      * @return string
      */
     public function getHeadimg($headimg, $size = 180)
     {
-        return $headimg ? $this->container->config['config.REMOTE_PIC_URL'] . '/' . $headimg . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size) : $this->container->config['config.WEB_CDN_STATIC'] . '/src/img/head_' . $size . '.png';
+        return $headimg ? Site::config('img_host') . '/' . $headimg . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size)
+            : Site::config('cdn_host') . '/src/img/head_' . $size . '.png';
     }
 
     /**
@@ -836,10 +808,10 @@ class UserService extends Service
         $redis = $this->make('redis');
 
         $rank = $redis->zRevRange($key, $offset, $limit, true);
-       $ret = [];
+        $ret = [];
         static $userCache = [];//缓存用户信息
         foreach ($rank as $uid => $score) {
-           $ret[] = array_merge([
+            $ret[] = array_merge([
                 'uid' => $uid,
                 'score' => $score,
             ],

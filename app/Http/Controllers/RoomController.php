@@ -4,11 +4,8 @@
 namespace App\Http\Controllers;
 
 
-use App\Service\Room\NoSocketChannelException;
-use App\Service\Room\RoomService;
-use App\Service\Room\SocketService;
-use App\Service\Safe\RtmpService;
 use App\Services\User\UserService;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
@@ -18,7 +15,7 @@ class RoomController extends Controller
      * 直播间首页
      * todo 追加打错日志
      * @param $rid
-     * @return \Core\Response|JsonResponse|\Symfony\Component\HttpFoundation\Response
+     * @return RoomController|JsonResponse
      */
     public function index($rid, $h5 = false)
     {
@@ -88,7 +85,7 @@ class RoomController extends Controller
                         if ($h5 === 'h5hls')
                             return JsonResponse::create(['status' => 0]);
                         return $this->render('Room/no_order_room', [
-                            'handle' => $handle
+                            'handle' => $handle,
                         ]);
                     }
                     break;
@@ -99,7 +96,7 @@ class RoomController extends Controller
                             return JsonResponse::create(['status' => 0]);
                         return $this->render('Room/no_timecost_watch_room', [
                             'room' => &$room,
-                            'handle' => $handle
+                            'handle' => $handle,
                         ]);
                     }
                     break;
@@ -110,7 +107,7 @@ class RoomController extends Controller
                             return JsonResponse::create(['status' => 0]);
                         return $this->render('Room/no_timecost_watch_pwd_room', [
                             'room' => &$room,
-                            'handle' => $handle
+                            'handle' => $handle,
                         ]);
                     }
                     break;
@@ -126,7 +123,7 @@ class RoomController extends Controller
                             'start_time' => $roomService->extend_room['starttime'],
                             'end_time' => $roomService->extend_room['endtime'],
                             'duration' => strtotime($roomService->extend_room['endtime']) - strtotime($roomService->extend_room['starttime']),
-                            'username' => resolve(UserService::class)->getUserByUid($rid)['nickname']
+                            'username' => resolve(UserService::class)->getUserByUid($rid)['nickname'],
                         ];
 
                         $hplat = $redis->exists("hplatforms:$origin") ? "plat_whitename_room" : "not_whitename_room";
@@ -171,7 +168,7 @@ class RoomController extends Controller
                             return JsonResponse::create(['status' => 0]);
                         return $this->render('Room/no_passwd_room', [
                             'room' => &$room,
-                            'handle' => $handle
+                            'handle' => $handle,
                         ]);
                     }
                     break;
@@ -236,7 +233,7 @@ class RoomController extends Controller
     /**
      * @return page
      * @author Young
-     * @des 用于合作平台测试
+     * @des    用于合作平台测试
      */
     public function switchToOne2More()
     {
@@ -248,11 +245,11 @@ class RoomController extends Controller
             'start_time' => '11:11',
             'end_time' => '12:12',
             'duration' => '30000',
-            'username' => 'young'
+            'username' => 'young',
         ];
 
         $plat_backurl = [
-            'pay' => '/order/young'
+            'pay' => '/order/young',
         ];
 
         return $this->render('Room/plat_whitename_room', [
@@ -282,7 +279,7 @@ class RoomController extends Controller
      */
     public function getHLS($rid)
     {
-        $redis = $this->make('redis');
+        $redis = resolve('redis');
         $host = $redis->hget('hvediosKtv:' . $rid, 'rtmp_host');
         $port = $redis->hget('hvediosKtv:' . $rid, 'rtmp_port') ?: "";
 
@@ -308,23 +305,26 @@ class RoomController extends Controller
             $url = $hls_arr[0] . '/' . $sid . '.m3u8';
             $uri = parse_url($url, PHP_URL_PATH);
 
-            $cdnParams=[];
-            switch ($hls_arr[1]){
+            $cdnParams = [];
+            switch ($hls_arr[1]) {
                 case 'superVIP:4':// 帝联
+                    $url = $hls_arr[0] . '/' . $sid . '';
+                    $uri = parse_url($url, PHP_URL_PATH);
                     $cdn = $redis->hgetall('hrtmp_cdn:4');
                     $time = dechex(time());
                     $k = hash('md5', $cdn['key'] . $uri . $time);
-                    $cdnParams=[
-                        'k'=>$k,
-                        't'=>$time
+                    $url .= '/index.m3u8';
+                    $cdnParams = [
+                        'k' => $k,
+                        't' => $time,
                     ];
                     break;
                 default:
                     break;
             }
             return [
-                'addr' => empty($cdnParams)?$url:$url.'?'.http_build_query($cdnParams),
-                'name' => $hls_arr[1]
+                'addr' => empty($cdnParams) ? $url : $url . '?' . http_build_query($cdnParams),
+                'name' => $hls_arr[1],
             ];
         }, $hls_down);
         return $addr;
@@ -413,7 +413,7 @@ class RoomController extends Controller
         }
 
         return [
-            'rtmp' => $rtmp
+            'rtmp' => $rtmp,
         ];
     }
 
@@ -470,7 +470,7 @@ class RoomController extends Controller
         //$certi = 'certi='.$this->make("safeService")->getLcertificate("cdn");
         return [
             'rtmp' => $rtmp_down,
-            'sid' => $redis->hget('hvedios_ktv_set:' . $rid, 'sid')
+            'sid' => $redis->hget('hvedios_ktv_set:' . $rid, 'sid'),
         ];
     }
 
