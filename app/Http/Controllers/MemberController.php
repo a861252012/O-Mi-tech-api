@@ -27,9 +27,11 @@ use App\Models\UserGroup;
 use App\Models\Users;
 use App\Models\WithDrawalList;
 use App\Services\Message\MessageService;
+use App\Services\Room\RoomService;
 use App\Services\User\UserService;
 use Core\Exceptions\NotFoundHttpException;
 use DB;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
@@ -37,11 +39,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Redis;
 use Mews\Captcha\Facades\Captcha;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\Response;
-use App\Services\Room\RoomService;
-use Illuminate\Support\Facades\Log;
 
 class MemberController extends Controller
 {
@@ -640,37 +637,30 @@ class MemberController extends Controller
 
     /**
      * 用户中心 我的道具
-     * scene Action
-     * @author  D.C
-     * @update  2014.11.07
-     * @version 1.1
-     * @return Response
      */
-    public function scene()
+    public function scene(Request $request)
     {
         $uid = Auth::id();
-
         //道具装备操作
-        if ($this->make('request')->get('handle') == 'equip') {
-            $handle = $this->_getEquipHandle($this->make('request')->get('gid'));
+        if ($request->get('handle') == 'equip') {
+            $handle = $this->_getEquipHandle($request->get('gid'));
             if (is_array($handle)) {
                 return new JsonResponse($handle);
-            } else {
-                $result = json_encode(['status' => 101, 'messages' => '操作出现未知错误！']);
             }
+            return JsonResponse::create(['status' => 0, 'messages' => '操作出现未知错误！']);
+
         }
         $data = Pack::with('mountGroup')->where('uid', $uid)->paginate();
-        $thispage = $this->make("request")->get('page') ?: 1;
-        $result['user'] = $this->userInfo;
-        $result['data'] = $data;
-        $result['equip'] = $this->make('redis')->hgetall('user_car:' . $uid);
-
         //判断是否过期
-        if ($result['equip'] != null && current($result['equip']) < time()) {
-            $this->make('redis')->del('user_car:' . $uid);//检查过期直接删除对应的缓存key
+        $equip = Redis::hgetall('user_car:' . $uid);
+        if ($equip != null && current($equip) < time()) {
+            Redis::del('user_car:' . $uid);//检查过期直接删除对应的缓存key
         }
-
-        return $this->render('Member/scene', $result);
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => $data,
+            'equip' => $equip,
+        ]);
     }
 
     /**
@@ -699,7 +689,7 @@ class MemberController extends Controller
          */
         $goods = Goods::find($gid);
         if ($goods['gid'] < 120001 || $goods['gid'] > 121000) {
-            return ['status' => 2, 'messages' => '对不起！该道具限房间内使用,不能装备！'];
+            return ['status' => 0, 'msg' => '对不起！该道具限房间内使用,不能装备！'];
         }
 
         /**
@@ -707,10 +697,10 @@ class MemberController extends Controller
          * @todo   目前道具道备只在Redis上实现，并未进行永久化存储。目前产品部【Antony】表示保持现状。
          * @update 2014.12.15 14:35 pm (Antony要求将道具改为同时只能装备一个道具！)
          */
-        $redis = $this->make('redis');
+        $redis = resolve('redis');
         $redis->del('user_car:' . $uid);
         $redis->hset('user_car:' . $uid, $gid, $pack['expires']);
-        return ['status' => 1, 'messages' => '装备成功'];
+        return ['status' => 1, 'msg' => '装备成功'];
     }
 
     /**
@@ -953,14 +943,14 @@ class MemberController extends Controller
      */
     public function roomOneToMore(Request $request)
     {
-         $data = array();
-         $data = $request->only(['mintime','hour','minute','tid','duration','points','origin']);
+        $data = [];
+        $data = $request->only(['mintime', 'hour', 'minute', 'tid', 'duration', 'points', 'origin']);
 
-         $data['uid'] =  Auth::guard()->id();
-       //  var_dump($data);exit;
-         $roomservice  = resolve(RoomService::class);
-         $result  = $roomservice->addOnetomore($data);
-         return  new JsonResponse($result);
+        $data['uid'] = Auth::guard()->id();
+        //  var_dump($data);exit;
+        $roomservice = resolve(RoomService::class);
+        $result = $roomservice->addOnetomore($data);
+        return new JsonResponse($result);
 
     }
 

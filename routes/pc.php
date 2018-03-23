@@ -24,6 +24,8 @@ Route::group(['prefix' => 'member'], function () {
         Route::post('buyModifyNickname', 'MemberController@buyModifyNickname')->name('buyModifyNickname');
         // 用户中心 我的关注
         Route::get('attention', ['name' => 'member_attention', 'uses' => 'MemberController@attention']);
+        // 用户中心 我的道具
+        Route::any('/scene', ['name' => 'member_scene', 'uses' => 'MemberController@scene']);
     });
 });
 
@@ -171,8 +173,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     //Route::get('/member/invite', ['name' => 'member_invite', 'uses' => 'MemberController@invite']);
     // 用户中心 我的关注
     Route::get('/member/attention', ['name' => 'member_attention', 'uses' => 'MemberController@attention']);
-    // 用户中心 我的道具
-    Route::get('/member/scene', ['name' => 'member_scene', 'uses' => 'MemberController@scene']);
+
     // 用户中心 充值记录
     Route::get('/member/charge', ['name' => 'member_charge', 'uses' => 'MemberController@charge']);
     // 用户中心 消费记录
