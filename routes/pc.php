@@ -341,8 +341,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     //邮箱验证
     Route::match(['GET', 'POST'], 'sendVerifyMail', ['name' => 'sendVerifyMail', 'uses' => 'PasswordController@sendVerifyMail']);
 
-    // 目前房间内flash使用的获取商品的接口
-    Route::get('/goods', ['name' => 'json_goods', 'uses' => 'ApiController@goods']);
     // 关键字屏蔽
     Route::get('/kw', ['name' => 'json_kw', 'uses' => 'ApiController@kw']);
     // 获取主播房间内的礼物清单
