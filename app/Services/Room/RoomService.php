@@ -10,6 +10,7 @@ use Illuminate\Container\Container;
 use App\Models\RoomDuration;
 use App\Models\RoomOneToMore;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 /**
  *  @desc 房间类
  */
@@ -378,7 +379,7 @@ class RoomService extends Service
                 }
             }
         }
-       /* if (empty($uids)) {
+      /*  if (empty($uids)) {
             return ['status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间'];
         }*/
 
@@ -430,9 +431,11 @@ class RoomService extends Service
         ];
         $rs = $this->make('redis')->hmset('hroom_whitelist:'.$duroom['uid'].':'.$duroom->id,$temp);
 
-        $logPath = base_path() . '/storage/logs/one2more_' . date('Ym') . '.log';
         $one2moreLog = 'hroom_whitelist:'.$duroom['uid'].':'.$duroom->id.' '.json_encode($temp)."\n";
-        $this->logResult('roomOneToMore  '.$one2moreLog,$logPath);
+        $monolog = Log::getMonolog();
+        $monolog->popHandler();
+        Log::useDailyFiles(storage_path( 'logs/one2more'.'.log'));
+        Log::info('roomOneToMore  '.$one2moreLog);
 
         return ['status' =>1, 'msg' =>'添加成功'];
 
