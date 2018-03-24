@@ -720,22 +720,18 @@ class MemberController extends Controller
     }
 
     /**
-     * 用户中心 消费记录 TODO 优化用户的获取
-     *
-     * @author  D.C
-     * @version 1.0
-     * @update  2014.11.7
-     * @return Response
+     * 用户中心 消费记录
      */
     public function consumerd()
     {
         $uid = Auth::id();
-        $result['user'] = $this->userInfo;
-        $result['data'] = MallList::with('goods')->where('send_uid', $uid)
+        $data = MallList::with('goods')->where('send_uid', $uid)
             ->where('gid', '>', 0)
             ->orderBy('created', 'DESC')->paginate();
-
-        return $this->render('Member/consumerd', $result);
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => $data,
+        ]);
     }
 
     /**
@@ -2362,7 +2358,7 @@ class MemberController extends Controller
         $type = $request->get('type');
         $gid = $request->get('gid');
         $nums = $request->get('nums');
-        if (!$this->buyGoods($type,$gid,$nums)) {
+        if (!$this->buyGoods($type, $gid, $nums)) {
             $retData = [
                 'msg' => '购买失败！可能钱不够',
                 'status' => 0,

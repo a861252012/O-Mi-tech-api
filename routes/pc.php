@@ -23,15 +23,17 @@ Route::group(['prefix' => 'member'], function () {
         //购买修改昵称
         Route::post('buyModifyNickname', 'MemberController@buyModifyNickname')->name('buyModifyNickname');
         // 用户中心 我的关注
-        Route::get('attention', ['name' => 'member_attention', 'uses' => 'MemberController@attention']);
+        Route::get('attention', 'MemberController@attention')->name('member_attention');
         // 用户中心 我的道具
-        Route::any('scene', ['name' => 'member_scene', 'uses' => 'MemberController@scene']);
+        Route::any('scene', 'MemberController@scene')->name('member_scene');
         // 商城购买
-        Route::post('pay', ['name' => 'member_pay', 'uses' => 'MemberController@pay']);
+        Route::post('pay', 'MemberController@pay')->name('member_pay');
         // 用户中心 取消装备
-        Route::get('cancelscene', ['name' => 'member_cancelscene', 'uses' => 'MemberController@cancelScene']);
+        Route::get('cancelscene', 'MemberController@cancelScene')->name('member_cancelscene');
         // 用户中心 充值记录
-        Route::get('charge', ['name' => 'member_charge', 'uses' => 'MemberController@charge']);
+        Route::get('charge', 'MemberController@charge')->name('member_charge');
+        // 用户中心 消费记录
+        Route::get('consumerd', 'MemberController@consumerd')->name('member_consumerd');
     });
 });
 
@@ -181,8 +183,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/member/attention', ['name' => 'member_attention', 'uses' => 'MemberController@attention']);
 
 
-    // 用户中心 消费记录
-    Route::get('/member/consumerd', ['name' => 'member_consumerd', 'uses' => 'MemberController@consumerd']);
     // 用户中心 密码修改
     Route::match(['POST', 'GET'], '/member/password', ['name' => 'member_password', 'uses' => 'MemberController@password']);
     // 用户中心 我的预约
