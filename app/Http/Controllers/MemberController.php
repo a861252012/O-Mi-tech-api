@@ -736,68 +736,45 @@ class MemberController extends Controller
 
     /**
      * 用户中心 密码管理
-     * @name password
-     * @author  D.C
-     * @version 1.0
-     * @return Response
      */
-    public function password()
+    public function passwordChange(Request $request)
     {
-
-        if (Auth::guest()) {
-            return new Response('Login:TimeOut');
-        }
         $uid = Auth::id();
-        if ($this->make('request')->getMethod() === 'POST') {
-            $post = $this->make('request')->request->all();
-            if (!Captcha::check(Input::get('captcha'))) {
-                return new JsonResponse(['code' => 300, 'msg' => '对不起，验证码错误!']);
-            }
-
-            if (empty($post['password'])) {
-                return new JsonResponse(['code' => 301, 'msg' => '原始密码不能为空！']);
-            }
-
-
-            if (strlen($post['password1']) < 6 || strlen($post['password2']) < 6) {
-                return new JsonResponse(['code' => 302, 'msg' => '请输入大于或等于6位字符串长度']);
-            }
-
-            if ($post['password1'] != $post['password2']) {
-                return new JsonResponse(['code' => 303, 'msg' => '新密码两次输入不一致!']);
-            }
-
-            $old_password = $this->make('redis')->hget('huser_info:' . $uid, 'password');
-            $new_password = md5($post['password2']);
-            if (md5($post['password']) != $old_password) {
-                return new JsonResponse(['code' => 303, 'msg' => '原始密码错误!']);
-            }
-            if ($old_password == $new_password) {
-                return new JsonResponse(['code' => 305, 'msg' => '新密码和原密码相同']);
-            }
-
-            $user = Users::find($uid);
-            $user->password = $new_password;
-            if (!$user->save()) {
-                return new JsonResponse(['code' => 304, 'msg' => '修改失败!']);
-            }
-
-            // 删除A域名上的session 踢出用户
-            // $sid_a = $this->make('redis')->hget('huser_sid_a', Auth::id());
-            // $this->make('redis')->del('PHPREDIS_SESSION:' . $sid_a);
-
-            // 删除B域名上的session 踢出用户
-            $sid = $this->make('redis')->hget('huser_sid', Auth::id());
-            $this->make('redis')->del('PHPREDIS_SESSION:' . $sid);
-
-            $this->_clearCookie();
-            $this->_reqSession->invalidate();//销毁session,生成新的sesssID
-            //更新用户redis
-            resolve(UserService::class)->getUserReset($uid);
-            return new JsonResponse(['code' => 0, 'msg' => '修改成功!请重新登录']);
+        $post = $request->all();
+        if (!Captcha::check(Input::get('captcha'))) {
+            return JsonResponse::create(['status' => 0, 'msg' => '对不起，验证码错误!']);
         }
 
-        return $this->render('Member/password');
+        if (empty($post['password'])) {
+            return JsonResponse::create(['status' => 0, 'msg' => '原始密码不能为空！']);
+        }
+
+
+        if (strlen($post['password1']) < 6 || strlen($post['password2']) < 6) {
+            return JsonResponse::create(['status' => 0, 'msg' => '请输入大于或等于6位字符串长度']);
+        }
+
+        if ($post['password1'] != $post['password2']) {
+            return JsonResponse::create(['status' => 0, 'msg' => '新密码两次输入不一致!']);
+        }
+
+        $old_password = Redis::hget('huser_info:' . $uid, 'password');
+        $new_password = md5($post['password2']);
+        if (md5($post['password']) != $old_password) {
+            return JsonResponse::create(['status' => 0, 'msg' => '原始密码错误!']);
+        }
+        if ($old_password == $new_password) {
+            return JsonResponse::create(['status' => 0, 'msg' => '新密码和原密码相同']);
+        }
+
+        $user = Users::find($uid);
+        $user->password = $new_password;
+        if (!$user->save()) {
+            return JsonResponse::create(['status' => 304, 'msg' => '修改失败!']);
+        }
+        resolve(UserService::class)->getUserReset($uid);
+        Auth::logout();
+        return new JsonResponse(['status' => 0, 'msg' => '修改成功!请重新登录']);
     }
 
     /**

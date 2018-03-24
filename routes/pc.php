@@ -34,6 +34,8 @@ Route::group(['prefix' => 'member'], function () {
         Route::get('charge', 'MemberController@charge')->name('member_charge');
         // 用户中心 消费记录
         Route::get('consumerd', 'MemberController@consumerd')->name('member_consumerd');
+        // 用户中心 密码修改
+        Route::post('password/change', 'MemberController@passwordChange')->name('member_password');
     });
 });
 
@@ -183,8 +185,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/member/attention', ['name' => 'member_attention', 'uses' => 'MemberController@attention']);
 
 
-    // 用户中心 密码修改
-    Route::match(['POST', 'GET'], '/member/password', ['name' => 'member_password', 'uses' => 'MemberController@password']);
     // 用户中心 我的预约
     Route::match(['POST', 'GET'], '/member/myReservation', ['name' => 'member_myReservation', 'uses' => 'MemberController@myReservation']);
     //删除一对一
@@ -226,11 +226,6 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     //上传头像
     Route::match(['POST', 'GET'], '/upload', ['name' => 'member_upload', 'uses' => 'MemberController@avatarUpload']);
-
-    //安全邮箱验证
-    Route::get('/mailverific', ['name' => 'mailverific', 'uses' => 'PasswordController@mailVerific']);
-    Route::match(['GET', 'POST'], 'mailsend', ['name' => 'mailsend', 'uses' => 'PasswordController@mailSend']);
-    Route::get('/verifymail[/{token:.+}]', ['name' => 'resetpassword', 'uses' => 'PasswordController@VerifySafeMail']);
 
 
     //隐身功能接口
