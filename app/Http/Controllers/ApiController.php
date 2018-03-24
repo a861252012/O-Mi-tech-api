@@ -11,7 +11,6 @@ use App\Models\FlashCookie;
 use App\Models\GiftActivity;
 use App\Models\GiftCategory;
 use App\Models\Goods;
-use App\Models\InviteCode;
 use App\Models\InviteCodes;
 use App\Models\LevelRich;
 use App\Models\Lottery;
@@ -20,17 +19,13 @@ use App\Models\Pack;
 use App\Models\UserGroup;
 use App\Models\Users;
 use App\Services\User\UserService;
-use Core\Exceptions\NotFoundHttpException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
-use Slb\Request\V20140515\AddListenerWhiteListItemRequest;
-use Symfony\Component\Config\Definition\Exception\Exception;
-use Symfony\Component\HttpFoundation\Cookie;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Redis;
 
 /**
  * Class ApiController
@@ -952,16 +947,13 @@ class ApiController extends Controller
     {
         $uid = $this->make('request')->get('u');
         if (!$uid) return new JsonResponse(['status' => 0]);
-        $response = new Response();
-        $response->headers->setCookie(new Cookie('invitation_uid', $uid, time() + 3600));
-        return new JsonResponse(['status' => 1]);
+        return JsonResponse::create(['status' => 1])->cookie(Cookie::make('invitation_uid', $uid, time() + 3600));
     }
 
 
     /**
      * [活动送礼接口]
      *
-     * @see         src\Video\ProjectBundle\Controller\ApiController.php  activityAction
      * @author      dc
      * @version     20151027
      * @description 迁移自原 activityAction
@@ -980,7 +972,7 @@ class ApiController extends Controller
 
         //活动有效期判断
         $recharge_datetime = Conf::whereName('recharge_datetime')->first()->value;
-        if (!$recharge_datetime) throw new NotFoundHttpException('Get recharge date time was empty');
+        if (!$recharge_datetime) abort(404, 'Get recharge date time was empty');
         $recharge_datetime = json_decode($recharge_datetime, true);
         if (!(strtotime($recharge_datetime['begintime']) < $timestamp && strtotime($recharge_datetime['endtime']) > $timestamp)) return new JsonResponse(['status' => 0, 'msg' => '活动已经停止！']);
 

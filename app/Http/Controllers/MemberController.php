@@ -708,7 +708,6 @@ class MemberController extends Controller
      *
      * @author cannyco<cannyco@weststarinc.co>
      * @update 2015.01.30
-     * @return Response
      */
     public function charge()
     {
@@ -717,13 +716,7 @@ class MemberController extends Controller
         //获取下用户信息
         $chargelist = Recharge::where('uid', $uid)->where('del', 0)
             ->orderBy('id', 'DESC')->paginate();
-
-        $userInfo = $this->userInfo;
-        $rtn = [
-            'chargelist' => $chargelist,
-            'user' => $userInfo,
-        ];
-        return $this->render('Member/charge', $rtn);
+        return JsonResponse::create(['status' => 1, 'msg' => $chargelist]);
     }
 
     /**

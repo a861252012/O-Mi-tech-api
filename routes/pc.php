@@ -25,7 +25,13 @@ Route::group(['prefix' => 'member'], function () {
         // 用户中心 我的关注
         Route::get('attention', ['name' => 'member_attention', 'uses' => 'MemberController@attention']);
         // 用户中心 我的道具
-        Route::any('/scene', ['name' => 'member_scene', 'uses' => 'MemberController@scene']);
+        Route::any('scene', ['name' => 'member_scene', 'uses' => 'MemberController@scene']);
+        // 商城购买
+        Route::post('pay', ['name' => 'member_pay', 'uses' => 'MemberController@pay']);
+        // 用户中心 取消装备
+        Route::get('cancelscene', ['name' => 'member_cancelscene', 'uses' => 'MemberController@cancelScene']);
+        // 用户中心 充值记录
+        Route::get('charge', ['name' => 'member_charge', 'uses' => 'MemberController@charge']);
     });
 });
 
@@ -174,8 +180,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     // 用户中心 我的关注
     Route::get('/member/attention', ['name' => 'member_attention', 'uses' => 'MemberController@attention']);
 
-    // 用户中心 充值记录
-    Route::get('/member/charge', ['name' => 'member_charge', 'uses' => 'MemberController@charge']);
+
     // 用户中心 消费记录
     Route::get('/member/consumerd', ['name' => 'member_consumerd', 'uses' => 'MemberController@consumerd']);
     // 用户中心 密码修改
@@ -323,15 +328,13 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::post('/member/roomSetPwd', ['name' => 'member_roomSetPwd', 'uses' => 'MemberController@roomSetPwd']);
     // 用户中心 体现
     Route::post('/member/addwithdraw', ['name' => 'member_addwithdraw', 'uses' => 'MemberController@addwithdraw']);
-    // 商城购买
-    Route::post('/member/pay', ['name' => 'member_pay', 'uses' => 'MemberController@pay']);
+
 // 密码房间
     Route::post('/checkroompwd', ['name' => 'checkroompwd', 'uses' => 'MemberController@checkroompwd']);
 
     Route::get('/member/doReservation', ['uses' => 'MemberController@doReservation']);
     Route::post('/member/domsg', ['uses' => 'MemberController@domsg']);
-    // 用户中心 取消装备
-    Route::get('/member/cancelscene', ['name' => 'member_cancelscene', 'uses' => 'MemberController@cancelScene']);
+
 
     //关注用户接口
     Route::any('/focus', ['name' => 'focus', 'uses' => 'ApiController@Follow']);
