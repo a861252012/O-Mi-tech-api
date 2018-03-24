@@ -36,6 +36,8 @@ Route::group(['prefix' => 'member'], function () {
         Route::get('consumerd', 'MemberController@consumerd')->name('member_consumerd');
         // 用户中心 密码修改
         Route::post('password/change', 'MemberController@passwordChange')->name('member_password');
+        // 用户中心 我的预约
+        Route::match(['POST', 'GET'], 'myReservation', 'MemberController@myReservation')->name('member_myReservation');
     });
 });
 
@@ -185,8 +187,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/member/attention', ['name' => 'member_attention', 'uses' => 'MemberController@attention']);
 
 
-    // 用户中心 我的预约
-    Route::match(['POST', 'GET'], '/member/myReservation', ['name' => 'member_myReservation', 'uses' => 'MemberController@myReservation']);
     //删除一对一
     Route::get('/member/delRoomOne2One', ['name' => 'member_roomDelOne2One', 'uses' => 'MemberController@delRoomOne2One']);
     //删除一对多

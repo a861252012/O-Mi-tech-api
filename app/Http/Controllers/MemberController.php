@@ -1105,15 +1105,12 @@ class MemberController extends Controller
     }
 
     /**
-     *用户中心 我的预约 TODO 要优化 尼玛
-     * @author TX
-     * @update 2015.4.27
-     * @update raby 2015.9.11
-     * @return Response
+     *用户中心 我的预约
      */
-    public function myReservation()
+    public function myReservation(Request $request)
     {
-        $type = $this->make('request')->get('type') ?: 1;
+        $type = $request->get('type', 1);
+        $rooms = ['status' => 1];
         $rooms['type'] = $type;
         $rooms['data'] = [];
         $userServer = resolve(UserService::class);
@@ -1128,17 +1125,18 @@ class MemberController extends Controller
                     ->orderBy('starttime', 'DESC')
                     ->paginate();;
         }
-        foreach ($data as $key => $item) {
+        $items = $data->getCollection();
+        foreach ($items as &$item) {
             $rid = $type == 2 ? $item->rid : $item->uid;
             $userinfo = $userServer->getUserByUid($rid);
-            $rooms['data'][$key]['nickname'] = $userinfo['nickname'];
-            $rooms['data'][$key]['starttime'] = date('Y-m-d H:i:s', strtotime($item['starttime']));
-            $rooms['data'][$key]['endTime'] = date('Y-m-d H:i:s', strtotime($item->starttime) + ($item->duration));//date('Y-m-d H:i:s',strtotime($time1)+30*60);//注意引号内的大小写,分钟是i不是m
-            $rooms['data'][$key]['duration'] = ceil($item->duration / 60);
-            $rooms['data'][$key]['points'] = $item->points;
-            $rooms['data'][$key]['uid'] = $userinfo['uid'];
-            $rooms['data'][$key]['now'] = date('Y-m-d H:i:s');
-            $rooms['data'][$key]['url'] = '/' . $userinfo['uid'];
+            $item['nickname'] = $userinfo['nickname'];
+            $item['starttime'] = date('Y-m-d H:i:s', strtotime($item['starttime']));
+            $item['endTime'] = date('Y-m-d H:i:s', strtotime($item->starttime) + ($item->duration));//date('Y-m-d H:i:s',strtotime($time1)+30*60);//注意引号内的大小写,分钟是i不是m
+            $item['duration'] = ceil($item->duration / 60);
+            $item['points'] = $item->points;
+            $item['uid'] = $userinfo['uid'];
+            $item['now'] = date('Y-m-d H:i:s');
+            $item['url'] = '/' . $userinfo['uid'];
         }
         $thispage = $this->make("request")->get('page') ?: 1;
         //我的预约推荐是从redis中取数据的，先全部取出数据，做排序
@@ -1163,18 +1161,18 @@ class MemberController extends Controller
             $rooms['room'][$keys]['roomid'] = $value['id'];
             $rooms['room'][$keys]['headimg'] = $userinfo['headimg'];
             $cover = $redis->get('shower:cover:version:' . $userinfo['uid']);
-            $image_server = rtrim($this->container->config['config.REMOTE_PIC_URL'], '/') . '/';
+            $image_server = Site::config('img_host') . '/';
             $rooms['room'][$keys]['cover'] = $cover ? $image_server . $cover : false;
         }
         $rooms['uri'] = [];
-        $uriParammeters = $this->make('request')->query->all();
+        $uriParammeters = $request->all();
         foreach ($uriParammeters as $p => $v) {
             if (strstr($p, '?')) continue;
             if (!empty($v)) {
                 $rooms['uri'][$p] = $v;
             }
         }
-        return $this->render('Member/myReservation', $rooms);
+        return JsonResponse::create($rooms);
     }
 
     /**
