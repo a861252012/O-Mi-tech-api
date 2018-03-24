@@ -1500,7 +1500,7 @@ class ApiController extends Controller
 
     protected function isLuck($gid)
     {
-        return $this->make('redis')->hget("hgoodluck:$gid:1", 'bet') ? 1 : 0;
+        return Redis::hget("hgoodluck:$gid:1", 'bet') ? 1 : 0;
     }
 
     /**

@@ -32,6 +32,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Mews\Captcha\Facades\Captcha;
 
@@ -1138,11 +1139,8 @@ class Controller extends BaseController
         return (empty($data) || $data['uid'] == $uid) ? true : false;
     }
 
-    public function buyGoods()
+    public function buyGoods($type,$gid,$nums)
     {
-        $type = $this->request()->get('type');
-        $gid = $this->request()->get('gid');
-        $nums = intval($this->request()->get('nums'));
         if ($nums < 1) {
             return false;
         }

@@ -2003,8 +2003,8 @@ class MemberController extends Controller
      */
     public function cancelScene()
     {
-        $this->make('redis')->del('user_car:' . Auth::id());//检查过期直接删除对应的缓存key
-        return new JsonResponse(['status' => 0, 'msg' => '操作成功']);
+        Redis::del('user_car:' . Auth::id());//检查过期直接删除对应的缓存key
+        return new JsonResponse(['status' => 1, 'msg' => '操作成功']);
     }
 
     /**
@@ -2364,22 +2364,24 @@ class MemberController extends Controller
     /**
      * 付款
      */
-    public function pay()
+    public function pay(Request $request)
     {
-        $retData = null;
-        if (!$this->buyGoods()) {
+        $type = $request->get('type');
+        $gid = $request->get('gid');
+        $nums = $request->get('nums');
+        if (!$this->buyGoods($type,$gid,$nums)) {
             $retData = [
-                'info' => '购买失败！可能钱不够',
-                'ret' => false,
+                'msg' => '购买失败！可能钱不够',
+                'status' => 0,
             ];
         } else {
             //  $this->_getEquipHandle($this->get('request')->get('gid'));//分布
             $retData = [
-                'info' => '购买成功！',
-                'ret' => true,
+                'msg' => '购买成功！',
+                'status' => 1,
             ];
         }
-        return new Response(json_encode($retData));
+        return JsonResponse::create($retData);
     }
 
     /**
