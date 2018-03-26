@@ -15,10 +15,8 @@ use App\Models\Users;
 use App\Services\SiteService;
 use App\Services\User\UserService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Session;
 use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
@@ -282,7 +280,7 @@ class MobileController extends Controller
         $username = $request->get('username');
         $password = $request->get('password');
         $captcha = $request->get('captcha');
-        if (!app(SiteService::class)->config('SKIP_CAPTCHA_LOGIN')) {
+        if (!app(SiteService::class)->config('skip_captcha_login')) {
             if (empty($captcha)) {
                 return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
             }

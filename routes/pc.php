@@ -17,6 +17,8 @@ Route::group(['prefix' => 'member'], function () {
     Route::any('mail/verify/confirm/{token}', 'PasswordController@VerifySafeMail')->name('mail_verify_confirm');
 
     Route::group(['middleware' => 'login_auth'], function () {
+        Route::get('menu', 'MemberController@getMenu');
+        Route::get('index', 'MemberController@index')->name('member_index');
         Route::post('mail/verify/send', 'PasswordController@sendVerifyMail')->middleware('throttle:5:1')->name('mail_verify_send');
         // 用户中心消息  type 是可有可无的 必须放到最后
         Route::get('msglist/{type?}', 'MemberController@msglist')->where('type', '[0-9]+')->name('member_msglist');
@@ -39,9 +41,11 @@ Route::group(['prefix' => 'member'], function () {
         // 用户中心 我的预约
         Route::match(['POST', 'GET'], 'myReservation', 'MemberController@myReservation')->name('member_myReservation');
         // 用户中心 转账
-        Route::get('transfer/history', 'MemberController@transferHistory')->name('member_transfer_history');
+        Route::get('transfer', 'MemberController@transferHistory')->name('member_transfer_history');
         Route::post('transfer/create', 'MemberController@transfer')->name('member_transfer_create');
-
+        // 用户中心 提现
+        Route::get('withdraw', 'MemberController@withdrawHistory')->name('member_withdraw_history');
+        Route::post('withdraw/create', 'MemberController@withdraw')->name('member_withdraw_create');
     });
 });
 
@@ -177,9 +181,6 @@ Route::group(['middleware' => ['login_auth']], function () {
 //验证码，新版本移除
     //Route::get('/verfiycode', ['uses' => 'IndexController@captcha']);
 
-    // 用户中心 用户基本信息
-    Route::get('/member', ['name' => 'member_index', 'uses' => 'MemberController@index']);
-    Route::get('/member/index', ['name' => 'member_index', 'uses' => 'MemberController@index']);
 
     // 用户中心 vip 贵族体系
     Route::get('/member/vip', ['name' => 'member_vip', 'uses' => 'MemberController@vip']);
@@ -215,8 +216,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::match(['POST', 'GET'], '/member/anchor', ['name' => 'member_anchor', 'uses' => 'MemberController@anchor']);
     // 用户中心 房间设置
     Route::match(['POST', 'GET'], '/member/roomset', ['name' => 'member_roomset', 'uses' => 'MemberController@roomset']);
-    // 用户中心 房间设置
-    Route::match(['POST', 'GET'], '/member/withdraw', ['name' => 'member_withdraw', 'uses' => 'MemberController@withdraw']);
+
     // 用户中心 房间设置
     Route::match(['POST', 'GET'], '/member/roomSetTimecost', ['name' => 'member_roomset', 'uses' => 'MemberController@roomSetTimecost']);
 

@@ -253,7 +253,7 @@ class LoginController extends Controller
         if (!isset($_REQUEST['_m'])) {
             $password = $this->decode($password); // 密码传递解密
         }
-        $retval = $this->solveUserLogin($user_name, $password, app(SiteService::class)->config('SKIP_CAPTCHA_LOGIN'));
+        $retval = $this->solveUserLogin($user_name, $password, app(SiteService::class)->config('skip_captcha_login'));
 
 
         return JsonResponse::create($retval);

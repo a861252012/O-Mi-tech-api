@@ -168,36 +168,9 @@ class MemberController extends Controller
         ],
     ];
 
-    /**
-     * 用户中心需要的信息初始化
-     *
-     * @return JsonResponse
-     */
-    public function __init__()
+    public function getMenu()
     {
-        // 调用顺序一定是这样的
-        parent::__init__();
-
-        //$params['base_url'] = 'http://' . $_SERVER['HTTP_HOST'];
-
-        //$this->assign($params);
-
-        $this->assignMenu();
-    }
-
-    /**
-     * [assignMenu 分配用户中心菜单到模板]
-     *
-     * 添加转帐权限功能做了重构
-     * @author  dc <dc#wisdominfo.my> && young
-     * @version 2016-9-8 显示权限做了重构
-     * @return  Response
-     */
-    protected function assignMenu()
-    {
-
-        //主播菜单
-        //$anchor = array('anchor', 'live', 'withdraw', 'roomset', 'commission', 'roomadmin');
+        $user = Auth::user();
         $hasAgentsPriv = AgentsPriv::where('uid', $this->userInfo['uid'])->count();
 
         $params['menus_list'] = [];
@@ -218,50 +191,32 @@ class MemberController extends Controller
 
             //role == 1 普通用户 role == 2 主播
             //如果是主播
-            if ($this->userInfo['roled'] == 3 && $item['role'] == 2) {
+            if ($user['roled'] == 3 && $item['role'] == 2) {
                 $params['menus_list'][] = $item;
             }
 
             //如果不是主播
-            if ($this->userInfo['roled'] != 3 && $item['role'] == 1) {
+            if ($user['roled'] != 3 && $item['role'] == 1) {
                 $params['menus_list'][] = $item;
             }
 
             //如果需要人工设置
-            if ($item['role'] == 3 && (isset($this->userInfo[$item['action']]) && $this->userInfo[$item['action']])) {
+            if ($item['role'] == 3 && (isset($user[$item['action']]) && $user[$item['action']])) {
                 $params['menus_list'][] = $item;
             }
 
         }
-
-        // TODO 临时解决房间管理页面选中的问题
-        if ($this->container->currentMethod == 'roomadmin') {
-            $params['curmenu'] = 'roomset';
-        } else {
-            $params['curmenu'] = $this->container->currentMethod;
-        }
-
-        // 分配数据到模板中
-        $this->assign($params);
+        return JsonResponse::create(['status' => 1, 'data' => $params]);
     }
 
     /**
      * 用户中心 基本信息
-     * 此处需要用户信息userInfo，在父类中__init__中已经分配了
-     * 只做了昵称修改的权限分配
-     * @return \Core\Response
      */
     public function index()
     {
-        /**
-         * 创建用户服务 传入用户 获取用户修改昵称的权限
-         *
-         * @var $userServer /App/Service/User/UserService
-         */
         $userService = resolve(UserService::class);
-        $modNickName = $userService->setUser((new Users)->forceFill($userService->getUserByUid(Auth::id())))->getModNickNameStatus();//2017-05-12 nicholas 优化，不直接读库
-        //print_r($modNickName);die();
-        return $this->render('Member/index', ['modNickName' => $modNickName]);
+        $modNickName = $userService->getModNickNameStatus();
+        return JsonResponse::create(['status' => 1, 'data' => ['modNickName' => $modNickName]]);
     }
 
     /**
@@ -292,9 +247,6 @@ class MemberController extends Controller
 
     /**
      * [transfer 转帐功能]
-     *
-     * @author  dc <dc#wisdominfo.my>
-     * @return  JsonResponse
      */
     public function transfer(Request $request)
     {
@@ -314,7 +266,7 @@ class MemberController extends Controller
         $points = $request->get('points');
         $content = $request->get('content');
 
-        if ($username == $this->userInfo['username']) return new JsonResponse(['status' => 0, 'message' => '不能转给自己!']);
+        if ($username == $user['username']) return new JsonResponse(['status' => 0, 'message' => '不能转给自己!']);
 
         if (intval($points) < 1) return new JsonResponse(['status' => 0, 'message' => '转帐金额错误!']);
 
@@ -1403,26 +1355,15 @@ class MemberController extends Controller
 
     /**
      * 用户中心 提现页面
-     *
-     * @param
-     * @return
-     * @author  Young
-     * @update  2015-03-30
-     * @version 1.0
-     * @todo
      */
-    public function withdraw()
+    public function withdrawHistory(Rquest $request)
     {
         if (!$this->userInfo['uid'] || $this->userInfo['roled'] != 3) {
-            throw new NotFoundHttpException('error');
+            abort(404);
         }
-        $withdrawnum = $this->make('request')->get('withdrawnum') ?: 0;
-        if ($withdrawnum != 0) {
-            $this->addwithdraw();
-        }
-        $mintime = $this->make('request')->get('mintime') ?: date('Y-m-d', strtotime('-1 month'));
-        $maxtime = $this->make('request')->get('maxtime') ?: date('Y-m-d', strtotime('now'));
-        $status = $this->make('request')->get('status') ?: 0;
+        $mintime = $request->get('mintime') ?: date('Y-m-d', strtotime('-1 month'));
+        $maxtime = $request->get('maxtime') ?: date('Y-m-d', strtotime('now'));
+        $status = $request->get('status') ?: 0;
         $availableBalance = $this->getAvailableBalance(Auth::id());
         $result['sum_points'] = $availableBalance['availpoints'];
         //$result['sum_points'] = 6000000;
@@ -1431,26 +1372,13 @@ class MemberController extends Controller
         $result['mintime'] = $mintime;
         $result['maxtime'] = $maxtime;
         $maxtime = date('Y-m-d' . ' 23:59:59', strtotime($maxtime));
-//        $repository = $this->getDoctrine()->getManager()
-//            ->getRepository('Video\\ProjectBundle\\Entity\\VideoWithdrawalList');
-//
-//        $queryBuilder = $repository->createQueryBuilder('l')
-//            ->where('l.uid = :uid', 'l.created < :end', 'l.created > :start and l.status = :status')
-//            ->orderby('l.created', 'DESC')
-//            ->setParameter('uid', $this->_uid)
-//            ->setParameter('status', $status)
-//            ->setParameter('end', new \DateTime($maxtime))
-//            ->setParameter('start', new \DateTime($mintime))
-//            ->getQuery();
 
 //        $thispage = $this->make('request')->get('page') ?: 1;
         $data = WithDrawalList::where('uid', Auth::id())->where('created', '<', $maxtime)->where('created', '>', $mintime)
             ->where('status', $status)
             ->orderBy('created', 'DESC')
             ->paginate();
-        $result['user'] = $this->userInfo;
-//        $result['pagination'] = \Video\ProjectBundle\Service\Pagination::page($queryBuilder, $thispage, 10);
-//        $data = $queryBuilder->getResult();
+
         $status_array = [
             '0' => '审批中',
             '1' => '已审批',
@@ -1480,23 +1408,18 @@ class MemberController extends Controller
     }
 
     /**
-     * @description 提现申请
-     * @author      TX
-     * @data2015    .3.26
+     *  提现申请
      */
-    public function addwithdraw()
+    public function withdraw(Request $request)
     {
-        if (Auth::guest()) {
-            return new Response('Login:TimeOut');
-        }
-        $money = $this->make('request')->get('withdrawnum');
+        $money = $request->get('withdrawnum', 0);
         if (empty($money) || $money < 200) {
-            return new JsonResponse(['code' => 309, 'msg' => '每次提现不能少于200！']);
+            return new JsonResponse(['status' => 0, 'msg' => '每次提现不能少于200！']);
         }
         $uid = Auth::id();
         $avila_points = $this->getAvailableBalance($uid);
         if ($money > $avila_points['availmoney']) {
-            return new JsonResponse(['code' => 310, 'msg' => '提现金额不能大于可用余额！']);
+            return new JsonResponse(['status' => 0, 'msg' => '提现金额不能大于可用余额！']);
         }
         $wd = date('ymdhis') . substr(microtime(), 2, 4);
         $withrawal = new WithDrawalList();
@@ -1506,11 +1429,8 @@ class MemberController extends Controller
         $withrawal->moneypoints = $this->BalanceToOponts($money, $uid);
         $withrawal->withdrawalnu = $wd;
         $withrawal->status = 0;//0表示审批中
-//        $em = $this->getDoctrine()->getManager();
-//        $em ->persist($withrawal);
-//        $em->flush();
         $withrawal->save();
-        return new JsonResponse(['code' => 0, 'msg' => '申请成功！请等待审核']);
+        return new JsonResponse(['status' => 1, 'msg' => '申请成功！请等待审核']);
     }
 
     /**
