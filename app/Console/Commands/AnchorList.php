@@ -3,8 +3,12 @@
 namespace App\Console\Commands;
 
 use App\Services\SiteService;
+use Illuminate\Cache\FileStore;
 use Illuminate\Console\Command;
+use Illuminate\Filesystem\Filesystem;
+use Illuminate\Http\File;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
 
 class AnchorList extends Command
 {
@@ -39,14 +43,9 @@ class AnchorList extends Command
      */
     public function handle()
     {
-        //
-        define('APP_DIR', public_path());
-       // $_redisInstance = resolve('redis')->connections();
-       // dd(Redis::connection());
         $flashVer = Redis::get('flash_version');
-        echo $flashVer;
-        die;
         !$flashVer && $flashVer = 'v201504092044';
+
 //home_all_,home_rec_,home_ord_,home_gen_,home_vip_
         $conf_arr = array(
             'home_all_'=> array('所有主播','all'),
@@ -58,14 +57,13 @@ class AnchorList extends Command
         );
 //$json = '{';
         foreach( $conf_arr as $key=>$item ){
-            $data =  $_redisInstance->get($key.$flashVer);
+            $data =  Redis::get($key.$flashVer);
             if( $data == null ){
                 echo $item[0].'可能出问题了，请联系java开发人员'.PHP_EOL;
-                file_put_contents(APP_DIR.'/videolist'.$item[1].'.json','{"rooms":[]}');
+                (new Filesystem)->put(public_path().'/videolist'.$item[1].'.json','{"rooms":[]}');
             }else{
-                // $json .= $item[1].':'.$data;
                 $data = str_replace(array('cb(',');'),array('',''),$data);
-                file_put_contents(APP_DIR.'/videolist'.$item[1].'.json',$data);
+                (new Filesystem)->put(public_path().'/videolist'.$item[1].'.json',$data);
             }
         }
     }

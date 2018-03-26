@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\VideoMail;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Redis;
 
 class OnetoOneStartTip extends Command
@@ -45,9 +46,9 @@ class OnetoOneStartTip extends Command
             $roomlist = $_redisInstance->hGetAll($item);
             foreach($roomlist as $room){
                 $room = json_decode($room,true);
-                $timecheck = date('Y-m-d H:i:s',strtotime($room['starttime']));
-                $start = date('Y-m-d H:i:s',time()+150);
-                $end = date('Y-m-d H:i:s',time()+450);
+                $timecheck = Carbon::createFromFormat('Y-m-d H:i:s',$room['starttime']);//date('Y-m-d H:i:s',strtotime($room['starttime']));
+                $start = Carbon::now()->addMinutes(2)->addSeconds(30);
+                $end = Carbon::now()->addMinutes(7)->addSeconds(30);
                 if($start<$timecheck&&$end>$timecheck){
                     if( $room['status']==0 &&  $room['reuid']!=0 ){
                         VideoMail::create(

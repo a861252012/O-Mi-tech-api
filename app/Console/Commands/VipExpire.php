@@ -3,8 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Models\Users;
+use App\Models\VideoMail;
 use App\Models\VideoPack;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Redis;
 
 class VipExpire extends Command
@@ -40,9 +42,7 @@ class VipExpire extends Command
      */
     public function handle()
     {
-        //$_redisInstance = Redis::resolve();
-        echo app('redis')->get('home_js_data_v2017090701');
-die;
+        $_redisInstance = Redis::resolve();
 //每天发私信计数
         $key1 = (array)$_redisInstance->keys('hvideo_mail*');
 
@@ -69,27 +69,29 @@ die;
                 'category'=>1,
                 'created'=>date('Y-m-d H:i:s')
             );
+            $temp = [];
             foreach($data as $value){
                 $level_name = $_redisInstance->hGet('hgroups:special'.$value['vip'],'level_name');
                 $msg['rec_uid'] = $value['uid'];
                 $msg['content'] = '贵族保级即将失败提醒：您的'.$level_name.'贵族到期日：'.$value['vip_end'].'！请尽快充值保级！';
                 // 发送消息
-                pdo_insert('video_mail', $msg);
+                array_push($temp,$msg);
             }
+            VideoMail::query()->insert($temp);
         }
 
 // 已经到期的下掉贵族
         //$sql = 'select uid,vip,vip_end from video_user where vip!=0 and vip_end<"'.date('Y-m-d H:i:s').'"';
-        $data= Users::query()->where('vip','!=',0)->where('vip_end','<',date('Y-m-d H:i:s'))->get();// pdo_fetchall($sql);
-        if(!$data){
-            return;
-        }
+        $data= Users::query()->where('vip','!=',0)->where('vip_end','<',date('Y-m-d H:i:s'))->get();
+        $pack = VideoPack::query();
         foreach($data as $user){
             Users::query()->where('uid',$user['uid'])->update(array('vip'=>0,'vip_end'=>'','hidden'=>0));
-            $_redisInstance->hSet('huser_info:'.$user['uid'],'vip','0');
-            $_redisInstance->hSet('huser_info:'.$user['uid'],'hidden','0');
-            $_redisInstance->hSet('huser_info:'.$user['uid'],'vip_end','');
-            VideoPack::query()->where('uid',$user['uid'])->whereBetween('gid',[120101,120107])->delete();
+            $_redisInstance->hmset('huser_info:'.$user['uid'],[
+                'vip'=>'0',
+                'hidden'=>'0',
+                'vip_end'=>'',
+            ]);
+            $pack->where('uid',$user['uid'])->whereBetween('gid',[120101,120107])->delete();
             $_redisInstance->del('user_car:'.$user['uid']);
         }
     }

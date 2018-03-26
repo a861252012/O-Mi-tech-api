@@ -27,3 +27,5 @@ Route::get('captcha/test',function (\Illuminate\Http\Request $request){
     var_dump(Session::get('captcha'));
     var_dump(\Mews\Captcha\Facades\Captcha::check($phrase));
 })->middleware('mobile.session');
+
+Route::get('/m/room/conf', ['name' => 'm_room_conf', 'uses' => 'Mobile\RoomController@getRoomConf']);
