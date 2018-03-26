@@ -52,6 +52,12 @@ return [
             'level' => 'debug',
             'days' => 7,
         ],
+        'room' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/room.log'),
+            'level' => 'debug',
+            'days' => 7,
+        ],
         'cron' => [
             'driver' => 'daily',
             'path' => storage_path('logs/cron.log'),
