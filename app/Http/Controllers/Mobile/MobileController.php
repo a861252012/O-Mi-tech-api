@@ -3,6 +3,8 @@
 
 namespace App\Http\Controllers\Mobile;
 
+use App\Facades\Site;
+use App\Facades\UserSer;
 use App\Http\Controllers\Controller;
 use App\Models\AppCrash;
 use App\Models\AppVersion;
@@ -93,9 +95,8 @@ class MobileController extends Controller
     public function userInfo()
     {
         $uid = Auth::id();
-        $remote_js_url = $GLOBALS['REMOTE_JS_URL'];
-        $redis = $this->make('redis');
-        $userinfo = (object)$redis->hgetall('huser_info:' . $uid) ?: Users::find($uid);
+        $remote_js_url = Site::config('remote_js_url');
+        $userinfo = UserSer::getUserByUid($uid);
         if (!$userinfo) {
             return JsonResponse::create([
                 'status' => 0,

@@ -501,7 +501,18 @@ class ApiController extends Controller
         //登录
         $huser_sid = $this->make('redis')->hget('huser_sid', $this->userInfo['uid']);
         // 此时调用的是单实例登录的session 验证
-        $this->writeRedis($this->userInfo, $huser_sid);
+        //取uid
+        $auth = Auth::guard();
+        if (!$auth->attempt([
+            'username' => $this->userInfo['username'],
+            'password' => $this->userInfo['password'],
+        ])) {
+            return [
+                'status' => 0,
+                'msg' => '您的账号登录失败，请联系客服！',
+            ];
+        };
+
         //return new Response($res);
         $_SESSION['xo_httphost'] = $httphost;
         return RedirectResponse::create("/$room");

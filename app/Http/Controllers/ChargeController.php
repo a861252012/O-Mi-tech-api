@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\Active;
+use App\Facades\Charge;
 use App\Models\ChargeList;
 use App\Models\GiftActivity;
 use App\Models\PayConfig;

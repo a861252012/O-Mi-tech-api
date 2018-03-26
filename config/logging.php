@@ -52,6 +52,12 @@ return [
             'level' => 'debug',
             'days' => 7,
         ],
+        'cron' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/cron.log'),
+            'level' => 'debug',
+            'days' => 7,
+        ],
 
         'slack' => [
             'driver' => 'slack',

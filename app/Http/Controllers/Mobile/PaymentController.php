@@ -6,8 +6,10 @@
  * Time: 11:17
  */
 
-namespace App\Controller\Mobile;
+namespace App\Http\Controllers\Mobile;
 
+use App\Libraries\ErrorResponse;
+use App\Libraries\SuccessResponse;
 use App\Models\ChargeList;
 use App\Models\GiftActivity;
 use App\Models\PayConfig;
@@ -19,6 +21,7 @@ use App\Models\Users;
 use App\Services\User\UserService;
 use DB;
 use Illuminate\Container\Container;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -27,7 +30,6 @@ class PaymentController extends MobileController
 {
     public function __construct(Container $container)
     {
-        $this->codeMsg = L('CHARGE.CODE_MSG');
         parent::__construct($container);
     }
 
@@ -61,10 +63,10 @@ class PaymentController extends MobileController
         $uid = Auth::id();
 
         $user = resolve(UserService::class)->getUserByUid($uid);
-        $open = $this->make("redis")->hget("hconf", "open_pay") ?: 0;
-        $origin = $this->request()->get('origin') ?: 12;
-        $jwt = $this->make('JWTAuth');
-        $jwt->getTokenFromRequest($this->request());
+        $open = resolve("redis")->hget("hconf", "open_pay") ?: 0;
+        $request = resolve('request');
+        $origin = $request->get('origin',12);
+        $jwt = Auth::getTokenFromRequest($request);
         $token = $jwt->token;
         if ($open) {
             $var['options'] = PayOptions::with('channels')->where('device', 'MOBILE')->orderBy('sid','desc')->get();
@@ -78,100 +80,28 @@ class PaymentController extends MobileController
                 $a = json_decode($ad, true);
                 $var['ad'] = $a[0];
             }
-            return $this->render('Charge/order2', $var);
-        }
-        // 后台配置的充值限制条件群组信息
-        $rechargeGroup = $this->make('redis')->get('recharge_group');
-        if (!$rechargeGroup) {
-            $group = RechargeConf::where('dml_flag', '!=', 3)->get()->toArray();
-            // 格式化数组格式 array('[id]'=>array())
-            $rechargeGroup = array();
-            foreach ($group as $value) {
-                $rechargeGroup[$value['auto_id']] = $value;
-            }
-            $this->make('redis')->set('recharge_group', json_encode($rechargeGroup));
-        } else {
-            //还原数组
-            $rechargeGroup = json_decode($rechargeGroup, true);
-        }
-
-
-        //充值方法,会根据这个数来限制
-        $RechargeTypes = 0;//默认没渠道
-
-        // 1 验证白名单 和 黑名单 都在同一张表 type 0是白名单 1是黑名单
-        $whiteList = RechargeWhiteList::where('uid', $uid)->where('dml_flag', '!=', 3)->first();
-
-        // 如果在名单里面，就判断是白名单 还是 黑名单
-        if ($whiteList) {
-
-            if ($whiteList->type == 0) {
-                //白名单根据后台白单配置
-                $RechargeTypes = $rechargeGroup[1]['isopen'] < 2 ? intval($rechargeGroup[1]['isopen']) : $rechargeGroup[1]['recharge_type'];
-
-            } else if ($whiteList->type == 1) {
-
-                // 黑名单根据后台黑名单配置
-                $RechargeTypes = $rechargeGroup[2]['isopen'] < 2 ? intval($rechargeGroup[2]['isopen']) : $rechargeGroup[2]['recharge_type'];
-            }
-
-
-            // 2 当用户没在名单中时就进行下面的验证
-        } else {
-
-            //因为要加上统计后台充值数据，所以改从video_recharge充值记录进行统计
-            $paymoney = Recharge::where('uid', $uid)
-                ->where('pay_status', 1)//统计已成功记录
-                ->where(function ($query) {
-                    $query->orWhere('pay_type', 1)->orWhere('pay_type', 4);//4=只统计银行充值和后台充值记录
-                })->sum('paymoney');
-
-            //将钻石转化成实际充值金额，目前算法 /10;
-            $paymoney = $paymoney ?: 0;
-
-            //循环匹配充值组
-            foreach ($rechargeGroup as $rid => $val) {
-                if ($rid < 3) continue; //黑名单、白名单不进入循环
-
-                if ($val['recharge_min'] <= $paymoney && $paymoney <= $val['recharge_max']) {
-
-                    //判断充值时间
-                    $created = strtotime($user['created']);
-                    $regTimeMax = time() - $val['reg_time_max'] * 86400;
-                    $regTimeMin = time() - $val['reg_time_min'] * 86400;
-
-                    //判断充值时间,充值金额权限
-                    if ($created <= $regTimeMin && $created >= $regTimeMax) {
-                        $RechargeTypes = $val['isopen'] < 2 ? intval($val['isopen']) : $val['recharge_type'];
-                    }
-                }
-
-            }
+            $var['pay'] = 2;
+            return SuccessResponse::create($var);
         }
 
         // 没有充值的权限
-        if ($RechargeTypes === 0) {
-            return $this->render('Mobile/error', array('title' => L('CHARGE.ORDER.FAIL.NO_PRIVILEGE'), 'msg' => ''));
+        if (resolve('chargeGroup')->close($uid))
+            return ErrorResponse::create(array('title' => '尊敬的用户，您好，恭喜您成为今日幸运之星，请点击在线客服领取钻石，感谢您的支持与理解！', 'msg' => ''));
 
-            // 联系客服
-        } else if ($RechargeTypes === 1) {
-            return $this->render('Mobile/error', array('title' => L('CHARGE.ORDER.TYPE1.0') . '<u style="color:blue;">' . L('CHARGE.ORDER.TYPE1.1') . '</u>！！！', 'msg' => ''));
-
-        } else {
-            //显示充值渠道
-            $RechargeTypes = @unserialize($RechargeTypes);
-            $var['active'] = GiftActivity::where('type', 2)->get();
-            //充值方式数组
-            $var['recharge_type'] = $RechargeTypes ?: array();
-            //充值金额删选数组
-            $var['recharge_money'] = $this->make('redis')->get('recharge_money') ?: json_encode(array());
-            $var['user'] =& $user;
-            $request = $this->request();
-            $jwt = $this->make('JWTAuth');
-            $jwt->getTokenFromRequest($request);
-            $var['token'] = $jwt->token;
-            return $this->render('Mobile/order', $var);
+        if (resolve('chargeGroup')->customer($uid)) {
+            return ErrorResponse::create(array('title' => '需要充值请<u style="color:blue;">联系客服</u>！！！', 'msg' => ''));
         }
+
+        $var['active'] = GiftActivity::where('type', 2)->get();
+        //充值方式数组
+        //充值方式数组
+        $var['recharge_type'] = resolve('chargeGroup')->channel($uid);
+        //充值金额删选数组
+        $var['recharge_money'] = $this->make('redis')->get('recharge_money') ?: json_encode(array());
+        $var['user'] =& $user;
+        $var['token'] = $token;
+        $var['pay'] = 1;
+        return SuccessResponse::create($var);
 
     }
 

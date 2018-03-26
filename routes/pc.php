@@ -383,6 +383,20 @@ Route::group(['prefix' => 'charge', 'middleware' => ['charge', 'login_auth']], f
     Route::match(['POST', 'GET'], '/translate', ['name' => 'translate', 'uses' => 'ChargeController@translate']);
 
 });
+Route::get('/test', function () {
+  //  \App\Models\Users::find(10000)->notify(new \App\Notifications\InvoicePaid(['a'=>'a','b'=>'c']));
+    $active = \App\Models\Active::find(18);
+     \Illuminate\Support\Facades\Notification::send($active,new \App\Notifications\InvoicePaid(['a'=>'a','b'=>'c']));
+     //->notify(new \App\Notifications\InvoicePaid(['a'=>'a','b'=>'c']));
+
+});
+Route::get('/test_read', function () {
+    $user = \App\Models\Users::find(10000);
+    foreach ($user->unreadNotifications as $notification) {
+        dd($notification->data);
+        // $notification->markAsRead();
+    }
+});
 //通知
 Route::group(['prefix' => 'charge', 'middleware' => ['charge']], function () {
     Route::match(['POST', 'GET'], 'notice2', ['name' => 'notice2', 'uses' => 'ChargeController@notice2']);
