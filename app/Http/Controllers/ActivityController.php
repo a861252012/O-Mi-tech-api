@@ -54,30 +54,29 @@ class ActivityController extends Controller
 
         //先从redis中获取，如果取不到，再去匹配数据库。
         if ($action != $active['url']) {
-          $active  = ActivePage::where('url',action)->first();
-          if(empty($active)){
-              throw  new NotFoundHttpException();
-          }else{
-              $active = json_decode($active,true);
-          }
+              $active  = ActivePage::where('url',$action)->first();
+              if(empty($active)){
+                  return  new jsonresponse(['status'=>'0','msg'=>'找不到该页面！']);
+              }else{
+                  $active = json_decode($active,true);
+              }
         }
 
 
         if (Auth::id() > 0) {
-            $arr['userHasTimes'] = intval($this->make('redis')->hget('hlottery_ary', Auth::id()));
-            $arr['nickname'] = Auth::user()->nickname;
-            $arr['is_login'] = true;
+              $arr['userHasTimes'] = intval($this->make('redis')->hget('hlottery_ary', Auth::id()));
+              $arr['nickname'] = Auth::user()->nickname;
+              $arr['is_login'] = true;
         } else {
-            $arr = array(
-                'is_login' => false,
-                'userHasTimes' => 0,
-                'nickname' => ''
-            );
+              $arr = array(
+                  'is_login' => false,
+                  'userHasTimes' => 0,
+                  'nickname' => ''
+              );
         }
+
         $arr = array_merge($arr, $active);
         return  new jsonresponse($arr);
-
-
     }
 
     /**

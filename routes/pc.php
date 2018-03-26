@@ -192,19 +192,25 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/member/attention', ['name' => 'member_attention', 'uses' => 'MemberController@attention']);
 
 
-    //删除一对一
-    Route::get('/member/delRoomOne2One', ['name' => 'member_roomDelOne2One', 'uses' => 'MemberController@delRoomOne2One']);
     //删除一对多
     Route::get('/member/delRoomOne2Many', ['name' => 'member_roomDelOne2Many', 'uses' => 'MemberController@delRoomOne2Many']);
-
     //一对多记录详情-购买用户
     Route::get('/member/getBuyOneToMore', ['uses' => 'MemberController@getBuyOneToMore']);
     //pc创建一对多
     Route::get('/member/roomOneToMore', ['name' => 'roomOneToMore', 'uses' => 'MemberController@roomOneToMore']);
     //pc一对多补票
     Route::post('/member/makeUpOneToMore', ['name' => 'makeUpOneToMore', 'uses' => 'MemberController@makeUpOneToMore']);
-    //删除一对多
+    //pc删除一对多
     Route::get('/member/delRoomOne2Many', ['name' => 'member_roomDelOne2Many', 'uses' => 'MemberController@delRoomOne2Many']);
+    //pc端添加一第一
+    Route::get('/member/roomSetDuration', ['name' => 'member_roomSetDuration', 'uses' => 'MemberController@roomSetDuration']);
+    //pc端预约一对一
+    Route::get('/member/doReservation', ['uses' => 'MemberController@doReservation']);
+    //pc端修改房间时长
+    Route::get('/member/roomUpdateDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@roomUpdateDuration']);
+    //pc端删除一对一
+    Route::get('/member/delRoomDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@delRoomDuration']);
+
 
     // 用户中心 房间游戏
     Route::get('/member/gamelist[/{type:\d+}]', ['name' => 'member_gamelist', 'uses' => 'MemberController@gamelist']);
@@ -318,19 +324,16 @@ Route::group(['middleware' => ['login_auth']], function () {
     // 用户中心修改基本信息
     Route::post('/member/edituserinfo', ['name' => 'member_edituserinfo', 'uses' => 'MemberController@editUserInfo']);
     // 用户中心 预约房间设置
-    Route::get('/member/roomSetDuration', ['name' => 'member_roomSetDuration', 'uses' => 'MemberController@roomSetDuration']);
-    Route::get('/member/roomUpdateDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@roomUpdateDuration']);
-    Route::get('/member/delRoomDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@delRoomDuration']);
-    // 用户中心 密码房间设置
+
+    Route::post('/member/domsg', ['uses' => 'MemberController@domsg']);
+   // 用户中心 密码房间设置
     Route::post('/member/roomSetPwd', ['name' => 'member_roomSetPwd', 'uses' => 'MemberController@roomSetPwd']);
     // 用户中心 体现
     Route::post('/member/addwithdraw', ['name' => 'member_addwithdraw', 'uses' => 'MemberController@addwithdraw']);
 
-// 密码房间
+    // 密码房间
     Route::post('/checkroompwd', ['name' => 'checkroompwd', 'uses' => 'MemberController@checkroompwd']);
 
-    Route::get('/member/doReservation', ['uses' => 'MemberController@doReservation']);
-    Route::post('/member/domsg', ['uses' => 'MemberController@domsg']);
 
 
     //关注用户接口
@@ -509,6 +512,15 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/m/oneToManyCompetence', ['as' => 'competence', 'uses' => 'Mobile\RoomController@competence']);
     //app直播记录表
     Route::get('/m/showlist', ['as' => 'm_showlist', 'uses' => 'Mobile\RoomController@showlist']);
+
+    //移动端删除一对一
+    Route::get('/m/room/delRoomOne2One', ['name' => 'member_roomDelOne2One', 'uses' => 'Mobile\RoomController@delRoomOne2One']);
+    //移动端预约一对一
+    Route::get('/m/room/buyOneToOne', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@buyOneToOne']);
+    //移动端创建一对一
+    Route::get('/m/room/roomSetDuration', ['name' => 'member_roomSetDuration', 'uses' => 'Mobile\RoomController@roomSetDuration']);
+    //移动端一对一房间用户
+    Route::get('/m/OneToOne/list', ['name' => 'member_onetoONElist', 'uses' => 'Mobile\MobileController@listOneToOneByHost']);
 
 });
 Route::get('/m/find', ['name' => 'm_find', 'uses' => 'Mobile\MobileController@searchAnchor']);
