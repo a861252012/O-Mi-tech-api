@@ -73,7 +73,7 @@ class MemberController extends Controller
         ],
         [
             'role' => 0,
-            'action' => 'consumerd',
+            'action' => 'consume',
             'name' => '消费记录',
         ],
         //消费统计，用户
@@ -100,7 +100,7 @@ class MemberController extends Controller
         ],//主播才有
         [
             'role' => 0,
-            'action' => 'myReservation',
+            'action' => 'reservation',
             'name' => '我的预约',
         ],//主播才有
         [
@@ -657,7 +657,7 @@ class MemberController extends Controller
     /**
      * 用户中心 消费记录
      */
-    public function consumerd()
+    public function consume()
     {
         $uid = Auth::id();
         $data = MallList::with('goods')->where('send_uid', $uid)
@@ -1042,7 +1042,7 @@ class MemberController extends Controller
     /**
      *用户中心 我的预约
      */
-    public function myReservation(Request $request)
+    public function reservation(Request $request)
     {
         $type = $request->get('type', 1);
         $rooms = ['status' => 1];

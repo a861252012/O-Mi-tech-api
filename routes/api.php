@@ -16,10 +16,8 @@ use Illuminate\Http\Request;
 //Route::middleware('auth:api')->get('/user', function (Request $request) {
 //    return $request->user();
 //});
-Route::group(['middleware' => ['web']], function () {
-    Route::get('/',function (){
-        echo 'api';
-        session()->put('api','456');
-        return session('web') . session('api');
-    });
-});
+//Route::group(['middleware' => ['web']], function () {
+//    Route::get('/',function (){
+//        echo 'api';
+//    });
+//});

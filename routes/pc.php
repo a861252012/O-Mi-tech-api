@@ -1,12 +1,7 @@
 <?php
 
 Route::group(['middleware' => ['login_auth']], function () {
-    Route::match(['POST', 'GET'], '/onetomore', function () {
-        echo "aaa";
-    });
-    Route::get('login/test', function () {
-        return [Auth::guard()->user(), session()->getId()];
-    });
+
 });
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 
@@ -35,11 +30,11 @@ Route::group(['prefix' => 'member'], function () {
         // 用户中心 充值记录
         Route::get('charge', 'MemberController@charge')->name('member_charge');
         // 用户中心 消费记录
-        Route::get('consumerd', 'MemberController@consumerd')->name('member_consumerd');
+        Route::get('consume', 'MemberController@consume')->name('member_consume');
         // 用户中心 密码修改
         Route::post('password/change', 'MemberController@passwordChange')->name('member_password');
         // 用户中心 我的预约
-        Route::match(['POST', 'GET'], 'myReservation', 'MemberController@myReservation')->name('member_myReservation');
+        Route::get('reservation', 'MemberController@reservation')->name('member_reservation');
         // 用户中心 转账
         Route::get('transfer', 'MemberController@transferHistory')->name('member_transfer_history');
         Route::post('transfer/create', 'MemberController@transfer')->name('member_transfer_create');
@@ -291,10 +286,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/space', ['name' => 'shop_space', 'uses' => 'SpaceController@index']);
 
 
-    // test 测试用
-    Route::get('/task/bb', function () {
-        return new \Symfony\Component\HttpFoundation\Response('4455566');
-    });
 
 
     Route::match(['POST', 'GET'], '/verfiyName', ['uses' => 'IndexController@checkUniqueName']);
@@ -364,10 +355,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     //获取时长打折信处
     Route::get('/getTimeCountRoomDiscountInfo', ['name' => 'flashcookie', 'uses' => 'ApiController@getTimeCountRoomDiscountInfo']);
-    //rtmp地址
-    Route::get('/room/rtmp/{rid:\d+}', ['name' => 'room_rtmp', 'uses' => 'RoomController@getRTMP']);
-    //排行榜数据
-    Route::get('/rank_data', ['name' => 'rank_data', 'uses' => 'RankController@rankData']);
+
 
     Route::get('/ajaxProxy', ['name' => 'ajaxProxy', 'uses' => 'ApiController@ajaxProxy']);
 });
@@ -386,20 +374,7 @@ Route::group(['prefix' => 'charge', 'middleware' => ['charge', 'login_auth']], f
     Route::match(['POST', 'GET'], '/translate', ['name' => 'translate', 'uses' => 'ChargeController@translate']);
 
 });
-Route::get('/test', function () {
-  //  \App\Models\Users::find(10000)->notify(new \App\Notifications\InvoicePaid(['a'=>'a','b'=>'c']));
-    $active = \App\Models\Active::find(18);
-     \Illuminate\Support\Facades\Notification::send($active,new \App\Notifications\InvoicePaid(['a'=>'a','b'=>'c']));
-     //->notify(new \App\Notifications\InvoicePaid(['a'=>'a','b'=>'c']));
 
-});
-Route::get('/test_read', function () {
-    $user = \App\Models\Users::find(10000);
-    foreach ($user->unreadNotifications as $notification) {
-        dd($notification->data);
-        // $notification->markAsRead();
-    }
-});
 //通知
 Route::group(['prefix' => 'charge', 'middleware' => ['charge']], function () {
     Route::match(['POST', 'GET'], 'notice2', ['name' => 'notice2', 'uses' => 'ChargeController@notice2']);
@@ -417,13 +392,10 @@ Route::get('/ping', ['name' => 'ping', 'uses' => 'ApiController@ping']);
 //登录页面
 Route::get('/passport', ['name' => 'passport', 'uses' => 'LoginController@passport']);
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
-Route::get('/synlogin', ['name' => 'synlogin', 'uses' => 'LoginController@synLogin']);
-Route::get('/reload', ['name' => 'reload', 'uses' => 'LoginController@reloadLogin']);
 Route::any('/logout', 'LoginController@logout');
 //Route::match(['POST', 'GET'], '/peachReg', ['name' => 'peachReg', 'uses' => 'LoginController@mitaoReg']);
 Route::match(['POST', 'GET'], '/api/register', ['name' => 'api_register', 'uses' => 'ApiController@register']);
 Route::match(['POST', 'GET'], '/api/register_agents', ['name' => 'api_agents', 'uses' => 'ApiController@registerAgents']);
-
 
 Route::match(['POST', 'GET'], '/get_lcertificate', ['name' => 'api_agents', 'uses' => 'ApiController@get_lcertificate']);
 
@@ -436,8 +408,6 @@ Route::get('/getpwd', ['name' => 'shop_getpwd', 'uses' => 'PasswordController@ge
 Route::post('/getpwdsuccess', ['name' => 'shop_getpwdsuccess', 'uses' => 'PasswordController@getPwdSuccess']);
 // 找回密码
 Route::get('/islogin', ['name' => 'islogin', 'uses' => 'LoginController@isLogin']);
-//票据
-Route::get('/get_lcertificate', ['name' => 'islogin', 'uses' => 'ApiController@get_lcertificate']);
 
 //==================================================================================
 /**
@@ -531,11 +501,6 @@ Route::match(['POST', 'GET'], '/m/statistic', ['name' => 'm_statistic', 'uses' =
 Route::get('/oort2bunny', ['name' => 'guanggao', 'uses' => 'AdsController@getAd']);//广告接口
 Route::post('/send_crash', ['name' => 'send_crash', 'uses' => 'Mobile\MobileController@saveCrash']);//app报错接口
 
-
-//
-Route::match(['POST', 'GET'], '/return', function () {
-    return new \Symfony\Component\HttpFoundation\Response('4455566');
-});
 
 Route::match(['POST', 'GET'], '/pay/g2p', ['name' => 'pay_g2p', 'uses' => 'Pay\PayController@index']);
 Route::match(['POST', 'GET'], '/pay/{action}', ['name' => 'pay_notify', 'uses' => 'Pay\PayController@notify']);

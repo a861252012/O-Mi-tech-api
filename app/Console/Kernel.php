@@ -34,27 +34,27 @@ class Kernel extends ConsoleKernel
 
         #########定时缓存主播搜索结果##########
         //*/1 * * * * /usr/local/bin/php /var/www/peach-front/crontab-list/anchor-search-list.php 1>/dev/null
-        $schedule->command("anchor_search")->everyMinute()->withoutOverlapping()->onOneServer();
+        $schedule->command("anchor_search")->everyMinute()->withoutOverlapping();
 
-        $schedule->command("clear-user")->everyMinute()->withoutOverlapping();
+        $schedule->command("clear-user")->everyMinute()->withoutOverlapping()->onOneServer();
         #########每五分钟定时推送预约房间开始信息##########
         //*/5 * * * * /usr/bin/php /var/www/video-front/crontab-list/duration-room-msg-send.php 1>/dev/null
-        $schedule->command("one_to_one_start_tip")->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command("one_to_one_start_tip")->everyFiveMinutes()->withoutOverlapping()->onOneServer();
 
         //30 7 * * *  /usr/bin/php /var/www/video-front/crontab-list/everyday-clear-rediscache.php 1>/dev/null
-        $schedule->command('vip_expire')->dailyAt('7:30')->withoutOverlapping();
+        $schedule->command('vip_expire')->dailyAt('7:30')->withoutOverlapping()->onOneServer();
 
         #########每天更新广告统计到数据库##########
         //0 1 * * *  /usr/bin/php /var/www/video-front/crontab-list/update-total.php 1>/dev/null
-        $schedule->command('update_total')->dailyAt('1:00')->withoutOverlapping();
+        $schedule->command('update_total')->dailyAt('1:00')->withoutOverlapping()->onOneServer();
 
         #########用于主播工资核算##############
         //0 6 * * *  /usr/bin/php /var/www/video-front/crontab-list/user-salary-total.php>/dev/null
-        $schedule->command('salary_total')->dailyAt('6:00')->withoutOverlapping();
+        $schedule->command('salary_total')->dailyAt('6:00')->withoutOverlapping()->onOneServer();
 
         #########每五分钟定时推送一对多房间开始信息##########
         //*/5 * * * * /usr/bin/php /var/www/video-front/crontab-list/one2many-room-msg-send.php 1>/dev/null
-        $schedule->command('one2many_msg')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('one2many_msg')->everyFiveMinutes()->withoutOverlapping()->onOneServer();
     }
 
     /**
