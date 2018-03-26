@@ -2,17 +2,17 @@
 
 namespace App\Services\Room;
 
-use App\Models\Users;
-use App\Services\User\UserService;
-use Core\Request;
-use App\Services\Service;
-use Illuminate\Container\Container;
 use App\Models\RoomDuration;
 use App\Models\RoomOneToMore;
+use App\Models\Users;
+use App\Services\Service;
+use App\Services\User\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
+
 /**
- *  @desc 房间类
+ * @desc 房间类
  */
 class RoomService extends Service
 {
@@ -265,11 +265,11 @@ class RoomService extends Service
     public function getPlatBackUrl($origin=0){
         $redis = $this->make('redis');
         $plat_backurl = "{}";
-        if($redis->exists("hplatforms:$origin")){
+        if ($redis->exists("hplatforms:$origin")) {
             $hplatforms = $redis->hgetall("hplatforms:$origin");
             $plat_backurl = $hplatforms['backurl'];
         }
-        return json_decode($plat_backurl,true);
+        return json_decode($plat_backurl, true);
     }
     public function getPlatUrl($origin=0){
         $urlList = $this->getPlatBackUrl($origin);
@@ -296,15 +296,15 @@ class RoomService extends Service
             case 61: $key = "l_backurl"; break;
             default: return "{}";
         }
-        return $this->make('redis')->hget('hconf',$key) ?:"{}";
+        return $this->make('redis')->hget('hconf', $key) ?: "{}";
     }
     public function getXOPayUrl()
     {
-        return $this->parseXOUrl($this->make('redis')->hget('hconf','xo_pay_url'))? : '';
+        return $this->parseXOUrl($this->make('redis')->hget('hconf', 'xo_pay_url')) ?: '';
     }
     public function getXOHallUrl()
     {
-        return $this->parseXOUrl($this->make('redis')->hget('hconf','xo_hall_url'))? : '';
+        return $this->parseXOUrl($this->make('redis')->hget('hconf', 'xo_hall_url')) ?: '';
     }
 
     public function parseXOUrl($url)
@@ -419,25 +419,20 @@ class RoomService extends Service
         }
 
         $duroom = $oneToMoreRoom;
-        $redis->sAdd("hroom_whitelist_key:".$duroom['uid'],$duroom->id);
+        $redis->sAdd("hroom_whitelist_key:" . $duroom['uid'], $duroom->id);
 
         $temp = [
-            'starttime'=>$duroom['starttime'],
-            'endtime'=>$duroom['endtime'],
-            'uid'=>$duroom['uid'],
-            'nums'=>$tickets,
-            'uids'=>$uids,
-            'points'=>$data['points'],
+            'starttime' => $duroom['starttime'],
+            'endtime' => $duroom['endtime'],
+            'uid' => $duroom['uid'],
+            'nums' => $tickets,
+            'uids' => $uids,
+            'points' => $data['points'],
         ];
-        $rs = $this->make('redis')->hmset('hroom_whitelist:'.$duroom['uid'].':'.$duroom->id,$temp);
+        $rs = $this->make('redis')->hmset('hroom_whitelist:' . $duroom['uid'] . ':' . $duroom->id, $temp);
 
-        $one2moreLog = 'hroom_whitelist:'.$duroom['uid'].':'.$duroom->id.' '.json_encode($temp)."\n";
-        $monolog = Log::getMonolog();
-        $monolog->popHandler();
-        Log::useDailyFiles(storage_path( 'logs/one2more'.'.log'));
-        Log::info('roomOneToMore  '.$one2moreLog);
-
-        return ['status' =>1, 'msg' =>'添加成功'];
+        Log::channel('room')->info('OneToMore', $duroom->toArray());
+        return ['status' => 1, 'msg' => '添加成功'];
 
     }
 
@@ -487,7 +482,7 @@ class RoomService extends Service
     /**
      * @param string $stime
      * @param string $etime
-     * @param array  $data
+     * @param array $data
      * @return bool false重叠 true不重叠
      */
     public function checkActiveTime($stime = '', $etime = '', $data = [])
@@ -524,6 +519,57 @@ class RoomService extends Service
             $result[$key] = array_intersect_key($el, $column_keys);
         }
         return $result;
+    }
+
+
+    /*
+     * app和pc，添加一对一房间
+     */
+    public function addOnetoOne($data)
+    {
+
+        if (empty($data['tid']) || empty($data['mintime']) || empty($data['duration']) || empty($data['points'])) return ['status' => 0, 'msg' => '请求错误'];
+        $start_time = date("Y-m-d H:i:s", strtotime($data['mintime'] . ' ' . $data['hour'] . ':' . $data['minute'] . ':00'));
+        $theday = date("Y-m-d H:i:s", mktime(23, 59, 59, date("m"), date("d") + 7, date("Y")));
+
+        if ($theday < date("Y-m-d H:i:s", strtotime($start_time))) return ['status' => 0, 'msg' => '只能设置未来七天以内'];
+
+        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return ['status' => 0, 'msg' => '不能设置过去的时间'];
+
+        $durationRoom = new RoomDuration();
+        $durationRoom->created = date('Y-m-d H:i:s');
+        $durationRoom->uid = Auth::id();
+        $durationRoom->roomtid = $data['tid'];
+        $durationRoom->starttime = $start_time;
+        $durationRoom->duration = $data['duration'] * 60;
+        $durationRoom->status = 0;
+        $durationRoom->points = $data['points'];
+
+
+        $endtime = date('Y-m-d H:i:s', strtotime($start_time) + $durationRoom->duration);
+        if ($this->notSetRepeat($start_time, $endtime)) {
+            $durationRoom->save();
+            $this->set_durationredis($durationRoom);
+            return ['status' => 1, 'msg' => '添加成功'];
+        } else {
+            return ['status' => 0, 'msg' => '你这段时间有重复的房间'];
+        }
+
+
+    }
+
+    /*
+     * 设置时长房间的redis
+     */
+
+    public function set_durationredis($durationRoom)
+    {
+        if (empty($durationRoom)) return false;
+        $keys = 'hroom_duration:' . $durationRoom->uid . ':' . $durationRoom->roomtid;
+        $arr = $durationRoom->find($durationRoom->id)->toArray();
+        unset($arr['endtime']);
+        Redis::hSet($keys, $arr['id'], json_encode($arr));
+        return true;
     }
 
 

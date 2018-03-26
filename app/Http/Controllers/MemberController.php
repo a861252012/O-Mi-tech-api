@@ -884,50 +884,30 @@ class MemberController extends Controller
      */
     public function roomSetDuration(Request $request)
     {
-        $start_time = $request->get('mintime');
-        $hour = $request->get('hour');
-        $minute =$request->get('minute');
-        $tid = $request->get('tid');
-        $duration = $request->get('duration');
-        if (!in_array($duration, [25, 55])) return new JsonResponse(['status' => 9, 'msg' => '请求错误']);
 
+        $data = [];
+        $data = $request->only(['mintime', 'hour', 'minute', 'tid', 'duration']);
+
+        if (!in_array($data['duration'], [25, 55])) return new JsonResponse(['status' => 0, 'msg' => '请求错误']);
         // 判断是否为手动输入 如果手动输入需要大于1万才行
         $select_points = $request->get('select-points');
         $input_points = $request->get('input-points');
         if (empty($select_points) && $input_points < 10000) {
-            return new JsonResponse(['status' => 2, 'msg' => '手动设置的钻石数必须大于1万']);
+            return new JsonResponse(['status' => 0, 'msg' => '手动设置的钻石数必须大于1万']);
         } else {
             $points = $input_points;
         }
         if (!empty($select_points)) {
             $points = $select_points;
         }
+        $data['points'] = $points;
 
-        if (empty($tid) || empty($start_time) || empty($duration) || empty($points)) return new JsonResponse(['status' => 4, 'msg' => '请求错误']);
-        $start_time = date("Y-m-d H:i:s", strtotime($start_time . ' ' . $hour . ':' . $minute . ':00'));
-        $theday = date("Y-m-d H:i:s", mktime(23, 59, 59, date("m"), date("d") + 7, date("Y")));
+        $roomservice = resolve(RoomService::class);
+        $result = $roomservice->addOnetoOne($data);
+        return new JsonResponse($result);
 
-        if ($theday < date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(['status' => 5, 'msg' => '只能设置未来七天以内']);
 
-        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return new JsonResponse(['status' => 6, 'msg' => '不能设置过去的时间']);
 
-        $durationRoom = new RoomDuration();
-        $durationRoom->created = date('Y-m-d H:i:s');
-        $durationRoom->uid = Auth::id();
-        $durationRoom->roomtid = $tid;
-        $durationRoom->starttime = $start_time;
-        $durationRoom->duration = $duration * 60;
-        $durationRoom->status = 0;
-        $durationRoom->points = $points;
-
-        $endtime = date('Y-m-d H:i:s', strtotime($start_time) + $durationRoom->duration);
-        if ($this->notSetRepeat($start_time, $endtime)) {
-            $durationRoom->save();
-            $this->set_durationredis($durationRoom);
-            return new JsonResponse(['status' => 1, 'msg' => '添加成功']);
-        } else {
-            return new JsonResponse(['status' => 2, 'msg' => '你这段时间有重复的房间']);
-        }
 
     }
 
