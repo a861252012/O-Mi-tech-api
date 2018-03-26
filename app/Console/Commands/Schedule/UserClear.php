@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Schedule;
 
 use Illuminate\Console\Command;
 
@@ -11,7 +11,7 @@ class UserClear extends Command
      *
      * @var string
      */
-    protected $signature = 'command:clear-user';
+    protected $signature = 'clear-user';
 
     /**
      * The console command description.

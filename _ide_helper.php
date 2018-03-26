@@ -1,7 +1,7 @@
 <?php
 /**
  * A helper file for Laravel 5, to provide autocomplete information to your IDE
- * Generated for Laravel 5.6.12 on 2018-03-26 14:14:55.
+ * Generated for Laravel 5.6.12 on 2018-03-26 15:55:27.
  *
  * This file should not be included in your code, only analyzed by your IDE!
  *
@@ -12583,7 +12583,7 @@ namespace Mews\Captcha\Facades {
 
 namespace App\Facades { 
 
-    class Site {
+    class SiteSer {
         
         /**
          * 
@@ -12717,6 +12717,16 @@ namespace App\Facades {
         public static function errors()
         {
             return \App\Services\SiteService::errors();
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function getIDs()
+        {
+            return \App\Services\SiteService::getIDs();
         }
          
     }
@@ -15429,7 +15439,7 @@ namespace  {
 
     class Captcha extends \Mews\Captcha\Facades\Captcha {}
 
-    class Site extends \App\Facades\Site {}
+    class SiteSer extends \App\Facades\SiteSer {}
 
     class UserSer extends \App\Facades\UserSer {}
 

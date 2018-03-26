@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Site;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Redis;
@@ -72,7 +73,7 @@ class SiteService
 
     protected function loadConfig(): void
     {
-        $config = Redis::hGetAll(static::KEY_SITE_CONFIG . $this->siteId());
+        $config = $this->getConfigBySiteID($this->siteId());
         $this->config = collect($config);
     }
 
@@ -106,7 +107,7 @@ class SiteService
 
     public function shareConfigWithViews()
     {
-        View::share('site', $this);
+        View::share('SiteSer', $this);
         View::share('cdn_host', $this->config()->get('cdn_host'));
         View::share('img_host', $this->config()->get('img_host'));
         View::share('open_web', $this->config()->get('open_web'));
@@ -142,4 +143,27 @@ class SiteService
         return $this->errors;
     }
 
+    public function getConfigBySiteID($id)
+    {
+        return Redis::hGetAll(static::KEY_SITE_CONFIG . $id);
+    }
+
+    public function getConfigArrayForSite(Site $site)
+    {
+        $config = $site->config;
+        $configArray = array_combine($config->pluck('k')->toArray(), $config->pluck('v')->toArray());
+        return $configArray;
+    }
+
+    public function flushConfigCacheForSite(Site $site)
+    {
+        return Redis::del(static::KEY_SITE_CONFIG . $site->id);
+    }
+
+    public function syncConfigForSite(Site $site)
+    {
+        $this->flushConfigCacheForSite($site);
+        $configArray = $this->getConfigArrayForSite($site);
+        return Redis::hMSet(static::KEY_SITE_CONFIG . $site->id , $configArray);
+    }
 }

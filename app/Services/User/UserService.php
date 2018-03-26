@@ -2,7 +2,7 @@
 
 namespace App\Services\User;
 
-use App\Facades\Site;
+use App\Facades\SiteSer;
 use App\Facades\UserSer;
 use App\Models\Agents;
 use App\Models\AgentsRelationship;
@@ -462,8 +462,8 @@ class UserService extends Service
      */
     public function getHeadimg($headimg, $size = 180)
     {
-        return $headimg ? Site::config('img_host') . '/' . $headimg . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size)
-            : Site::config('cdn_host') . '/src/img/head_' . $size . '.png';
+        return $headimg ? SiteSer::config('img_host') . '/' . $headimg . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size)
+            : SiteSer::config('cdn_host') . '/src/img/head_' . $size . '.png';
     }
 
     /**

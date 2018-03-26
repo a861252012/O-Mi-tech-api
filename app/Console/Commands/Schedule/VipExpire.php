@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Schedule;
 
 use App\Models\Users;
 use App\Models\VideoPack;

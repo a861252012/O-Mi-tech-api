@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Facades\Site;
+use App\Facades\SiteSer;
 use App\Models\Complaints;
 use App\Models\RoomDuration;
 use App\Models\RoomStatus;
@@ -342,7 +342,7 @@ class IndexController extends Controller
             $downloadUrl = json_encode($res);
         }
 
-        $flashVersion=Site::config('flash_version');
+        $flashVersion=SiteSer::config('flash_version');
         // 获取我的关注的数据主播的数据
         $myfav = [];
         if ($uid) {

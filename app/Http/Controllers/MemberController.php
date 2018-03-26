@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Facades\Site;
+use App\Facades\SiteSer;
 use App\Models\AgentsPriv;
 use App\Models\AgentsRelationship;
 use App\Models\Anchor;
@@ -1096,7 +1096,7 @@ class MemberController extends Controller
             $rooms['room'][$keys]['roomid'] = $value['id'];
             $rooms['room'][$keys]['headimg'] = $userinfo['headimg'];
             $cover = $redis->get('shower:cover:version:' . $userinfo['uid']);
-            $image_server = Site::config('img_host') . '/';
+            $image_server = SiteSer::config('img_host') . '/';
             $rooms['room'][$keys]['cover'] = $cover ? $image_server . $cover : false;
         }
         $rooms['uri'] = [];
@@ -2338,7 +2338,7 @@ class MemberController extends Controller
     {
         $user = Auth::user();
         $uid = Auth::id();
-        $price = Site::config('nickname_price');
+        $price = SiteSer::config('nickname_price');
         $userService = resolve(UserService::class);
         if ($user['points'] < $price) return JsonResponse::create(['status' => 0, 'msg' => '余额不足' . $price . '钻']);
         $num = $userService->getModNickNameStatus()['num'];

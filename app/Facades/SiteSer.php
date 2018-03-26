@@ -12,7 +12,7 @@ namespace App\Facades;
 use App\Services\SiteService;
 use Illuminate\Support\Facades\Facade;
 
-class Site extends Facade
+class SiteSer extends Facade
 {
     protected static function getFacadeAccessor()
     {
