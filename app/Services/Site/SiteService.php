@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Site;
 
 use App\Models\Site;
 use Illuminate\Http\Request;
@@ -14,18 +14,29 @@ use Illuminate\Support\MessageBag;
  * User: nicholas
  * Date: 2018/3/8
  * Time: 15:22
- * @property Collection $domain
- * @property Collection $config
  */
 class SiteService
 {
     const KEY_SITE_DOMAIN = 'hsite_domains:';
     const KEY_SITE_CONFIG = 'hsite_config:';
     protected $booted;
+    /**
+     * 当前域名信息，通过网络请求时才会有
+     * @var Collection
+     */
     private $domain;
+
+    /**
+     * 站点配置信息，懒加载
+     * @var Collection
+     */
     private $config;
     private $host;
+    /**
+     * @var MessageBag
+     */
     private $errors;
+    private $id;
 
     public function __construct()
     {
@@ -47,28 +58,32 @@ class SiteService
         $this->booted = true;
         $this->host = $request->getHost();
         $this->loadDomainInfo();
-        $this->checkDomainValidity($this->domain);
-        $this->checkConfigValidity($this->siteId());
+        $this->checkConfigValidity($this->id);
         return $this;
+    }
+
+    public function fromID($id)
+    {
+
     }
 
     protected function loadDomainInfo(): void
     {
         $siteDomain = Redis::hgetall(static::KEY_SITE_DOMAIN . $this->host);
         $this->domain = collect($siteDomain);
+        if ($this->checkDomainValidity($this->domain)) {
+            $this->id = $siteDomain['site_id'];
+        }
     }
 
     public function domain(): Collection
     {
-        if (!isset($this->domain)) {
-            $this->loadDomainInfo();
-        }
         return $this->domain;
     }
 
     public function siteId()
     {
-        return $this->domain()->get('siteId');
+        return $this->id;
     }
 
     protected function loadConfig(): void
@@ -78,10 +93,12 @@ class SiteService
     }
 
     /**
-     * @param null $name
-     * @return Collection|mixed
+     * 获取缓存，懒加载机制
+     * @param null $name 如果没有name会
+     * @param bool $noCache 跳过本地缓存
+     * @return Collection
      */
-    public function config($name = null)
+    public function config($name = null,$noCache=true)
     {
         if (is_null($this->config))
             $this->loadConfig();
@@ -91,18 +108,22 @@ class SiteService
         return $this->config;
     }
 
-    public function checkDomainValidity(Collection $domain)
+    public function checkDomainValidity(Collection $domain): bool
     {
-        if (!$domain->has('siteId')) {
+        if (!$domain->has('site_id')) {
             $this->errors->add('domain', '域名配置错误，请联系客服！');
+            return false;
         }
+        return true;
     }
 
-    public function checkConfigValidity(?int $siteId)
+    public function checkConfigValidity(?int $siteId): bool
     {
         if (!Redis::exists(static::KEY_SITE_CONFIG . $siteId)) {
             $this->errors->add('config', '站点配置缺失，请联系客服！');
+            return false;
         }
+        return true;
     }
 
     public function shareConfigWithViews()
@@ -164,6 +185,6 @@ class SiteService
     {
         $this->flushConfigCacheForSite($site);
         $configArray = $this->getConfigArrayForSite($site);
-        return Redis::hMSet(static::KEY_SITE_CONFIG . $site->id , $configArray);
+        return Redis::hMSet(static::KEY_SITE_CONFIG . $site->id, $configArray);
     }
 }

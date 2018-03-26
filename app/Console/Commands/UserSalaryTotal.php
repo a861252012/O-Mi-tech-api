@@ -9,7 +9,7 @@ use App\Models\MallList;
 use App\Models\Salary;
 use App\Models\SalaryRule;
 use App\Models\Users;
-use App\Services\SiteService;
+use App\Services\Site\SiteService;
 use Illuminate\Cache\FileStore;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;

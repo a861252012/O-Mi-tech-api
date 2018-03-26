@@ -7,7 +7,7 @@ use App\Services\ActiveService;
 use App\Services\Charge\ChargeGroupService;
 use App\Services\Charge\ChargeService;
 use App\Services\Message\MessageService;
-use App\Services\SiteService;
+use App\Services\Site\SiteService;
 use App\Services\UserGroup\UserGroupService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\ServiceProvider;

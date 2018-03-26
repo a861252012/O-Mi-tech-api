@@ -9,7 +9,7 @@
 namespace App\Facades;
 
 
-use App\Services\SiteService;
+use App\Services\Site\SiteService;
 use Illuminate\Support\Facades\Facade;
 
 class SiteSer extends Facade

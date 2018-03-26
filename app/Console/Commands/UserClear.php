@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\Schedule;
+namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 

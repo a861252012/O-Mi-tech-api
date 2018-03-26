@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\UserDomain;
 use App\Models\UserLoginLog;
 use App\Models\Users;
-use App\Services\SiteService;
+use App\Services\Site\SiteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;

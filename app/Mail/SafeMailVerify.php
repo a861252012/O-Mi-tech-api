@@ -4,7 +4,7 @@ namespace App\Mail;
 
 use App\Models\Conf;
 use App\Models\Users;
-use App\Services\SiteService;
+use App\Services\Site\SiteService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;

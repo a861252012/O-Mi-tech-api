@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\SiteService;
+use App\Services\Site\SiteService;
 use Closure;
 use Illuminate\Http\JsonResponse;
 

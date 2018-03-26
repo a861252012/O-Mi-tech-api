@@ -11,7 +11,7 @@ namespace App\Services\Charge;
 
 use App\Models\Users;
 use App\Services\Service;
-use App\Services\SiteService;
+use App\Services\Site\SiteService;
 use Illuminate\Support\Facades\Auth;
 
 class ChargeService extends Service

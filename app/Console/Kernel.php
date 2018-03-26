@@ -36,7 +36,6 @@ class Kernel extends ConsoleKernel
         //*/1 * * * * /usr/local/bin/php /var/www/peach-front/crontab-list/anchor-search-list.php 1>/dev/null
         $schedule->command("anchor_search")->everyMinute()->withoutOverlapping();
 
-        $schedule->command("clear-user")->everyMinute()->withoutOverlapping()->onOneServer();
         #########每五分钟定时推送预约房间开始信息##########
         //*/5 * * * * /usr/bin/php /var/www/video-front/crontab-list/duration-room-msg-send.php 1>/dev/null
         $schedule->command("one_to_one_start_tip")->everyFiveMinutes()->withoutOverlapping()->onOneServer();

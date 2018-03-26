@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\Schedule;
 
-use App\Services\SiteService;
+use App\Services\Site\SiteService;
 use Illuminate\Cache\FileStore;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
@@ -25,15 +25,20 @@ class AnchorList extends Command
      * @var string
      */
     protected $description = 'Command description';
+    /**
+     * @var SiteService
+     */
+    private $siteService;
 
     /**
      * Create a new command instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(SiteService $siteService)
     {
         parent::__construct();
+        $this->siteService = $siteService;
     }
 
     /**
@@ -43,9 +48,8 @@ class AnchorList extends Command
      */
     public function handle()
     {
-        $flashVer = Redis::get('flash_version');
-        !$flashVer && $flashVer = 'v201504092044';
-
+        $flashVer =  $this->siteService->config('flash_version');
+        $this->info('flash_version'.$flashVer);
 //home_all_,home_rec_,home_ord_,home_gen_,home_vip_
         $conf_arr = array(
             'home_all_'=> array('所有主播','all'),
@@ -60,10 +64,10 @@ class AnchorList extends Command
             $data =  Redis::get($key.$flashVer);
             if( $data == null ){
                 echo $item[0].'可能出问题了，请联系java开发人员'.PHP_EOL;
-                (new Filesystem)->put(public_path().'/videolist'.$item[1].'.json','{"rooms":[]}');
+                Storage::disk('public')->put('videolist'.$item[1].'.json','{"rooms":[]}');
             }else{
                 $data = str_replace(array('cb(',');'),array('',''),$data);
-                (new Filesystem)->put(public_path().'/videolist'.$item[1].'.json',$data);
+                Storage::disk('public')->put('videolist'.$item[1].'.json',$data);
             }
         }
     }

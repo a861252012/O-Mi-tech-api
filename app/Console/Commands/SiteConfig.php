@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Site;
-use App\Services\SiteService;
+use App\Services\Site\SiteService;
 use Illuminate\Console\Command;
 
 class SiteConfig extends Command
