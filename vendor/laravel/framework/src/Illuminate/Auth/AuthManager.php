@@ -3,8 +3,8 @@
 namespace Illuminate\Auth;
 
 use Closure;
-use InvalidArgumentException;
 use Illuminate\Contracts\Auth\Factory as FactoryContract;
+use InvalidArgumentException;
 
 class AuthManager implements FactoryContract
 {
@@ -94,7 +94,7 @@ class AuthManager implements FactoryContract
             return $this->{$driverMethod}($name, $config);
         }
 
-        throw new InvalidArgumentException("Auth guard driver [{$name}] is not defined.");
+        throw new InvalidArgumentException("Auth driver [{$config['driver']}] for guard [{$name}] is not defined.");
     }
 
     /**

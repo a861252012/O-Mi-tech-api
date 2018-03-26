@@ -414,7 +414,7 @@ class LoginRoute
         $passFlag = true;
         $times = intval($this->_redisInstance->hget('hlogin_authcode',$userinfo['uid'])) ?: 0;
 
-        if( $times >= 5 && !checkCaptcha($sCode,!$this->_confAssoc['SKIP_CAPTCHA_LOGIN']) ){
+        if( $times >= 5 && !checkCaptcha($sCode,!$this->_confAssoc['skip_captcha_login']) ){
             return array(
                 "status"=> 0,
                 "msg" => "验证码错误，请重新输入！",

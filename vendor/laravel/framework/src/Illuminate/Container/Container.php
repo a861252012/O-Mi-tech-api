@@ -2,13 +2,13 @@
 
 namespace Illuminate\Container;
 
-use Closure;
 use ArrayAccess;
+use Closure;
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Contracts\Container\Container as ContainerContract;
 use LogicException;
 use ReflectionClass;
 use ReflectionParameter;
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Illuminate\Contracts\Container\Container as ContainerContract;
 
 class Container implements ArrayAccess, ContainerContract
 {
@@ -271,13 +271,28 @@ class Container implements ArrayAccess, ContainerContract
     /**
      * Bind a callback to resolve with Container::call.
      *
-     * @param  string  $method
+     * @param  array|string  $method
      * @param  \Closure  $callback
      * @return void
      */
     public function bindMethod($method, $callback)
     {
-        $this->methodBindings[$method] = $callback;
+        $this->methodBindings[$this->parseBindMethod($method)] = $callback;
+    }
+
+    /**
+     * Get the method to be bound in class@method format.
+     *
+     * @param  array|string $method
+     * @return string
+     */
+    protected function parseBindMethod($method)
+    {
+        if (is_array($method)) {
+            return $method[0].'@'.$method[1];
+        }
+
+        return $method;
     }
 
     /**

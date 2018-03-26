@@ -2,8 +2,8 @@
 
 namespace Illuminate\Cache;
 
-use Illuminate\Support\InteractsWithTime;
 use Illuminate\Contracts\Cache\Repository as Cache;
+use Illuminate\Support\InteractsWithTime;
 
 class RateLimiter
 {
@@ -32,10 +32,9 @@ class RateLimiter
      *
      * @param  string  $key
      * @param  int  $maxAttempts
-     * @param  float|int  $decayMinutes
      * @return bool
      */
-    public function tooManyAttempts($key, $maxAttempts, $decayMinutes = 1)
+    public function tooManyAttempts($key, $maxAttempts)
     {
         if ($this->attempts($key) >= $maxAttempts) {
             if ($this->cache->has($key.':timer')) {

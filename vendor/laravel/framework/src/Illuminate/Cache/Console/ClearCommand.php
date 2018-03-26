@@ -2,11 +2,11 @@
 
 namespace Illuminate\Cache\Console;
 
-use Illuminate\Console\Command;
 use Illuminate\Cache\CacheManager;
+use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 
 class ClearCommand extends Command
 {
@@ -82,7 +82,11 @@ class ClearCommand extends Command
      */
     public function flushFacades()
     {
-        foreach ($this->files->files(storage_path('framework/cache')) as $file) {
+        if (! $this->files->exists($storagePath = storage_path('framework/cache'))) {
+            return;
+        }
+
+        foreach ($this->files->files($storagePath) as $file) {
             if (preg_match('/facade-.*\.php$/', $file)) {
                 $this->files->delete($file);
             }

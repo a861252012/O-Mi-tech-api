@@ -8,7 +8,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -38,7 +37,6 @@ class Handler extends ExceptionHandler
      *
      * @param  \Exception $exception
      * @return void
-     * @throws Exception
      */
     public function report(Exception $exception)
     {

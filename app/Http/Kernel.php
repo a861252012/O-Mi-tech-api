@@ -2,11 +2,10 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\Charge;
 use App\Http\Middleware\LoginAuth;
 use App\Http\Middleware\MobileSession;
-use App\Http\Middleware\Charge;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
-use Illuminate\Session\Middleware\StartSession;
 
 class Kernel extends HttpKernel
 {
@@ -68,8 +67,10 @@ class Kernel extends HttpKernel
         'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+        'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'login_auth' => LoginAuth::class,
         'charge' => Charge::class,

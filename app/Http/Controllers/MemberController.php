@@ -60,111 +60,93 @@ class MemberController extends Controller
             'role' => 0,
             'action' => 'attention',
             'name' => '我的关注',
-            'ico' => 6,
         ],
         [
             'role' => 0,
             'action' => 'scene',
             'name' => '我的道具',
-            'ico' => 3,
         ],
         [
             'role' => 0,
             'action' => 'charge',
             'name' => '充值记录',
-            'ico' => 5,
         ],
         [
             'role' => 0,
             'action' => 'consumerd',
             'name' => '消费记录',
-            'ico' => 8,
         ],
         //消费统计，用户
         [
             'role' => 1,
             'action' => 'count',
             'name' => '消费统计',
-            'ico' => 7,
         ],
         //收入统计，主播
         [
             'role' => 2,
             'action' => 'count',
             'name' => '收入统计',
-            'ico' => 7,
         ],
         [
             'role' => 0,
             'action' => 'vip',
             'name' => '贵族体系',
-            'ico' => 8,
         ],
         [
             'role' => 0,
             'action' => 'password',
             'name' => '密码管理',
-            'ico' => 2,
         ],//主播才有
         [
             'role' => 0,
             'action' => 'myReservation',
             'name' => '我的预约',
-            'ico' => 2,
         ],//主播才有
         [
             'role' => 2,
             'action' => 'roomset',
             'name' => '房间管理',//房间管理员
-            'ico' => 2,
         ],//主播才有
         [
             'role' => 3,
             'action' => 'transfer',
             'name' => '转账',
-            'ico' => 8,
         ],//主播才有
         [
             'role' => 2,
             'action' => 'withdraw',
             'name' => '提现',
-            'ico' => 9,
         ],
         [
             'role' => 2,
             'action' => 'anchor',
             'name' => '主播中心',
-            'ico' => 4,
         ],//主播才有
         [
             'role' => 0,
             'action' => 'gamelist',
             'name' => '房间游戏',
-            'ico' => 4,
         ],//主播才有
         [
             'role' => 2,
             'action' => 'commission',
             'name' => '佣金统计',
-            'ico' => 7,
         ],//主播才有
         [
             'role' => 2,
             'action' => 'live',
             'name' => '直播记录',
-            'ico' => 8,
         ],//主播才有
         [
             'role' => 0,
             'action' => 'msglist',
             'name' => '消息',
-            'ico' => '0',
         ],
         [
             'role' => 0,
             'action' => 'agents',
             'name' => '代理数据',
-            'ico' => '0',
         ],
     ];
 
