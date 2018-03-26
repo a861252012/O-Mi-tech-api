@@ -294,34 +294,15 @@ class MemberController extends Controller
      * [transfer 转帐功能]
      *
      * @author  dc <dc#wisdominfo.my>
-     * @version 2015-11-13
      * @return  JsonResponse
      */
     public function transfer(Request $request)
     {
         $uid = Auth::id();
+        $user = Auth::user();
         //转帐菜单
-        if (!isset($this->userInfo['transfer']) || !$this->userInfo['transfer']) {
-            return new RedirectResponse('/');
-        }
-
-        //数据列表、查询、展示处理。
-        if ($request->getMethod() != 'POST') {
-            $mintime = $request->get('mintime');
-            $maxtime = $request->get('maxtime');
-            $transfers = Transfer::where(function ($query) use ($uid) {
-                $query->where('by_uid', $uid)->orWhere('to_uid', $uid);
-            });
-            if ($mintime && $maxtime) {
-                $v['mintime'] = date('Y-m-d 00:00:00', strtotime($mintime));
-                $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
-                $transfers->where('datetime', '>=', $mintime)->where('datetime', '<=', $maxtime);
-
-            }
-            $v['transfers'] = $transfers->orderBy('datetime', 'desc')->paginate(10);
-            $v['transfers']->appends(['mintime' => $mintime, 'maxtime' => $maxtime])->render();
-            $v['user'] = $this->userInfo;
-            return $this->render('Member/transfer', $v);
+        if (!$user->transfer) {
+            return JsonResponse::create(['status' => 0, 'msg' => '没有权限']);
         }
         /**
          * 转帐处理过程
@@ -338,13 +319,13 @@ class MemberController extends Controller
         if (intval($points) < 1) return new JsonResponse(['status' => 0, 'message' => '转帐金额错误!']);
 
         //获取转到用户信息
-        $user = resolve(UserService::class)->getUserByUsername($username);
+        $userTo = resolve(UserService::class)->getUserByUsername($username);
 
-        if (!$user) return new JsonResponse(['status' => 0, 'message' => '对不起！该用户不存在']);
+        if (!$userTo) return new JsonResponse(['status' => 0, 'message' => '对不起！该用户不存在']);
 
-        if (!$this->userInfo['transfer']) return new JsonResponse(['status' => 0, 'message' => '对不起！您没有该权限！']);
+        if (!$user['transfer']) return new JsonResponse(['status' => 0, 'message' => '对不起！您没有该权限！']);
 
-        if ($this->userInfo['points'] < $points) return new JsonResponse(['status' => 0, 'message' => '对不起！您的钻石余额不足!']);
+        if ($user['points'] < $points) return new JsonResponse(['status' => 0, 'message' => '对不起！您的钻石余额不足!']);
 
         //开始转帐事务处理
         DB::beginTransaction();
@@ -352,40 +333,60 @@ class MemberController extends Controller
             DB::table((new Users)->getTable())->where('uid', $uid)->decrement('points', $points);
             //update(array('points' => $this->userInfo['points'] - $points));
 
-            DB::table((new Users)->getTable())->where('uid', $user['uid'])->increment('points', $points);
+            DB::table((new Users)->getTable())->where('uid', $userTo['uid'])->increment('points', $points);
             //update(array('points' => $user['points'] + $points));
 
             //记录转帐
-            DB::table((new Transfer)->getTable())->insert(['by_uid' => $uid, 'by_nickname' => $this->userInfo['nickname'], 'to_uid' => $user['uid'], 'to_nickname' => $user['nickname'], 'points' => $points, 'content' => $content, 'datetime' => date('Y-m-d H:i:s'), 'status' => 1]);
+            DB::table((new Transfer)->getTable())->insert(['by_uid' => $uid, 'by_nickname' => $user['nickname'], 'to_uid' => $userTo['uid'], 'to_nickname' => $userTo['nickname'], 'points' => $points, 'content' => $content, 'datetime' => date('Y-m-d H:i:s'), 'status' => 1]);
 
             //写入recharge表方便保级运算
-            DB::table((new Recharge)->getTable())->insert(['uid' => $user['uid'], 'points' => $points, 'paymoney' => round($points / 10, 2), 'created' => date('Y-m-d H:i:s'), 'order_id' => 'transfer_' . $uid . '_to_' . $user['uid'] . '_' . uniqid(), 'pay_type' => 7, 'pay_status' => 2, 'nickname' => $user['nickname']]);
+            DB::table((new Recharge)->getTable())->insert(['uid' => $userTo['uid'], 'points' => $points, 'paymoney' => round($points / 10, 2), 'created' => date('Y-m-d H:i:s'), 'order_id' => 'transfer_' . $uid . '_to_' . $userTo['uid'] . '_' . uniqid(), 'pay_type' => 7, 'pay_status' => 2, 'nickname' => $userTo['nickname']]);
 
 
             //发送成功消息给转帐人
             $from_user_transfer_message = ['mail_type' => 3, 'rec_uid' => $uid, 'content' => '您成功转出' . $points . '钻石到 ' . $username . ' 帐户'];
-            $this->make('messageServer')->sendSystemToUsersMessage($from_user_transfer_message);
+            resolve(MessageService::class)->sendSystemToUsersMessage($from_user_transfer_message);
 
             //发送成功消息给收帐人
-            $to_user_transfer_message = ['mail_type' => 3, 'rec_uid' => $user['uid'], 'content' => '您成功收到由 "' . $this->userInfo['nickname'] . '" 转到您帐户' . $points . '钻石'];
-            $this->make('messageServer')->sendSystemToUsersMessage($to_user_transfer_message);
+            $to_user_transfer_message = ['mail_type' => 3, 'rec_uid' => $userTo['uid'], 'content' => '您成功收到由 "' . $user['nickname'] . '" 转到您帐户' . $points . '钻石'];
+            resolve(MessageService::class)->sendSystemToUsersMessage($to_user_transfer_message);
 
             DB::commit();//事务提交
 
             //检查收款人用户VIP保级状态 一定要在事务之后进行验证
-            $this->checkUserVipStatus($user);
+            $this->checkUserVipStatus($userTo);
             //更新转帐人用户redis信息
             resolve(UserService::class)->getUserReset($uid);
 
             //更新收款人用户redis信息
-            resolve(UserService::class)->getUserReset($user['uid']);
+            resolve(UserService::class)->getUserReset($userTo['uid']);
 
 
             return new JsonResponse(['status' => 1, 'message' => '您成功转出' . $points . '钻石']);
         } catch (\Exception $e) {
             DB::rollBack();//事务回滚
+            logger()->debug($e);
             return new JsonResponse(['status' => 0, 'message' => '对不起！转帐失败!']);
         }
+    }
+
+    public function transferHistory(Request $request)
+    {
+        $mintime = $request->get('mintime');
+        $maxtime = $request->get('maxtime');
+        $uid = Auth::id();
+        $transfers = Transfer::where(function ($query) use ($uid) {
+            $query->where('by_uid', $uid)->orWhere('to_uid', $uid);
+        });
+        if ($mintime && $maxtime) {
+            $v['mintime'] = date('Y-m-d 00:00:00', strtotime($mintime));
+            $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
+            $transfers->where('datetime', '>=', $mintime)->where('datetime', '<=', $maxtime);
+        }
+        $transfers = $transfers->orderBy('datetime', 'desc')->paginate(10)
+            ->appends(['mintime' => $mintime, 'maxtime' => $maxtime]);
+        return $this->render('Member/transfer', ['status' => 1, 'data' => $transfers]);
+
     }
 
     /**

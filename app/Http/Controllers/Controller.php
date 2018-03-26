@@ -33,6 +33,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Mews\Captcha\Facades\Captcha;
 
@@ -1310,7 +1311,7 @@ class Controller extends BaseController
      *      达到状态更新贵族的有效期
      *      未达到直接返回
      *
-     * @param object $user
+     * @param $user
      * @return boolean
      */
     public function checkUserVipStatus($user)

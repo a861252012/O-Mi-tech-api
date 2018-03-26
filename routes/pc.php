@@ -38,6 +38,10 @@ Route::group(['prefix' => 'member'], function () {
         Route::post('password/change', 'MemberController@passwordChange')->name('member_password');
         // 用户中心 我的预约
         Route::match(['POST', 'GET'], 'myReservation', 'MemberController@myReservation')->name('member_myReservation');
+        // 用户中心 转账
+        Route::get('transfer/history', 'MemberController@transferHistory')->name('member_transfer_history');
+        Route::post('transfer/create', 'MemberController@transfer')->name('member_transfer_create');
+
     });
 });
 
@@ -215,8 +219,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::match(['POST', 'GET'], '/member/withdraw', ['name' => 'member_withdraw', 'uses' => 'MemberController@withdraw']);
     // 用户中心 房间设置
     Route::match(['POST', 'GET'], '/member/roomSetTimecost', ['name' => 'member_roomset', 'uses' => 'MemberController@roomSetTimecost']);
-    // 用户中心 转账
-    Route::match(['POST', 'GET'], '/member/transfer', ['name' => 'member_transfer', 'uses' => 'MemberController@transfer']);
 
     // 用户中心 代理数据
     Route::match(['POST', 'GET'], '/member/agents', ['name' => 'member_agents', 'uses' => 'MemberController@agents']);
