@@ -197,19 +197,19 @@ Route::group(['middleware' => ['login_auth']], function () {
     //一对多记录详情-购买用户
     Route::get('/member/getBuyOneToMore', ['uses' => 'MemberController@getBuyOneToMore']);
     //pc创建一对多
-    Route::get('/member/roomOneToMore', ['name' => 'roomOneToMore', 'uses' => 'MemberController@roomOneToMore']);
+    Route::post('/member/roomOneToMore', ['name' => 'roomOneToMore', 'uses' => 'MemberController@roomOneToMore']);
     //pc一对多补票
     Route::post('/member/makeUpOneToMore', ['name' => 'makeUpOneToMore', 'uses' => 'MemberController@makeUpOneToMore']);
     //pc删除一对多
-    Route::get('/member/delRoomOne2Many', ['name' => 'member_roomDelOne2Many', 'uses' => 'MemberController@delRoomOne2Many']);
+    Route::post('/member/delRoomOne2Many', ['name' => 'member_roomDelOne2Many', 'uses' => 'MemberController@delRoomOne2Many']);
     //pc端添加一第一
-    Route::get('/member/roomSetDuration', ['name' => 'member_roomSetDuration', 'uses' => 'MemberController@roomSetDuration']);
+    Route::post('/member/roomSetDuration', ['name' => 'member_roomSetDuration', 'uses' => 'MemberController@roomSetDuration']);
     //pc端预约一对一
-    Route::get('/member/doReservation', ['uses' => 'MemberController@doReservation']);
+    Route::post('/member/doReservation', ['uses' => 'MemberController@doReservation']);
     //pc端修改房间时长
     Route::get('/member/roomUpdateDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@roomUpdateDuration']);
     //pc端删除一对一
-    Route::get('/member/delRoomDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@delRoomDuration']);
+    Route::post('/member/delRoomDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@delRoomDuration']);
 
 
     // 用户中心 礼物统计

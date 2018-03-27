@@ -436,25 +436,7 @@ class RoomService extends Service
 
     }
 
-    /**
-     * 写充值的 日志 TODO 优化到充值服务中去
-     *
-     * @param string $word
-     * @param string $recodeurl
-     */
-    protected function logResult($word = '', $recodeurl = '')
-    {
-        if ($recodeurl) {
-            $recordLog = $recodeurl;
-        } else {
-            $recordLog = $this->container->config['config.PAY_LOG_FILE'];
-        }
-        $fp = fopen($recordLog, "a");
-        flock($fp, LOCK_EX);
-        fwrite($fp, "执行日期：" . date("Ymd H:i:s", time()) . "\n" . $word . "\n");
-        flock($fp, LOCK_UN);
-        fclose($fp);
-    }
+
 
     /**
      * 时段房间互拆（一对一，一对多）
@@ -570,6 +552,24 @@ class RoomService extends Service
         unset($arr['endtime']);
         Redis::hSet($keys, $arr['id'], json_encode($arr));
         return true;
+    }
+
+    /*
+     * 删除一对一 by  desmond
+     */
+
+    public  function delOnetoOne($data){
+
+        $room = RoomDuration::find($data);
+        if (!$room) return ['status' => 0, 'msg' => '房间不存在'];
+        if ($room->uid != Auth::id()) return ['status' => 0, 'msg' => '只能删除自己房间'];//只能删除自己房间
+        if ($room->status == 1)  return  ['status' => 0, 'msg' => '房间已经删除'];
+        if ($room->reuid != 0) {
+            return  ['status' => 0, 'msg' => '房间已经被预定，不能删除！'];
+        }
+        $this->make('redis')->hdel('hroom_duration:' . $room->uid . ':' . $room->roomtid, $room->id);//删除对应的redis
+        $room->delete();
+        return  ['status' => 1, 'msg' => '删除成功'];
     }
 
 

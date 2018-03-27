@@ -3,7 +3,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Service\User\UserService;
+
 use App\Services\User\UserService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 

@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\Log;
 use App\Facades\SiteSer;
 use App\Models\AgentsPriv;
 use App\Models\AgentsRelationship;
@@ -1171,23 +1171,22 @@ class MemberController extends Controller
      */
     public function doReservation()
     {
-        $roomid = $this->request()->get('duroomid');
+        $roomid = $this->request()->get('rid');
         $flag = $this->request()->get('flag');
         if (empty($roomid) || empty($flag)) {
-            return new JsonResponse(['code' => 408, 'msg' => '请求错误']);
+            return new JsonResponse(['status' => 0, 'msg' => '请求错误']);
         }
-        /** @var  $duroom \Video\ProjectBundle\Entity\VideoRoomDuration */
-//        $duroom = $this->getDoctrine()->getManager()->getRepository('Video\ProjectBundle\Entity\VideoRoomDuration')->find($roomid);
+
         $duroom = RoomDuration::find($roomid);
-        if (empty($duroom)) return new JsonResponse(['code' => 410, 'msg' => '请求错误']);
-        if (empty($duroom)) return new JsonResponse(['code' => 401, 'msg' => '您预约的房间不存在']);
-        if ($duroom['status'] == 1) return new JsonResponse(['code' => 402, 'msg' => '当前的房间已经下线了，请选择其他房间。']);
-        if ($duroom['reuid'] != '0') return new JsonResponse(['code' => 403, 'msg' => '当前的房间已经被预定了，请选择其他房间。']);
-        if ($duroom['uid'] == Auth::id()) return new JsonResponse(['code' => 404, 'msg' => '自己不能预约自己的房间']);
-        if ($this->userInfo['points'] < $duroom['points']) return new JsonResponse(['code' => 405, 'msg' => '余额不足哦，请充值！']);
+        if (empty($duroom)) return new JsonResponse(['status' => 0, 'msg' => '请求错误']);
+        if (empty($duroom)) return new JsonResponse(['status' => 0, 'msg' => '您预约的房间不存在']);
+        if ($duroom['status'] == 1) return new JsonResponse(['status' => 0, 'msg' => '当前的房间已经下线了，请选择其他房间。']);
+        if ($duroom['reuid'] != '0') return new JsonResponse(['status' => 0, 'msg' => '当前的房间已经被预定了，请选择其他房间。']);
+        if ($duroom['uid'] == Auth::id()) return new JsonResponse(['status' => 0, 'msg' => '自己不能预约自己的房间']);
+        if (Auth::user()->points < $duroom['points']) return new JsonResponse(['status' => 0, 'msg' => '余额不足哦，请充值！']);
         //关键点，这个时段内有没有其他的房间重复，标志位为flag 默认值为false 当用户确认后传入的值为true
         if (!$this->checkRoomUnique($duroom, Auth::id()) && $flag == 'false') {
-            return new JsonResponse(['code' => 407, 'msg' => '您这个时间段有房间预约了，您确定要预约么']);
+            return new JsonResponse(['status' => 0, 'msg' => '您这个时间段有房间预约了，您确定要预约么']);
         }
         $duroom['reuid'] = Auth::id();
         $duroom->save();
@@ -1196,7 +1195,7 @@ class MemberController extends Controller
         if (!($this->checkUserAttensExists(Auth::id(), $duroom['uid'], true, true))) {
             $this->make('redis')->zadd('zuser_reservation:' . Auth::id(), time(), $duroom['uid']);
         }
-        Users::where('uid', Auth::id())->update(['points' => ($this->userInfo['points'] - $duroom['points']), 'rich' => ($this->userInfo['rich'] + $duroom['points'])]);
+        Users::where('uid', Auth::id())->update(['points' => (Auth::user()->points - $duroom['points']), 'rich' => (Auth::user()->rich + $duroom['points'])]);
         resolve(UserService::class)->getUserReset(Auth::id());// 更新redis TODO 好屌
         RoomDuration::where('id', $duroom['id'])
             ->update(['reuid' => Auth::id(), 'invitetime' => time()]);
@@ -1240,7 +1239,9 @@ class MemberController extends Controller
             }
         }
         $this->make('redis')->lPush('lanchor_is_sub:' . $duroom['uid'], date('YmdHis', strtotime($duroom['starttime'])));
-        return new JsonResponse(['code' => 1, 'msg' => '预定成功']);
+        Log::channel('room')->info('buyOneToOne',$duroom->toArray());
+
+        return new JsonResponse(['code' => 1, 'msg' => '预约成功']);
     }
 
     /**
@@ -2187,18 +2188,17 @@ class MemberController extends Controller
      */
     public function delRoomDuration()
     {
+
         $rid = $this->request()->input('rid');
-        if (!$rid) return JsonResponse::create(['code' => 401, 'msg' => '请求错误']);
-        $room = RoomDuration::find($rid);
-        if (!$room) return new JsonResponse(['code' => 402, 'msg' => '房间不存在']);
-        if ($room->uid != Auth::id()) return JsonResponse::create(['code' => 404, 'msg' => '非法操作']);//只能删除自己房间
-        if ($room->status == 1) return new JsonResponse(['code' => 403, 'msg' => '房间已经删除']);
-        if ($room->reuid != 0) {
-            return new JsonResponse(['code' => 400, 'msg' => '房间已经被预定，不能删除！']);
-        }
-        $this->make('redis')->hdel('hroom_duration:' . $room->uid . ':' . $room->roomtid, $room->id);//删除对应的redis
-        $room->delete();
-        return JsonResponse::create(['code' => 1, 'msg' => '删除成功']);
+
+
+        if (!$rid) return JsonResponse::create(['status' => 0, 'msg' => '请求错误']);
+        $roomservice = resolve(RoomService::class);
+        $result = $roomservice->delOnetoOne($rid);
+
+
+
+        return JsonResponse::create($result);
     }
 
     /**
@@ -2208,6 +2208,7 @@ class MemberController extends Controller
     public function delRoomOne2Many()
     {
         $rid = $this->request()->input('rid');
+
         if (!$rid) return JsonResponse::create(['status' => 401, 'msg' => '请求错误']);
         $room = RoomOneToMore::find($rid);
         if (!$room) return new JsonResponse(['status' => 402, 'msg' => '房间不存在']);
