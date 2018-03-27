@@ -41,6 +41,10 @@ Route::group(['prefix' => 'member'], function () {
         // 用户中心 提现
         Route::get('withdraw', 'MemberController@withdrawHistory')->name('member_withdraw_history');
         Route::post('withdraw/request', 'MemberController@withdraw')->name('member_withdraw_create');
+        // 用户中心 主播中心
+        Route::get('anchor', 'MemberController@anchor')->name('member_anchor');
+        // 用户中心 房间游戏
+        Route::get('gamelist/{type?}', 'MemberController@gamelist')->where('type','[1,2]')->name('member_gamelist');
     });
 });
 
@@ -207,14 +211,12 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/member/delRoomDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@delRoomDuration']);
 
 
-    // 用户中心 房间游戏
-    Route::get('/member/gamelist[/{type:\d+}]', ['name' => 'member_gamelist', 'uses' => 'MemberController@gamelist']);
+
     // 用户中心 礼物统计
     Route::get('/member/count', ['name' => 'member_count', 'uses' => 'MemberController@count']);
     // 用户中心 直播统计
     Route::match(['POST', 'GET'], '/member/live', ['name' => 'member_live', 'uses' => 'MemberController@live']);
-    // 用户中心 主播中心
-    Route::match(['POST', 'GET'], '/member/anchor', ['name' => 'member_anchor', 'uses' => 'MemberController@anchor']);
+
     // 用户中心 房间设置
     Route::match(['POST', 'GET'], '/member/roomset', ['name' => 'member_roomset', 'uses' => 'MemberController@roomset']);
 
@@ -286,8 +288,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/space', ['name' => 'shop_space', 'uses' => 'SpaceController@index']);
 
 
-
-
     Route::match(['POST', 'GET'], '/verfiyName', ['uses' => 'IndexController@checkUniqueName']);
     Route::match(['POST', 'GET'], '/setinroomstat', ['name' => 'setinroomstat', 'uses' => 'IndexController@setInRoomStat']);
 
@@ -317,14 +317,13 @@ Route::group(['middleware' => ['login_auth']], function () {
     // 用户中心 预约房间设置
 
     Route::post('/member/domsg', ['uses' => 'MemberController@domsg']);
-   // 用户中心 密码房间设置
+    // 用户中心 密码房间设置
     Route::post('/member/roomSetPwd', ['name' => 'member_roomSetPwd', 'uses' => 'MemberController@roomSetPwd']);
     // 用户中心 体现
     Route::post('/member/addwithdraw', ['name' => 'member_addwithdraw', 'uses' => 'MemberController@addwithdraw']);
 
     // 密码房间
     Route::post('/checkroompwd', ['name' => 'checkroompwd', 'uses' => 'MemberController@checkroompwd']);
-
 
 
     //关注用户接口

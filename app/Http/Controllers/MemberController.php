@@ -1344,7 +1344,7 @@ class MemberController extends Controller
             $item['status'] = $status_array[$item->status];
         });
 
-        return JsonResponse::create(['status' => 1, 'data' => ['list'=>$data,'available_balance'=>$availableBalance]]);
+        return JsonResponse::create(['status' => 1, 'data' => ['list' => $data, 'available_balance' => $availableBalance]]);
     }
 
     /**
@@ -1375,9 +1375,6 @@ class MemberController extends Controller
 
     /**
      * 用户中心 主播中心
-     * @author D.C
-     * @update 2014.11.11
-     * @return Response
      */
     public function anchor()
     {
@@ -1423,20 +1420,12 @@ class MemberController extends Controller
     private function _anchorHandle($type = null, $id = 0)
     {
         if (!$type || !$id) return false;
-        /*irwin doctrine 到 lavarel 改造
-        $gm = $this->get('doctrine')->getManager();
-        $dm = new DataModel($this);
-        $user = $this->getUserInfo();
-        $anchor = $gm->getRepository('Video\ProjectBundle\Entity\VideoAnchor')->find($id);*/
         $anchor = Anchor::find($id);
         if (!$anchor) return false;
         $pic_used_size = $this->userInfo['pic_used_size'] - $anchor['size'];
 
         switch ($type) {
             case 'del':
-                /*irwin doctrine 到 lavarel 改造
-                $dm->setUserField(array('pic_used_size' => $pic_used_size), $user['uid']);
-                $gm->remove($anchor);*/
                 //将用户剩余图片空间同步更新数据库及redis
                 Users::find(Auth::id())->update(['pic_used_size' => $pic_used_size]);
                 $this->make('redis')->hMset('huser_info:' . Auth::id(), Users::find(Auth::id())->toArray());
@@ -1448,10 +1437,6 @@ class MemberController extends Controller
                 break;
 
             case 'set':
-                /*irwin doctrine 到 lavarel 改造
-                $anchor->setName($this->request()->get('name'));
-                $anchor->setSummary($this->request()->get('summary'));
-                $gm->persist($anchor);*/
                 //更新图片名称与备注
                 Anchor::find($id)->update(['name' => $this->make('request')->get('name'), 'summary' => $this->make('request')->get('summary')]);
                 break;
@@ -1459,25 +1444,17 @@ class MemberController extends Controller
             default:
                 return false;
         }
-        //$gm->flush();
         return true;
     }
 
     /**
      *用户中心 房间游戏
-     * @author TX
-     * @updata 2015.6.110
-     * @return Response
      */
     public function gamelist($type = 1)
     {
-        if (!in_array($type, [1, 2])) {
-            throw new NotFoundHttpException();
-        }
         $data = [];
         // 我参与的
         if ($type == 1) {
-
             $data = CarGameBetBak::with(['game' => function ($query) {
                 $query->with('gameMasterUser');
             }])->with('gameRoomUser')
@@ -1494,8 +1471,7 @@ class MemberController extends Controller
                 ->orderBy('stime', 'DESC')
                 ->paginate();
         }
-
-        return $this->render('Member/gamelist' . $type, ['data' => $data]);
+        return JsonResponse::create(['status' => 1, 'data' => $data]);
     }
 
     /**
