@@ -11,9 +11,10 @@ namespace App\Services\Site;
 
 use ArrayAccess;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Facades\Redis;
 
-class Config implements Arrayable, ArrayAccess
+class Config implements Arrayable, ArrayAccess, Jsonable
 {
     const KEY_SITE_CONFIG = 'hsite_config:';
 
@@ -147,5 +148,21 @@ class Config implements Arrayable, ArrayAccess
     public function hMset($configArray)
     {
         return Redis::hMSet(static::KEY_SITE_CONFIG . $this->siteID, $configArray);
+    }
+
+    /**
+     * Convert the object to its JSON representation.
+     *
+     * @param  int $options
+     * @return string
+     */
+    public function toJson($options = 0)
+    {
+        return json_encode($this->attributes, $options);
+    }
+
+    public function __toString()
+    {
+        return $this->toJson();
     }
 }
