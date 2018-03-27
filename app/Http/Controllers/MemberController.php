@@ -907,8 +907,6 @@ class MemberController extends Controller
         return new JsonResponse($result);
 
 
-
-
     }
 
     /**
@@ -1318,21 +1316,17 @@ class MemberController extends Controller
     /**
      * 用户中心 提现页面
      */
-    public function withdrawHistory(Rquest $request)
+    public function withdrawHistory(Request $request)
     {
-        if (!$this->userInfo['uid'] || $this->userInfo['roled'] != 3) {
+        $user = Auth::user();
+        if ($user['roled'] != 3) {
             abort(404);
         }
         $mintime = $request->get('mintime') ?: date('Y-m-d', strtotime('-1 month'));
         $maxtime = $request->get('maxtime') ?: date('Y-m-d', strtotime('now'));
         $status = $request->get('status') ?: 0;
         $availableBalance = $this->getAvailableBalance(Auth::id());
-        $result['sum_points'] = $availableBalance['availpoints'];
-        //$result['sum_points'] = 6000000;
-        $result['Available_points'] = $availableBalance['availmoney'];
-        //$result['Available_points'] = 6000000;
-        $result['mintime'] = $mintime;
-        $result['maxtime'] = $maxtime;
+
         $maxtime = date('Y-m-d' . ' 23:59:59', strtotime($maxtime));
 
 //        $thispage = $this->make('request')->get('page') ?: 1;
@@ -1346,27 +1340,11 @@ class MemberController extends Controller
             '1' => '已审批',
             '2' => '拒绝',
         ];
-        foreach ($data as $key => $item) {
-            $result['data'][$key]['id'] = $item['id'];
-            $result['data'][$key]['withdrawalnu'] = $item->withdrawalnu;
-            $result['data'][$key]['created'] = $item->created;
-            $result['data'][$key]['money'] = $item->money;
-            $result['data'][$key]['status'] = $status_array[$item->status];
-            $result['data'][$key]['withdrawaltime'] = $item->withdrawaltime;
+        $data->getCollection()->each(function ($item) use ($status_array) {
+            $item['status'] = $status_array[$item->status];
+        });
 
-        }
-        $uriParammeters = $this->make('request')->query->all();
-        $result['uri'] = [];
-        foreach ($uriParammeters as $p => $v) {
-            if (strstr($p, '?')) continue;
-            if (!empty($v)) {
-                $result['uri'][$p] = $v;
-            }
-        }
-        if (empty($result['data'])) {
-            $result['data'] = [];
-        }
-        return $this->render('Member/withdraw', $result);
+        return JsonResponse::create(['status' => 1, 'data' => ['list'=>$data,'available_balance'=>$availableBalance]]);
     }
 
     /**

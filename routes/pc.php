@@ -40,7 +40,7 @@ Route::group(['prefix' => 'member'], function () {
         Route::post('transfer/create', 'MemberController@transfer')->name('member_transfer_create');
         // 用户中心 提现
         Route::get('withdraw', 'MemberController@withdrawHistory')->name('member_withdraw_history');
-        Route::post('withdraw/create', 'MemberController@withdraw')->name('member_withdraw_create');
+        Route::post('withdraw/request', 'MemberController@withdraw')->name('member_withdraw_create');
     });
 });
 
