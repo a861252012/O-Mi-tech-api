@@ -93,14 +93,14 @@ Route::get('/ranking', ['name' => 'rank_index', 'uses' => 'RankController@index'
 //排行榜接口
 Route::get('/rank_data', ['name' => 'rank_data', 'uses' => 'RankController@rankData']);
 // 关于 帮助 投诉
-Route::get('/about/{act:[a-z_]+}', ['uses' => 'PageController@index']);
+Route::get('/about/{act}', ['uses' => 'PageController@index']);
 // 活动详情页面
-Route::get('/nac/{id:\d+}', ['name' => 'ac_info', 'uses' => 'ActivityController@info']);
+Route::get('/nac/{id}', ['name' => 'ac_info', 'uses' => 'ActivityController@info']);
 Route::match(['GET', 'POST'], '/majax/{action}', ['name' => 'majax', 'uses' => 'MemberController@ajax']);
 
 Route::match(['POST', 'GET'], '/indexinfo', ['name' => 'indexinfo', 'uses' => 'IndexController@getIndexInfo']);
 //代理
-Route::get('/extend[/{url:.+}]', ['name' => 'business_extend', 'uses' => 'BusinessController@extend']);
+Route::get('/extend/{url}', ['name' => 'business_extend', 'uses' => 'BusinessController@extend']);
 Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
 
 Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopController@getGroupAll']);

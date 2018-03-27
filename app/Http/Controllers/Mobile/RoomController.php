@@ -696,8 +696,9 @@ class RoomController extends Controller
     public  function    roomSetDuration(Request $request){
         $data = [];
         $data = $request->only(['mintime', 'hour', 'minute', 'tid', 'duration','points']);
+
         $roomservice = resolve(RoomService::class);
-        $result = $roomservice->delOnetoOne($data);
+        $result = $roomservice->addOnetoOne($data);
         return new JsonResponse($result);
     }
 
@@ -706,14 +707,9 @@ class RoomController extends Controller
      */
     public function delRoomOne2One(){
         $rid = $this->request()->input('rid');
-
-
         if (!$rid) return JsonResponse::create(['status' => 0, 'msg' => '请求错误']);
         $roomservice = resolve(RoomService::class);
         $result = $roomservice->delOnetoOne($rid);
-
-
-
         return JsonResponse::create($result);
     }
 
