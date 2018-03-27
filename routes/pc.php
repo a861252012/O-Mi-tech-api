@@ -44,7 +44,9 @@ Route::group(['prefix' => 'member'], function () {
         // 用户中心 主播中心
         Route::get('anchor', 'MemberController@anchor')->name('member_anchor');
         // 用户中心 房间游戏
-        Route::get('gamelist/{type?}', 'MemberController@gamelist')->where('type','[1,2]')->name('member_gamelist');
+        Route::get('gamelist/{type?}', 'MemberController@gamelist')->where('type', '[1,2]')->name('member_gamelist');
+        // 用户中心 vip 贵族体系主播佣金
+        Route::get('commission', 'MemberController@commission')->name('member_commission');
     });
 });
 
@@ -183,8 +185,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     // 用户中心 vip 贵族体系
     Route::get('/member/vip', ['name' => 'member_vip', 'uses' => 'MemberController@vip']);
-    // 用户中心 vip 贵族体系主播佣金
-    Route::get('/member/commission', ['name' => 'member_commission', 'uses' => 'MemberController@commission']);
+
     // 用户中心 推广中心 V2移除
     //Route::get('/member/invite', ['name' => 'member_invite', 'uses' => 'MemberController@invite']);
     // 用户中心 我的关注
@@ -209,7 +210,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/member/roomUpdateDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@roomUpdateDuration']);
     //pc端删除一对一
     Route::get('/member/delRoomDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@delRoomDuration']);
-
 
 
     // 用户中心 礼物统计

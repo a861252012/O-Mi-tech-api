@@ -453,19 +453,14 @@ class MemberController extends Controller
      * @author raby
      * @date   2019-9-29
      */
-    public function commission()
+    public function commission(Request $request)
     {
         $type = 'open_vip';
-
-        $uid = $this->userInfo['uid'];
-        if (!$uid) {
-            throw $this->createNotFoundException();
-        }
-        $mintimeDate = $this->request()->get('mintime') ?: date('Y-m-d', strtotime('-1 year'));
-        $maxtimeDate = $this->request()->get('maxtime') ?: date('Y-m-d');
+        $uid = Auth::id();
+        $mintimeDate = $request->get('mintime') ?: date('Y-m-d', strtotime('-1 year'));
+        $maxtimeDate = $request->get('maxtime') ?: date('Y-m-d');
         $mintime = date('Y-m-d H:i:s', strtotime($mintimeDate));
         $maxtime = date('Y-m-d H:i:s', strtotime($maxtimeDate . '23:59:59'));
-
 
         $all_data = UserCommission::where('uid', $uid)
             ->where('create_at', '>', $mintime)->where('create_at', '<', $maxtime)->where('type', $type)
@@ -479,13 +474,15 @@ class MemberController extends Controller
             ->first();
 
         $total_points = ceil($total->points / 10);
-        $all_data->appends(['mintime' => $mintimeDate, 'maxtime' => $maxtimeDate])->render();
+        $all_data->appends(['mintime' => $mintimeDate, 'maxtime' => $maxtimeDate]);
 
-        $var['total_points'] = $total_points;
-        $var['data'] = $all_data;
-        $var['mintime'] = $mintimeDate;
-        $var['maxtime'] = $maxtimeDate;
-        return $this->render('Member/commission', $var);
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => [
+                'list' => $all_data,
+                'total_points' => $total_points,
+            ],
+        ]);
     }
 
     /**
