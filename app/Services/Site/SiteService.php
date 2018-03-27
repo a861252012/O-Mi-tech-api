@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\MessageBag;
+use RuntimeException;
 
 /**
  * Created by PhpStorm.
@@ -18,8 +19,7 @@ use Illuminate\Support\MessageBag;
 class SiteService
 {
     const KEY_SITE_DOMAIN = 'hsite_domains:';
-    const KEY_SITE_CONFIG = 'hsite_config:';
-    protected $booted;
+
     /**
      * 当前域名信息，通过网络请求时才会有
      * @var Collection
@@ -28,14 +28,25 @@ class SiteService
 
     /**
      * 站点配置信息，懒加载
-     * @var Collection
+     * @var Config
      */
     private $config;
+
+    /**
+     * 请求域名
+     * @var String
+     */
     private $host;
+
     /**
      * @var MessageBag
      */
     private $errors;
+
+    /**
+     * 站点ID
+     * @var int
+     */
     private $id;
 
     public function __construct()
@@ -48,23 +59,26 @@ class SiteService
         return !$this->errors->any();
     }
 
-    public function booted()
-    {
-        return $this->booted ?: false;
-    }
-
     public function fromRequest(Request $request): SiteService
     {
-        $this->booted = true;
         $this->host = $request->getHost();
         $this->loadDomainInfo();
-        $this->checkConfigValidity($this->id);
+        if (!is_null($this->id)){
+            $this->loadConfig();
+            $this->checkConfigValidity();
+        }
         return $this;
     }
 
     public function fromID($id)
     {
-
+        if (is_null($id)) {
+            throw new RuntimeException('site id cannot be null');
+        }
+        $this->id = $id;
+        $this->loadConfig();
+        $this->checkConfigValidity();
+        return $this;
     }
 
     protected function loadDomainInfo(): void
@@ -88,22 +102,21 @@ class SiteService
 
     protected function loadConfig(): void
     {
-        $config = $this->getConfigBySiteID($this->siteId());
-        $this->config = collect($config);
+        $this->config = new Config($this->id);
     }
 
     /**
      * 获取缓存，懒加载机制
-     * @param null $name 如果没有name会
+     * @param null $name    如果没有name会
      * @param bool $noCache 跳过本地缓存
-     * @return Collection
+     * @return Config|mixed|null
      */
-    public function config($name = null,$noCache=true)
+    public function config($name = null, $noCache = true)
     {
         if (is_null($this->config))
             $this->loadConfig();
         if (!is_null($name)) {
-            return $this->config->get($name);
+            return $this->config->get($name, $noCache);
         }
         return $this->config;
     }
@@ -117,9 +130,9 @@ class SiteService
         return true;
     }
 
-    public function checkConfigValidity(?int $siteId): bool
+    public function checkConfigValidity(): bool
     {
-        if (!Redis::exists(static::KEY_SITE_CONFIG . $siteId)) {
+        if (!$this->config->isValid()) {
             $this->errors->add('config', '站点配置缺失，请联系客服！');
             return false;
         }
@@ -128,7 +141,7 @@ class SiteService
 
     public function shareConfigWithViews()
     {
-        View::share('SiteSer', $this);
+        View::share('site', $this);
         View::share('cdn_host', $this->config()->get('cdn_host'));
         View::share('img_host', $this->config()->get('img_host'));
         View::share('open_web', $this->config()->get('open_web'));
@@ -146,14 +159,9 @@ class SiteService
         return $this->domain;
     }
 
-    public function getMsg()
-    {
-        return $this->msg;
-    }
-
     public function getPublicPath()
     {
-        return 's' . $this->siteId();
+        return 's' . $this->id;
     }
 
     /**
@@ -162,11 +170,6 @@ class SiteService
     public function errors(): MessageBag
     {
         return $this->errors;
-    }
-
-    public function getConfigBySiteID($id)
-    {
-        return Redis::hGetAll(static::KEY_SITE_CONFIG . $id);
     }
 
     public function getConfigArrayForSite(Site $site)
@@ -178,13 +181,22 @@ class SiteService
 
     public function flushConfigCacheForSite(Site $site)
     {
-        return Redis::del(static::KEY_SITE_CONFIG . $site->id);
+        return Config::flushByID($site->id);
     }
 
     public function syncConfigForSite(Site $site)
     {
         $this->flushConfigCacheForSite($site);
         $configArray = $this->getConfigArrayForSite($site);
-        return Redis::hMSet(static::KEY_SITE_CONFIG . $site->id, $configArray);
+        return $this->config->hMset($configArray);
+    }
+
+    public function getIDs(): Collection
+    {
+        $keys = Redis::keys(Config::KEY_SITE_CONFIG . '*');
+        return collect($keys)->map(function ($key) {
+            return str_replace_first(Config::KEY_SITE_CONFIG, '', $key);
+        });
+
     }
 }
