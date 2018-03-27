@@ -53,61 +53,57 @@ class RoomController extends Controller
                 'msg' => '非法来源'
             ]);
         }
+
         $rid = $request->input('rid');
         $flag = $request->get('flag');
         if (empty($rid) || empty($flag)) {
-            return new JsonResponse(array('status' => 408, 'msg' => L('MEMBER.DORESERVATION.ERROR')));
+            return new JsonResponse(array('status' => 0, 'msg' => '请求错误'));
         }
         $duroom = RoomDuration::find($rid);
-        if (empty($duroom)) return new JsonResponse(array('status' => 401, 'msg' => L('MEMBER.DORESERVATION.NO_EXIST')));
-        if ($duroom['status'] == 1) return new JsonResponse(array('status' => 402, 'msg' => L('MEMBER.DORESERVATION.OFFLINE')));
-        if ($duroom['reuid'] != '0') return new JsonResponse(array('status' => 403, 'msg' => L('MEMBER.DORESERVATION.BOOKED')));
-        if ($duroom['uid'] == Auth::id()) return new JsonResponse(array('status' => 404, 'msg' => L('MEMBER.DORESERVATION.SELF')));
-        if ($this->userInfo['points'] < $duroom['points']) return new JsonResponse(array('status' => 405, 'msg' => L('MEMBER.DORESERVATION.POINTS_NOT_ENOUGH')));
+
+        if (empty($duroom)) return new JsonResponse(array('status' => 0, 'msg' =>'您预约的房间不存在'));
+        if ($duroom['status'] == 1) return new JsonResponse(array('status' => 0, 'msg' =>'当前的房间已经下线了'));
+        if ($duroom['reuid'] != '0') return new JsonResponse(array('status' => 0, 'msg' => '当前的房间已经被预定了，请选择其他房间'));
+        if ($duroom['uid'] == Auth::id()) return new JsonResponse(array('status' => 0, 'msg' => '自己不能预约自己的房间'));
+        if (Auth::user()->points < $duroom['points']) return new JsonResponse(array('status' => 0, 'msg' => '余额不足哦，请充值！'));
         //关键点，这个时段内有没有其他的房间重复，标志位为flag 默认值为false 当用户确认后传入的值为true
-//        if ($flag == 'false' && !$this->notBuyRepeat($duroom['starttime'], $duroom['endtime'])) return new JsonResponse(array('status' => 407, 'msg' => L('MEMBER.DORESERVATION.CONFIRM')));
+       //if ($flag == 'false' && !$this->notBuyRepeat($duroom['starttime'], $duroom['endtime'])) return new JsonResponse(array('status' => 0, 'msg' => '您这个时间段有房间预约了，您确定要预约么'));
 
         $duroom['reuid'] = Auth::id();
-        //$duroom->save();
-
-        $logPath = BASEDIR . '/app/logs/test_' . date('Ym') . '.log';
         try {
             DB::beginTransaction();
-//            DB::table('video_room_duration')
-//                ->where('id', $rid)->update(['reuid' => Auth::id(), 'invitetime' => time(), 'origin' => $origin]);
             if (!DB::table('video_room_duration')
-                ->where('id', $rid)->where('reuid', '0')->update(['reuid' => Auth::id(), 'invitetime' => time(), 'origin' => $origin])
+                ->where('id', $rid)->where('reuid', '0')
+                ->update(['reuid' => Auth::id(), 'invitetime' => time()])
             ) {
                 DB::rollBack();
-                return JsonResponse::create(['status' => 408, 'msg' => L('MEMBER.DORESERVATION.ERROR')]);
+                return JsonResponse::create(['status' => 0, 'msg' => '错误']);
             }
 
             $keys = 'hroom_duration:' . $duroom['uid'] . ':' . $duroom['roomtid'];
             $duroom['invitetime'] = time();
             $arr = $duroom;
             $rs = $this->make('redis')->hSet($keys, $arr['id'], json_encode($arr));
-            $this->logResult("redis hset表：" . $keys . " key:" . $arr['id'] . " 结果:" . $rs . "\n", $logPath);
+            Log::channel('room')->info('buyOneToOne',array("redis hset表：" . $keys . " key:" . $arr['id'] . " 结果:" . $rs . "\n"));
             if ($rs !== false) {
                 DB::commit();
             } else {
                 DB::rollback();
-                return new JsonResponse(array('status' => 408, 'msg' => L('MEMBER.DORESERVATION.ERROR')));
+                return new JsonResponse(array('status' => 0, 'msg' => '错误'));
             }
         } catch (\Exception $e) {
-            $this->logResult("事务异常：id" . $rid . " 房间号" . $duroom['uid'] . " 预约者" . $duroom['reuid'] . " 事务结果：" . $e->getMessage() . "\n", $logPath);
+            Log::channel('room')->info('buyOneToOne',"事务异常：id" . $rid . " 房间号" . $duroom['uid'] . " 预约者" . $duroom['reuid'] . " 事务结果：" . $e->getMessage() . "\n");
             DB::rollback();
-            return new JsonResponse(array('status' => 409, 'msg' => L('MEMBER.DORESERVATION.ERROR')));
+            return new JsonResponse(array('status' => 0, 'msg' => '错误'));
         }
 
-        //$this->set_durationredis($duroom);
         //记录一个标志位，在我的预约列表查询中需要优先显示查询已经预约过的主播，已经预约过的主播的ID会写到这个redis中类似关注一样的
         if (!($this->checkUserAttensExists(Auth::id(), $duroom['uid'], true, true))) {
             $this->make('redis')->zadd('zuser_reservation:' . Auth::id(), time(), $duroom['uid']);
         }
-        Users::where('uid', Auth::id())->update(array('points' => ($this->userInfo['points'] - $duroom['points']), 'rich' => ($this->userInfo['rich'] + $duroom['oints'])));
+        Users::where('uid', Auth::id())->update(array('points' => (Auth::user()->points  - $duroom['points']), 'rich' => (Auth::user()->rich + $duroom['oints'])));
         resolve(UserService::class)->getUserReset(Auth::id());// 更新redis TODO 好屌
-//        RoomDuration::where('id', $duroom['id'])
-//            ->update(array('reuid' => Auth::id(), 'invitetime' => time()));
+
         //增加消费记录查询
         MallList::create(array(
             'send_uid' => Auth::id(),
@@ -148,7 +144,7 @@ class RoomController extends Controller
         }
         $this->make('redis')->lPush('lanchor_is_sub:' . $duroom['uid'], date('YmdHis', strtotime($duroom['starttime'])));
 
-        return new JsonResponse(array('status' => 1, 'msg' => L('MEMBER.DORESERVATION.OK')));
+        return new JsonResponse(array('status' => 1, 'msg' => '预约成功'));
 
     }
 
@@ -701,8 +697,24 @@ class RoomController extends Controller
         $data = [];
         $data = $request->only(['mintime', 'hour', 'minute', 'tid', 'duration','points']);
         $roomservice = resolve(RoomService::class);
-        $result = $roomservice->addOnetoOne($data);
+        $result = $roomservice->delOnetoOne($data);
         return new JsonResponse($result);
+    }
+
+    /*
+     * 删除一对一
+     */
+    public function delRoomOne2One(){
+        $rid = $this->request()->input('rid');
+
+
+        if (!$rid) return JsonResponse::create(['status' => 0, 'msg' => '请求错误']);
+        $roomservice = resolve(RoomService::class);
+        $result = $roomservice->delOnetoOne($rid);
+
+
+
+        return JsonResponse::create($result);
     }
 
 }

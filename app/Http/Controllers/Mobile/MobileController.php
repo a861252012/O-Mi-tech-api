@@ -29,7 +29,7 @@ class MobileController extends Controller
 
     public function __construct()
     {
-
+        config()->set('auth.defaults.guard', 'mobile');
     }
 
     /**

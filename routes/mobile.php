@@ -82,7 +82,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     //移动端购买一对多
     Route::post('room/buyOneToMany', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@makeUpOneToMore']);
     //app删除一对多房间
-    Route::get('OneToMore/delete', ['name' => 'm_onetomoredel', 'uses' => 'Mobile\RoomController@delRoomOne2More']);
+    Route::post('OneToMore/delete', ['name' => 'm_onetomoredel', 'uses' => 'Mobile\RoomController@delRoomOne2More']);
     //app一对多房间列表
     Route::get('OneToMore/list', ['as' => 'm_onetomorelist', 'uses' => 'Mobile\RoomController@listOneToMoreByHost']);
     //app判断是否开通一对多和一对一
@@ -91,11 +91,11 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('showlist', ['as' => 'm_showlist', 'uses' => 'Mobile\RoomController@showlist']);
 
     //移动端删除一对一
-    Route::get('room/delRoomOne2One', ['name' => 'member_roomDelOne2One', 'uses' => 'Mobile\RoomController@delRoomOne2One']);
+    Route::post('room/delRoomOne2One', ['name' => 'member_roomDelOne2One', 'uses' => 'Mobile\RoomController@delRoomOne2One']);
     //移动端预约一对一
-    Route::get('room/buyOneToOne', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@buyOneToOne']);
+    Route::post('room/buyOneToOne', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@buyOneToOne']);
     //移动端创建一对一
-    Route::get('room/roomSetDuration', ['name' => 'member_roomSetDuration', 'uses' => 'Mobile\RoomController@roomSetDuration']);
+    Route::post('room/roomSetDuration', ['name' => 'member_roomSetDuration', 'uses' => 'Mobile\RoomController@roomSetDuration']);
     //移动端一对一房间用户
     Route::get('OneToOne/list', ['name' => 'member_onetoONElist', 'uses' => 'Mobile\MobileController@listOneToOneByHost']);
 
