@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Facades\SiteSer;
+use App\Facades\UserSer;
 use App\Models\AnchorGroup;
 use App\Models\Area;
 use App\Models\Attention;
@@ -62,6 +64,8 @@ class Controller extends BaseController
     public function __construct()
     {
         config()->set('auth.defaults.guard', 'pc');
+        $this->_online = Auth::id();
+        $this->userInfo = Auth::user();
         $this->container = app();
     }
 
@@ -622,7 +626,7 @@ class Controller extends BaseController
      */
     public function getHeadimg($headimg, $size = 180)
     {
-        return $headimg ? config('app.REMOTE_PIC_URL') . '/' . $headimg . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size) : $this->container->config['config.WEB_CDN_STATIC'] . '/public/src/img/head_' . $size . '.png';
+        return $headimg ? SiteSer::config('remote_pic_url') . '/' . $headimg . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size) : SiteSer::config('web_cdn_static') . '/public/src/img/head_' . $size . '.png';
     }
 
 
@@ -1050,9 +1054,7 @@ class Controller extends BaseController
         }
 
         // 更新对象的数据 顺序在这儿 改变顺序上面的逻辑会受影响
-        $this->userInfo = Users::find($this->userInfo['uid'])->toArray();
-        // 更新redis
-        Redis::hmset('huser_info:' . $this->userInfo['uid'], $this->userInfo);
+        $this->userInfo = UserSer::getUserByUid($this->userInfo['uid'])->toArray();
 
         $msg = [
             'info' => '更新成功！',

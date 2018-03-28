@@ -7,6 +7,9 @@ use App\Services\ActiveService;
 use App\Services\Charge\ChargeGroupService;
 use App\Services\Charge\ChargeService;
 use App\Services\Message\MessageService;
+use App\Services\Mobile\MobileService;
+use App\Services\Room\SocketService;
+use App\Services\Safe\SafeService;
 use App\Services\Site\SiteService;
 use App\Services\UserGroup\UserGroupService;
 use Illuminate\Support\Facades\Artisan;
@@ -28,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ChargeService::class);
         $this->app->singleton(ChargeGroupService::class);
         $this->app->singleton(MessageService::class);
+        $this->app->singleton(MobileService::class);
 
         $this->app->singleton('userGroupServer', function () {
             return new UserGroupService();
@@ -43,6 +47,15 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton('messageService', function () {
             return new MessageService();
+        });
+        $this->app->singleton('safeService', function () {
+            return new SafeService();
+        });
+        $this->app->singleton('mobile', function () {
+            return new MobileService();
+        });
+        $this->app->singleton('socketService', function () {
+            return new SocketService();
         });
         if (config('app.env') !== 'production' || config('app.debug') == true) {
             Artisan::call('route:clear');

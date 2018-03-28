@@ -19,7 +19,7 @@ class One2ManyMsgSend extends Command
      *
      * @var string
      */
-    protected $signature = 'one2many_msg';
+    protected $signature = 'command:one2many_msg';
 
     /**
      * The console command description.
@@ -45,6 +45,7 @@ class One2ManyMsgSend extends Command
      */
     public function handle()
     {
+        echo "1213";die;
         $_redisInstance = Redis::resolve();
 
         $keys = $_redisInstance->getKeys('hbuy_one_to_more:*');

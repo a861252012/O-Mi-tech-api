@@ -163,6 +163,7 @@ return [
 
         \App\Providers\SiteServiceProvider::class,
         \App\Providers\SocketServiceProvider::class,
+        \App\Providers\RoomServiceProvider::class,
     ],
 
     /*
@@ -214,6 +215,7 @@ return [
 
         'Captcha' => Mews\Captcha\Facades\Captcha::class,
         'SiteSer' =>\App\Facades\SiteSer::class,
-        'UserSer'=>\App\Facades\UserSer::class
+        'UserSer'=>\App\Facades\UserSer::class,
+        'Mobile'=>\App\Facades\Mobile::class,
     ],
 ];

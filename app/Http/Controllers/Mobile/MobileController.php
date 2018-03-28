@@ -3,7 +3,9 @@
 
 namespace App\Http\Controllers\Mobile;
 
+use App\Facades\Mobile;
 use App\Facades\Site;
+use App\Facades\SiteSer;
 use App\Facades\UserSer;
 use App\Http\Controllers\Controller;
 use App\Models\AppCrash;
@@ -19,6 +21,7 @@ use App\Services\User\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
 use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
@@ -95,16 +98,16 @@ class MobileController extends Controller
     public function userInfo()
     {
         $uid = Auth::id();
-        $remote_js_url = Site::config('remote_js_url');
+        $remote_js_url = SiteSer::config('remote_js_url');
         $userinfo = UserSer::getUserByUid($uid);
         if (!$userinfo) {
             return JsonResponse::create([
                 'status' => 0,
                 'msg' => '无效的用户',
-                'js_url' => $remote_js_url,
+                'data' => $remote_js_url,
             ]);
         }
-        return JsonResponse::create()->setContent(urldecode(json_encode([
+        return JsonResponse::create([
                 'status' => 1,
                 'uid' => $userinfo->uid,
                 'nickname' => $userinfo->nickname,
@@ -119,8 +122,7 @@ class MobileController extends Controller
                 'safemail' => $userinfo->safemail ?? '',
 //                'mails' => $this->make('messageServer')->getMessageNotReadCount($userinfo->uid, $userinfo->lv_rich),// 通过服务取到数量
                 'icon_id' => intval($userinfo->icon_id),
-            ]))
-        );
+            ]);
     }
 
     /**
@@ -145,7 +147,8 @@ class MobileController extends Controller
             $user->save();
 
             // 删除坐骑
-            Pack::where('uid', $uid)->where('gid', '<=', 120107)->where('gid', '>=', 120101)->delete();
+            Pack::where('uid', $uid)->where('gid', '<=', 120107)
+                ->where('gid', '>=', 120101)->delete();
             $this->make('redis')->hSet('huser_info:' . $uid, 'vip', 0);
             $this->make('redis')->hSet('huser_info:' . $uid, 'vip_end', '');
             $this->make('redis')->del('user_car:' . $uid);
@@ -393,15 +396,16 @@ class MobileController extends Controller
     {
 //        $page = $this->request()->input('page', 1);
 //        $userServer = resolve(UserService::class);
-        $arr = include(BASEDIR . '/app/cache/cli-files/anchor-search-data.php');
+        $arr = include Storage::path('cache/anchor-search-data.php');
         $hasharr = [];
         foreach ($arr as $value) {
             $hasharr[$value['uid']] = $value;
         }
+        dd($arr);
         unset($arr);
         $myfavArr = $this->make('redis')->zrevrange('zuser_attens:' . Auth::id(), 0, -1);
         $myfav = [];
-        if (!!$myfavArr) {
+        if ($myfavArr) {
             //过滤出主播
             foreach ($myfavArr as $item) {
                 if (isset($hasharr[$item])) {
@@ -511,56 +515,25 @@ class MobileController extends Controller
 
     }
 
-    public function appVersion()
+    /**
+     * branch : 版本，正式| 联调等
+     * @return static
+     */
+    public function appVersion(Request $request)
     {
-        if (!isset($_REQUEST['agent']) && !isset($_REQUEST['branch']) || $_SERVER['REQUEST_METHOD'] === 'POST')
-            return $this->appVersionIOS();
-        $branches = $this->request()->input('branch');
+        $branches = $request->get('branch');
         if ($branches) {
             $branches = explode(',', $branches);
         } else {
             $branches = range(1, 5);
         }
-        $redis = $this->make('redis');
         $versions = [];
         foreach ($branches as $branch) {
-            $version = $redis->get('m:app:versions:branch:' . $branch);
-            if (!$version) {
-                $version = AppVersion::whereRaw('released_at<=now()')
-                    ->where('branch', $branch)->whereNull('deleted_at')->orderBy('ver_code', 'desc')->first();
-                if ($version) {
-                    $redis->set('m:app:versions:branch:' . $branch, json_encode($version), 300);
-                    $versions[$branch] = $version;
-                }
-            } else {
-                $versions[$branch] = json_decode($version);
-            }
-        }
-        return JsonResponse::create(['status' => empty($versions) ? 0 : 1, 'data' => $versions]);
-    }
+            $version = Mobile::checkIos() ?
+                Mobile::getLastIosVersion($branch) :
+                Mobile::getLastAndroidVersion($branch);
 
-    public function appVersionIOS()
-    {
-        $branches = $this->request()->input('branch');
-        if ($branches) {
-            $branches = explode(',', $branches);
-        } else {
-            $branches = range(1, 5);
-        }
-        $redis = $this->make('redis');
-        $versions = [];
-        foreach ($branches as $branch) {
-            $version = $redis->get('m:app:versionsIOS:branch:' . $branch);
-            if (!$version) {
-                $version = AppVersionIOS::whereRaw('released_at<=now()')
-                    ->where('branch', $branch)->whereNull('deleted_at')->orderBy('ver_code', 'desc')->first();
-                if ($version) {
-                    $redis->set('m:app:versions:branchIOS:' . $branch, json_encode($version), 300);
-                    $versions[$branch] = $version;
-                }
-            } else {
-                $versions[$branch] = json_decode($version);
-            }
+            if($version) $versions[$branch] = $version;
         }
         return JsonResponse::create(['status' => empty($versions) ? 0 : 1, 'data' => $versions]);
     }

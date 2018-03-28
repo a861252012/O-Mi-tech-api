@@ -17,10 +17,11 @@ class SuccessResponse extends JsonResponse
     {
         parent::__construct($data, $status, $headers, $options);
     }
-    public static function create($data = null, $status = 200, $headers = array()){
+    public static function create($data = null,$msg = "", $status = 1,$code=200, $headers = array()){
         return new static([
-            'status'=>1,
-            'msg'=>$data
-        ], $status, $headers);
+            'status'=>$status,
+            'data'=>$data,
+            'msg'=>$msg,
+        ], $code, $headers);
     }
 }

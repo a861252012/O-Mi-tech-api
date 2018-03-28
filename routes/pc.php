@@ -364,6 +364,7 @@ Route::get('/m/login', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@
 //rtmp地址
 Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp', 'uses' => 'RoomController@get']);
 
+
 // 充值类 TODO 登录验证
 // 验证是否登录
 Route::group(['prefix' => 'charge', 'middleware' => ['charge', 'login_auth']], function () {
@@ -416,7 +417,6 @@ Route::get('/islogin', ['name' => 'islogin', 'uses' => 'LoginController@isLogin'
 
 
 Route::get('/m/find', ['name' => 'm_find', 'uses' => 'Mobile\MobileController@searchAnchor']);
-Route::match(['POST', 'GET'], '/m/pay/{action}', ['name' => 'm_pay', 'uses' => 'Mobile\PaymentController@action']);
 //统计接口
 Route::match(['POST', 'GET'], '/m/statistic', ['name' => 'm_statistic', 'uses' => 'Mobile\MobileController@statistic']);
 

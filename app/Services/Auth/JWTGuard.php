@@ -276,6 +276,9 @@ class JWTGuard implements StatefulGuard
 
         return $this->user = $user;
     }
+    public function getUser(){
+        return $this->user();
+    }
 
     /**
      * Validate a user's credentials.
