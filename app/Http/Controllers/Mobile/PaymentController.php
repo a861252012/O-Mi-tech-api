@@ -58,7 +58,7 @@ class PaymentController extends MobileController
      * 充值页面
      * 移植自ChargeController
      */
-    public function orderAction()
+    public function order()
     {
         $uid = Auth::id();
 
@@ -66,13 +66,12 @@ class PaymentController extends MobileController
         $open = resolve("redis")->hget("hconf", "open_pay") ?: 0;
         $request = resolve('request');
         $origin = $request->get('origin',12);
-        $jwt = Auth::getTokenFromRequest($request);
-        $token = $jwt->token;
+        $token =  Auth::getToken();
         if ($open) {
             $var['options'] = PayOptions::with('channels')->where('device', 'MOBILE')->orderBy('sid','desc')->get();
             $var['payConfig'] = PayConfig::where('open', 1)->get(['id', 'cid', 'bus', 'channel']);
             $var['origin'] = $origin;
-            $jwt && $var['jwt'] = $token;
+            $var['jwt'] = $token;
             //右边广告图
             $var['ad'] = '';
             $ad = $this->make('redis')->hget('img_cache', 3);// 获取右边的广告栏的数据
@@ -109,7 +108,7 @@ class PaymentController extends MobileController
      * 微信充值页面
      * author: Young
      */
-    public function wechatAction()
+    public function wechat()
     {
         return $this->render('Mobile/wechat', array());
     }
@@ -138,7 +137,7 @@ class PaymentController extends MobileController
      *  }
      *
      */
-    public function payAction()
+    public function pay()
     {
         $amount = isset($_POST['price']) ? number_format(intval($_POST['price']), 2, '.', '') : 0;
 

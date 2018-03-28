@@ -1522,7 +1522,7 @@ class MemberController extends Controller
             ->sum('points');
         $sum_Gift_mun = $sum_Gift_mun ? $sum_Gift_mun : 0;
         $sum_Points_mun = $sum_Points_mun ? $sum_Points_mun : 0;
-        $twig = clone $this->make('view');
+      /*  $twig = clone $this->make('view');
         $twig->setLoader(new \Twig_Loader_String());
 
         $function = new \Twig_SimpleFunction('getUserName', function ($uid) {
@@ -1533,13 +1533,13 @@ class MemberController extends Controller
             }
         });
 
-        $twig->addFunction($function);
+        $twig->addFunction($function);*/
 
-        $function = new \Twig_SimpleFunction('getGoods', function ($gid) {
+       /* $function = new \Twig_SimpleFunction('getGoods', function ($gid) {
             if (!$gid) return false;
             return $this->getGoods($gid);
         });
-        $twig->addFunction($function);
+        $twig->addFunction($function);*/
 
 
         //todo author raby
@@ -1573,6 +1573,7 @@ class MemberController extends Controller
         $var['maxtime'] = $maxt;
         $var['sum_Gift_mun'] = $sum_Gift_mun;
         $var['sum_Points_mun'] = $sum_Points_mun;
+        return  new JsonResponse(($var));
         return $this->render('Member/count', $var);
     }
 

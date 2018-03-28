@@ -22,7 +22,14 @@ class ChargeGroupService extends Service
     public function channel($uid): array
     {
         $RechargeTypes = $this->groupByUid($uid)['recharge_type'];
-        return $RechargeTypes ? @unserialize($RechargeTypes) : [];
+        $rechargeTypeArr = $RechargeTypes ? @unserialize($RechargeTypes) : [];
+        $rs = [];
+        foreach ($rechargeTypeArr as $mode_type=>$v){
+            $temp = $v;
+            $temp['id'] = $mode_type;
+            array_push($rs,$temp);
+        }
+        return $rs;
     }
 
     /**

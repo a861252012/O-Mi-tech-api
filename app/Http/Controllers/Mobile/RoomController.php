@@ -9,6 +9,9 @@
 namespace App\Http\Controllers\Mobile;
 
 
+use App\Facades\Site;
+use App\Facades\SiteSer;
+use App\Libraries\SuccessResponse;
 use App\Models\MallList;
 use App\Models\RoomDuration;
 use App\Models\RoomStatus;
@@ -20,6 +23,7 @@ use App\Services\Room\NoSocketChannelException;
 use App\Services\User\UserService;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Http\Controllers\Controller;
@@ -467,28 +471,31 @@ class RoomController extends Controller
         return $data;
     }
 
+    /**
+     * @return static
+     */
     public function getConf()
     {
-        $config = $this->make('config');
-        $redis = $this->make('redis');
         $conf = [
-            'OPEN_WEB' => $config['config.OPEN_WEB'],
-            'IMG_HOST' => $config['config.REMOTE_PIC_URL'],
-            'PIC_CDN_STATIC' => $config['config.PIC_CDN_STATIC'],
-            'flash_version' => $redis->get('flash_version') ?: 'v201504092044',
-            'publish_version' => $redis->get('publish_version') ?: 'v2017090701', //young添加
-            'in_limit_points' => $redis->hget('hconf', 'in_limit_points') ?: 0,
-            'in_limit_safemail' => $redis->hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
+            'OPEN_WEB' => SiteSer::config('open_web'),
+            'IMG_HOST' => SiteSer::config('remote_pic_url'),
+            'PIC_CDN_STATIC' => SiteSer::config('pic_cdn_static'),
+            'flash_version' => SiteSer::config('flash_version') ?: 'v201504092044',
+            'publish_version' => SiteSer::config('publish_version') ?: 'v2017090701', //young添加
+            'in_limit_points' => Redis::hget('hconf', 'in_limit_points') ?: 0,
+            'in_limit_safemail' => Redis::hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
         ];
         return JsonResponse::create($conf);
     }
 
-    public function getRoomConf()
+    /**
+     * @return static
+     */
+    public function getRoomConf(Request $request)
     {
-        $rid = $this->request()->get('rid');
+        $rid = $request->get('rid');
         $redis = $this->make('redis');
-        /** @var RoomService $roomService */
-        $roomService = $this->make('roomService');
+        $roomService = resolve('roomService');
 
         $room = $roomService->getRoom($rid, Auth::id());
         /** @var SocketService $socketService */
@@ -509,16 +516,12 @@ class RoomController extends Controller
             }
         }
         return JsonResponse::create([
-            'new_user' => $this->userInfo['created'] > $this->container->config['config.USER_TIME_DIVISION'] ? 1 : 0,
+            'new_user' => $this->userInfo['created'] > SiteSer::config('user_time_division') ? 1 : 0,
             'rid' => $rid,
-//            'room'=>$room,
             'chatServer' => $chatServer,
             'in_limit_points' => $redis->hget('hconf', 'in_limit_points') ?: 0,
             'in_limit_safemail' => $redis->hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
-//            'flash_version' => $redis->get('flash_version') ?: 'v201504092044',
-//            'flash_ver_h5' => $redis->get('flash_ver_h5') ?: 'v201504092044',
             'certificate' => $this->make('safeService')->getLcertificate(),
-//            'publish_version' => $redis->get('publish_version') ?: 'v2017090701' //young添加
         ]);
     }
 
@@ -527,61 +530,95 @@ class RoomController extends Controller
         $return = [];
         $redis = $this->make('redis');
         $now = time();
+        $roomSer = resolve('roomService');
+        $temp = $roomSer->getRoom($rid,$this->userInfo['uid']);
+
         /** 判断房间一对多 */
-        if ($redis->exists("hroom_status:" . $rid . ":7") && $redis->hget("hroom_status:" . $rid . ":7", "status") == '1') {
-            $onetomores = $redis->sMembers('hroom_whitelist_key:' . $rid);
-            foreach ($onetomores as $onetomore) {
-                $room = $redis->hGetAll("hroom_whitelist:$rid:$onetomore");
-                $starttime = strtotime($room['starttime']);
-                $endtime = strtotime($room['endtime']);
-                if ($now >= $starttime && $now < $endtime) {//正在一对多
-                    $return['onetomore'] = $room;
-                    $return['onetomore']['id'] = $onetomore;
-                    $return['onetomore']['access'] = 0;
-                    if (Auth::id()) {
-                        /** 判断用户是否购买 */
-                        $uids = array_merge(explode(',', $room['uids']), explode(',', isset($room['tickets']) ? $room['tickets'] : ''));
-                        $uids = array_filter($uids);
-                        if (in_array(Auth::id(), $uids)) {
-                            $return['onetomore']['access'] = 1;
-                        }
+        if ($roomSer->checkOne2More()) {
+            $room =  $roomSer->getExtendRoom();
+            if($room){
+                $return['onetomore'] = $room;
+                $return['onetomore']['id'] = $room['id'];
+                $return['onetomore']['access'] = 0;
+                if (Auth::id()) {
+                    /** 判断用户是否购买 */
+                    $uids = array_merge(explode(',', $room['uids']), explode(',', isset($room['tickets']) ? $room['tickets'] : ''));
+                    $uids = array_filter($uids);
+                    if (in_array(Auth::id(), $uids)) {
+                        $return['onetomore']['access'] = 1;
                     }
-                    break;
                 }
             }
         }
 
         /** 一对一 */
-        if ($redis->hget("hroom_status:" . $rid . ":4", "status") == 1) {
-            $ordMap = $redis->hgetall("hroom_duration:" . $rid . ":4");
-            if ($ordMap) {
-                foreach ($ordMap as $k => $v) {
-                    $ord = json_decode($v, true);
-                    if (!$ord || $ord['status'] != 0) continue;
-
-                    $starttime = strtotime($ord['starttime']);
-                    $endtime = $starttime + $ord['duration'];
-                    if ($now >= $starttime && $now <= $endtime) {
-                        $return['ord'] = $ord;
-                        $return['ord']['access'] = Auth::id() == $ord['reuid'] ? 1 : 0;
-                    }
-                }
+        if ($roomSer->checkOne2One()) {
+            $room =  $roomSer->getExtendRoom();
+            if($room){
+                $return['ord'] = $room;
+                $return['ord']['access'] = Auth::id() == $room['reuid'] ? 1 : 0;
             }
         }
         /** 时长房 */
-        if ($redis->exists("hroom_status:" . $rid . ":6") && $redis->hget("hroom_status:" . $rid . ":6", "status") == '1') {
-            if ($redis->hget("htimecost:" . $rid, "timecost_status")) {
-                $timecost = $redis->hget("hroom_status:" . $rid . ":6", "timecost") ?: 0;
-                $discount = $redis->hget('hgroups:special:' . $this->userInfo['vip'], 'discount') ?: 10;
-                $return['timecost'] = [
-                    'price' => $timecost,
-                    'discount' => $discount,
-                    'discountValue' => ceil($timecost * $discount / 10)
-                ];
-            }
+        if ($roomSer->checkTimecost()) {
+            $room =  $roomSer->getExtendRoom();
+            $discount = $redis->hget('hgroups:special:' . $this->userInfo['vip'], 'discount') ?: 10;
+            $timecost = $room['timecost'] ?? 0;
+            $return['timecost'] = [
+                'price' => $timecost,
+                'discount' => $discount,
+                'discountValue' => ceil($timecost * $discount / 10)
+            ];
         }
         return JsonResponse::create($return);
     }
+
+//    public function getRoomAccess($rid)
+//    {
+//        $return = [];
+//        $redis = $this->make('redis');
+//        $now = time();
+//        $roomSer = resolve('roomService')->getRoom($rid,$this->userInfo['uid']);
+//
+//        /** 判断房间一对多 */
+//        if ($roomSer->checkOne2More()) {
+//            $room =  $roomSer->getExtendRoom();
+//            if($room){
+//                $return['onetomore'] = $room;
+//                $return['onetomore']['id'] = $room['id'];
+//                $return['onetomore']['access'] = 0;
+//                if (Auth::id()) {
+//                    /** 判断用户是否购买 */
+//                    $uids = array_merge(explode(',', $room['uids']), explode(',', isset($room['tickets']) ? $room['tickets'] : ''));
+//                    $uids = array_filter($uids);
+//                    if (in_array(Auth::id(), $uids)) {
+//                        $return['onetomore']['access'] = 1;
+//                    }
+//                }
+//            }
+//        }
+//
+//        /** 一对一 */
+//        if ($roomSer->checkOne2One()) {
+//            $room =  $roomSer->getExtendRoom();
+//            if($room){
+//                $return['ord'] = $room;
+//                $return['ord']['access'] = Auth::id() == $room['reuid'] ? 1 : 0;
+//            }
+//        }
+//        /** 时长房 */
+//        if ($roomSer->checkTimecost()) {
+//            $room =  $roomSer->getExtendRoom();
+//            $discount = $redis->hget('hgroups:special:' . $this->userInfo['vip'], 'discount') ?: 10;
+//            $timecost = $room['timecost'] ?? 0;
+//            $return['timecost'] = [
+//                'price' => $timecost,
+//                'discount' => $discount,
+//                'discountValue' => ceil($timecost * $discount / 10)
+//            ];
+//        }
+//        return JsonResponse::create($return);
+//    }
 
     /*
      * app创建一对多房间接口 by desmond
@@ -696,8 +733,9 @@ class RoomController extends Controller
     public  function    roomSetDuration(Request $request){
         $data = [];
         $data = $request->only(['mintime', 'hour', 'minute', 'tid', 'duration','points']);
+
         $roomservice = resolve(RoomService::class);
-        $result = $roomservice->delOnetoOne($data);
+        $result = $roomservice->addOnetoOne($data);
         return new JsonResponse($result);
     }
 
@@ -706,14 +744,9 @@ class RoomController extends Controller
      */
     public function delRoomOne2One(){
         $rid = $this->request()->input('rid');
-
-
         if (!$rid) return JsonResponse::create(['status' => 0, 'msg' => '请求错误']);
         $roomservice = resolve(RoomService::class);
         $result = $roomservice->delOnetoOne($rid);
-
-
-
         return JsonResponse::create($result);
     }
 

@@ -24,8 +24,10 @@ Route::get('captcha/test',function (\Illuminate\Http\Request $request){
     var_dump(\Mews\Captcha\Facades\Captcha::check($phrase));
 })->middleware('mobile.session');
 
-Route::get('room/conf', ['name' => 'm_room_conf', 'uses' => 'Mobile\RoomController@getRoomConf']);
-
+//app版本ｈ
+Route::get('/app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
+Route::get('/conf',['name'=>'m_conf', 'uses'=>'Mobile\RoomController@getConf']);
+Route::get('/room/conf',['name'=>'m_room_conf', 'uses'=>'Mobile\RoomController@getRoomConf']);
 
 //移动端登录验证
 Route::group(['middleware' => ['login_auth:mobile']], function () {
@@ -100,4 +102,25 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('OneToOne/list', ['name' => 'member_onetoONElist', 'uses' => 'Mobile\MobileController@listOneToOneByHost']);
 
 
+});
+// 充值类 TODO 登录验证
+// 验证是否登录
+Route::group(['prefix' => 'pay', 'middleware' => ['login_auth:mobile','charge']], function () {
+    Route::match(['POST', 'GET'], 'pay', ['name' => 'charge_pay', 'uses' => 'Mobile\PaymentController@pay']);
+    Route::match(['POST', 'GET'], '/order', ['name' => 'charge_order', 'uses' => 'Mobile\PaymentController@order']);
+    Route::match(['POST', 'GET'], '/order2', ['name' => 'charge_order2', 'uses' => 'Mobile\PaymentController@order2']);
+    Route::match(['POST', 'GET'], '/pay2', ['name' => 'charge_pay2', 'uses' => 'Mobile\PaymentController@pay2']);
+    Route::match(['POST', 'GET'], '/translate', ['name' => 'translate', 'uses' => 'Mobile\PaymentController@translate']);
+
+});
+
+//通知
+Route::group(['prefix' => 'pay', 'middleware' => ['charge']], function () {
+    Route::match(['POST', 'GET'], 'notice2', ['name' => 'notice2', 'uses' => 'Mobile\PaymentController@notice2']);
+    Route::match(['POST', 'GET'], 'notice', ['name' => 'charge_notice', 'uses' => 'Mobile\PaymentController@notice'])->name('charge_notice');
+    Route::match(['POST', 'GET'], 'checkKeepVip', ['name' => 'checkKeepVip', 'uses' => 'Mobile\PaymentController@checkKeepVip']);
+    Route::match(['POST', 'GET'], 'callFailOrder', ['name' => 'callFailOrder', 'uses' => 'Mobile\PaymentController@callFailOrder']);
+//    Route::post( 'moniCharge', ['name' => 'charge', 'uses' => 'Mobile\PaymentController@moniCharge']);
+    Route::match(['POST', 'GET'], 'moniHandler', ['name' => 'moniHandler', 'uses' => 'Mobile\PaymentController@moniHandler']);
+    Route::post('del', ['name' => 'charge', 'uses' => 'Mobile\PaymentController@del']);
 });

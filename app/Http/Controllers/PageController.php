@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Faq;
 use Core\Exceptions\NotFoundHttpException;
+use Illuminate\Http\JsonResponse;
 
 class PageController extends Controller
 {
@@ -26,6 +27,7 @@ class PageController extends Controller
      */
     public function index($act)
     {
+
         if (!in_array($act, array('aboutus', 'help', 'state', 'help_old'))) {
             throw new NotFoundHttpException();
         }
@@ -52,7 +54,8 @@ class PageController extends Controller
                 $redis->set('video:faq:list', json_encode($data));
             }
         }
-        return $this->render('Page/' . $act, compact('data'));
+        return  new JsonResponse($data);
+       // return $this->render('Page/' . $act, compact('data'));
     }
 
     /**
@@ -61,7 +64,8 @@ class PageController extends Controller
      */
     public function noble()
     {
-        return $this->render('Page/noble');
+        return  new JsonResponse(['status'=>1,'msg'=>'贵族']);
+        //return $this->render('Page/noble');
     }
 
     /**
@@ -70,7 +74,8 @@ class PageController extends Controller
      */
     public function download()
     {
-        return $this->render('Page/download');
+        return  new JsonResponse(['status'=>1,'msg'=>'下载']);
+       // return $this->render('Page/download');
     }
 
     /**
@@ -79,7 +84,8 @@ class PageController extends Controller
      */
     public function join()
     {
-        return $this->render('Page/join');
+        return  new JsonResponse(['status'=>1,'msg'=>'招募']);
+       // return $this->render('Page/join');
     }
 
     /**

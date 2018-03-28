@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\One2ManyMsgSend;
 use App\Console\Commands\Schedule\UserClear;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -17,6 +18,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         //
+        'App\Console\Commands\One2ManyMsgSend'
     ];
 
     /**

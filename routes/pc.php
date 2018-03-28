@@ -99,14 +99,14 @@ Route::get('/ranking', ['name' => 'rank_index', 'uses' => 'RankController@index'
 //排行榜接口
 Route::get('/rank_data', ['name' => 'rank_data', 'uses' => 'RankController@rankData']);
 // 关于 帮助 投诉
-Route::get('/about/{act:[a-z_]+}', ['uses' => 'PageController@index']);
+Route::get('/about/{act}', ['uses' => 'PageController@index']);
 // 活动详情页面
-Route::get('/nac/{id:\d+}', ['name' => 'ac_info', 'uses' => 'ActivityController@info']);
+Route::get('/nac/{id}', ['name' => 'ac_info', 'uses' => 'ActivityController@info']);
 Route::match(['GET', 'POST'], '/majax/{action}', ['name' => 'majax', 'uses' => 'MemberController@ajax']);
 
 Route::match(['POST', 'GET'], '/indexinfo', ['name' => 'indexinfo', 'uses' => 'IndexController@getIndexInfo']);
 //代理
-Route::get('/extend[/{url:.+}]', ['name' => 'business_extend', 'uses' => 'BusinessController@extend']);
+Route::get('/extend/{url}', ['name' => 'business_extend', 'uses' => 'BusinessController@extend']);
 Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
 
 Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopController@getGroupAll']);
@@ -363,6 +363,7 @@ Route::get('/m/login', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@
 //rtmp地址
 Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp', 'uses' => 'RoomController@get']);
 
+
 // 充值类 TODO 登录验证
 // 验证是否登录
 Route::group(['prefix' => 'charge', 'middleware' => ['charge', 'login_auth']], function () {
@@ -415,7 +416,6 @@ Route::get('/islogin', ['name' => 'islogin', 'uses' => 'LoginController@isLogin'
 
 
 Route::get('/m/find', ['name' => 'm_find', 'uses' => 'Mobile\MobileController@searchAnchor']);
-Route::match(['POST', 'GET'], '/m/pay/{action}', ['name' => 'm_pay', 'uses' => 'Mobile\PaymentController@action']);
 //统计接口
 Route::match(['POST', 'GET'], '/m/statistic', ['name' => 'm_statistic', 'uses' => 'Mobile\MobileController@statistic']);
 
