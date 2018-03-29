@@ -1682,7 +1682,9 @@ class ApiController extends Controller
         $uid = $this->make('request')->get('uid');
         $data = [
             'status' => 0,
-            'headimg' => '',
+            'data'=>[
+                'headimg' => '',
+            ]
         ];
         if (!$uid) {
             return new JsonResponse($data);
@@ -1690,7 +1692,7 @@ class ApiController extends Controller
         $headimg = $this->make('redis')->hget('huser_info:' . $uid, 'headimg');
         $headimg = $this->getHeadimg($headimg);
         $data['status'] = 1;
-        $data['headimg'] = $headimg;
+        $data['data']['headimg'] = $headimg;
 
         return new JsonResponse($data);
 

@@ -125,7 +125,7 @@ class MemberController extends Controller
         ],//主播才有
         [
             'role' => 0,
-            'action' => 'gamelist',
+            'action' => 'game',
             'name' => '房间游戏',
         ],//主播才有
         [
@@ -140,7 +140,7 @@ class MemberController extends Controller
         ],//主播才有
         [
             'role' => 0,
-            'action' => 'msglist',
+            'action' => 'msg',
             'name' => '消息',
         ],
         [
@@ -1589,18 +1589,18 @@ class MemberController extends Controller
          * 查询的开始时间 用于获取数据
          * 默认是前一天到现在的
          */
-        $start = $request->get('start') ?: $this->_reqSession->get('live_start');
+        $start = $request->get('start') ?: $request->session()->get('live_start');
         if (!$start) {
             $start = date('Y-m-d', strtotime("-1 day"));
         } else {
-            $this->_reqSession->set('live_start', $start);
+            $request->session()->set('live_start', $start);
         }
 
-        $end = $this->make('request')->get('end') ?: $this->_reqSession->get('live_end');
+        $end = $request->get('end') ?: $request->session()->get('live_end');
         if (!$end) {
             $end = date('Y-m-d');
         } else {
-            $this->_reqSession->set('live_end', $end);
+            $request->session()->set('live_end', $end);
         }
         $result = [];
         $result['end'] = $end;
@@ -1614,11 +1614,6 @@ class MemberController extends Controller
          */
         $iEnd = strtotime($end);
         $iStart = strtotime($start);
-////        var_dump(['uid' => $uid, 'end' => $end, 'start' => $start, 'start2' => $start, 'iEnd' => $iEnd, 'iStart' => $iStart]);
-////        $page = $this->make('request')->get('page')?$this->make('request')->get('page'):1;
-//        $count = DB::select('select count(0) as c from video_live_list where uid=:uid and ((start_time < :end and start_time > :start) or (
-//          start_time < :start2 and UNIX_TIMESTAMP(start_time)+duration < :iEnd and UNIX_TIMESTAMP(start_time)+duration > :iStart))
-//          order by start_time desc', ['uid' => $uid, 'end' => $end, 'start' => $start, 'start2' => $start, 'iEnd' => $iEnd, 'iStart' => $iStart]);
 
 
         $data = (array)DB::select('SELECT * FROM video_live_list WHERE uid=:uid AND ((start_time < :end AND start_time > :start) OR (

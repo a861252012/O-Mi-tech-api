@@ -16,7 +16,7 @@ Route::group(['prefix' => 'member'], function () {
         Route::get('index', 'MemberController@index')->name('member_index');
         Route::post('mail/verify/send', 'PasswordController@sendVerifyMail')->middleware('throttle:5:1')->name('mail_verify_send');
         // 用户中心消息  type 是可有可无的 必须放到最后
-        Route::get('msglist/{type?}', 'MemberController@msglist')->where('type', '[0-9]+')->name('member_msglist');
+        Route::get('msg/{type?}', 'MemberController@msglist')->where('type', '[0-9]+')->name('member_msglist');
         //购买修改昵称
         Route::post('buyModifyNickname', 'MemberController@buyModifyNickname')->name('buyModifyNickname');
         // 用户中心 我的关注
@@ -44,7 +44,7 @@ Route::group(['prefix' => 'member'], function () {
         // 用户中心 主播中心
         Route::get('anchor', 'MemberController@anchor')->name('member_anchor');
         // 用户中心 房间游戏
-        Route::get('gamelist/{type?}', 'MemberController@gamelist')->where('type', '[1,2]')->name('member_gamelist');
+        Route::get('game/{type?}', 'MemberController@gamelist')->where('type', '[1,2]')->name('member_gamelist');
         // 用户中心 vip 贵族体系主播佣金
         Route::get('commission', 'MemberController@commission')->name('member_commission');
         // 用户中心 直播统计
