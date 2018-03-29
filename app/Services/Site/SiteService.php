@@ -188,7 +188,7 @@ class SiteService
     {
         $this->flushConfigCacheForSite($site);
         $configArray = $this->getConfigArrayForSite($site);
-        return $this->config()->hMset($configArray);
+        return Config::hMset($site->id,$configArray);
     }
 
     public function getIDs(): Collection
