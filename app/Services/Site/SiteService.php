@@ -109,7 +109,7 @@ class SiteService
      * 获取缓存，懒加载机制
      * @param null $name    如果没有name会
      * @param bool $noCache 跳过本地缓存
-     * @return Config|mixed|null
+     * @return Config
      */
     public function config($name = null, $noCache = true)
     {
@@ -132,7 +132,7 @@ class SiteService
 
     public function checkConfigValidity(): bool
     {
-        if (!$this->config->isValid()) {
+        if (!$this->config()->isValid()) {
             $this->errors->add('config', '站点配置缺失，请联系客服！');
             return false;
         }
@@ -188,7 +188,7 @@ class SiteService
     {
         $this->flushConfigCacheForSite($site);
         $configArray = $this->getConfigArrayForSite($site);
-        return $this->config->hMset($configArray);
+        return Config::hMset($site->id,$configArray);
     }
 
     public function getIDs(): Collection

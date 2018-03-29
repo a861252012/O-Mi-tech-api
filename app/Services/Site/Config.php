@@ -145,9 +145,9 @@ class Config implements Arrayable, ArrayAccess, Jsonable
         unset($this->attributes[$offset]);
     }
 
-    public function hMset($configArray)
+    public static function hMset($id,$configArray)
     {
-        return Redis::hMSet(static::KEY_SITE_CONFIG . $this->siteID, $configArray);
+        return Redis::hMSet(static::KEY_SITE_CONFIG . $id, $configArray);
     }
 
     /**
