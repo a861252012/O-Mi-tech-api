@@ -76,7 +76,8 @@ class ActivityController extends Controller
         }
 
         $arr = array_merge($arr, $active);
-        return  new jsonresponse($arr);
+        $arr =  $this->format_jsoncode($arr);
+        return  new JsonResponse($arr);
     }
 
     /**
