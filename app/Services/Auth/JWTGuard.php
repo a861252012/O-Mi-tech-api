@@ -253,6 +253,9 @@ class JWTGuard implements StatefulGuard
         if (empty($token)) {
             $token = $this->request->getPassword();
         }
+        if (empty($token)) {
+            $token = $this->request->headers->get('jwt');
+        }
 
         return $token;
     }

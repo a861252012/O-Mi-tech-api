@@ -137,7 +137,7 @@ class PaymentController extends MobileController
      *  }
      *
      */
-    public function pay()
+    public function pay(Request $request)
     {
         $amount = isset($_POST['price']) ? number_format(intval($_POST['price']), 2, '.', '') : 0;
 
@@ -155,85 +155,17 @@ class PaymentController extends MobileController
             $msg = L('CHARGE.PAY.WRONG_CHANEL');
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
         }
-        //$amount = 1;
-        $serviceCode = $this->container->config['config.PAY_SERVICE_CODE'];
-        $version = $this->container->config['config.PAY_VERSION'];
-        $serviceType = $this->container->config['config.PAY_SERVICE_TYPE'];
-        $signType = $this->container->config['config.PAY_SIGNTYPE'];
-        $sysPlatCode = $this->container->config['config.PAY_SYSPLATCODE'];
-        $charset = $this->container->config['config.PAY_CHARSET'];
-        $priviteKey = $this->container->config['config.PAY_PRIVATEKEY'];
-        $remoteUrl = $this->container->config['config.PAY_CALL_URL'];
 
-        //$randValue = mt_rand(1000, 9999);
-        $sentTime = date('Y-m-d H:i:s');
-        $expTime = '';
-        $orderDate = date('YmdHis');
-
-        $date_array = explode(" ", microtime());
-        $milliseconds = $date_array[1] . ($date_array[0] * 10000);
-        $milliseconds = explode(".", $milliseconds);
-        $randValue = substr($milliseconds[0], -4);
-
-        //唯一订单号
-        $sMessageNo = $serviceCode . $orderDate . $randValue;
-
-        // $sMessageNo = $this->checkOrderNu($serviceCode,$sMessageNo);
-
-        //通知地址
-        //获取下当前域名
-//        $noticeUrl = $GLOBALS['CUR_URL'] . $this->container->config['config.PAY_NOTICE_URL'];
-        $noticeUrl = $this->container->config['config.PAY_NOTICE_URL'];
-        $returnUrl = $GLOBALS['CUR_URL'] . $this->container->config['config.PAY_REBACK_URL'];
-        $username = $this->userInfo['username'];
-        $isMobile = "true";
-        $Datas = array(
-            array(
-                'dataNo' => $plat . 'FCDATA' . $orderDate . $randValue,
-                'amount' => $amount,
-                'noticeUrl' => $noticeUrl,
-                'returnUrl' => $returnUrl,
-                'remark' => $username,
-                'channel' => "",
-                'vipLevel' => $channel,
-                'bankCode' => "",
-                'lan' => "",
-                'currency' => "",
-                'isMobile' => $isMobile,
-            )
-        );
-        $sign_str = "";
-        foreach ($Datas[0] as $v) {
-            $sign_str .= $v;
-        }
-        //生成签名 签名是由非signType，sign的字符串+ Datas的第一个成员的所有属性，再加私密钥拼接而成
-        $sign = MD5($serviceCode . $version . $serviceType . $sysPlatCode . $sentTime . $expTime . $charset . $sMessageNo . $sign_str .
-            $priviteKey);
-
-        $postdataArr = array(
-            'serviceCode' => $serviceCode,
-            'version' => $version,
-            'serviceType' => $serviceType,
-            'signType' => $signType,
-            'sign' => $sign,
-            'sysPlatCode' => $sysPlatCode,
-            'sentTime' => $sentTime,
-            'expTime' => $expTime,
-            'charset' => $charset,
-            'sMessageNo' => $sMessageNo,
-            'Datas' => $Datas
-        );
-        $postdata = json_encode($postdataArr);
+        $postdata = resolve('charge')->postData($amount,$channel);
 
         //记录下数据库
-//        $uid = $this->request()->getSession()->get(self::SEVER_SESS_ID);
         $uid = Auth::id();//todo recheck session
-        $tradeno = $sMessageNo;
-        switch (substr($tradeno, 0, 3)) {
-            case "ARD":
+        $client = $request->headers->get('client');
+        switch ($client) {
+            case "1001":
                 $origin = 22;
                 break;
-            case "IOS":
+            case "1002":
                 $origin = 32;
                 break;
             default:
@@ -244,13 +176,13 @@ class PaymentController extends MobileController
                 'uid' => $uid,
                 'created' => date('Y-m-d H:i:s'),
                 'pay_status' => 0,// 刚开始受理
-                'pay_type' => 1, // 银行充值
+                'pay_type' => Recharge::PAY_TYPE_CHONGTI, // 银行充值
                 'del' => 0,
                 'paymoney' => $amount,
                 'points' => ceil($amount * 10),
-                'order_id' => $sMessageNo,
+                'order_id' => resolve('charge')->getMessageNo(),
                 'postdata' => $postdata,
-                'nickname' => $this->userInfo['nickname'],
+                'nickname' => Auth::user()['username'],
                 'channel' => $channel,
                 'mode_type' => $mode_type,
                 'origin' => $origin
@@ -259,8 +191,8 @@ class PaymentController extends MobileController
 
         $rtn = array(
             'postdata' => $postdata,
-            'remoteUrl' => $remoteUrl,
+            'remoteUrl' => resolve('charge')->remote(),
         );
-        return $this->render('Mobile/pay', $rtn);
+        return new JsonResponse(array('status' => 0, 'msg' => $rtn));
     }
 }

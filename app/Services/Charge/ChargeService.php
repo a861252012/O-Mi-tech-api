@@ -10,6 +10,7 @@ namespace App\Services\Charge;
 
 
 use App\Models\Users;
+use App\Services\Auth\JWTGuard;
 use App\Services\Service;
 use App\Services\Site\SiteService;
 use Illuminate\Support\Facades\Auth;
@@ -97,7 +98,7 @@ class ChargeService extends Service
     {
         //通知地址
         $username = $this->nickname();
-        $isMobile = "false";
+        $isMobile = $this->checkMobile() ? "true" : "false";
         return array(
             array(
                 'dataNo' => $this->dataNo,
@@ -113,6 +114,9 @@ class ChargeService extends Service
                 'isMobile' => $isMobile,
             )
         );
+    }
+    public function checkMobile(){
+        return config()->get('auth.defaults.guard') == JWTGuard::guard;
     }
 
     //支付数据  postData
@@ -198,7 +202,7 @@ class ChargeService extends Service
         $jsondatas['Datas']['0']['dataNo'] = $this->getDataNo();
         $jsondatas['Datas']['0']['amount'] = $amount;
         $jsondatas['sMessageNo'] = $orderID;
-        echo "转化成充提中心给我的json格式\n";
+        echo "$orderID $amount 转化成充提中心给我的json格式\n";
         $datas = array(
             array(
                 'dataNo' => $jsondatas['Datas']['0']['dataNo'],
