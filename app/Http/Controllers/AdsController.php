@@ -11,7 +11,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Ads;
 use Illuminate\Support\Facades\Input;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Illuminate\Http\JsonResponse;
 
 class   AdsController extends Controller{
     public function getAd(){

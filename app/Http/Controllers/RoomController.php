@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Services\User\UserService;
 use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class RoomController extends Controller

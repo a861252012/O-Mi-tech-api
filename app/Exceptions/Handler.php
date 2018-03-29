@@ -54,12 +54,12 @@ class Handler extends ExceptionHandler
     {
 
         if ($exception instanceof HttpException) {
-            $statusCode = $exception->getStatusCode();
             $status = 0;
             $msg = $exception->getMessage();
-            $headers=$exception->getHeaders();
-            $return = collect(compact('status', 'statusCode', 'msg','headers'));
-            switch ($statusCode) {
+            $data['headers']=$exception->getHeaders();
+            $data['statusCode']=$exception->getStatusCode();
+            $return = collect(compact('status',  'msg','data'));
+            switch ($data['statusCode']) {
                 case Response::HTTP_TOO_MANY_REQUESTS:
                     break;
                 default;

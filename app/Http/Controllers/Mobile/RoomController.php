@@ -25,7 +25,7 @@ use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Mews\Captcha\Facades\Captcha;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\RoomOneToMore;

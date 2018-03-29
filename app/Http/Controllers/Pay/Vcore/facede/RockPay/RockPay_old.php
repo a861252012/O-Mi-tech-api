@@ -12,7 +12,7 @@ use Pay\c\pay;
 use Pay\HttpUrl;
 use Pay\Log;
 use Pay\Twig;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 abstract class RockPay implements pay

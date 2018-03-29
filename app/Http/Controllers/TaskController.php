@@ -7,7 +7,7 @@ use App\Service\Task\TaskService;
 use Core\Model;
 use Core\Response;
 use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Illuminate\Http\JsonResponse;
 
 class TaskController extends Controller
 {

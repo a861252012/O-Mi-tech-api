@@ -3,6 +3,7 @@
 namespace App\Http;
 
 use App\Http\Middleware\Charge;
+use App\Http\Middleware\FormatResponse;
 use App\Http\Middleware\LoginAuth;
 use App\Http\Middleware\MobileSession;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
@@ -17,6 +18,7 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
+        FormatResponse::class,
         \Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,

@@ -1578,21 +1578,16 @@ class MemberController extends Controller
     }
 
     /**
-     * 用户中心 直播时间 TODO 尼玛
-     *
-     * @author TX
-     * @date   2015.2.6
+     * 用户中心 直播时间
      */
-    public function live()
+    public function live(Request $request)
     {
-
         $uid = Auth::id();
-
         /**
          * 查询的开始时间 用于获取数据
          * 默认是前一天到现在的
          */
-        $start = $this->make('request')->get('start') ?: $this->_reqSession->get('live_start');
+        $start = $request->get('start') ?: $this->_reqSession->get('live_start');
         if (!$start) {
             $start = date('Y-m-d', strtotime("-1 day"));
         } else {

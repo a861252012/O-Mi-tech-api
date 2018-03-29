@@ -47,6 +47,8 @@ Route::group(['prefix' => 'member'], function () {
         Route::get('gamelist/{type?}', 'MemberController@gamelist')->where('type', '[1,2]')->name('member_gamelist');
         // 用户中心 vip 贵族体系主播佣金
         Route::get('commission', 'MemberController@commission')->name('member_commission');
+        // 用户中心 直播统计
+        Route::get('live', 'MemberController@live')->name('member_live');
     });
 });
 
@@ -214,8 +216,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     // 用户中心 礼物统计
     Route::get('/member/count', ['name' => 'member_count', 'uses' => 'MemberController@count']);
-    // 用户中心 直播统计
-    Route::match(['POST', 'GET'], '/member/live', ['name' => 'member_live', 'uses' => 'MemberController@live']);
+
 
     // 用户中心 房间设置
     Route::match(['POST', 'GET'], '/member/roomset', ['name' => 'member_roomset', 'uses' => 'MemberController@roomset']);

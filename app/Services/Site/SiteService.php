@@ -61,7 +61,7 @@ class SiteService
 
     public function fromRequest(Request $request): SiteService
     {
-        $this->host = $request->getHost();
+        $this->host = $request->getHttpHost();
         $this->loadDomainInfo();
         if (!is_null($this->id)){
             $this->loadConfig();

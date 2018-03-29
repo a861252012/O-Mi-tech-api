@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 
 
 use App\Services\User\UserService;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Illuminate\Http\JsonResponse;
 
 class RankController extends Controller
 {

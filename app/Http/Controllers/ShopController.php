@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Goods;
 use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Illuminate\Http\JsonResponse;
 
 class ShopController extends Controller
 {
