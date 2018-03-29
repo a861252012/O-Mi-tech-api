@@ -131,7 +131,7 @@ class MobileController extends Controller
     public function userPrivilege()
     {
         $uid = Auth::id();
-        $user = Users::find($uid);
+        $user = UserSer::getUserByUid($uid);
 
         //判断隐身权限
         $allowStealth = resolve(UserService::class)->getUserHiddenPermission($user);
@@ -164,18 +164,26 @@ class MobileController extends Controller
      */
     public function mountList()
     {
+        $flash_url = Redis::get('flash_url');
+        if ($flash_url) {
+            $url_array = explode(';', $flash_url);
+            $url_first = explode('/', trim($url_array[0]));
+            $count = count($url_first);
+            $flash_url_v = $url_first[$count - 1];
+        } else {
+            $flash_url_v = '';
+        }
+
         $uid = Auth::id();
 //        $page = $this->make("request")->input('page',1);
         $list = Pack::with('mountGroup')->where('uid', $uid)->simplePaginate(self::MOUNT_LIST_PAGE_SIZE);
 //        $result['user'] = $this->userInfo;
         $result['list'] = $list->toArray();
-        $result['equip'] = $this->make('redis')->hgetall('user_car:' . $uid);
+        $result['equip'] = Redis::hgetall('user_car:' . $uid);
         //判断是否过期
         if ($result['equip'] != null && current($result['equip']) < time()) {
-            $this->make('redis')->del('user_car:' . $uid);//检查过期直接删除对应的缓存key
+            Redis::del('user_car:' . $uid);//检查过期直接删除对应的缓存key
         }
-        //道具图片路径
-        $result['sceneIcoUrl'] = '/flash/' . $this->flash_url_v . '/image/gift_material/';
         return JsonResponse::create($result);
     }
 

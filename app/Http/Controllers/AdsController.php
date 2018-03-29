@@ -8,6 +8,8 @@
 
 
 namespace App\Http\Controllers;
+use App\Facades\SiteSer;
+use App\Libraries\SuccessResponse;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Ads;
 use Illuminate\Support\Facades\Input;
@@ -19,7 +21,7 @@ class   AdsController extends Controller{
 
         $data = Ads::where('device',$device)->published()->get()->toArray();
         //$cdn  = $this->make('config')['config.REMOTE_CDN_PIC_URL'];
-        $cdn = 'http://s.tnmhl.com/public/oort';
+        $cdn = SiteSer::config('cdn_host')."/public/oort"; // 'http://s.tnmhl.com/public/oort';
         $img_path = Ads::IMG_PATH;
 
 
@@ -31,7 +33,7 @@ class   AdsController extends Controller{
                    array_pull($data,$v);
           }
         }*/
-        return jsonResponse::create(compact('cdn','img_path','data'));
+        return SuccessResponse::create(compact('cdn','img_path','data'));
     }
 
 }

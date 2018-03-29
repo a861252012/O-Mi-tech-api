@@ -382,7 +382,7 @@ Route::group(['prefix' => 'charge', 'middleware' => ['charge']], function () {
     Route::match(['POST', 'GET'], 'notice', ['name' => 'charge_notice', 'uses' => 'ChargeController@notice'])->name('charge_notice');
     Route::match(['POST', 'GET'], 'checkKeepVip', ['name' => 'checkKeepVip', 'uses' => 'ChargeController@checkKeepVip']);
     Route::match(['POST', 'GET'], 'callFailOrder', ['name' => 'callFailOrder', 'uses' => 'ChargeController@callFailOrder']);
-//    Route::post( 'moniCharge', ['name' => 'charge', 'uses' => 'ChargeController@moniCharge']);
+    Route::post( 'moniCharge', ['name' => 'charge', 'uses' => 'ChargeController@moniCharge']);
     Route::match(['POST', 'GET'], 'moniHandler', ['name' => 'moniHandler', 'uses' => 'ChargeController@moniHandler']);
     Route::post('del', ['name' => 'charge', 'uses' => 'ChargeController@del']);
 });
@@ -425,7 +425,7 @@ Route::post('/send_crash', ['name' => 'send_crash', 'uses' => 'Mobile\MobileCont
 
 
 Route::match(['POST', 'GET'], '/pay/g2p', ['name' => 'pay_g2p', 'uses' => 'Pay\PayController@index']);
-Route::match(['POST', 'GET'], '/pay/{action}', ['name' => 'pay_notify', 'uses' => 'Pay\PayController@notify']);
+//Route::match(['POST', 'GET'], '/pay/{action}', ['name' => 'pay_notify', 'uses' => 'Pay\PayController@notify']);
 //Route::match(['POST', 'GET'], '/pay/{action}', function(){
 //    echo json_encode($_POST);
 //    file_put_contents(BASEDIR.'/app/logs/inner.log',json_encode($_POST));

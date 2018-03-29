@@ -94,6 +94,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
 
 
 });
+Route::get('oort2bunny', ['name' => 'guanggao', 'uses' => 'AdsController@getAd']);//广告接口
 // 充值类 TODO 登录验证
 // 验证是否登录
 Route::group(['prefix' => 'pay', 'middleware' => ['login_auth:mobile','charge']], function () {

@@ -19,13 +19,16 @@ use App\Models\Pack;
 use App\Models\UserGroup;
 use App\Models\Users;
 use App\Services\User\UserService;
+use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Session;
 
 /**
  * Class ApiController
@@ -405,230 +408,6 @@ class ApiController extends Controller
      */
 //接收XO跳转过来的sskey,callback,sign 并验证sign是否正确防攻击
 //@RequestMapping("/recvSskey")
-    public function dealSign()
-    {
-        $sskey = $this->request()->get("sskey");
-        $callback = $this->request()->get("callback");
-        $sign = $this->request()->get("sign");
-        $httphost = $this->request()->get("httphost");
-
-        $open = $this->make("redis")->exists("hplatform:1") ? $this->make("redis")->hget("hplatform:1", 'open') : 1;
-        if (!$open) return new Response("XO接入已关闭");
-        if (empty($sskey) || empty($callback) || empty($sign) || empty($httphost)) return new Response("参数不对");
-
-        $hconf = $this->make("redis")->hgetall("hconf");
-        $key = $hconf['xo_key'];
-        $logPath = BASEDIR . '/app/logs/xo_' . date('Y-m-d') . '.log';
-        $this->make("systemServer")->logResult("XO项目 dealSign:sskey=$sskey, callback=$callback, sign=$sign, httphost=$httphost", $logPath);
-        $estimatedSign = MD5($sskey . $callback . $key);
-        if ($estimatedSign != $sign) return new Response("校验失败");
-//    $callback = 2650010;
-        $room = $callback;
-        if (!resolve(UserService::class)->getUserByUid($room)) return new Response("房间不存在");
-
-        //TODO PHP端 注册并登录用户 跳转到callback参数指定的直播间
-        //实现cure通讯报文
-        $url = $hconf['xo_live_checked'];
-        $data = "sskey=$sskey";
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);//$activityPostData已经是k1=v2&k2=v2的字符串
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-        $res = curl_exec($ch);
-        curl_close($ch);
-
-        //return new Response($res);
-        $this->make("systemServer")->logResult("XO项目 /live/checked:$res", $logPath);
-        /*var request*/
-        $temp_data = json_decode($res, true);
-
-        $data = $temp_data['data'];
-        if (empty($data)) return new Response("请先登录");
-        if (empty($data['uuid'])) return new Response("uuid不存在");
-
-        $users = Users::where('uuid', $data['uuid'])->first();
-
-        //注册
-        if (empty($users)) {
-            //{"status":"000","message":"success","data":{"uuid":"140611","nickename":"raby","gender":"M","avatar":"http:\/\/10.1.100.141:8082\/user_head\/default_4_3.jpg",
-            //"token":"k8qjd100TYa42IduhfL1DZwy9r5JKLz1","failureTime":1494412231,"diamond":0,"email":"raby@qq.com"}}
-            $password_key = "asdfwe";
-
-            $user = [
-                'username' => "v2_" . $data['nickename'] . "@xo.com",
-                'nickname' => "v2_" . $data['nickename'],
-                'sex' => $data['gender'] == 'M' ? 1 : 0,
-                //'points'=>$data['diamond'],
-                //'email'=>$data['gender'],
-                'uuid' => $data['uuid'],
-                'rich' => 64143000,
-                'lv_rich' => 28,
-                'password' => $data['nickename'] . $password_key,
-                'xtoken' => $data['token'],
-                'origin' => 51,
-            ];
-            $uid = resolve(UserService::class)->register($user);
-            $this->make("systemServer")->logResult("XO项目 注册:" . json_encode($user) . '-' . (string)$uid, $logPath);
-            if (!$uid) {
-                return new Response("用户不存在" . json_encode($user) . $uid . $res);
-            }
-
-            AgentsRelationship::create([
-                'uid' => $uid,
-                'aid' => $this->container->config['config.xo_agent'],
-            ]);
-
-            $this->userInfo = resolve(UserService::class)->getUserByUid($uid);
-            if (empty($this->userInfo)) {
-                return new Response("获取用户信息失败" . json_encode($user) . $uid . $res);
-            }
-
-            //处理用户头像
-            if (($avatarResource = fopen($data['avatar'], 'r'))) {
-                $result = json_decode($this->make('systemServer')->upload($this->userInfo, $avatarResource), true);
-                if (!$result['ret']) return new JsonResponse($result);
-                //更新用户头像
-                Users::where('uid', $this->userInfo['uid'])->update(['headimg' => $result['info']['md5']]);
-                $this->userInfo['headimg'] = $result['info']['md5'];
-                $this->make('redis')->hset('huser_info:' . $uid, 'headimg', $result['info']['md5']);
-            }
-        } else {
-            $this->userInfo = $users->toArray();
-        }
-        //登录
-        $huser_sid = $this->make('redis')->hget('huser_sid', $this->userInfo['uid']);
-        // 此时调用的是单实例登录的session 验证
-        //取uid
-        $auth = Auth::guard();
-        if (!$auth->attempt([
-            'username' => $this->userInfo['username'],
-            'password' => $this->userInfo['password'],
-        ])) {
-            return [
-                'status' => 0,
-                'msg' => '您的账号登录失败，请联系客服！',
-            ];
-        };
-
-        //return new Response($res);
-        $_SESSION['xo_httphost'] = $httphost;
-        return RedirectResponse::create("/$room");
-    }
-
-
-
-    /**
-     * @return Response
-     *
-     */
-//接收XO跳转过来的sskey,callback,sign 并验证sign是否正确防攻击
-//@RequestMapping("/recvSskey")
-    public function dealLSign()
-    {
-        $sskey = $this->request()->get("sskey");
-        $callback = $this->request()->get("callback");
-        $sign = $this->request()->get("sign");
-        $httphost = $this->request()->get("httphost") ?: 0;
-
-        $open = $this->make("redis")->exists("hplatform:2") ? $this->make("redis")->hget("hplatform:2", 'open') : 1;
-        if (!$open) return new Response("L接入已关闭");
-        if (empty($sskey) || empty($callback) || empty($sign)) return new Response("参数不对");
-
-        $hconf = $this->make("redis")->hgetall("hconf");
-        $key = $hconf['l_key'];
-        $logPath = BASEDIR . '/app/logs/l_' . date('Y-m-d') . '.log';
-        $this->make("systemServer")->logResult("L项目 dealSign:sskey=$sskey, callback=$callback, sign=$sign, httphost=$httphost", $logPath);
-        $estimatedSign = MD5($sskey . $callback . $key);
-        if ($estimatedSign != $sign) return new Response("校验失败");
-//    $callback = 2650010;
-        $room = $callback;
-        if (!resolve(UserService::class)->getUserByUid($room)) return new Response("房间不存在");
-
-        //TODO PHP端 注册并登录用户 跳转到callback参数指定的直播间
-        //实现cure通讯报文
-        $url = $hconf['l_live_checked'];
-        //$url = "http://discuz.shaw_dev.com/xolive.php?id=v_ad:live";
-        $data = "sskey=$sskey&action=checked";
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);//$activityPostData已经是k1=v2&k2=v2的字符串
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-        $res = curl_exec($ch);
-        curl_close($ch);
-
-        //return new Response($res);
-        $this->make("systemServer")->logResult("L项目 /live/checked:$res", $logPath);
-        /*var request*/
-        $temp_data = json_decode($res, true);
-
-        $data = $temp_data['data'];
-        if (empty($data)) return new Response("请先登录");
-        if (empty($data['uuid'])) return new Response("uuid不存在");
-
-        $users = Users::where('uuid', $data['uuid'])->first();
-
-        //注册
-        if (empty($users)) {
-            $password_key = "asdfwe";
-            $user = [
-                'username' => "杏吧_" . $data['nickename'] . "@sex8.com",
-                'nickname' => "杏吧_" . $data['nickename'],
-                'sex' => 0,
-                'uuid' => $data['uuid'],
-                'rich' => 64143000,
-                'lv_rich' => 28,
-                'password' => $data['nickename'] . $password_key,
-                'xtoken' => $data['token'],
-                'origin' => 61,
-            ];
-
-            $uid = resolve(UserService::class)->register($user);
-            $this->make("systemServer")->logResult("L项目 注册:" . json_encode($user) . '-' . (string)$uid, $logPath);
-            if (!$uid) {
-                return new Response("用户不存在" . json_encode($user) . $uid . $res);
-            }
-
-            AgentsRelationship::create([
-                'uid' => $uid,
-                'aid' => $this->container->config['config.l_agent'],
-            ]);
-
-            $this->userInfo = resolve(UserService::class)->getUserByUid($uid);
-            if (empty($this->userInfo)) {
-                return new Response("获取用户信息失败" . json_encode($user) . $uid . $res);
-            }
-        } else {
-            $this->userInfo = $users->toArray();
-            if ($this->userInfo['xtoken'] != $data['token']) {
-                Users::where('uid', $this->userInfo['uid'])->update([
-                    'xtoken' => $data['token'],
-                ]);
-                $this->userInfo['xtoken'] = $data['token'];
-            }
-        }
-        //登录
-        $huser_sid = $this->make('redis')->hget('huser_sid', $this->userInfo['uid']);
-        // 此时调用的是单实例登录的session 验证
-        $this->writeRedis($this->userInfo, $huser_sid);
-
-        $_SESSION['httphost'] = base64_decode($httphost);
-        return RedirectResponse::create("/$room");
-    }
-
-
-
-    /**
-     * @return Response
-     *
-     */
-//接收XO跳转过来的sskey,callback,sign 并验证sign是否正确防攻击
-//@RequestMapping("/recvSskey")
     public function platform()
     {
         $sskey = $this->request()->get("sskey");
@@ -673,7 +452,7 @@ class ApiController extends Controller
         curl_close($ch);
 
         //return new Response($res);
-        $this->make("systemServer")->logResult("$url:$res", $logPath);
+        Log::channel('plat')->info("$plat_code $url:$res");
         /*var request*/
         $temp_data = json_decode($res, true);
 
@@ -700,7 +479,7 @@ class ApiController extends Controller
             ];
 
             $uid = resolve(UserService::class)->register($user);
-            $this->make("systemServer")->logResult("$plat_code 项目 注册:" . json_encode($user) . '-' . (string)$uid, $logPath);
+            Log::channel('plat')->info("$plat_code 项目 注册:" . json_encode($user) . '-' . (string)$uid);
             if (!$uid) {
                 return new Response("用户不存在" . json_encode($user) . $uid . $res);
             }
@@ -729,6 +508,17 @@ class ApiController extends Controller
         ]);
         $this->userInfo['logined'] = $time;
 
+//        //判断当前用户session是否是最新登陆
+//        $this->_online  =  $userInfo['uid'];
+//        //设置新session
+//        $_SESSION['_sf2_attributes'][self::SEVER_SESS_ID] = $userInfo['uid'];
+//        setcookie(self::WEB_UID,$userInfo['uid'],0,'/',$this->_common_domain);//用于首页判断
+//        $this->_sess_id = session_id();
+//
+//        if(empty($huser_sid)){ //说明以前没登陆过，没必要检查重复登录
+//            $this->_redisInstance->hset('huser_sid',$userInfo['uid'],$this->_sess_id);
+//        }
+
         //登录
         $huser_sid = $this->make('redis')->hget('huser_sid', $this->userInfo['uid']);
         // 此时调用的是单实例登录的session 验证
@@ -738,6 +528,39 @@ class ApiController extends Controller
 
         $h5 = $this->container->config['config.H5'] ? "/h5" : "";
         return RedirectResponse::create("/$room$h5");
+    }
+
+    /**
+     * 写入redis
+     **/
+    private function writeRedis($userInfo,$huser_sid){
+        try{
+            //判断当前用户session是否是最新登陆
+            $this->_online  =  $userInfo['uid'];
+            //设置新session
+            Session::put(self::SEVER_SESS_ID,$userInfo['uid']);
+            setcookie(self::WEB_UID,$userInfo['uid'],0,'/');//用于首页判断
+            $this->_sess_id = session_id();
+
+            if(empty($huser_sid)){ //说明以前没登陆过，没必要检查重复登录
+                $this->_redisInstance->hset('huser_sid',$userInfo['uid'],$this->_sess_id);
+            }elseif($huser_sid !=   $this->_sess_id){//有可能重复登录了
+                //更新用户对应的sessid
+                $this->_redisInstance->hset('huser_sid',$userInfo['uid'], $this->_sess_id );
+                //删除旧session，踢出用户在上一个浏览器的登录状态
+                $this->_redisInstance->del('PHPREDIS_SESSION:'.$huser_sid);
+            }
+            if( $this->_isGetCache == false){
+                $this->_redisInstance->hset('husername_to_id',$userInfo['username'],$userInfo['uid']);
+                $this->_redisInstance->hset('hnickname_to_id',$userInfo['nickname'],$userInfo['uid']);
+                $this->_redisInstance->hmset('huser_info:'.$userInfo['uid'],$userInfo);
+            }
+            $this->_points = $userInfo['points'];
+        }catch(Exception $e){
+            Session::put(self::SEVER_SESS_ID,$userInfo['uid']);
+            setcookie(self::WEB_UID, null, time()-31536000,'/');
+            $this->_online  = false;
+        }
     }
 
     /**

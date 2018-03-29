@@ -19,14 +19,23 @@ class RoomService extends Service
 
     public $tid = null;
     public $rid = null;
-    public $current_tid = null;
     public $uid = null;
     public $cur_login_uid = null; //当前登陆用户
     public $rtmp_host = null;
     public $rtmp_port = null;
     public $channel_id = null;
     public $finger_id = null;
+
+    public $current_tid = null;
     public $extend_room = [];
+
+
+    public $room_type = []; //一对一，一对多
+    public $one2more_room = [];
+    public $one2one_room = [];
+    public $timecost_room = [];
+    public $password_room = [];
+
     const TIMECOST = 6;
     const ONE2ONE = 4;
     const ONE2MORE = 8;
@@ -81,7 +90,6 @@ class RoomService extends Service
         $view_user = resolve(UserService::class)->getUserByUid($view_uid);
         $room['user'] = $user;
         $room['room_status'] = $this->getRoomStatus($rid);
-
 
         $this->getCurrentRoomStatus();
 
