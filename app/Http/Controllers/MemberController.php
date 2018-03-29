@@ -1573,8 +1573,10 @@ class MemberController extends Controller
         $var['maxtime'] = $maxt;
         $var['sum_Gift_mun'] = $sum_Gift_mun;
         $var['sum_Points_mun'] = $sum_Points_mun;
+
+        $var =  $this->format_jsoncode($var);
         return  new JsonResponse(($var));
-        return $this->render('Member/count', $var);
+
     }
 
     /**

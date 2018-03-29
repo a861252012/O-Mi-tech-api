@@ -1401,4 +1401,16 @@ class Controller extends BaseController
         }
         return $result;
     }
+
+    public function format_jsoncode($arr){
+         if($arr){
+             $res = array(
+                 'status'=>1,
+                 'data'=>$arr,
+                 'msg'=>'获取成功'
+             );
+         }
+         return  $res;
+
+    }
 }
