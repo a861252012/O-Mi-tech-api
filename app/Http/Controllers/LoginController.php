@@ -6,55 +6,18 @@ use App\Models\UserDomain;
 use App\Models\UserLoginLog;
 use App\Models\Users;
 use App\Services\Site\SiteService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use Mews\Captcha\Facades\Captcha;
-use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 
 class LoginController extends Controller
 {
-    /**
-     * [登录页面进入] 主域名登录使用的页面
-     *
-     *  <p>
-     *  登录域：A
-     *         在配置文件中配置 login_domain选项，跳转时会随机一个域名
-     *  用户所属域：B
-     *              用户所属的域名是在后台添加用户时进行分配的
-     *
-     *  登录流程：
-     *  》当用户访问网站时，检测未登录，会定向到A的passport方法进行登录；
-     *  》用户AJAX提交登录信息，验证通过后，首先进行A的登录，同时根据用户信息加密生成通知B域名该用户登录的synstr并返回到页面；
-     *  》A登录页面在拿到synstr后，js发起请求到B实现用户在B域名也同时登录了，js发起请求的目的是通过浏览器实现cookie和sid的绑定;
-     *  》跳转到B。
-     *
-     *  登录后Redis中记录session的KEY：
-     *  A；huser_sid_a uid session_id (redis hash)
-     *  B；huser_sid uid session_id  (redis hash)
-     *
-     *  登录后的会话保持会有四种现象：
-     *  1、A 在线  B 在线 > 正常状态
-     *  2、A 在线  B 退出 > A会重新通知B登录,B的reloadLogin方法
-     *  3、A 退出  B 在线 > 用户访问A登录页面时，用户在A重新输入信息登录，会刷新B的会话信息
-     *  4、A 退出  B 退出 > 重新登录
-     *
-     *     |------------------|                                                   |-------------------|
-     *     |            login | 1登录成功后页面中AJAX 通知B域名synLogin方法登录>  |  synlogin         |
-     *     | A                | 2当B退出后跳到A时，A在线，reload方法重新让B登录>  |  reload         B |
-     *     |                  |                                                   |                   |
-     *     |__________________|                                                   |__________________ |
-     * </p>
-     *
-     * @author
-     * @return object
-     *
-     * TODO 去除登录页面---可以去除
-     */
     public function passport()
     {
         return new RedirectResponse('/?handle=login');
@@ -386,13 +349,11 @@ class LoginController extends Controller
 
         //$times = intval($this->make('redis')->hget('hlogin_authcode', $userinfo['uid'])) ?: 0;
         //if (!isset($_REQUEST['_m']) && $times >= 5 && !$skipCaptcha && !$this->make('captcha')->Verify($this->make('request')->get('sCode'))) {
-        $times = 0;
         //todo 验证码是否更换
         if (!$skipCaptcha && !Captcha::check(request('sCode'))) {
             return [
                 "status" => 0,
                 "msg" => "验证码错误，请重新输入！",
-                "failNums" => $times,
             ];
         }
 
@@ -422,7 +383,9 @@ class LoginController extends Controller
         return [
             'status' => 1,
             'msg' => '登录成功',
-            'sid' => Session::getId(),
+            'data'=>[
+                'sid' => Session::getId(),
+            ]
         ];
     }
 
