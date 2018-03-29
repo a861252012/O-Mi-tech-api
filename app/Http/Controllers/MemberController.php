@@ -465,7 +465,11 @@ class MemberController extends Controller
         $all_data = UserCommission::where('uid', $uid)
             ->where('create_at', '>', $mintime)->where('create_at', '<', $maxtime)->where('type', $type)
             ->where('dml_flag', '!=', 3)
-            ->orderBy('create_at', 'desc')->with('user')->with('userGroup')->paginate(10);
+            ->orderBy('create_at', 'desc')->with([
+                'user'=>function($q){
+                $q->selectRaw('uid, username, roled, lv_exp, lv_rich');
+            }])
+            ->with('userGroup')->paginate(10);
 
         $total = UserCommission::selectRaw('sum(points) as points')
             ->where('uid', $uid)
