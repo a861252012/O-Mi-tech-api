@@ -29,7 +29,7 @@ class ShopController extends Controller
         $result['lists'] = $lists;
         $result['vipmount'] = $vipmount;
         $result['group'] = $group;
-
+        $result = $this->format_jsoncode($result);
         return  new jsonresponse($result);
 
     }
@@ -73,7 +73,7 @@ class ShopController extends Controller
         $gid = $this->make('request')->get('gid');
         $msg = array(
             'status' => 1,
-            'msg' => ''
+            'msg' => '数据获取成功'
         );
         $userGroup = $this->make('userGroupServer')->getGroupById($gid);
         if (!$userGroup) {
@@ -81,7 +81,7 @@ class ShopController extends Controller
             $msg['msg'] = '数据获取失败';
             return (new JsonResponse($msg))->setCallback('cb');
         }
-        $msg['info'] = $userGroup;
+        $msg['data'] = $userGroup;
         return (new JsonResponse($msg))->setCallback('cb');
     }
 
@@ -94,16 +94,17 @@ class ShopController extends Controller
     public function getGroupAll()
     {
         $msg = array(
-            'code' => 0,
+            'status' => 0,
             'msg' => ''
         );
         $userGroup = $this->make('userGroupServer')->getPublicGroup();
         if (!$userGroup) {
-            $msg['code'] = 1003;
+            $msg['status'] = 1003;
             $msg['msg'] = '数据获取失败';
             return (new JsonResponse($msg))->setCallback('cb');
         }
-        $msg['info'] = $userGroup;
+        $msg['data'] = $userGroup;
+        $msg['msg'] = '数据获取成功';
         return (new JsonResponse($msg))->setCallback('cb');
     }
 

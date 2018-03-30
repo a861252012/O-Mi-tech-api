@@ -758,8 +758,10 @@ class MemberController extends Controller
         //时长房间
         $roomStatus = $this->getRoomStatus(Auth::id(), 6);
         $result['roomStatus'] = $roomStatus;
-
-        return new JsonResponse($result);
+        $res['data'] = $result;
+        $res['status'] = 1;
+        $res['msg'] = '获取成功';
+        return new JsonResponse($res);
 
     }
 
@@ -829,7 +831,7 @@ class MemberController extends Controller
             $user = $userService->getUserByUid($item->uid);
             $item->nickname = isset($user['nickname']) ? $user['nickname'] : '';
         });
-        return new JsonResponse(['code' => 1, 'msg' => $buyOneToMore]);
+        return new JsonResponse(['status' => 1, 'data' => $buyOneToMore,'msg'=>'获取成功']);
     }
 
     /**
@@ -2014,14 +2016,14 @@ class MemberController extends Controller
         // 获取vip坐骑的id
         $mid = $this->make('request')->get('mid');
         $msg = [
-            'code' => 0,
+            'status' => 0,
             'msg' => '',
         ];
 
         // 判断是否已经领过了
         $pack = Pack::where('uid', Auth::id())->where('gid', $mid)->first();
         if ($pack) {
-            $msg['code'] = 1002;
+            $msg['status'] = 1002;
             $msg['msg'] = '你已经获取过了该坐骑！';
             return new JsonResponse($msg);
         }
@@ -2030,13 +2032,13 @@ class MemberController extends Controller
         $userGroup = UserGroup::where('type', 'special')->where('mount', $mid)->first();
 
         if (!$userGroup) {
-            $msg['code'] = 1005;
+            $msg['status'] = 1005;
             $msg['msg'] = '此坐骑专属贵族所有！';
             return new JsonResponse($msg);
         }
 
         if ($this->userInfo['vip'] < $userGroup['level_id']) {
-            $msg['code'] = 1003;
+            $msg['status'] = 1003;
             $msg['msg'] = '你还不够领取此级别的坐骑！';
             return new JsonResponse($msg);
         }
@@ -2050,7 +2052,7 @@ class MemberController extends Controller
         $res = $pack->save();
 
         if ($res !== false) {
-            $msg['msg'] = '开通成功！';
+            $msg['status'] = '开通成功！';
             return new JsonResponse($msg);
         }
 
@@ -2063,7 +2065,7 @@ class MemberController extends Controller
     {
         return new JsonResponse(
             [
-                'code' => 0,
+                'status' => 0,
                 'info' => [
                     'nickname' => $this->userInfo['nickname'],
                     'money' => $this->userInfo['points'],

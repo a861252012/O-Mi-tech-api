@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\Faq;
 use Core\Exceptions\NotFoundHttpException;
 use Illuminate\Http\JsonResponse;
+use App\Libraries\SuccessResponse;
 
 class PageController extends Controller
 {
@@ -54,7 +55,8 @@ class PageController extends Controller
                 $redis->set('video:faq:list', json_encode($data));
             }
         }
-        return  new JsonResponse($data);
+        return SuccessResponse::create($data,$msg = "获取成功", $status = 1);
+    //    return  new JsonResponse($data);
        // return $this->render('Page/' . $act, compact('data'));
     }
 
@@ -64,7 +66,7 @@ class PageController extends Controller
      */
     public function noble()
     {
-        return  new JsonResponse(['status'=>1,'msg'=>'贵族']);
+        return  new JsonResponse(['status'=>1,'data'=>'贵族']);
         //return $this->render('Page/noble');
     }
 
@@ -74,7 +76,7 @@ class PageController extends Controller
      */
     public function download()
     {
-        return  new JsonResponse(['status'=>1,'msg'=>'下载']);
+        return  new JsonResponse(['status'=>1,'data'=>'下载']);
        // return $this->render('Page/download');
     }
 
@@ -84,7 +86,7 @@ class PageController extends Controller
      */
     public function join()
     {
-        return  new JsonResponse(['status'=>1,'msg'=>'招募']);
+        return  new JsonResponse(['status'=>1,'data'=>'招募']);
        // return $this->render('Page/join');
     }
 
