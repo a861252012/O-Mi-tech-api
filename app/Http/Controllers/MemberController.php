@@ -1468,7 +1468,9 @@ class MemberController extends Controller
         }
         // 我做庄的
         if ($type == 2) {
-            $data = CarGame::with('gameRoomUser')
+            $data = CarGame::with(['gameRoomUser'=>function ($q) {
+                $q->selectRaw('uid,username');
+            }])
                 ->where('uid', Auth::id())
                 ->where('dml_flag', '!=', 3)
                 ->orderBy('stime', 'DESC')
