@@ -861,18 +861,18 @@ class MemberController extends Controller
      */
     public function roomSetTimecost()
     {
-        return JsonResponse::create(['code' => 0, 'msg' => '非法操作']);//禁止用户修改
+        return JsonResponse::create(['status' => 0, 'msg' => '非法操作']);//禁止用户修改
         $timecost = $this->make('request')->get('timecost');
-        if ($timecost <= 0 || $timecost > 999999) return new JsonResponse(['code' => "301", 'msg' => '金额设置有误']);
+        if ($timecost <= 0 || $timecost > 999999) return new JsonResponse(['status' => "301", 'msg' => '金额设置有误']);
 
         //todo 时长房直播，并且开启时，不处理
         $timecost_status = $this->make("redis")->hget("htimecost:" . Auth::id(), "timecost_status");
-        if ($timecost_status == 1) return new JsonResponse(['code' => "302", 'msg' => '时长房直播中,不能设置']);
+        if ($timecost_status == 1) return new JsonResponse(['status' => "302", 'msg' => '时长房直播中,不能设置']);
 
         RoomStatus::where("uid", Auth::id())->where("tid", 6)->where("status", 1)->update(['timecost' => $timecost]);
 
         $this->make("redis")->hset("hroom_status:" . Auth::id() . ":6", "timecost", $timecost);
-        return new JsonResponse(['code' => 1, 'msg' => '设置成功']);
+        return new JsonResponse(['status' => 1, 'msg' => '设置成功']);
     }
 
     /**
