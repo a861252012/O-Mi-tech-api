@@ -2345,5 +2345,62 @@ class MemberController extends Controller
                 ['points' => $points],
         ];
     }
+
+    /*
+     * 礼物统计
+     */
+    public function gift()
+    {
+        $uid = Auth::id();
+        if (!$uid) {
+            throw new NotFoundHttpException();
+        }
+        $type = $this->make('request')->get('type') ?: 'receive';
+        $mint = $this->make('request')->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
+        $maxt = $this->make('request')->get('maxtime') ?: date('Y-m-d');
+
+        $mintime = date('Y-m-d H:i:s', strtotime($mint));
+        $maxtime = date('Y-m-d H:i:s', strtotime($maxt . '23:59:59'));
+
+        $selectTypeName = $type == 'send' ? 'send_uid' : 'rec_uid';
+        $uriParammeters = $this->make('request')->query->all();
+        $var['uri'] = array();
+        foreach ($uriParammeters as $p => $v) {
+            if (strstr($p, '?')) continue;
+            if (!empty($v)) {
+                $var['uri'][$p] = $v;
+            }
+        }
+
+        $all_data = MallList::where($selectTypeName, $uid)
+            ->where('created', '>=', $mintime)
+            ->where('created', '<=', $maxtime)
+            ->where('gid', '>', 10)
+            ->paginate();
+
+        $sum_Gift_mun = MallList::where($selectTypeName, $uid)
+            ->where('created', '>=', $mintime)
+            ->where('created', '<=', $maxtime)
+            ->where('gid', '>', 10)
+            ->sum('gnum');
+        $sum_Points_mun = MallList::where($selectTypeName, $uid)
+            ->where('created', '>=', $mintime)
+            ->where('created', '<=', $maxtime)
+            ->where('gid', '>', 10)
+            ->sum('points');
+        $sum_Gift_mun = $sum_Gift_mun ? $sum_Gift_mun : 0;
+        $sum_Points_mun = $sum_Points_mun ? $sum_Points_mun : 0;
+        $all_data->appends(['type' => $type, 'mintime' => $mint, 'maxtime' => $maxt]);
+
+        $var['type'] = $type;
+        $var['data'] = $all_data;
+        $var['mintime'] = $mint;
+        $var['maxtime'] = $maxt;
+        $var['sum_Gift_mun'] = $sum_Gift_mun;
+        $var['sum_Points_mun'] = $sum_Points_mun;
+        $var = $this->format_jsoncode($var);
+        return new JsonResponse(($var));
+
+    }
 }
 
