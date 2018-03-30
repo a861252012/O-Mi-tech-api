@@ -74,9 +74,10 @@ class RankController extends Controller
         ];
 
         /** jsonp or json */
-        $jsonData = json_encode($data);
-        $jsonData = $cb ? $cb . '(' . $jsonData . ')' : $jsonData;
+       // $jsonData = json_encode($data);
+       // $jsonData = $cb ? $cb . '(' . $jsonData . ')' : $jsonData;
+        $jsonData =  $this->format_jsoncode($data);
+        return new JsonResponse($jsonData);
 
-        return JsonResponse::create()->setContent($jsonData);
     }
 }

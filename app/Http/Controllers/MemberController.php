@@ -755,8 +755,10 @@ class MemberController extends Controller
         //时长房间
         $roomStatus = $this->getRoomStatus(Auth::id(), 6);
         $result['roomStatus'] = $roomStatus;
-
-        return new JsonResponse($result);
+        $res['data'] = $result;
+        $res['status'] = 1;
+        $res['msg'] = '获取成功';
+        return new JsonResponse($res);
 
     }
 
@@ -826,7 +828,7 @@ class MemberController extends Controller
             $user = $userService->getUserByUid($item->uid);
             $item->nickname = isset($user['nickname']) ? $user['nickname'] : '';
         });
-        return new JsonResponse(['code' => 1, 'msg' => $buyOneToMore]);
+        return new JsonResponse(['status' => 1, 'data' => $buyOneToMore,'msg'=>'获取成功']);
     }
 
     /**
@@ -860,18 +862,18 @@ class MemberController extends Controller
      */
     public function roomSetTimecost()
     {
-        return JsonResponse::create(['code' => 0, 'msg' => '非法操作']);//禁止用户修改
+        return JsonResponse::create(['status' => 0, 'msg' => '非法操作']);//禁止用户修改
         $timecost = $this->make('request')->get('timecost');
-        if ($timecost <= 0 || $timecost > 999999) return new JsonResponse(['code' => "301", 'msg' => '金额设置有误']);
+        if ($timecost <= 0 || $timecost > 999999) return new JsonResponse(['status' => "301", 'msg' => '金额设置有误']);
 
         //todo 时长房直播，并且开启时，不处理
         $timecost_status = $this->make("redis")->hget("htimecost:" . Auth::id(), "timecost_status");
-        if ($timecost_status == 1) return new JsonResponse(['code' => "302", 'msg' => '时长房直播中,不能设置']);
+        if ($timecost_status == 1) return new JsonResponse(['status' => "302", 'msg' => '时长房直播中,不能设置']);
 
         RoomStatus::where("uid", Auth::id())->where("tid", 6)->where("status", 1)->update(['timecost' => $timecost]);
 
         $this->make("redis")->hset("hroom_status:" . Auth::id() . ":6", "timecost", $timecost);
-        return new JsonResponse(['code' => 1, 'msg' => '设置成功']);
+        return new JsonResponse(['status' => 1, 'msg' => '设置成功']);
     }
 
     /**
@@ -1991,14 +1993,14 @@ class MemberController extends Controller
         // 获取vip坐骑的id
         $mid = $this->make('request')->get('mid');
         $msg = [
-            'code' => 0,
+            'status' => 0,
             'msg' => '',
         ];
 
         // 判断是否已经领过了
         $pack = Pack::where('uid', Auth::id())->where('gid', $mid)->first();
         if ($pack) {
-            $msg['code'] = 1002;
+            $msg['status'] = 1002;
             $msg['msg'] = '你已经获取过了该坐骑！';
             return new JsonResponse($msg);
         }
@@ -2007,13 +2009,13 @@ class MemberController extends Controller
         $userGroup = UserGroup::where('type', 'special')->where('mount', $mid)->first();
 
         if (!$userGroup) {
-            $msg['code'] = 1005;
+            $msg['status'] = 1005;
             $msg['msg'] = '此坐骑专属贵族所有！';
             return new JsonResponse($msg);
         }
 
         if ($this->userInfo['vip'] < $userGroup['level_id']) {
-            $msg['code'] = 1003;
+            $msg['status'] = 1003;
             $msg['msg'] = '你还不够领取此级别的坐骑！';
             return new JsonResponse($msg);
         }
@@ -2027,7 +2029,7 @@ class MemberController extends Controller
         $res = $pack->save();
 
         if ($res !== false) {
-            $msg['msg'] = '开通成功！';
+            $msg['status'] = '开通成功！';
             return new JsonResponse($msg);
         }
 
@@ -2040,7 +2042,7 @@ class MemberController extends Controller
     {
         return new JsonResponse(
             [
-                'code' => 0,
+                'status' => 0,
                 'info' => [
                     'nickname' => $this->userInfo['nickname'],
                     'money' => $this->userInfo['points'],
@@ -2318,6 +2320,63 @@ class MemberController extends Controller
             1, '添加成功', 'data' =>
                 ['points' => $points],
         ];
+    }
+
+    /*
+     * 礼物统计
+     */
+    public function gift()
+    {
+        $uid = Auth::id();
+        if (!$uid) {
+            throw new NotFoundHttpException();
+        }
+        $type = $this->make('request')->get('type') ?: 'receive';
+        $mint = $this->make('request')->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
+        $maxt = $this->make('request')->get('maxtime') ?: date('Y-m-d');
+
+        $mintime = date('Y-m-d H:i:s', strtotime($mint));
+        $maxtime = date('Y-m-d H:i:s', strtotime($maxt . '23:59:59'));
+
+        $selectTypeName = $type == 'send' ? 'send_uid' : 'rec_uid';
+        $uriParammeters = $this->make('request')->query->all();
+        $var['uri'] = array();
+        foreach ($uriParammeters as $p => $v) {
+            if (strstr($p, '?')) continue;
+            if (!empty($v)) {
+                $var['uri'][$p] = $v;
+            }
+        }
+
+        $all_data = MallList::where($selectTypeName, $uid)
+            ->where('created', '>=', $mintime)
+            ->where('created', '<=', $maxtime)
+            ->where('gid', '>', 10)
+            ->paginate();
+
+        $sum_Gift_mun = MallList::where($selectTypeName, $uid)
+            ->where('created', '>=', $mintime)
+            ->where('created', '<=', $maxtime)
+            ->where('gid', '>', 10)
+            ->sum('gnum');
+        $sum_Points_mun = MallList::where($selectTypeName, $uid)
+            ->where('created', '>=', $mintime)
+            ->where('created', '<=', $maxtime)
+            ->where('gid', '>', 10)
+            ->sum('points');
+        $sum_Gift_mun = $sum_Gift_mun ? $sum_Gift_mun : 0;
+        $sum_Points_mun = $sum_Points_mun ? $sum_Points_mun : 0;
+        $all_data->appends(['type' => $type, 'mintime' => $mint, 'maxtime' => $maxt]);
+
+        $var['type'] = $type;
+        $var['data'] = $all_data;
+        $var['mintime'] = $mint;
+        $var['maxtime'] = $maxt;
+        $var['sum_Gift_mun'] = $sum_Gift_mun;
+        $var['sum_Points_mun'] = $sum_Points_mun;
+        $var = $this->format_jsoncode($var);
+        return new JsonResponse(($var));
+
     }
 }
 

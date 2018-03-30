@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
+use App\Services\Safe\SafeService;
 
 /**
  * Class ApiController
@@ -569,9 +570,9 @@ class ApiController extends Controller
     public function get_lcertificate()
     {
         //get certificate
-        $certificate = $this->make('socketService')->getLcertificate("socket");
+        $certificate = resolve(SafeService::class)->getLcertificate("socket");
         if (!$certificate) return new JsonResponse(['status' => 0, 'msg' => "票据用完或频率过快"]);
-        return new JsonResponse(['status' => 1, 'msg' => $certificate]);
+        return ['status' => 1,'data'=>['datalist'=>$certificate],'msg'=>'获取成功'];
     }
 
     /**
@@ -1349,14 +1350,14 @@ class ApiController extends Controller
          */
         $result = [];
         if (empty($key_words)) {//为空时
-            $result['ret'] = -101;
+            $result['status'] = 0;
         } else if ($key_words === null) {// key不存在时
-            $result['ret'] = -100;
+            $result['status'] = 0;
         } else {
-            $result['ret'] = 1;
+            $result['status'] = 1;
         }
-        $result['msg'] = '';
-        $result['kw'] = $key_words;
+        $result['msg'] = '获取成功';
+        $result['data']['key_word'] = $key_words;
 
         return JsonResponse::create($result)->setEncodingOptions(JSON_UNESCAPED_UNICODE);
     }
