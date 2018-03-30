@@ -234,6 +234,11 @@ class UserService extends Service
         return $this->user = $user;
     }
 
+    public function userExists($uid)
+    {
+        return $this->redis->exists(static::KEY_USER_INFO . $uid);
+    }
+
     /**
      * [userReset 重置用户redis并获取数据]
      *

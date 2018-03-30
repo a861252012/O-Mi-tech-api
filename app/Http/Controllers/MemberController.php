@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Facades\SiteSer;
+use App\Facades\UserSer;
 use App\Models\AgentsPriv;
 use App\Models\AgentsRelationship;
 use App\Models\Anchor;
@@ -1246,46 +1247,31 @@ class MemberController extends Controller
 
     /**
      * 发送私信
-     * @return string
      */
-    public function domsg()
+    public function domsg(Request $request)
     {
         // $fid = $this->get('request')->get('fid');
-        $tid = $this->make('request')->get('tid');
-        if (!Users::find($tid)) {
-            return new Response(json_encode([
-                'ret' => false,
-                'info' => '接受者用户不存在！',
-            ]));
-        }
+        $tid = $request->get('tid');
         if (Auth::id() == $tid) {
-            return new Response(json_encode([
-                'ret' => false,
-                'info' => '不能给自己发私信！',
-            ]));
+            return JsonResponse::create(['status' => 0, 'msg' => '不能给自己发私信！']);
         }
-        $content = $this->make('request')->get('content');
+        if (empty($tid) || !UserSer::userExists($tid)) {
+            return JsonResponse::create(['status' => 0, 'msg' => '接受者用户不存在！']);
+        }
+
+        $content = $request->get('content');
         $len = $this->count_chinese_utf8($content);
         if ($len < 0 || $len > 200) {
-            return new Response(json_encode([
-                'ret' => false,
-                'info' => '输入为空或者输入内容过长，字符长度请限制200以内！',
-            ]));
+            return JsonResponse::create(['status' => 0, 'msg' => '输入为空或者输入内容过长，字符长度请限制200以内！']);
         }
         $userInfo = $this->userInfo;
         if ($userInfo['roled'] == 0 && $userInfo['lv_rich'] < 3) {
-            return new Response(json_encode([
-                'ret' => false,
-                'info' => '财富等级达到二富才能发送私信哦，请先去给心爱的主播送礼物提升财富等级吧。',
-            ]));
+            return JsonResponse::create(['status' => 0, 'msg' => '财富等级达到二富才能发送私信哦，请先去给心爱的主播送礼物提升财富等级吧。']);
         }
 
         $num = $this->checkAstrictUidDay(Auth::id(), 1000, 'video_mail');//验证每天发帖次数
         if ($num == 0) {
-            return new Response(json_encode([
-                'ret' => false,
-                'info' => '本日发送私信数量已达上限，请明天再试！',
-            ]));
+            return JsonResponse::create(['status' => 0, 'msg' => '本日发送私信数量已达上限，请明天再试！']);
         }
 
         $message = new Messages();
@@ -1299,15 +1285,9 @@ class MemberController extends Controller
         ]);
         if ($res) {
             $this->setAstrictUidDay(Auth::id(), $num, 'video_mail');//更新每天发帖次数
-            return new Response(json_encode([
-                'ret' => true,
-                'info' => '私信发送成功！',
-            ]));
+            return JsonResponse::create(['status' => 1, 'msg' => '私信发送成功！']);
         } else {
-            return new Response(json_encode([
-                'ret' => false,
-                'info' => '私信发送失败！',
-            ]));
+            return JsonResponse::create(['status' => 0, 'msg' => '私信发送失败！']);
         }
     }
 
@@ -1468,7 +1448,7 @@ class MemberController extends Controller
         }
         // 我做庄的
         if ($type == 2) {
-            $data = CarGame::with(['gameRoomUser'=>function ($q) {
+            $data = CarGame::with(['gameRoomUser' => function ($q) {
                 $q->selectRaw('uid,username');
             }])
                 ->where('uid', Auth::id())
@@ -1686,7 +1666,7 @@ class MemberController extends Controller
         }
         $result['totalTime'] = $this->_sec2time($total);
         return JsonResponse::create([
-            'data'=>$result
+            'data' => $result,
         ]);
     }
 
