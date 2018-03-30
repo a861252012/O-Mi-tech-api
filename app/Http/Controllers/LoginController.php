@@ -365,7 +365,7 @@ class LoginController extends Controller
         ], request('v_remember'))) {
             return [
                 'status' => 0,
-                'msg' => '您的账号登录失败，请联系客服！',
+                'msg' => '用户名密码错误！',
             ];
         };
 

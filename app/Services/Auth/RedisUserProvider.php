@@ -80,7 +80,7 @@ class RedisUserProvider implements UserProvider
             return;
         }
         $user = resolve(UserService::class)->getUserByUsername($credentials['username']);
-        if ($user->banned()) {
+        if ($user && $user->banned()) {
             throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '您的账号已经被禁止登录，请联系客服！']));
         }
         return $user;
