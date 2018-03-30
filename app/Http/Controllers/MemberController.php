@@ -1755,7 +1755,7 @@ class MemberController extends Controller
     public function flashUpload()
     {
         $user = Auth::user();
-        $result = resolve(SystemService::class)->upload($user);
+        $result = resolve(SystemService::class)->upload($user->toArray());
 
         if (isset($result['status']) && $result['status'] != 1) {
             return JsonResponse::create($result);

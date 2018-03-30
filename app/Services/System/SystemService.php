@@ -144,7 +144,7 @@ class SystemService extends Service
             //兼容表单方式上传
         } else {
             $files = $request->files->get('Filedata');
-            if (!$files->getClientOriginalName()) return ['status' => 0, 'msg' => '上传图片错误'];
+            if (!$files || !$files->getClientOriginalName()) return ['status' => 0, 'msg' => '上传图片错误'];
             $image_extension = $files->getClientOriginalExtension();
             $image_size = $files->getClientSize();
             $image = file_get_contents($files->getpathName());
