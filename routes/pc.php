@@ -1,11 +1,12 @@
 <?php
 
-Route::group(['middleware' => ['login_auth']], function () {
-
-});
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
-
 Route::get('/captcha', 'Controller@captcha');
+
+Route::group(['middleware' => ['login_auth']], function () {
+    //上传相册
+    Route::post('fupload', 'MemberController@flashUpload')->name('member_fupload');
+});
 
 /** 用户中心路由组 */
 Route::group(['prefix' => 'member'], function () {
@@ -228,8 +229,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     // 用户中心 代理数据
     Route::match(['POST', 'GET'], '/member/agents', ['name' => 'member_agents', 'uses' => 'MemberController@agents']);
 
-    //上传相册
-    Route::match(['POST', 'GET'], '/fupload', ['name' => 'member_fupload', 'uses' => 'MemberController@flashUpload']);
+
 
     //上传头像
     Route::match(['POST', 'GET'], '/upload', ['name' => 'member_upload', 'uses' => 'MemberController@avatarUpload']);

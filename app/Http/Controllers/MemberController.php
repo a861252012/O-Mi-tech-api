@@ -29,6 +29,7 @@ use App\Models\Users;
 use App\Models\WithDrawalList;
 use App\Services\Message\MessageService;
 use App\Services\Room\RoomService;
+use App\Services\System\SystemService;
 use App\Services\User\UserService;
 use Core\Exceptions\NotFoundHttpException;
 use DB;
@@ -828,7 +829,7 @@ class MemberController extends Controller
             $user = $userService->getUserByUid($item->uid);
             $item->nickname = isset($user['nickname']) ? $user['nickname'] : '';
         });
-        return new JsonResponse(['status' => 1, 'data' => $buyOneToMore,'msg'=>'获取成功']);
+        return new JsonResponse(['status' => 1, 'data' => $buyOneToMore, 'msg' => '获取成功']);
     }
 
     /**
@@ -1753,10 +1754,15 @@ class MemberController extends Controller
      */
     public function flashUpload()
     {
-        $user = $this->userInfo;
-        $result = json_decode($this->make('systemServer')->upload($this->userInfo), true);
+        $user = Auth::user();
+        $result = resolve(SystemService::class)->upload($user);
 
-        if (!$result['ret']) return new JsonResponse($result);
+        if (isset($result['status']) && $result['status'] != 1) {
+            return JsonResponse::create($result);
+        }
+        if (isset($result['ret']) && $result['ret'] === false) {
+            return JsonResponse::create($result);
+        }
 
         $anchor = Anchor::create(['uid' => Auth::id(), 'file' => $result['info']['md5'], 'size' => $result['info']['size'], 'jointime' => time()]);
 
@@ -1765,9 +1771,8 @@ class MemberController extends Controller
         //更新用户redis
         resolve(UserService::class)->getUserReset($user['uid']);
 
-
         $result['info']['id'] = $anchor->id;
-        return new JsonResponse($result);
+        return JsonResponse::create(['data' => $result]);
 
     }
 
@@ -2340,7 +2345,7 @@ class MemberController extends Controller
 
         $selectTypeName = $type == 'send' ? 'send_uid' : 'rec_uid';
         $uriParammeters = $this->make('request')->query->all();
-        $var['uri'] = array();
+        $var['uri'] = [];
         foreach ($uriParammeters as $p => $v) {
             if (strstr($p, '?')) continue;
             if (!empty($v)) {
