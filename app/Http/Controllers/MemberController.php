@@ -1600,22 +1600,19 @@ class MemberController extends Controller
         if (!$start) {
             $start = date('Y-m-d', strtotime("-1 day"));
         } else {
-            $request->session()->set('live_start', $start);
+            $request->session()->put('live_start', $start);
         }
 
         $end = $request->get('end') ?: $request->session()->get('live_end');
         if (!$end) {
             $end = date('Y-m-d');
         } else {
-            $request->session()->set('live_end', $end);
+            $request->session()->put('live_end', $end);
         }
         $result = [];
-        $result['end'] = $end;
-        $result['start'] = $start;
         $end = date('Y-m-d' . ' 23:59:59', strtotime($end));
         $start = date('Y-m-d' . ' 00:00:00', strtotime($start));
-        $result['user'] = $this->userInfo;
-        $result['data'] = [];
+        $result['list'] = [];
         /**
          * 获取自播记录 运算时长
          */
@@ -1631,11 +1628,6 @@ class MemberController extends Controller
         $total_duration = $data;
         $Count = count($data);
         $data = array_slice($data, ($thispage - 1) * 15, 15);
-        $result['pagination'] = [
-            'page' => $thispage,
-            'count' => $Count,
-            'pages' => ceil($Count / 15),
-        ];
         $total = 0;
         foreach ($total_duration as $key => $item) {
             /**
@@ -1658,16 +1650,16 @@ class MemberController extends Controller
         // $total = 0;
         foreach ($data as $key => $item2) {
             $item = (array)$item2;
-            $result['data'][$key] = $item;
+            $result['list'][$key] = $item;
 
-            $result['data'][$key]['created'] = $item['start_time'];
+            $result['list'][$key]['created'] = $item['start_time'];
             /**
              * 如果开始时间是在前一天的
              */
             if ($item['start_time'] <= $start) {
-                $result['data'][$key]['startTime'] = $start;
+                $result['list'][$key]['startTime'] = $start;
             } else {
-                $result['data'][$key]['startTime'] = $item['start_time'];
+                $result['list'][$key]['startTime'] = $item['start_time'];
             }
 
             /**
@@ -1684,16 +1676,18 @@ class MemberController extends Controller
             }
 
             //   $total += $duration;
-            $result['data'][$key]['endTime'] = date('Y-m-d H:i:s', $endTime);//date('Y-m-d H:i:s',strtotime($time1)+30*60);//注意引号内的大小写,分钟是i不是m
-            $result['data'][$key]['duration'] = $this->_sec2time($duration);
+            $result['list'][$key]['endTime'] = date('Y-m-d H:i:s', $endTime);//date('Y-m-d H:i:s',strtotime($time1)+30*60);//注意引号内的大小写,分钟是i不是m
+            $result['list'][$key]['duration'] = $this->_sec2time($duration);
         }
-        $result['data'] = new LengthAwarePaginator($result['data'], $Count, 15, '', ['path' => '/member/live', 'query' => ['start' => $result['start'], 'end' => $result['end']]]);
+        $result['list'] = new LengthAwarePaginator($result['list'], $Count, 15, '', ['path' => '/member/live', 'query' => ['start' => $start, 'end' => $end]]);
         //$result['totalTime'] = $this->getTotalTime($uid, $end, $start);
-        if (empty($result['data'])) {
-            $result['data'] = [];
+        if (empty($result['list'])) {
+            $result['list'] = [];
         }
         $result['totalTime'] = $this->_sec2time($total);
-        return $this->render('Member/live', $result);
+        return JsonResponse::create([
+            'data'=>$result
+        ]);
     }
 
     /**
