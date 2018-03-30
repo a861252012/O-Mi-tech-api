@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-use Illuminate\Support\Facades\Log;
+
 use App\Facades\SiteSer;
 use App\Models\AgentsPriv;
 use App\Models\AgentsRelationship;
@@ -37,6 +37,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Input;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Mews\Captcha\Facades\Captcha;
 
@@ -450,8 +451,6 @@ class MemberController extends Controller
 
     /**
      * 用户中心 主播佣金统计
-     * @author raby
-     * @date   2019-9-29
      */
     public function commission(Request $request)
     {
@@ -466,9 +465,9 @@ class MemberController extends Controller
             ->where('create_at', '>', $mintime)->where('create_at', '<', $maxtime)->where('type', $type)
             ->where('dml_flag', '!=', 3)
             ->orderBy('create_at', 'desc')->with([
-                'user'=>function($q){
-                $q->selectRaw('uid, username, roled, lv_exp, lv_rich');
-            }])
+                'user' => function ($q) {
+                    $q->selectRaw('uid, username, roled, lv_exp, lv_rich');
+                }])
             ->with('userGroup')->paginate(10);
 
         $total = UserCommission::selectRaw('sum(points) as points')
@@ -491,9 +490,6 @@ class MemberController extends Controller
 
     /**
      * 用户中心 邀请推广
-     * @author D.C
-     * @update 2014.12.12
-     * @return Response
      */
     public function invite()
     {
@@ -583,7 +579,7 @@ class MemberController extends Controller
             if (is_array($handle)) {
                 return new JsonResponse($handle);
             }
-            return JsonResponse::create(['status' => 0, 'messages' => '操作出现未知错误！']);
+            return JsonResponse::create(['status' => 0, 'msg' => '操作出现未知错误！']);
 
         }
         $data = Pack::with('mountGroup')->where('uid', $uid)->paginate();
@@ -1245,7 +1241,7 @@ class MemberController extends Controller
             }
         }
         $this->make('redis')->lPush('lanchor_is_sub:' . $duroom['uid'], date('YmdHis', strtotime($duroom['starttime'])));
-        Log::channel('room')->info('buyOneToOne',$duroom->toArray());
+        Log::channel('room')->info('buyOneToOne', $duroom->toArray());
 
         return new JsonResponse(['code' => 1, 'msg' => '预约成功']);
     }
@@ -1453,6 +1449,7 @@ class MemberController extends Controller
 
     /**
      *用户中心 房间游戏
+     * @TODO 优化用户信息
      */
     public function gamelist($type = 1)
     {
@@ -1460,8 +1457,12 @@ class MemberController extends Controller
         // 我参与的
         if ($type == 1) {
             $data = CarGameBetBak::with(['game' => function ($query) {
-                $query->with('gameMasterUser');
-            }])->with('gameRoomUser')
+                $query->with(['gameMasterUser' => function ($q) {
+                    $q->selectRaw('uid,username');
+                }]);
+            }])->with(['gameRoomUser' => function ($q) {
+                $q->selectRaw('uid,username');
+            }])
                 ->where('uid', Auth::id())
                 ->where('dml_flag', '!=', 3)
                 ->orderBy('created', 'desc')
@@ -1528,24 +1529,24 @@ class MemberController extends Controller
             ->sum('points');
         $sum_Gift_mun = $sum_Gift_mun ? $sum_Gift_mun : 0;
         $sum_Points_mun = $sum_Points_mun ? $sum_Points_mun : 0;
-      /*  $twig = clone $this->make('view');
-        $twig->setLoader(new \Twig_Loader_String());
+        /*  $twig = clone $this->make('view');
+          $twig->setLoader(new \Twig_Loader_String());
 
-        $function = new \Twig_SimpleFunction('getUserName', function ($uid) {
-            if (!$uid) return;
-            $user = Users::find($uid);
-            if ($user) {
-                return $user['nickname'] ?: $user['username'];
-            }
-        });
+          $function = new \Twig_SimpleFunction('getUserName', function ($uid) {
+              if (!$uid) return;
+              $user = Users::find($uid);
+              if ($user) {
+                  return $user['nickname'] ?: $user['username'];
+              }
+          });
 
-        $twig->addFunction($function);*/
+          $twig->addFunction($function);*/
 
-       /* $function = new \Twig_SimpleFunction('getGoods', function ($gid) {
-            if (!$gid) return false;
-            return $this->getGoods($gid);
-        });
-        $twig->addFunction($function);*/
+        /* $function = new \Twig_SimpleFunction('getGoods', function ($gid) {
+             if (!$gid) return false;
+             return $this->getGoods($gid);
+         });
+         $twig->addFunction($function);*/
 
 
         //todo author raby
@@ -1580,8 +1581,8 @@ class MemberController extends Controller
         $var['sum_Gift_mun'] = $sum_Gift_mun;
         $var['sum_Points_mun'] = $sum_Points_mun;
 
-        $var =  $this->format_jsoncode($var);
-        return  new JsonResponse(($var));
+        $var = $this->format_jsoncode($var);
+        return new JsonResponse(($var));
 
     }
 
@@ -2194,7 +2195,6 @@ class MemberController extends Controller
         if (!$rid) return JsonResponse::create(['status' => 0, 'msg' => '请求错误']);
         $roomservice = resolve(RoomService::class);
         $result = $roomservice->delOnetoOne($rid);
-
 
 
         return JsonResponse::create($result);

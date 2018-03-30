@@ -26,7 +26,7 @@ Route::group(['prefix' => 'member'], function () {
         // 商城购买
         Route::post('pay', 'MemberController@pay')->name('member_pay');
         // 用户中心 取消装备
-        Route::get('cancelscene', 'MemberController@cancelScene')->name('member_cancelscene');
+        Route::any('cancelscene', 'MemberController@cancelScene')->name('member_cancelscene');
         // 用户中心 充值记录
         Route::get('charge', 'MemberController@charge')->name('member_charge');
         // 用户中心 消费记录
