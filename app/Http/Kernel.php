@@ -18,6 +18,7 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
+        Charge::class,
         FormatResponse::class,
         \Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,

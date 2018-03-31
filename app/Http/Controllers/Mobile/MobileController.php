@@ -11,6 +11,8 @@ use App\Http\Controllers\Controller;
 use App\Models\AppCrash;
 use App\Models\AppVersion;
 use App\Models\AppVersionIOS;
+use App\Models\Domain;
+use App\Models\DomainList;
 use App\Models\Goods;
 use App\Models\ImagesText;
 use App\Models\MobileUseLogs;
@@ -62,6 +64,37 @@ class MobileController extends Controller
             }
         }
         return JsonResponse::create($lists);
+    }
+    public function domains(Request $request){
+        try {
+            $site = $request->get('site',1);
+            $result = DomainList::query()->get();
+            $return = [
+                'status' => 1,
+                'data' => [
+                    'greenips' => [],
+                    'ips' => [],
+                ]
+            ];
+            foreach ($result as $row) {
+                if ($row->green)
+                    $return['data']['greenips'][] = $row->url;
+                else
+                    $return['data']['ips'][] = $row->url;
+            }
+            $return = json_encode($return);
+            Redis::set('domain:list', $return);
+        } catch (\Exception $e) {
+            $return =  json_encode([
+                'status' => 0,
+                'msg' => $e->getTraceAsString(),
+                'data' => [
+                    'greenips' => [],
+                    'ips' => [],
+                ]
+            ]);
+        }
+        return $return;
     }
 
     /**
@@ -164,16 +197,6 @@ class MobileController extends Controller
      */
     public function mountList()
     {
-        $flash_url = Redis::get('flash_url');
-        if ($flash_url) {
-            $url_array = explode(';', $flash_url);
-            $url_first = explode('/', trim($url_array[0]));
-            $count = count($url_first);
-            $flash_url_v = $url_first[$count - 1];
-        } else {
-            $flash_url_v = '';
-        }
-
         $uid = Auth::id();
 //        $page = $this->make("request")->input('page',1);
         $list = Pack::with('mountGroup')->where('uid', $uid)->simplePaginate(self::MOUNT_LIST_PAGE_SIZE);

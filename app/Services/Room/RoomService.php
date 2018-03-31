@@ -7,6 +7,7 @@ use App\Models\RoomOneToMore;
 use App\Models\Users;
 use App\Services\Service;
 use App\Services\User\UserService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -19,28 +20,22 @@ class RoomService extends Service
 
     public $tid = null;
     public $rid = null;
+    public $current_tid = null;
     public $uid = null;
     public $cur_login_uid = null; //当前登陆用户
     public $rtmp_host = null;
     public $rtmp_port = null;
     public $channel_id = null;
     public $finger_id = null;
-
-    public $current_tid = null;
     public $extend_room = [];
 
-
-    public $room_type = []; //一对一，一对多
-    public $one2more_room = [];
-    public $one2one_room = [];
-    public $timecost_room = [];
-    public $password_room = [];
-
-    const TIMECOST = 6;
-    const ONE2ONE = 4;
-    const ONE2MORE = 8;
-
     const BE_KICK_OUT_TIME='beKickOutTime';
+
+    public function __construct(Request $request)
+    {
+        parent::__construct();
+
+    }
     /**
      * 检测，并重新分配socket
      * @param $uid
@@ -58,7 +53,6 @@ class RoomService extends Service
 
         $channelInfo = $this->make('socketServices')->getNextServerAvailable($uid);
         $redis->hset($hktvKey, "channel_id", $channelInfo['id']);
-
         $str = "===addRoom rid===" . $rid . "===uid===" . $uid . "===serverIds size===" . json_encode($channelInfo);
         Log::channel('room')->info($str);
         //todo 后台申请主播有用到
@@ -87,130 +81,20 @@ class RoomService extends Service
         $room = $redis->hgetAll($key);
         $uid = $redis->hget($roomids, $rid);
         $user = resolve(UserService::class)->getUserByUid($uid);
-        $view_user = resolve(UserService::class)->getUserByUid($view_uid);
         $room['user'] = $user;
-        $room['room_status'] = $this->getRoomStatus($rid);
-
-        $this->getCurrentRoomStatus();
-
+        $room['room_status'] = [//todo 1站加7
+            1 => $redis->hgetall("hroom_status:$rid:1"),
+            2 => $redis->hgetall("hroom_status:$rid:2"),
+            4 => $redis->hgetall("hroom_status:$rid:4"),
+            6 => $redis->hgetall("hroom_status:$rid:6"),
+        ];
         $timecost=isset($room['room_status'][6]['timecost'])?$room['room_status'][6]['timecost']:0;
-        $discount=$redis->hget('hgroups:special:' . $view_user['vip'], 'discount')?:10;
+        $discount=$redis->hget('hgroups:special:' . $user['vip'], 'discount')?:10;
         $room['discount'] = [
             'discount' => $discount,
             'discountValue' => ceil($timecost*$discount/10)
         ];
         return $room;
-    }
-
-    public function getRoomStatus($rid=null){
-        $redis = $this->make('redis');
-        return [//todo 1站加7
-            1 => $redis->hgetall("hroom_status:$rid:1"),
-            2 => $redis->hgetall("hroom_status:$rid:2"),
-            4 => $redis->hgetall("hroom_status:$rid:4"),
-            6 => Redis::hgetall("hroom_status:$rid:6"),
-        ];
-    }
-
-    public function checkOne2One(){
-        return $this->current_tid==4;
-    }
-    public function checkTimecost()
-    {
-        return $this->current_tid==6;
-    }
-    public function checkOne2More(){
-        return $this->current_tid==7;
-    }
-    public function getTimecost(){
-       if(!(
-           Redis::exists("hroom_status:" . $this->rid . ":6")
-            && Redis::hget("hroom_status:" . $this->rid . ":6", "status") == '1'
-            && Redis::hget("htimecost:" . $this->rid, "timecost_status"))
-       ) return [];
-
-        $this->extend_room = Redis::hgetall("hroom_status:" . $this->rid . ":6");
-        return $this->extend_room;
-    }
-
-    public function checkPasswdRoom() : bool
-    {
-        return Redis::exists("hroom_status:" . $this->rid . ":2")
-            && Redis::hget("hroom_status:" . $this->rid . ":2", "status") == '1'
-            && trim(Redis::hget("hroom_status:" . $this->rid . ":2", "pwd")) != '';
-    }
-
-    public function getOne2OneStart() : array
-    {
-        if (!(Redis::exists("hroom_status:" . $this->rid . ":4")
-            && Redis::hget("hroom_status:" . $this->rid . ":4", "status") == '1')) return [];
-
-        $ordMap = Redis::hgetall("hroom_duration:" . $this->rid . ":4");
-        if ($ordMap) {
-            //Log::channel('room')->info('getCurrentRoomStatus rid'.$this->rid.' uid'.$this->cur_login_uid.'hroom_duration:'.count($ordMap),$logPath);
-            foreach ($ordMap as $k => $v) {
-                $ord = json_decode($v, true);
-                if (!$ord || $ord['status'] != 0) continue;
-
-                $starttime = strtotime($ord['starttime']);
-                $endtime = strtotime($ord['starttime']) + $ord['duration'];
-                if ($this->doing($starttime,$endtime)) {
-                    $this->extend_room = $ord;
-                    Log::channel('room')->info('getCurrentRoomStatus rid' . $this->rid . ' uid' . $this->cur_login_uid . 'hroom_duration:' . $v);
-                    return $ord;
-                }
-            }
-        }
-        return [];
-    }
-
-    public function getPwdStart(){
-        $rs =  Redis::exists("hroom_status:" . $this->rid . ":2")
-            && Redis::hget("hroom_status:" . $this->rid . ":2", "status") == '1'
-            && trim(Redis::hget("hroom_status:" . $this->rid . ":2", "pwd")) != '';
-
-        return $rs;
-    }
-    public function getTimecostPwdStart(){
-        if(
-            Redis::exists("hroom_status:" . $this->rid . ":6")
-            && Redis::hget("hroom_status:" . $this->rid . ":6", "status") == '1'
-            && Redis::hget("htimecost:" . $this->rid, "timecost_status")
-            && Redis::hget("hroom_status:" . $this->rid . ":2", "status") == '1'
-            && trim(Redis::hget("hroom_status:" . $this->rid . ":2", "pwd")) != ''
-        ){
-            $this->extend_room = Redis::hgetall("hroom_status:" . $this->rid . ":6");
-            return $this->extend_room;
-        }
-        return [];
-    }
-    public function doing($starttime,$endtime){
-        return time() >= $starttime && time() <= $endtime;
-    }
-    public function getExtendRoom(){
-        return $this->extend_room;
-    }
-
-    public function getOne2MoreStart(){
-        if(  Redis::exists("hroom_status:" . $this->rid . ":7")
-            && Redis::hget("hroom_status:" . $this->rid . ":7", "status") == '1'
-        ){
-            $ordMap = Redis::sMembers("hroom_whitelist_key:" . $this->rid);
-            if ($ordMap) {
-                foreach ($ordMap as $k => $v) {
-                    $ord = Redis::hGetAll('hroom_whitelist:'.$this->rid.':'.$v);
-                    if (!$ord) continue;
-
-                    $starttime = strtotime($ord['starttime']);
-                    $endtime = strtotime($ord['endtime']);
-                    if (time() >= $starttime && time() <= $endtime) {
-                        $this->extend_room = $ord;
-                        return $v;
-                    }
-                }
-            }
-        }
-        return [];
     }
 
     /**
@@ -222,23 +106,31 @@ class RoomService extends Service
     {
         /** @var \Redis $redis */
         $redis = $this->make('redis');
+        $logPath = BASEDIR . '/app/logs/room'.date('Y-m').'.log';
 
         //一对一
-        if (!empty($this->getOne2OneStart())) { return $this->current_tid = 4;
+        if ($one2one = resolve('one2one')->getData()) {
+            $this->extend_room = $one2one;
+            return $this->current_tid = 4;
         }
         //一对多
-        if (!empty($this->getOne2MoreStart())) {
-            if(!empty($this->extend_room)) return $this->current_tid = 8;
+        if ($one2more = resolve('one2more')->getData()) {
+            $this->extend_room = $one2more;
+            $this->make('systemServer')->logResult('getCurrentRoomStatus rid' . $this->rid . ' uid' . $this->cur_login_uid . 'hroom_whitelist:'.$this->rid.':'.$v, $logPath);
+            return $this->current_tid = 8;
         }
 
-        //时长房密码
-        if (!empty($this->getTimecostPwdStart())) { return $this->current_tid=7;}
-
-        //时长
-        if (!empty($this->getTimecost())) { return $this->current_tid=6; }
-
+        //时长房
+        if ($redis->exists("hroom_status:" . $this->rid . ":6") && $redis->hget("hroom_status:" . $this->rid . ":6", "status") == '1' && trim($redis->hget("hroom_status:" . $this->rid . ":2", "pwd")) != '') {
+            if ($redis->hget("htimecost:" . $this->rid, "timecost_status")) {
+                if ($redis->exists("hroom_status:" . $this->rid . ":2") && $redis->hget("hroom_status:" . $this->rid . ":2", "status") == '1' && trim($redis->hget("hroom_status:" . $this->rid . ":2", "pwd")) != ''){
+                    return $this->current_tid = 7;
+                }
+                return $this->current_tid = 6;
+            }
+        }
         //密码房
-        if (!empty($this->getPwdStart())){ return $this->current_tid = 2;}
+        if ($redis->exists("hroom_status:" . $this->rid . ":2") && $redis->hget("hroom_status:" . $this->rid . ":2", "status") == '1' && trim($redis->hget("hroom_status:" . $this->rid . ":2", "pwd")) != '') return $this->current_tid = 2;
 
         return $this->current_tid = 1;
     }
@@ -250,16 +142,7 @@ class RoomService extends Service
      */
     public function whiteList()
     {
-        $ord = $this->extend_room;
-        if(isset($ord['uids']) && !empty(trim($ord['uids']))){
-            $uidArr = explode(',',trim($ord['uids']));
-            if(in_array($this->cur_login_uid,$uidArr)) return true;
-        }
-        if(isset($ord['tickets']) && !empty(trim($ord['tickets']))) {
-            $uidArr2 = explode(',',$ord['tickets']);//添加补票入口判断
-            if(in_array($this->cur_login_uid,$uidArr2)) return true;
-        }
-        return false;
+        return resolve('one2more')->checkUserBuyRunning($this->cur_login_uid);
     }
 
     /**
@@ -514,6 +397,26 @@ class RoomService extends Service
         Log::channel('room')->info('OneToMore'.$duroom->toJson());
         return ['status' => 1, 'msg' => '添加成功'];
 
+    }
+
+    /**
+     * 写充值的 日志 TODO 优化到充值服务中去
+     *
+     * @param string $word
+     * @param string $recodeurl
+     */
+    protected function logResult($word = '', $recodeurl = '')
+    {
+        if ($recodeurl) {
+            $recordLog = $recodeurl;
+        } else {
+            $recordLog = $this->container->config['config.PAY_LOG_FILE'];
+        }
+        $fp = fopen($recordLog, "a");
+        flock($fp, LOCK_EX);
+        fwrite($fp, "执行日期：" . date("Ymd H:i:s", time()) . "\n" . $word . "\n");
+        flock($fp, LOCK_UN);
+        fclose($fp);
     }
 
     /**

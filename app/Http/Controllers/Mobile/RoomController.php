@@ -530,45 +530,36 @@ class RoomController extends Controller
         $return = [];
         $redis = $this->make('redis');
         $now = time();
-        $roomSer = resolve('roomService');
-        $temp = $roomSer->getRoom($rid,$this->userInfo['uid']);
+        $one2more = resolve('one2more');
 
         /** 判断房间一对多 */
-        if ($roomSer->checkOne2More()) {
-            $room =  $roomSer->getExtendRoom();
-            if($room){
-                $return['onetomore'] = $room;
-                $return['onetomore']['id'] = $room['id'];
-                $return['onetomore']['access'] = 0;
-                if (Auth::id()) {
-                    /** 判断用户是否购买 */
-                    $uids = array_merge(explode(',', $room['uids']), explode(',', isset($room['tickets']) ? $room['tickets'] : ''));
-                    $uids = array_filter($uids);
-                    if (in_array(Auth::id(), $uids)) {
-                        $return['onetomore']['access'] = 1;
-                    }
-                }
+        if ($room = $one2more->getRunningData()) {
+            $return['onetomore'] = $room;
+            $return['onetomore']['access'] = 0;
+
+            if ($one2more->checkUserBuyRunning(Auth::id())) {
+                /** 判断用户是否购买 */
+                $return['onetomore']['access'] = 1;
             }
         }
 
         /** 一对一 */
-        if ($roomSer->checkOne2One()) {
-            $room =  $roomSer->getExtendRoom();
-            if($room){
-                $return['ord'] = $room;
-                $return['ord']['access'] = Auth::id() == $room['reuid'] ? 1 : 0;
-            }
+        $one2one = resolve('one2one');
+        if ($room = $one2one->getRunningData()) {
+            $return['ord'] = $room;
+            $return['ord']['access'] = Auth::id() == $room['reuid'] ? 1 : 0;
         }
         /** 时长房 */
-        if ($roomSer->checkTimecost()) {
-            $room =  $roomSer->getExtendRoom();
-            $discount = $redis->hget('hgroups:special:' . $this->userInfo['vip'], 'discount') ?: 10;
-            $timecost = $room['timecost'] ?? 0;
-            $return['timecost'] = [
-                'price' => $timecost,
-                'discount' => $discount,
-                'discountValue' => ceil($timecost * $discount / 10)
-            ];
+        if ($redis->exists("hroom_status:" . $rid . ":6") && $redis->hget("hroom_status:" . $rid . ":6", "status") == '1') {
+            if ($redis->hget("htimecost:" . $rid, "timecost_status")) {
+                $timecost = $redis->hget("hroom_status:" . $rid . ":6", "timecost") ?: 0;
+                $discount = $redis->hget('hgroups:special:' . $this->userInfo['vip'], 'discount') ?: 10;
+                $return['timecost'] = [
+                    'price' => $timecost,
+                    'discount' => $discount,
+                    'discountValue' => ceil($timecost * $discount / 10)
+                ];
+            }
         }
         return JsonResponse::create($return);
     }
