@@ -25,8 +25,8 @@ class RoomServiceProvider extends ServiceProvider
     public function register()
     {
         //roomService
-        $this->app->singleton('roomService', function () {
-            return new RoomService();
+        $this->app->singleton('roomService', function ($app) {
+            return new RoomService($app['request']);
         });
         $this->app->singleton(RoomService::class);
     }

@@ -164,16 +164,6 @@ class MobileController extends Controller
      */
     public function mountList()
     {
-        $flash_url = Redis::get('flash_url');
-        if ($flash_url) {
-            $url_array = explode(';', $flash_url);
-            $url_first = explode('/', trim($url_array[0]));
-            $count = count($url_first);
-            $flash_url_v = $url_first[$count - 1];
-        } else {
-            $flash_url_v = '';
-        }
-
         $uid = Auth::id();
 //        $page = $this->make("request")->input('page',1);
         $list = Pack::with('mountGroup')->where('uid', $uid)->simplePaginate(self::MOUNT_LIST_PAGE_SIZE);

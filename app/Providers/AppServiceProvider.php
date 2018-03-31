@@ -8,6 +8,8 @@ use App\Services\Charge\ChargeGroupService;
 use App\Services\Charge\ChargeService;
 use App\Services\Message\MessageService;
 use App\Services\Mobile\MobileService;
+use App\Services\Room\One2MoreRoomService;
+use App\Services\Room\One2OneRoomService;
 use App\Services\Room\SocketService;
 use App\Services\Safe\SafeService;
 use App\Services\Site\SiteService;
@@ -53,6 +55,12 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton('mobile', function () {
             return new MobileService();
+        });
+        $this->app->singleton('one2one', function ($app) {
+            return new One2OneRoomService($app['request']);
+        });
+        $this->app->singleton('one2more', function ($app) {
+            return new One2MoreRoomService($app['request']);
         });
         $this->app->singleton('socketService', function () {
             return new SocketService();
