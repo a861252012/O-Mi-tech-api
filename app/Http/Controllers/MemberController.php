@@ -1024,22 +1024,25 @@ class MemberController extends Controller
     public function reservation(Request $request)
     {
         $type = $request->get('type', 1);
-        $rooms = ['status' => 1];
-        $rooms['type'] = $type;
-        $rooms['data'] = [];
+        $rooms =[];
+        $recommend =[];
+        $data= [
+            'rooms'=>&$rooms,
+            'recommend'=>&$recommend,
+        ];
         $userServer = resolve(UserService::class);
         switch ($type) {
             case 2:
-                $data = UserBuyOneToMore::where('uid', Auth::id())->orderBy('starttime', 'DESC')->paginate();
+                $rooms = UserBuyOneToMore::where('uid', Auth::id())->orderBy('starttime', 'DESC')->paginate();
                 break;
             case 1:
             default:
-                $data = RoomDuration::where('reuid', Auth::id())
+            $rooms = RoomDuration::where('reuid', Auth::id())
                     ->where('starttime', '>', time() . '-duration')
                     ->orderBy('starttime', 'DESC')
-                    ->paginate();;
+                    ->paginate();
         }
-        $items = $data->getCollection();
+        $items = $rooms->getCollection();
         foreach ($items as &$item) {
             $rid = $type == 2 ? $item->rid : $item->uid;
             $userinfo = $userServer->getUserByUid($rid);
@@ -1052,41 +1055,23 @@ class MemberController extends Controller
             $item['now'] = date('Y-m-d H:i:s');
             $item['url'] = '/' . $userinfo['uid'];
         }
-        $thispage = $this->make("request")->get('page') ?: 1;
+        $page = $request->get('page') ?: 1;
         //我的预约推荐是从redis中取数据的，先全部取出数据，做排序
-        $roomlists = $this->getReservation(Auth::id());
-        $roomlist = array_slice($roomlists, ($thispage - 1) * 6, 6);
-        $Count = count($roomlists);
-        $rooms['pagination'] = [
-            'page' => $thispage,
-            'count' => $Count,
-            'pages' => ceil($Count / 6),
-        ];
-        $rooms['room'] = [];
+        $recommend = collect($this->getReservation(Auth::id()))->forPage($page,6);
 
-        $redis = $this->make('redis');
-        foreach ($roomlist as $keys => $value) {
+        $redis = resolve('redis');
+        $image_server = SiteSer::config('img_host') . '/';
+        foreach ($recommend as $keys => &$value) {
             $userinfo = $userServer->getUserByUid($value['uid']);
-            $merge = array_merge($value, $userinfo);
-            $merge['duration'] = ceil($merge['duration'] / 60);
-            $rooms['room'][$keys] = $merge;
-            $rooms['room'][$keys]['datenu'] = date('YmdHis', strtotime($value['starttime']));
-            $rooms['room'][$keys]['points'] = $value['points'];
-            $rooms['room'][$keys]['roomid'] = $value['id'];
-            $rooms['room'][$keys]['headimg'] = $userinfo['headimg'];
+            $value = array_merge($value, $userinfo->get(['nickname']));//todo 字段过滤
+            $value['duration'] = ceil($value['duration'] / 60);
+            $value['datenu'] = date('YmdHis', strtotime($value['starttime']));
+            $value['roomid'] = $value['id'];
+            $value['headimg'] = $userinfo['headimg'];
             $cover = $redis->get('shower:cover:version:' . $userinfo['uid']);
-            $image_server = SiteSer::config('img_host') . '/';
-            $rooms['room'][$keys]['cover'] = $cover ? $image_server . $cover : false;
+            $value['cover'] = $cover ? $image_server . $cover : false;
         }
-        $rooms['uri'] = [];
-        $uriParammeters = $request->all();
-        foreach ($uriParammeters as $p => $v) {
-            if (strstr($p, '?')) continue;
-            if (!empty($v)) {
-                $rooms['uri'][$p] = $v;
-            }
-        }
-        return JsonResponse::create($rooms);
+        return JsonResponse::create(['data'=>$data]);
     }
 
     /**
@@ -1104,7 +1089,7 @@ class MemberController extends Controller
         array_push($user_key, 'hroom_duration:' . $uid . ':4');
         $key = 'hroom_duration:*';
 //        $keys = array();
-        $keys = $this->make('redis')->getKeys($key);
+        $keys = Redis::keys($key);
         if ($keys == false) {
             $keys = [];
         }
@@ -1112,7 +1097,7 @@ class MemberController extends Controller
         $room_reservation = [];
         foreach ($uids['reservation'] as $value) {
             array_push($user_key, 'hroom_duration:' . $value . ':4');
-            $roomlist = $this->make('redis')->hGetAll('hroom_duration:' . $value . ':4');
+            $roomlist = Redis::hGetAll('hroom_duration:' . $value . ':4');
             foreach ($roomlist as $item) {
                 $room = json_decode($item, true);
                 if ($room['status'] == 0 && $room['reuid'] == 0 && $room['uid'] != $uid && strtotime($room['starttime']) > time()) {
@@ -1127,7 +1112,7 @@ class MemberController extends Controller
         $room_attens = [];
         foreach ($uids['attens'] as $value) {
             array_push($user_key, 'hroom_duration:' . $value . ':4');
-            $roomlist = $this->make('redis')->hGetAll('hroom_duration:' . $value . ':4');
+            $roomlist = Redis::hGetAll('hroom_duration:' . $value . ':4');
             foreach ($roomlist as $item) {
                 $room = json_decode($item, true);
                 if ($room['status'] == 0 && $room['reuid'] == 0 && $room['uid'] != $uid && strtotime($room['starttime']) > time()) {
@@ -1143,7 +1128,7 @@ class MemberController extends Controller
         $room_list = [];
         foreach ($keys as $value) {
             array_push($user_key, $value);
-            $roomlist = $this->make('redis')->hGetAll($value);
+            $roomlist = Redis::hGetAll($value);
             foreach ($roomlist as $item) {
                 $room = json_decode($item, true);
                 if ($room['status'] == 0 && $room['reuid'] == 0 && $room['uid'] != $uid && strtotime($room['starttime']) > time()) {
@@ -1197,7 +1182,7 @@ class MemberController extends Controller
         $this->set_durationredis($duroom);
         //记录一个标志位，在我的预约列表查询中需要优先显示查询已经预约过的主播，已经预约过的主播的ID会写到这个redis中类似关注一样的
         if (!($this->checkUserAttensExists(Auth::id(), $duroom['uid'], true, true))) {
-            $this->make('redis')->zadd('zuser_reservation:' . Auth::id(), time(), $duroom['uid']);
+            Redis::zadd('zuser_reservation:' . Auth::id(), time(), $duroom['uid']);
         }
         Users::where('uid', Auth::id())->update(['points' => (Auth::user()->points - $duroom['points']), 'rich' => (Auth::user()->rich + $duroom['points'])]);
         resolve(UserService::class)->getUserReset(Auth::id());// 更新redis TODO 好屌
@@ -1215,34 +1200,34 @@ class MemberController extends Controller
             'points' => $duroom['points'],
         ]);
         // 用户增加预约排行榜的排名
-        $this->make('redis')->zIncrBy('zrank_appoint_month' . date('Ym'), 1, $duroom['uid']);
+        Redis::zIncrBy('zrank_appoint_month' . date('Ym'), 1, $duroom['uid']);
         //修改用户日，周，月排行榜数据
         //zrank_rich_history: 用户历史消费    zrank_rich_week ：用户周消费   zrank_rich_day ：用户日消费  zrank_rich_month ：用户月消费
         $expire_day = strtotime(date('Y-m-d 00:00:00', strtotime('next day'))) - time();
         $expire_week = strtotime(date('Y-m-d 00:00:00', strtotime('next week'))) - time();
         $zrank_user = ['zrank_rich_history', 'zrank_rich_week', 'zrank_rich_day', 'zrank_rich_month:' . date('Ym')];
         foreach ($zrank_user as $value) {
-            $this->make('redis')->zIncrBy($value, $duroom['points'], Auth::id());
+            Redis::zIncrBy($value, $duroom['points'], Auth::id());
             if ('zrank_rich_day' == $value) {
-                $this->make('redis')->expire('zrank_rich_day', $expire_day);
+                Redis::expire('zrank_rich_day', $expire_day);
             }
             if ('zrank_rich_week' == $value) {
-                $this->make('redis')->expire('zrank_rich_week', $expire_week);
+                Redis::expire('zrank_rich_week', $expire_week);
             }
         }
         //修改主播日，周，月排行榜数据
         //zrank_pop_history ：主播历史消费   zrank_pop_month  ：主播周消费 zrank_pop_week ：主播日消费 zrank_pop_day ：主播月消费
         $zrank_pop = ['zrank_pop_history', 'zrank_pop_month:' . date('Ym'), 'zrank_pop_week', 'zrank_pop_day'];
         foreach ($zrank_pop as $value) {
-            $this->make('redis')->zIncrBy($value, $duroom['points'], $duroom['uid']);
+            Redis::zIncrBy($value, $duroom['points'], $duroom['uid']);
             if ('zrank_pop_day' == $value) {
-                $this->make('redis')->expire('zrank_pop_day', $expire_day);
+                Redis::expire('zrank_pop_day', $expire_day);
             }
             if ('zrank_pop_week' == $value) {
-                $this->make('redis')->expire('zrank_pop_week', $expire_week);
+                Redis::expire('zrank_pop_week', $expire_week);
             }
         }
-        $this->make('redis')->lPush('lanchor_is_sub:' . $duroom['uid'], date('YmdHis', strtotime($duroom['starttime'])));
+        Redis::lPush('lanchor_is_sub:' . $duroom['uid'], date('YmdHis', strtotime($duroom['starttime'])));
         Log::channel('room')->info('buyOneToOne', $duroom->toArray());
 
         return new JsonResponse(['code' => 1, 'msg' => '预约成功']);
@@ -1359,9 +1344,9 @@ class MemberController extends Controller
      */
     public function anchor()
     {
-        $user = $this->userInfo;
-        if (!$user['uid'] || $user['roled'] != 3) {
-            throw $this->createAccessDeniedException();
+        $user = Auth::user();
+        if ($user['roled'] != 3) {
+            return JsonResponse::create(['status' => 0]);
         }
 
         //更新相册
