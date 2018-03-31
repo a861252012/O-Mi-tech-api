@@ -13,7 +13,7 @@ Route::post('/login', 'Mobile\MobileController@login')->name('m_login')->middlew
 //登录验证码
 Route::get('/login/captcha', 'Mobile\MobileController@loginCaptcha')->middleware('mobile.session');
 
-Route::get('/m/room/conf', ['name' => 'm_room_conf', 'uses' => 'Mobile\RoomController@getRoomConf']);
+Route::get('/room/conf', ['name' => 'm_room_conf', 'uses' => 'Mobile\RoomController@getRoomConf']);
 
 //app版本ｈ
 Route::get('/app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
@@ -30,7 +30,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     //注册
     Route::get('register', ['name' => 'm_register', 'uses' => 'Mobile\MobileController@register']);
     //轮播图获取
-    Route::get('/m/sliderlist', ['name' => 'm_sliderlist', 'uses' => 'Mobile\MobileController@sliderList']);
+    Route::get('sliderlist', ['name' => 'm_sliderlist', 'uses' => 'Mobile\MobileController@sliderList']);
     //活动列表
     Route::get('activitylist', ['name' => 'm_activitylist', 'uses' => 'Mobile\MobileController@activityList']);
     //活动详情
@@ -61,7 +61,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     //预约列表 type=1 一对一，type=2 一对多,type=3 所有
     Route::get('room/reservation/{type}', ['name' => 'm_userroomreservation', 'uses' => 'Mobile\RoomController@listReservation']);
     //隐身
-    Route::get('user/stealth[/{status:\d+}]', ['name' => 'm_stealth', 'uses' => 'Mobile\MobileController@stealth']);
+    Route::any('user/stealth/{status}', 'Mobile\MobileController@stealth')->where('status','[0,1]')->name('m_stealths');
     //购买一对一
     Route::post('room/buyOneToOne', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@buyOneToOne']);
 

@@ -256,14 +256,12 @@ class MobileController extends Controller
      */
     public function stealth($status)
     {
-        if (!in_array($status, ['0', '1'])) return JsonResponse::create(['status' => 0, 'message' => '参数错误']);
-
         $uid = Auth::id();
         if (!$uid) return JsonResponse::create(['status' => 0, 'message' => '用户错误']);
         $userServer = resolve(UserService::class);
         $user = $userServer->getUserByUid($uid);
         //判断用户是否有隐身权限
-        if (!$userServer->getUserHiddenPermission($user)) return JsonResponse::create(['status' => 0, 'message' => '没有权限!']);
+        if (!$userServer->getUserHiddenPermission($user)) return JsonResponse::create(['status' => 0, 'msg' => '没有权限!']);
 
         //更新数据库隐身状态
         Users::where('uid', $uid)->update(['hidden' => $status]);

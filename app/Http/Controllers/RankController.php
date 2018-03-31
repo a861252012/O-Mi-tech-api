@@ -39,15 +39,6 @@ class RankController extends Controller
     const  ZRANK_APPOINT_MONTH = 'zrank_appoint_month';
     const RANK_PAGE_SIZE = 15;
 
-    /**
-     * 排行榜页面
-     *
-     * @return \Core\Response
-     */
-    function index()
-    {
-        return $this->render('Rank/index', array());
-    }
 
     function rankData()
     {

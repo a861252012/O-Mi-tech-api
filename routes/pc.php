@@ -98,8 +98,7 @@ Route::get('/activity/{action}', ['name' => 'activity_detail', 'uses' => 'Activi
 // PageController 招募页面
 Route::get('/join', ['name' => 'join', 'uses' => 'PageController@join']);
 Route::get('/cooperation', ['name' => 'join', 'uses' => 'PageController@cooperation']);
-// 排行榜页面
-Route::get('/ranking', ['name' => 'rank_index', 'uses' => 'RankController@index']);
+
 //排行榜接口
 Route::get('/rank_data', ['name' => 'rank_data', 'uses' => 'RankController@rankData']);
 // 关于 帮助 投诉
@@ -228,7 +227,6 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     // 用户中心 代理数据
     Route::match(['POST', 'GET'], '/member/agents', ['name' => 'member_agents', 'uses' => 'MemberController@agents']);
-
 
 
     //上传头像
@@ -383,7 +381,7 @@ Route::group(['prefix' => 'charge', 'middleware' => ['charge']], function () {
     Route::match(['POST', 'GET'], 'notice', ['name' => 'charge_notice', 'uses' => 'ChargeController@notice'])->name('charge_notice');
     Route::match(['POST', 'GET'], 'checkKeepVip', ['name' => 'checkKeepVip', 'uses' => 'ChargeController@checkKeepVip']);
     Route::match(['POST', 'GET'], 'callFailOrder', ['name' => 'callFailOrder', 'uses' => 'ChargeController@callFailOrder']);
-    Route::post( 'moniCharge', ['name' => 'charge', 'uses' => 'ChargeController@moniCharge']);
+    Route::post('moniCharge', ['name' => 'charge', 'uses' => 'ChargeController@moniCharge']);
     Route::match(['POST', 'GET'], 'moniHandler', ['name' => 'moniHandler', 'uses' => 'ChargeController@moniHandler']);
     Route::post('del', ['name' => 'charge', 'uses' => 'ChargeController@del']);
 });
