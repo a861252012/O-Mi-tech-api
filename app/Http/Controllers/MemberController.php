@@ -143,7 +143,7 @@ class MemberController extends Controller
         ],//主播才有
         [
             'role' => 0,
-            'action' => 'msg',
+            'action' => 'message',
             'name' => '消息',
         ],
         [

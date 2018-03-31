@@ -17,7 +17,7 @@ Route::group(['prefix' => 'member'], function () {
         Route::get('index', 'MemberController@index')->name('member_index');
         Route::post('mail/verify/send', 'PasswordController@sendVerifyMail')->middleware('throttle:5:1')->name('mail_verify_send');
         // 用户中心消息  type 是可有可无的 必须放到最后
-        Route::get('msg/{type?}', 'MemberController@msglist')->where('type', '[0-9]+')->name('member_msglist');
+        Route::get('message/{type?}', 'MemberController@msglist')->where('type', '[0-9]+')->name('member_msglist');
         Route::post('/member/domsg', ['uses' => 'MemberController@domsg']);
         //购买修改昵称
         Route::post('buyModifyNickname', 'MemberController@buyModifyNickname')->name('buyModifyNickname');
