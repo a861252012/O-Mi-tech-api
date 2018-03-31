@@ -1,11 +1,12 @@
 <?php
 
-Route::group(['middleware' => ['login_auth']], function () {
-
-});
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
-
 Route::get('/captcha', 'Controller@captcha');
+
+Route::group(['middleware' => ['login_auth']], function () {
+    //上传相册
+    Route::post('fupload', 'MemberController@flashUpload')->name('member_fupload');
+});
 
 /** 用户中心路由组 */
 Route::group(['prefix' => 'member'], function () {
@@ -16,7 +17,8 @@ Route::group(['prefix' => 'member'], function () {
         Route::get('index', 'MemberController@index')->name('member_index');
         Route::post('mail/verify/send', 'PasswordController@sendVerifyMail')->middleware('throttle:5:1')->name('mail_verify_send');
         // 用户中心消息  type 是可有可无的 必须放到最后
-        Route::get('msg/{type?}', 'MemberController@msglist')->where('type', '[0-9]+')->name('member_msglist');
+        Route::get('message/{type?}', 'MemberController@msglist')->where('type', '[0-9]+')->name('member_msglist');
+        Route::post('/member/domsg', ['uses' => 'MemberController@domsg']);
         //购买修改昵称
         Route::post('buyModifyNickname', 'MemberController@buyModifyNickname')->name('buyModifyNickname');
         // 用户中心 我的关注
@@ -26,7 +28,7 @@ Route::group(['prefix' => 'member'], function () {
         // 商城购买
         Route::post('pay', 'MemberController@pay')->name('member_pay');
         // 用户中心 取消装备
-        Route::get('cancelscene', 'MemberController@cancelScene')->name('member_cancelscene');
+        Route::any('cancelscene', 'MemberController@cancelScene')->name('member_cancelscene');
         // 用户中心 充值记录
         Route::get('charge', 'MemberController@charge')->name('member_charge');
         // 用户中心 消费记录
@@ -216,7 +218,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     // 用户中心 礼物统计
     Route::get('/member/count', ['name' => 'member_count', 'uses' => 'MemberController@count']);
-
+    Route::get('/member/gift', ['name' => 'member_gift', 'uses' => 'MemberController@gift']);
 
     // 用户中心 房间设置
     Route::match(['POST', 'GET'], '/member/roomset', ['name' => 'member_roomset', 'uses' => 'MemberController@roomset']);
@@ -227,8 +229,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     // 用户中心 代理数据
     Route::match(['POST', 'GET'], '/member/agents', ['name' => 'member_agents', 'uses' => 'MemberController@agents']);
 
-    //上传相册
-    Route::match(['POST', 'GET'], '/fupload', ['name' => 'member_fupload', 'uses' => 'MemberController@flashUpload']);
+
 
     //上传头像
     Route::match(['POST', 'GET'], '/upload', ['name' => 'member_upload', 'uses' => 'MemberController@avatarUpload']);
@@ -317,7 +318,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::post('/member/edituserinfo', ['name' => 'member_edituserinfo', 'uses' => 'MemberController@editUserInfo']);
     // 用户中心 预约房间设置
 
-    Route::post('/member/domsg', ['uses' => 'MemberController@domsg']);
+
     // 用户中心 密码房间设置
     Route::post('/member/roomSetPwd', ['name' => 'member_roomSetPwd', 'uses' => 'MemberController@roomSetPwd']);
     // 用户中心 体现

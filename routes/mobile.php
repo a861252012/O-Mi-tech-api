@@ -14,15 +14,6 @@ Route::post('/login', 'Mobile\MobileController@login')->name('m_login')->middlew
 Route::get('/login/captcha', 'Mobile\MobileController@loginCaptcha')->middleware('mobile.session');
 
 Route::get('/m/room/conf', ['name' => 'm_room_conf', 'uses' => 'Mobile\RoomController@getRoomConf']);
-Route::get('captcha/test',function (\Illuminate\Http\Request $request){
-//    Session::setId($request->get('cid'));
-//    Session::start();
-//    \Illuminate\Support\Facades\Session::getHandler()->read()
-    $phrase =$request->get('captcha');
-    var_dump(session()->getId());
-    var_dump(Session::get('captcha'));
-    var_dump(\Mews\Captcha\Facades\Captcha::check($phrase));
-})->middleware('mobile.session');
 
 //app版本ｈ
 Route::get('/app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);

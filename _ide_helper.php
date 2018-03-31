@@ -1,7 +1,7 @@
 <?php
 /**
  * A helper file for Laravel 5, to provide autocomplete information to your IDE
- * Generated for Laravel 5.6.12 on 2018-03-26 15:55:27.
+ * Generated for Laravel 5.6.12 on 2018-03-30 15:57:38.
  *
  * This file should not be included in your code, only analyzed by your IDE!
  *
@@ -12592,17 +12592,7 @@ namespace App\Facades {
          */ 
         public static function isValid()
         {
-            return \App\Services\SiteService::isValid();
-        }
-        
-        /**
-         * 
-         *
-         * @static 
-         */ 
-        public static function booted()
-        {
-            return \App\Services\SiteService::booted();
+            return \App\Services\Site\SiteService::isValid();
         }
         
         /**
@@ -12612,7 +12602,17 @@ namespace App\Facades {
          */ 
         public static function fromRequest($request)
         {
-            return \App\Services\SiteService::fromRequest($request);
+            return \App\Services\Site\SiteService::fromRequest($request);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function fromID($id)
+        {
+            return \App\Services\Site\SiteService::fromID($id);
         }
         
         /**
@@ -12622,7 +12622,7 @@ namespace App\Facades {
          */ 
         public static function domain()
         {
-            return \App\Services\SiteService::domain();
+            return \App\Services\Site\SiteService::domain();
         }
         
         /**
@@ -12632,19 +12632,20 @@ namespace App\Facades {
          */ 
         public static function siteId()
         {
-            return \App\Services\SiteService::siteId();
+            return \App\Services\Site\SiteService::siteId();
         }
         
         /**
-         * 
+         * 获取缓存，懒加载机制
          *
-         * @param null $name
-         * @return \App\Services\Collection|mixed 
+         * @param null $name 如果没有name会
+         * @param bool $noCache 跳过本地缓存
+         * @return \Config 
          * @static 
          */ 
-        public static function config($name = null)
+        public static function config($name = null, $noCache = true)
         {
-            return \App\Services\SiteService::config($name);
+            return \App\Services\Site\SiteService::config($name, $noCache);
         }
         
         /**
@@ -12654,7 +12655,7 @@ namespace App\Facades {
          */ 
         public static function checkDomainValidity($domain)
         {
-            return \App\Services\SiteService::checkDomainValidity($domain);
+            return \App\Services\Site\SiteService::checkDomainValidity($domain);
         }
         
         /**
@@ -12662,9 +12663,9 @@ namespace App\Facades {
          *
          * @static 
          */ 
-        public static function checkConfigValidity($siteId)
+        public static function checkConfigValidity()
         {
-            return \App\Services\SiteService::checkConfigValidity($siteId);
+            return \App\Services\Site\SiteService::checkConfigValidity();
         }
         
         /**
@@ -12674,7 +12675,7 @@ namespace App\Facades {
          */ 
         public static function shareConfigWithViews()
         {
-            return \App\Services\SiteService::shareConfigWithViews();
+            return \App\Services\Site\SiteService::shareConfigWithViews();
         }
         
         /**
@@ -12685,17 +12686,7 @@ namespace App\Facades {
          */ 
         public static function getDomain()
         {
-            return \App\Services\SiteService::getDomain();
-        }
-        
-        /**
-         * 
-         *
-         * @static 
-         */ 
-        public static function getMsg()
-        {
-            return \App\Services\SiteService::getMsg();
+            return \App\Services\Site\SiteService::getDomain();
         }
         
         /**
@@ -12705,18 +12696,48 @@ namespace App\Facades {
          */ 
         public static function getPublicPath()
         {
-            return \App\Services\SiteService::getPublicPath();
+            return \App\Services\Site\SiteService::getPublicPath();
         }
         
         /**
          * 
          *
-         * @return \App\Services\MessageBag 
+         * @return \App\Services\Site\MessageBag 
          * @static 
          */ 
         public static function errors()
         {
-            return \App\Services\SiteService::errors();
+            return \App\Services\Site\SiteService::errors();
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function getConfigArrayForSite($site)
+        {
+            return \App\Services\Site\SiteService::getConfigArrayForSite($site);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function flushConfigCacheForSite($site)
+        {
+            return \App\Services\Site\SiteService::flushConfigCacheForSite($site);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function syncConfigForSite($site)
+        {
+            return \App\Services\Site\SiteService::syncConfigForSite($site);
         }
         
         /**
@@ -12726,7 +12747,7 @@ namespace App\Facades {
          */ 
         public static function getIDs()
         {
-            return \App\Services\SiteService::getIDs();
+            return \App\Services\Site\SiteService::getIDs();
         }
          
     }
@@ -12800,6 +12821,16 @@ namespace App\Facades {
         public static function getUserByUid($uid)
         {
             return \App\Services\User\UserService::getUserByUid($uid);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function userExists($uid)
+        {
+            return \App\Services\User\UserService::userExists($uid);
         }
         
         /**
@@ -13134,6 +13165,82 @@ namespace App\Facades {
         public static function deleteUserSession($user)
         {
             return \App\Services\User\UserService::deleteUserSession($user);
+        }
+         
+    }
+
+    class Mobile {
+        
+        /**
+         * 
+         *
+         * @param string $branch
+         * @return \App\Services\Mobile\AppVersionIOS 
+         * @static 
+         */ 
+        public static function getLastIosVersion($branch = '')
+        {
+            return \App\Services\Mobile\MobileService::getLastIosVersion($branch);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function checkIos()
+        {
+            return \App\Services\Mobile\MobileService::checkIos();
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function checkAndroid()
+        {
+            return \App\Services\Mobile\MobileService::checkAndroid();
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function getClient()
+        {
+            return \App\Services\Mobile\MobileService::getClient();
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function getJwt()
+        {
+            return \App\Services\Mobile\MobileService::getJwt();
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function getAgent()
+        {
+            return \App\Services\Mobile\MobileService::getAgent();
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function getLastAndroidVersion($branch = '')
+        {
+            return \App\Services\Mobile\MobileService::getLastAndroidVersion($branch);
         }
          
     }
@@ -15442,6 +15549,8 @@ namespace  {
     class SiteSer extends \App\Facades\SiteSer {}
 
     class UserSer extends \App\Facades\UserSer {}
+
+    class Mobile extends \App\Facades\Mobile {}
 
     class Image extends \Intervention\Image\Facades\Image {}
  

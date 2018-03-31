@@ -172,26 +172,26 @@ class SiteService
         return $this->errors;
     }
 
-    public function getConfigArrayForSite(Site $site)
+    public static function getConfigArrayForSite(Site $site)
     {
         $config = $site->config;
         $configArray = array_combine($config->pluck('k')->toArray(), $config->pluck('v')->toArray());
         return $configArray;
     }
 
-    public function flushConfigCacheForSite(Site $site)
+    public static function flushConfigCacheForSite(Site $site)
     {
         return Config::flushByID($site->id);
     }
 
-    public function syncConfigForSite(Site $site)
+    public static function syncConfigForSite(Site $site)
     {
-        $this->flushConfigCacheForSite($site);
-        $configArray = $this->getConfigArrayForSite($site);
+        static::flushConfigCacheForSite($site);
+        $configArray = static::getConfigArrayForSite($site);
         return Config::hMset($site->id,$configArray);
     }
 
-    public function getIDs(): Collection
+    public static function getIDs(): Collection
     {
         $keys = Redis::keys(Config::KEY_SITE_CONFIG . '*');
         return collect($keys)->map(function ($key) {

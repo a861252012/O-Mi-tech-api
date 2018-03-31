@@ -13,7 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Redis;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
-
+use App\Libraries\SuccessResponse;
 class ActivityController extends Controller
 {
 
@@ -22,6 +22,7 @@ class ActivityController extends Controller
 
         $data = Redis::get('huodong_cache');
         $list = collect(json_decode($data))->where('pid', 0);
+        $list = $this->format_jsoncode($list);
         return  new jsonresponse($list);
 
     }
@@ -39,7 +40,8 @@ class ActivityController extends Controller
         $temp = explode(',', $tmp['temp_name']);
         $data['image'] = $temp[0]; // 第一个为原图
         $data['tmp'] = array_slice($temp, 1); // 抛出第一个原图的 后面的才是切割后的图
-        return $data;
+        return SuccessResponse::create($data,$msg = "获取成功", $status = 1);
+
 //        return $this->render('Activity/info',array('activity'=>$data));
     }
 
@@ -158,7 +160,7 @@ class ActivityController extends Controller
         if (empty($var['starlist'])) {
             $var['starlist'] = array();
         }
-
+        $var =$this->format_jsoncode($var);
         return JsonResponse::create($var);
     }
 
