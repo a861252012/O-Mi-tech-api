@@ -11,6 +11,8 @@ use App\Http\Controllers\Controller;
 use App\Models\AppCrash;
 use App\Models\AppVersion;
 use App\Models\AppVersionIOS;
+use App\Models\Domain;
+use App\Models\DomainList;
 use App\Models\Goods;
 use App\Models\ImagesText;
 use App\Models\MobileUseLogs;
@@ -62,6 +64,37 @@ class MobileController extends Controller
             }
         }
         return JsonResponse::create($lists);
+    }
+    public function domains(Request $request){
+        try {
+            $site = $request->get('site',1);
+            $result = DomainList::query()->get();
+            $return = [
+                'status' => 1,
+                'data' => [
+                    'greenips' => [],
+                    'ips' => [],
+                ]
+            ];
+            foreach ($result as $row) {
+                if ($row->green)
+                    $return['data']['greenips'][] = $row->url;
+                else
+                    $return['data']['ips'][] = $row->url;
+            }
+            $return = json_encode($return);
+            Redis::set('domain:list', $return);
+        } catch (\Exception $e) {
+            $return =  json_encode([
+                'status' => 0,
+                'msg' => $e->getTraceAsString(),
+                'data' => [
+                    'greenips' => [],
+                    'ips' => [],
+                ]
+            ]);
+        }
+        return $return;
     }
 
     /**

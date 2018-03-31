@@ -24,6 +24,9 @@ class IdentifySite
      */
     public function handle($request, Closure $next)
     {
+        //路由是domains
+        if($request->getPathInfo()=='/api/m/domains') return $next($request);
+
         $this->siteService->fromRequest($request);
         if (!$this->siteService->isValid()) {
             return JsonResponse::create([

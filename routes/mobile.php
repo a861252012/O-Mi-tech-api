@@ -95,6 +95,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
 
 });
 Route::get('oort2bunny', ['name' => 'guanggao', 'uses' => 'AdsController@getAd']);//广告接口
+Route::get('domains', ['name' => 'guanggao', 'uses' => 'Mobile\MobileController@domains']);//广告接口
 // 充值类 TODO 登录验证
 // 验证是否登录
 Route::group(['prefix' => 'pay', 'middleware' => ['login_auth:mobile','charge']], function () {
@@ -103,7 +104,6 @@ Route::group(['prefix' => 'pay', 'middleware' => ['login_auth:mobile','charge']]
     Route::match(['POST', 'GET'], '/order2', ['name' => 'charge_order2', 'uses' => 'Mobile\PaymentController@order2']);
     Route::match(['POST', 'GET'], '/pay2', ['name' => 'charge_pay2', 'uses' => 'Mobile\PaymentController@pay2']);
     Route::match(['POST', 'GET'], '/translate', ['name' => 'translate', 'uses' => 'Mobile\PaymentController@translate']);
-
 });
 
 //通知
