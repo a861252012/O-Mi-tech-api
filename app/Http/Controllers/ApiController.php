@@ -1223,7 +1223,7 @@ class ApiController extends Controller
                 }
             }
         }
-        return new JsonResponse(['data' => $data, 'status' => 0, 'total' => $i]);
+        return JsonResponse::create(['data' => $data, 'status' => 1]);
     }
 
 
