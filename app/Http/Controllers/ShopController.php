@@ -79,10 +79,10 @@ class ShopController extends Controller
         if (!$userGroup) {
             $msg['code'] = 1003;
             $msg['msg'] = '数据获取失败';
-            return (new JsonResponse($msg))->setCallback('cb');
+            return new JsonResponse($msg);
         }
         $msg['data'] = $userGroup;
-        return (new JsonResponse($msg))->setCallback('cb');
+        return new JsonResponse($msg);
     }
 
     /**
