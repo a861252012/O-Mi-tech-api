@@ -42,6 +42,7 @@ use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Mews\Captcha\Facades\Captcha;
+use App\Libraries\SuccessResponse;
 
 class MemberController extends Controller
 {
@@ -79,16 +80,10 @@ class MemberController extends Controller
             'action' => 'consume',
             'name' => '消费记录',
         ],
-        //消费统计，用户
-        [
-            'role' => 1,
-            'action' => 'count',
-            'name' => '消费统计',
-        ],
         //收入统计，主播
         [
             'role' => 2,
-            'action' => 'count',
+            'action' => 'income',
             'name' => '收入统计',
         ],
         [
@@ -406,12 +401,16 @@ class MemberController extends Controller
          * 获取开通过的日志 最新一条就是当前
          */
         $log = [];
+        $user = Auth::user();
         // 如果用户还是贵族状态的话  就判断充值的情况用于保级
-        $startTime = strtotime($this->userInfo['vip_end']) - 30 * 24 * 60 * 60;
-        if ($this->userInfo['vip']) {
-            $group = LevelRich::where('level_id', $this->userInfo['vip'])->first();
+        $startTime = strtotime($user->vip_end) - 30 * 24 * 60 * 60;
+
+        if ($user->vip) {
+            $group = LevelRich::where('level_id',$user->vip)->first();
+
             if (!$group) {
-                return true;// 用户组都不在了没保级了
+                return SuccessResponse::create('',$status=1,$msg='获取成功');// 用户组都不在了没保级了
+                //return true;// 用户组都不在了没保级了
             }
 
             $userGid = $group->gid;
@@ -447,8 +446,8 @@ class MemberController extends Controller
         }
         $data = [];
         $data['item'] = $log;
+        return SuccessResponse::create($data,$status=1,$msg='获取成功');
 
-        return $this->render('Member/vip', $data);
     }
 
     /**
@@ -1453,7 +1452,7 @@ class MemberController extends Controller
      * @author      D.C
      * @date        2015.2.6
      */
-    public function count()
+    public function income()
     {
         $uid = Auth::id();
         if (!$uid) {
@@ -1709,25 +1708,26 @@ class MemberController extends Controller
     }
 
     /**
-     * [avatarupload 头像上传方法]
-     *
-     * @author  dc <dc#wisdominfo.my>
-     * @version 2015-11-20
-     * @return  JsonResponse
+     * 头像上传方法
      */
     public function avatarUpload()
     {
-        $user = $this->userInfo;
-        $result = json_decode($this->make('systemServer')->upload($this->userInfo), true);
+        $user = Auth::user();
+        $result = resolve(SystemService::class)->upload($user->toArray());
 
-        if (!$result['ret']) return new JsonResponse($result);
+        if (isset($result['status']) && $result['status'] != 1) {
+            return JsonResponse::create($result);
+        }
+        if (isset($result['ret']) && $result['ret'] === false) {
+            return JsonResponse::create(['data'=>$result]);
+        }
         //更新用户头像
         Users::where('uid', $user['uid'])->update(['headimg' => $result['info']['md5']]);
 
         //更新用户redis
         resolve(UserService::class)->getUserReset($user['uid']);
 
-        return new JsonResponse($result);
+        return JsonResponse::create(['data' => $result]);
     }
 
     /**
@@ -1746,7 +1746,7 @@ class MemberController extends Controller
             return JsonResponse::create($result);
         }
         if (isset($result['ret']) && $result['ret'] === false) {
-            return JsonResponse::create($result);
+            return JsonResponse::create(['data'=>$result]);
         }
 
         $anchor = Anchor::create(['uid' => Auth::id(), 'file' => $result['info']['md5'], 'size' => $result['info']['size'], 'jointime' => time()]);
@@ -1758,7 +1758,6 @@ class MemberController extends Controller
 
         $result['info']['id'] = $anchor->id;
         return JsonResponse::create(['data' => $result]);
-
     }
 
     /**

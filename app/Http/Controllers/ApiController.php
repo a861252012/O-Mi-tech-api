@@ -18,6 +18,7 @@ use App\Models\Messages;
 use App\Models\Pack;
 use App\Models\UserGroup;
 use App\Models\Users;
+use App\Services\System\SystemService;
 use App\Services\User\UserService;
 use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use App\Services\Safe\SafeService;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class ApiController
@@ -1071,12 +1073,10 @@ class ApiController extends Controller
 
     }
 
-    public function coverUpload()
+    public function coverUpload(Request $request)
     {
-
-        $request = $this->make('request');
         $uid = Auth::id();
-        $user = resolve(UserService::class)->getUserByUid($uid);
+        $user = Auth::user();
 
         /**
          * 获取提交过来的图片二进制流
@@ -1099,19 +1099,18 @@ class ApiController extends Controller
          * 上传到图床
          */
         $stream = $request->getContent(true);
-
-        $result = $this->make('systemServer')->upload($user, $stream);
-
-        $result = json_decode($result, true);
-        if (!$result['ret']) {
-            return new JsonResponse(['ret' => 2, 'retDesc' => '封面上传失败。']);
+        $result = resolve(SystemService::class)->upload($user->toArray(), $stream);
+        if (isset($result['status']) && $result['status'] != 1) {
+            return JsonResponse::create($result);
+        }
+        if (isset($result['ret']) && $result['ret'] === false) {
+            return JsonResponse::create(['data'=>$result]);
         }
 
         //写入redis记录图片地址
         $this->make('redis')->set('shower:cover:version:' . $uid, $result['info']['md5']);
 
-
-        return new JsonResponse(['ret' => 100, 'retDesc' => '封面上传成功。']);
+        return JsonResponse::create(['msg' => '封面上传成功。']);
     }
 
     /**
@@ -1188,20 +1187,15 @@ class ApiController extends Controller
 
 
     /**
-     * [searchAnchor 不知作用]
-     *
-     * @author  dc <dc#wisdominfo.my>
-     * @version 2015-11-10
-     * @return  [type]     [description]
+     * 搜索主播
      */
-    public function searchAnchor()
+    public function searchAnchor(Request $request)
     {
-        //$uname = isset($_GET['nickname'])?$_GET['nickname']:'';//解码？
-        $uname = $this->make('request')->get('nickname') ?: '';
+        $uname = $request->get('nickname') ?: '';
 
-        $arr = include BASEDIR . '/app/cache/cli-files/anchor-search-data.php';
-        $pageStart = isset($_REQUEST['pageStart']) ? ($_REQUEST['pageStart'] < 1 ? 1 : intval($_REQUEST['pageStart'])) : 1;
-        $pageLimit = isset($_REQUEST['pageLimit']) ? (($_REQUEST['pageLimit'] > 40 || $_REQUEST['pageLimit'] < 1) ? 40 : intval($_REQUEST['pageLimit'])) : 40;
+        $arr= include Storage::path('cache/anchor-search-data.php');;
+        $pageStart = isset($request['pageStart']) ? ($request['pageStart'] < 1 ? 1 : intval($request['pageStart'])) : 1;
+        $pageLimit = isset($request['pageLimit']) ? (($request['pageLimit'] > 40 || $request['pageLimit'] < 1) ? 40 : intval($request['pageLimit'])) : 40;
 
         if ($uname == '') {
             $pageStart = ($pageStart - 1) * $pageLimit;
@@ -1221,7 +1215,7 @@ class ApiController extends Controller
                 }
             }
         }
-        return new JsonResponse(['data' => $data, 'status' => 0, 'total' => $i]);
+        return JsonResponse::create(['data' => $data, 'status' => 1]);
     }
 
 

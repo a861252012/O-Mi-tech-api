@@ -2,10 +2,18 @@
 
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 Route::get('/captcha', 'Controller@captcha');
+// 任务列表
+Route::get('/task', 'TaskController@index')->name('task_index');
 
 Route::group(['middleware' => ['login_auth']], function () {
     //上传相册
     Route::post('fupload', 'MemberController@flashUpload')->name('member_fupload');
+    //上传头像
+    Route::post('upload', 'MemberController@avatarUpload')->name('avatar_upload');
+    //图片静态化
+    Route::post('/coverUpload', 'ApiController@coverUpload')->name('coverUpload');
+    // 任务完成领取奖励api
+    Route::any('/task/end/{id}', 'TaskController@billTask')->where('end', '[0-9]+');
 });
 
 /** 用户中心路由组 */
@@ -120,15 +128,10 @@ Route::post('/reg', ['name' => 'api_reg', 'uses' => 'ApiController@reg']);
 Route::get('/search', ['name' => 'search', 'uses' => 'PageController@search']);
 
 
-Route::get('/find', ['name' => 'find', 'uses' => 'ApiController@searchAnchor']);
+Route::get('/find', 'ApiController@searchAnchor')->name('find');
 
 // 验证是否登录
 Route::group(['middleware' => ['login_auth']], function () {
-// 任务api
-    Route::get('/task', ['name' => 'task_index', 'uses' => 'TaskController@index']);
-// 任务完成领取奖励api
-    Route::get('/task/end/{id:\d+}', ['uses' => 'TaskController@billTask']);
-
 
 // 排行榜页面
     Route::get('/ranking', ['name' => 'rank_index', 'uses' => 'RankController@index']);
@@ -166,8 +169,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 //findroomcnt
     Route::get('/findroomcnt', ['name' => 'getflashcount', 'uses' => 'ApiController@getFlashCount']);
 
-//图片静态化
-    Route::post('/coverUpload', ['name' => 'coverUpload', 'uses' => 'ApiController@coverUpload']);
+
 //图片静态化
     Route::get('/convertstaticimg', ['name' => 'imagestatic', 'uses' => 'ApiController@imageStatic']);
 //FIND
@@ -216,7 +218,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 
 
     // 用户中心 礼物统计
-    Route::get('/member/count', ['name' => 'member_count', 'uses' => 'MemberController@count']);
+    Route::get('/member/income', ['name' => 'member_count', 'uses' => 'MemberController@income']);
     Route::get('/member/gift', ['name' => 'member_gift', 'uses' => 'MemberController@gift']);
 
     // 用户中心 房间设置
@@ -227,10 +229,6 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     // 用户中心 代理数据
     Route::match(['POST', 'GET'], '/member/agents', ['name' => 'member_agents', 'uses' => 'MemberController@agents']);
-
-
-    //上传头像
-    Route::match(['POST', 'GET'], '/upload', ['name' => 'member_upload', 'uses' => 'MemberController@avatarUpload']);
 
 
     //隐身功能接口

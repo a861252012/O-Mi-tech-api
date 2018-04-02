@@ -46,8 +46,6 @@ class TaskService extends Service
      */
     public function getAllTask()
     {
-        //$model = new Model();
-//        $list = $model->findAll('select * from video_task  where status=?  and dml_flag !=3', array('0'));
         $list = $this->getTaskFromRedis();
         /**
          * 判断是否有特殊的扩展变量
@@ -147,7 +145,8 @@ class TaskService extends Service
                     if ($goods) {
                         $v['name'] = $goods['name'];
                     } else {
-                        throw new \Exception('Receive bonus failed! No record in goods, Pls contact with system admin!');
+                        $v['name']='未知';
+//                        throw new \Exception('Receive bonus failed! No record in goods, Pls contact with system admin!');
                     }
                 }
             }
@@ -191,7 +190,7 @@ class TaskService extends Service
             }
         }
 
-        $check_task = new CheckUserTask($this->container);
+        $check_task = new CheckUserTask(app());
 
         // 去检查每一个任务用户对应的状态
         $result = $check_task->checkTask($task, $this->uid);

@@ -2,44 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Users;
-use App\Service\Task\TaskService;
-use Core\Model;
-use Core\Response;
-use Illuminate\Support\Facades\Auth;
+use App\Services\Task\TaskService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
 
     /**
      * 获取一个登陆用户的所有的可以做的项目的
-     *
-     * @return Response
      */
     public function index()
     {
 
-        $online =Auth::id();
+        $online = Auth::id();
+        $taskService = resolve(TaskService::class);
         if (!$online) {
-            //irwin$taskService = new TaskService();
-            $taskService = $this->container->make('taskServer');
             $user_task = $taskService->getAllTask();
         } else {
-            //irwin$taskService = new TaskService($online);
-            $taskService = $this->container->make('taskServer');
             $taskService->setUid($online);
             $user_task = $taskService->getAllUserCanTask();
         }
-
-        $task = array();
-        $data = array();
+        $task = [];
+        $data = [];
         foreach ($user_task as $value) {
             $data[$value['script_name']][] = $value;
         }
         // 临时处理为时间戳，后期前台可能会用到
-        $task['id'] = time();
-        $task['type'] = 'task';
         $task['data'] = $data;
         return new JsonResponse($task);
     }
@@ -47,8 +36,8 @@ class TaskController extends Controller
     public function test($id)
     {
         $msg = $this->container->make('messageServer');
-        $ms=$msg->getMessageByUid(Auth::id());
-        return $this->render('Member/msglist1', array('data'=>$ms));
+        $ms = $msg->getMessageByUid(Auth::id());
+        return $this->render('Member/msglist1', ['data' => $ms]);
     }
 
     /**
@@ -60,20 +49,16 @@ class TaskController extends Controller
     public function billTask($task_id)
     {
         $online = Auth::id();
-        if (!$online) {
-            $msg = array('code' => 0, 'msg' => '未登录');
-            return new JsonResponse($msg);
-        } else {
-            //irwin$taskService = new TaskService($online);
-            $taskService = $this->container->make('taskServer');
-            $taskService->setUid($online);
-            $flag = $taskService->billTask($task_id);
-        }
+
+
+        $taskService = resolve(TaskService::class);
+        $taskService->setUid($online);
+        $flag = $taskService->billTask($task_id);
 
         if ($flag) {
-            return new JsonResponse(array('code' => 1, 'msg' => '领取成功！'));
+            return new JsonResponse(['status' => 1, 'msg' => '领取成功！']);
         } else {
-            return new JsonResponse(array('code' => 0, 'msg' => '领取失败！请查看任务是否完成或已经领取过了！'));
+            return new JsonResponse(['status' => 0, 'msg' => '领取失败！请查看任务是否完成或已经领取过了！']);
         }
     }
 

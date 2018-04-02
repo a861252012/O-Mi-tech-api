@@ -164,7 +164,7 @@ class MobileController extends Controller
     public function userPrivilege()
     {
         $uid = Auth::id();
-        $user = UserSer::getUserByUid($uid);
+        $user = Auth::user();
 
         //判断隐身权限
         $allowStealth = resolve(UserService::class)->getUserHiddenPermission($user);
@@ -175,9 +175,10 @@ class MobileController extends Controller
         ];
         // 是贵族才验证 下掉贵族状态
         if ($user->vip && ($user->vip_end < date('Y-m-d H:i:s'))) {
-            $user->vip = 0;
-            $user->vip_end = null;
-            $user->save();
+            $user->update([
+                'vip'=>0,
+                'vip_end'=>null
+            ]);
 
             // 删除坐骑
             Pack::where('uid', $uid)->where('gid', '<=', 120107)
