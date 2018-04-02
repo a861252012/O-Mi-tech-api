@@ -355,6 +355,37 @@ class UserService extends Service
     }
 
     /**
+     * [checkVipStatus 检查vip状态]
+     *
+     * @author  dc <dc#wisdominfo.my>
+     * @version 2015-11-11
+     * @param   int $uid 用户id
+     * @return object|false
+     */
+    public function checkVip($uid)
+    {
+        if (!$uid || !is_numeric($uid)) {
+            throw new Exception('Please make sure $uid is a numeric');
+        }
+        $vip = Users::where('uid', $uid)->where('vip', '>', 0)->where('vip_end', '>', date('Y-m-d H:i:s'))->first();
+
+        return $vip;
+    }
+
+    public function cancelVip($uid=0){
+        $user['uid'] = $uid;
+        Users::query()->where('uid',$user['uid'])->update(array('vip'=>0,'vip_end'=>'','hidden'=>0));
+        Redis::hmset('huser_info:'.$user['uid'],[
+            'vip'=>'0',
+            'hidden'=>'0',
+            'vip_end'=>'',
+        ]);
+        $pack = VideoPack::query()->where('uid',$user['uid'])->whereBetween('gid',[120101,120107])->delete();
+        Redis::del('user_car:'.$user['uid']);
+        return true;
+    }
+
+    /**
      * 添加用户代理方法
      * @param $uid
      * @param $aid

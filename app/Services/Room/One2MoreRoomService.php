@@ -27,11 +27,15 @@ class One2MoreRoomService extends Service
     public function __construct(Request $request)
     {
         $this->rid = $request->get('rid',0);
-        $this->room = $this->_getData();
+        $this->rid && $this->room = $this->_getData();
         parent::__construct();
 
     }
 
+    public function set($rid=0){
+        $this->rid = $rid;
+        $this->room = $this->_getData();
+    }
     public function checkRunning(){
         return !empty($this->getRunningData());
     }
@@ -62,12 +66,12 @@ class One2MoreRoomService extends Service
         if(!$ordMap = Redis::sMembers("hroom_whitelist_key:" . $this->rid)) return [];
 
         $resault = [];
-        foreach ($ordMap as $k => $v) {
-            $ord = Redis::hGetAll('hroom_whitelist:'.$this->rid.':'.$v);
+        foreach ($ordMap as $k => $id) {
+            $ord = Redis::hGetAll('hroom_whitelist:'.$this->rid.':'.$id);
             if (!$ord) continue;
 
-            $ord['onetomore'] = $v;
-            $ord['id'] = $v;
+            $ord['onetomore'] = $id;
+            $ord['id'] = $id;
             array_push($resault, $ord);
         }
         return $resault;
@@ -79,6 +83,27 @@ class One2MoreRoomService extends Service
 
     public function checkUserBuyRunning($uid){
         return !empty($this->getUserBuyRunningData($uid));
+    }
+
+    public function checkBuyUser($uid,$onetomore){
+        return !empty($this->getUserBuyData($uid,$onetomore));
+    }
+    public function getUserBuyData($uid,$onetomore){
+        $ord = $this->getDataById($onetomore);
+
+        if(isset($ord['uids']) && !empty(trim($ord['uids']))){
+            $uidArr = explode(',',trim($ord['uids']));
+            if(in_array($uid,$uidArr)) return $ord;
+        }
+        if(isset($ord['tickets']) && !empty(trim($ord['tickets']))) {
+            $uidArr2 = explode(',',$ord['tickets']);//添加补票入口判断
+            if(in_array($uid,$uidArr2)) return $ord;
+        }
+        return $ord;
+    }
+    public function getDataById($onetomore){
+        $key = 'hroom_whitelist:'.$this->rid.':'.$onetomore;
+       return Redis::exists($key) ? Redis::hGetAll($key) : [];
     }
 
     public function getUserBuyRunningData($uid){

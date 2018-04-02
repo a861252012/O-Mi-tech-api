@@ -31,14 +31,7 @@ class UserController extends Controller
 
             // 是贵族才验证 下掉贵族状态
             if ($user['vip'] && ($user['vip_end'] < date('Y-m-d H:i:s'))) {
-                $user->vip = 0;
-                $user->vip_end = '0000-00-00 00:00:00';
-                $user->save();
-                // 删除坐骑
-                Pack::where('uid', $user->uid)->where('gid', '<=', 120107)->where('gid', '>=', 120101)->delete();
-                Redis::hSet('huser_info:' . $user->uid, 'vip', 0);
-                Redis::hSet('huser_info:' . $user->uid, 'vip_end', '');
-                Redis::del('user_car:' . $user->uid);
+                resolve(UserService::class)->cancelVip(Auth::id());
                 $userInfo['vip'] = 0;
                 $userInfo['vip_end'] = '';
             }

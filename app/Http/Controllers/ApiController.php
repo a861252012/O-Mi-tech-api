@@ -509,21 +509,15 @@ class ApiController extends Controller
         ]);
         $this->userInfo['logined'] = $time;
 
-//        //判断当前用户session是否是最新登陆
-//        $this->_online  =  $userInfo['uid'];
-//        //设置新session
-//        $_SESSION['_sf2_attributes'][self::SEVER_SESS_ID] = $userInfo['uid'];
-//        setcookie(self::WEB_UID,$userInfo['uid'],0,'/',$this->_common_domain);//用于首页判断
-//        $this->_sess_id = session_id();
-//
-//        if(empty($huser_sid)){ //说明以前没登陆过，没必要检查重复登录
-//            $this->_redisInstance->hset('huser_sid',$userInfo['uid'],$this->_sess_id);
-//        }
-
-        //登录
-        $huser_sid = $this->make('redis')->hget('huser_sid', $this->userInfo['uid']);
         // 此时调用的是单实例登录的session 验证
-        $this->writeRedis($this->userInfo, $huser_sid);
+        if(!Auth::check()){
+            if(!Auth::attempt([
+                'username'=>$this->userInfo['username'],
+                'password'=>$this->userInfo['password'],
+            ])){
+                return JsonResponse::create(['status' => 0, 'msg' => '用户名密码错误']);
+            };
+        }
 
         $_SESSION['httphost'] = $httphost;
 
