@@ -190,7 +190,7 @@ class TaskService extends Service
             }
         }
 
-        $check_task = new CheckUserTask($this->container);
+        $check_task = new CheckUserTask(app());
 
         // 去检查每一个任务用户对应的状态
         $result = $check_task->checkTask($task, $this->uid);

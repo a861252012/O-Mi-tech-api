@@ -9,12 +9,11 @@ Route::group(['middleware' => ['login_auth']], function () {
     //上传相册
     Route::post('fupload', 'MemberController@flashUpload')->name('member_fupload');
     //上传头像
-    Route::post( 'upload', 'MemberController@avatarUpload')->name('avatar_upload');
+    Route::post('upload', 'MemberController@avatarUpload')->name('avatar_upload');
     //图片静态化
     Route::post('/coverUpload', 'ApiController@coverUpload')->name('coverUpload');
-
     // 任务完成领取奖励api
-    Route::get('/task/end/{id:\d+}', 'TaskController@billTask');
+    Route::any('/task/end/{id}', 'TaskController@billTask')->where('end', '[0-9]+');
 });
 
 /** 用户中心路由组 */
@@ -230,9 +229,6 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     // 用户中心 代理数据
     Route::match(['POST', 'GET'], '/member/agents', ['name' => 'member_agents', 'uses' => 'MemberController@agents']);
-
-
-
 
 
     //隐身功能接口

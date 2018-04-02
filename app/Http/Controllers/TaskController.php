@@ -29,8 +29,6 @@ class TaskController extends Controller
             $data[$value['script_name']][] = $value;
         }
         // 临时处理为时间戳，后期前台可能会用到
-        $task['id'] = time();
-        $task['type'] = 'task';
         $task['data'] = $data;
         return new JsonResponse($task);
     }
@@ -51,20 +49,16 @@ class TaskController extends Controller
     public function billTask($task_id)
     {
         $online = Auth::id();
-        if (!$online) {
-            $msg = ['code' => 0, 'msg' => '未登录'];
-            return new JsonResponse($msg);
-        } else {
-            //irwin$taskService = new TaskService($online);
-            $taskService = $this->container->make('taskServer');
-            $taskService->setUid($online);
-            $flag = $taskService->billTask($task_id);
-        }
+
+
+        $taskService = resolve(TaskService::class);
+        $taskService->setUid($online);
+        $flag = $taskService->billTask($task_id);
 
         if ($flag) {
-            return new JsonResponse(['code' => 1, 'msg' => '领取成功！']);
+            return new JsonResponse(['status' => 1, 'msg' => '领取成功！']);
         } else {
-            return new JsonResponse(['code' => 0, 'msg' => '领取失败！请查看任务是否完成或已经领取过了！']);
+            return new JsonResponse(['status' => 0, 'msg' => '领取失败！请查看任务是否完成或已经领取过了！']);
         }
     }
 
