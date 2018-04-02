@@ -2,6 +2,8 @@
 
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 Route::get('/captcha', 'Controller@captcha');
+// 任务列表
+Route::get('/task', 'TaskController@index')->name('task_index');
 
 Route::group(['middleware' => ['login_auth']], function () {
     //上传相册
@@ -10,6 +12,9 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::post( 'upload', 'MemberController@avatarUpload')->name('avatar_upload');
     //图片静态化
     Route::post('/coverUpload', 'ApiController@coverUpload')->name('coverUpload');
+
+    // 任务完成领取奖励api
+    Route::get('/task/end/{id:\d+}', 'TaskController@billTask');
 });
 
 /** 用户中心路由组 */
@@ -128,11 +133,6 @@ Route::get('/find', 'ApiController@searchAnchor')->name('find');
 
 // 验证是否登录
 Route::group(['middleware' => ['login_auth']], function () {
-// 任务api
-    Route::get('/task', ['name' => 'task_index', 'uses' => 'TaskController@index']);
-// 任务完成领取奖励api
-    Route::get('/task/end/{id:\d+}', ['uses' => 'TaskController@billTask']);
-
 
 // 排行榜页面
     Route::get('/ranking', ['name' => 'rank_index', 'uses' => 'RankController@index']);
