@@ -14,6 +14,8 @@ use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Core\Exceptions\NotFoundHttpException;
 use Illuminate\Support\Facades\DB;
+use App\Libraries\SuccessResponse;
+
 
 class BusinessController extends Controller
 {
@@ -62,23 +64,19 @@ class BusinessController extends Controller
      * @return Respose
      */
     public function extend($url=''){
-        //$domain = $this->getDoctrine()->getManager()->getRepository('Video\ProjectBundle\Entity\VideoDomain')->findOneBy(array('url'=>$url,'status'=>0));
-
         //查询域名表
         $domain = Domain::where('url','=',$url)->where('status','=',0)->first();
+
         //不存在，返回首页
         if(empty($domain)||!$domain->exists){
-            return $this->render('Business/extend', array('extendUrl'=>'/'));
+            return SuccessResponse::create(array('extendUrl'=>'/'),$status=0,$msg='');
+
         }
-
-        //$agent = $this->getDoctrine()->getManager()->getRepository('Video\ProjectBundle\Entity\VideoAgents')->findOneBy(array('did'=>$domain->getId(),'status'=>0));
-
         //通过域名查询对应的代理列表（did为对应的domain id）
         $agent = Agents::where('did','=',$domain->id)->where('status','=',0)->first();
-//        die(var_export($agent));
         //如果不存在，返回首页
         if(empty($agent)||!$agent->exists){
-            return $this->render('Business/extend', array('extendUrl'=>'/'));
+            return SuccessResponse::create(array('extendUrl'=>'/'),$status=0,$msg='获取成功');
         }
 
         //获取url数组
@@ -90,10 +88,8 @@ class BusinessController extends Controller
          */
         if (empty($_GET['dir'])) {
             $var['extendUrl'] =$arrUrl . '?agent=' . $url;
-//            die(var_export($var));
-            return $this->render('Business/extend', $var);
+            return SuccessResponse::create($var,$status=1,$msg='获取成功');
         }
-
         //参数判断，dir跳转方向，用于跳转到直播间的功能
         if (!empty($_GET['dir']) && $_GET['dir'] === 'room') {
             /**
@@ -108,13 +104,18 @@ class BusinessController extends Controller
                 /**
                  * 取出在直播的，不为密码房间的，不为限制房间的 房间用于随机一个
                  */
-                foreach ($rooms['rec'] as $aRoom) {
-                    if ($aRoom['enterRoomlimit'] == 0 && $aRoom['live_status'] == 1 && $aRoom['tid'] == 1) {
-                        $aRandRooms[] = $aRoom;
-                    }
-                }
+              if (isset($rooms['rec'])){
+                  foreach ($rooms['rec'] as $aRoom) {
+                      if(isset($aRoom['enterRoomlimit']) && isset($aRoom['live_status']) && isset($aRoom['tid'])){
+                          if ($aRoom['enterRoomlimit'] == 0 && $aRoom['live_status'] == 1 && $aRoom['tid'] == 1) {
+                              $aRandRooms[] = $aRoom;
+                          }
+                      }
+
+                  }
+              }
+
             }
-//die(var_export($aRandRooms));
             /**
              * 当有符合直播状态的主播时就跳转到主播房间 TODO 异常处理
              */
@@ -123,18 +124,15 @@ class BusinessController extends Controller
                 $aUrlParse = parse_url($arrUrl);
                 $sVDomain = $aUrlParse['host'];
                 $aRandRoom = $aRandRooms[mt_rand(0,count($aRandRooms)-1)];
-//                die(var_export($aRandRoom));
                 $var['extendUrl'] = 'http://'.$sVDomain.'/'.$aRandRoom['rid'].'?agent='.$url;
-//                die(var_export($var));
+
             }else {
                 $var['extendUrl'] = $arrUrl . '?agent=' . $url;
             }
-
-            return $this->render('Business/extend', $var);
+            return SuccessResponse::create($var,$status=1,$msg='获取成功');
         }
-
         //所有不符合条件的
-        return $this->render('Business/extend', array('extendUrl'=>'/'));
+        return SuccessResponse::create(array('extendUrl'=>'/'),$status=1,$msg='获取成功');
 
     }
 
