@@ -6,6 +6,8 @@ Route::get('/captcha', 'Controller@captcha');
 Route::group(['middleware' => ['login_auth']], function () {
     //上传相册
     Route::post('fupload', 'MemberController@flashUpload')->name('member_fupload');
+    //上传头像
+    Route::post( 'upload', 'MemberController@avatarUpload')->name('avatar_upload');
 });
 
 /** 用户中心路由组 */
@@ -216,7 +218,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 
 
     // 用户中心 礼物统计
-    Route::get('/member/count', ['name' => 'member_count', 'uses' => 'MemberController@count']);
+    Route::get('/member/income', ['name' => 'member_count', 'uses' => 'MemberController@income']);
     Route::get('/member/gift', ['name' => 'member_gift', 'uses' => 'MemberController@gift']);
 
     // 用户中心 房间设置
@@ -229,8 +231,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::match(['POST', 'GET'], '/member/agents', ['name' => 'member_agents', 'uses' => 'MemberController@agents']);
 
 
-    //上传头像
-    Route::match(['POST', 'GET'], '/upload', ['name' => 'member_upload', 'uses' => 'MemberController@avatarUpload']);
+
 
 
     //隐身功能接口

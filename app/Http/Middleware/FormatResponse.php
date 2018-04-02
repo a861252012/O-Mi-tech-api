@@ -41,34 +41,6 @@ class FormatResponse
             }
         }
 
-        if ($response instanceof Paginator) {
-            return JsonResponse::create([
-                'status' => 1,
-                'data' => $response,
-                'msg' => '',
-            ]);
-        }
-
-        if ($response instanceof Collection || is_array($response)) {
-            return JsonResponse::create([
-                'status' => 1,
-                'data' => [
-                    'list' => $response,
-                ],
-                'msg' => '',
-            ]);
-        }
-
-        if (is_string($response) || is_numeric($response) || is_bool($response)) {
-            return JsonResponse::create([
-                'status' => 1,
-                'data' => [
-                    'val' => $response,
-                ],
-                'msg' => '',
-            ]);
-        }
-
         return $response;
     }
 }

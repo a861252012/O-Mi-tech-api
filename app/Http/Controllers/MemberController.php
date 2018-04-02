@@ -79,16 +79,10 @@ class MemberController extends Controller
             'action' => 'consume',
             'name' => '消费记录',
         ],
-        //消费统计，用户
-        [
-            'role' => 1,
-            'action' => 'count',
-            'name' => '消费统计',
-        ],
         //收入统计，主播
         [
             'role' => 2,
-            'action' => 'count',
+            'action' => 'income',
             'name' => '收入统计',
         ],
         [
@@ -1453,7 +1447,7 @@ class MemberController extends Controller
      * @author      D.C
      * @date        2015.2.6
      */
-    public function count()
+    public function income()
     {
         $uid = Auth::id();
         if (!$uid) {
@@ -1709,25 +1703,26 @@ class MemberController extends Controller
     }
 
     /**
-     * [avatarupload 头像上传方法]
-     *
-     * @author  dc <dc#wisdominfo.my>
-     * @version 2015-11-20
-     * @return  JsonResponse
+     * 头像上传方法
      */
     public function avatarUpload()
     {
-        $user = $this->userInfo;
-        $result = json_decode($this->make('systemServer')->upload($this->userInfo), true);
+        $user = Auth::user();
+        $result = resolve(SystemService::class)->upload($user->toArray());
 
-        if (!$result['ret']) return new JsonResponse($result);
+        if (isset($result['status']) && $result['status'] != 1) {
+            return JsonResponse::create($result);
+        }
+        if (isset($result['ret']) && $result['ret'] === false) {
+            return JsonResponse::create($result);
+        }
         //更新用户头像
         Users::where('uid', $user['uid'])->update(['headimg' => $result['info']['md5']]);
 
         //更新用户redis
         resolve(UserService::class)->getUserReset($user['uid']);
 
-        return new JsonResponse($result);
+        return JsonResponse::create(['data' => $result]);
     }
 
     /**
