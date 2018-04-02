@@ -78,7 +78,7 @@ class MemberController extends Controller
         [
             'role' => 0,
             'action' => 'consume',
-            'name' => '消费记录',
+            'name' => '消费统计',
         ],
         //收入统计，主播
         [
@@ -1482,20 +1482,20 @@ class MemberController extends Controller
             ->where('gid', '!=', 410001)
             ->paginate();
 
-        $sum_Gift_mun = MallList::where($selectTypeName, $uid)
+        $sum_gift_num = MallList::where($selectTypeName, $uid)
             ->where('created', '>', $mintime)
             ->where('created', '<', $maxtime)
             ->where('gid', '>', 10)
             ->where('gid', '!=', 410001)
             ->sum('gnum');
-        $sum_Points_mun = MallList::where($selectTypeName, $uid)
+        $sum_points_nun = MallList::where($selectTypeName, $uid)
             ->where('created', '>', $mintime)
             ->where('created', '<', $maxtime)
             ->where('gid', '!=', 410001)
             ->where('gid', '>', 10)
             ->sum('points');
-        $sum_Gift_mun = $sum_Gift_mun ? $sum_Gift_mun : 0;
-        $sum_Points_mun = $sum_Points_mun ? $sum_Points_mun : 0;
+        $sum_gift_num = $sum_gift_num ?: 0;
+        $sum_points_nun = $sum_points_nun ?: 0;
         /*  $twig = clone $this->make('view');
           $twig->setLoader(new \Twig_Loader_String());
 
@@ -1533,8 +1533,8 @@ class MemberController extends Controller
             $all_data = $timecost->paginate();
             $all_data->appends(['type' => $type, 'mintime' => $mint, 'maxtime' => $maxt]);
 
-            $sum_Gift_mun = $uid_sum;
-            $sum_Points_mun = $points_sum;
+            $sum_gift_num = $uid_sum;
+            $sum_points_nun = $points_sum;
             //$data['timecost_list'] = $live_list;
             //print_r($all_data); exit;
         }
@@ -1545,8 +1545,8 @@ class MemberController extends Controller
         $var['data'] = $all_data;
         $var['mintime'] = $mint;
         $var['maxtime'] = $maxt;
-        $var['sum_Gift_mun'] = $sum_Gift_mun;
-        $var['sum_Points_mun'] = $sum_Points_mun;
+        $var['sum_gift_nun'] = $sum_gift_num;
+        $var['sum_points_nun'] = $sum_points_nun;
 
         $var = $this->format_jsoncode($var);
         return new JsonResponse(($var));
@@ -2343,26 +2343,26 @@ class MemberController extends Controller
             ->where('gid', '>', 10)
             ->paginate();
 
-        $sum_Gift_mun = MallList::where($selectTypeName, $uid)
+        $sum_gift_nun = MallList::where($selectTypeName, $uid)
             ->where('created', '>=', $mintime)
             ->where('created', '<=', $maxtime)
             ->where('gid', '>', 10)
             ->sum('gnum');
-        $sum_Points_mun = MallList::where($selectTypeName, $uid)
+        $sum_points_nun = MallList::where($selectTypeName, $uid)
             ->where('created', '>=', $mintime)
             ->where('created', '<=', $maxtime)
             ->where('gid', '>', 10)
             ->sum('points');
-        $sum_Gift_mun = $sum_Gift_mun ? $sum_Gift_mun : 0;
-        $sum_Points_mun = $sum_Points_mun ? $sum_Points_mun : 0;
+        $sum_gift_nun = $sum_gift_nun ?: 0;
+        $sum_points_nun = $sum_points_nun ?: 0;
         $all_data->appends(['type' => $type, 'mintime' => $mint, 'maxtime' => $maxt]);
 
         $var['type'] = $type;
         $var['data'] = $all_data;
         $var['mintime'] = $mint;
         $var['maxtime'] = $maxt;
-        $var['sum_Gift_mun'] = $sum_Gift_mun;
-        $var['sum_Points_mun'] = $sum_Points_mun;
+        $var['sum_gift_nun'] = $sum_gift_nun;
+        $var['sum_points_nun'] = $sum_points_nun;
         $var = $this->format_jsoncode($var);
         return new JsonResponse(($var));
 
