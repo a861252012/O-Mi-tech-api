@@ -42,6 +42,7 @@ use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Mews\Captcha\Facades\Captcha;
+use App\Libraries\SuccessResponse;
 
 class MemberController extends Controller
 {
@@ -400,12 +401,16 @@ class MemberController extends Controller
          * 获取开通过的日志 最新一条就是当前
          */
         $log = [];
+        $user = Auth::user();
         // 如果用户还是贵族状态的话  就判断充值的情况用于保级
-        $startTime = strtotime($this->userInfo['vip_end']) - 30 * 24 * 60 * 60;
-        if ($this->userInfo['vip']) {
-            $group = LevelRich::where('level_id', $this->userInfo['vip'])->first();
+        $startTime = strtotime($user->vip_end) - 30 * 24 * 60 * 60;
+
+        if ($user->vip) {
+            $group = LevelRich::where('level_id',$user->vip)->first();
+
             if (!$group) {
-                return true;// 用户组都不在了没保级了
+                return SuccessResponse::create('',$status=1,$msg='获取成功');// 用户组都不在了没保级了
+                //return true;// 用户组都不在了没保级了
             }
 
             $userGid = $group->gid;
@@ -441,8 +446,8 @@ class MemberController extends Controller
         }
         $data = [];
         $data['item'] = $log;
+        return SuccessResponse::create($data,$status=1,$msg='获取成功');
 
-        return $this->render('Member/vip', $data);
     }
 
     /**
