@@ -908,12 +908,12 @@ class ApiController extends Controller
     {
         $lastChargeUsers = $this->make('redis')->lrange('llast_charge_user2', 0, 19);
 
-        if (sizeof($lastChargeUsers) < 1) return new JsonResponse ([]);
+        if (sizeof($lastChargeUsers) < 1) return new JsonResponse (['status'=>0]);
 
         foreach ($lastChargeUsers as $user) {
             $users[] = json_decode($user);
         }
-        return new JsonResponse($users);
+        return JsonResponse::create(['data'=>$users]);
     }
 
 
