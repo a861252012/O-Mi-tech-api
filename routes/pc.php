@@ -4,6 +4,8 @@ Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginCont
 Route::get('/captcha', 'Controller@captcha');
 // 任务列表
 Route::get('/task', 'TaskController@index')->name('task_index');
+//贵族列表
+Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopController@getGroupAll']);
 
 Route::group(['middleware' => ['login_auth']], function () {
     //上传相册
@@ -120,7 +122,7 @@ Route::match(['POST', 'GET'], '/indexinfo', ['name' => 'indexinfo', 'uses' => 'I
 Route::get('/extend/{url}', ['name' => 'business_extend', 'uses' => 'BusinessController@extend']);
 Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
 
-Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopController@getGroupAll']);
+
 
 Route::post('/reg', ['name' => 'api_reg', 'uses' => 'ApiController@reg']);
 
@@ -262,7 +264,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     // 贵族根据id获取贵族信息
     Route::get('/getgroup', ['name' => 'shop_getgroup', 'uses' => 'ShopController@getgroup']);
-    Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopController@getGroupAll']);
+
 
     // 商城页面
     Route::get('/shop', ['name' => 'shop_index', 'uses' => 'ShopController@index']);
