@@ -1714,7 +1714,7 @@ class MemberController extends Controller
             return JsonResponse::create($result);
         }
         if (isset($result['ret']) && $result['ret'] === false) {
-            return JsonResponse::create($result);
+            return JsonResponse::create(['data'=>$result]);
         }
         //更新用户头像
         Users::where('uid', $user['uid'])->update(['headimg' => $result['info']['md5']]);
@@ -1741,7 +1741,7 @@ class MemberController extends Controller
             return JsonResponse::create($result);
         }
         if (isset($result['ret']) && $result['ret'] === false) {
-            return JsonResponse::create($result);
+            return JsonResponse::create(['data'=>$result]);
         }
 
         $anchor = Anchor::create(['uid' => Auth::id(), 'file' => $result['info']['md5'], 'size' => $result['info']['size'], 'jointime' => time()]);

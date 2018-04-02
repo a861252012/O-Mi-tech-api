@@ -18,6 +18,7 @@ use App\Models\Messages;
 use App\Models\Pack;
 use App\Models\UserGroup;
 use App\Models\Users;
+use App\Services\System\SystemService;
 use App\Services\User\UserService;
 use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
@@ -1078,12 +1079,10 @@ class ApiController extends Controller
 
     }
 
-    public function coverUpload()
+    public function coverUpload(Request $request)
     {
-
-        $request = $this->make('request');
         $uid = Auth::id();
-        $user = resolve(UserService::class)->getUserByUid($uid);
+        $user = Auth::user();
 
         /**
          * 获取提交过来的图片二进制流
@@ -1106,19 +1105,18 @@ class ApiController extends Controller
          * 上传到图床
          */
         $stream = $request->getContent(true);
-
-        $result = $this->make('systemServer')->upload($user, $stream);
-
-        $result = json_decode($result, true);
-        if (!$result['ret']) {
-            return new JsonResponse(['ret' => 2, 'retDesc' => '封面上传失败。']);
+        $result = resolve(SystemService::class)->upload($user->toArray(), $stream);
+        if (isset($result['status']) && $result['status'] != 1) {
+            return JsonResponse::create($result);
+        }
+        if (isset($result['ret']) && $result['ret'] === false) {
+            return JsonResponse::create(['data'=>$result]);
         }
 
         //写入redis记录图片地址
         $this->make('redis')->set('shower:cover:version:' . $uid, $result['info']['md5']);
 
-
-        return new JsonResponse(['ret' => 100, 'retDesc' => '封面上传成功。']);
+        return JsonResponse::create(['msg' => '封面上传成功。']);
     }
 
     /**

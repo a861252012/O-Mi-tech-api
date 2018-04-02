@@ -8,6 +8,8 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::post('fupload', 'MemberController@flashUpload')->name('member_fupload');
     //上传头像
     Route::post( 'upload', 'MemberController@avatarUpload')->name('avatar_upload');
+    //图片静态化
+    Route::post('/coverUpload', 'ApiController@coverUpload')->name('coverUpload');
 });
 
 /** 用户中心路由组 */
@@ -168,8 +170,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 //findroomcnt
     Route::get('/findroomcnt', ['name' => 'getflashcount', 'uses' => 'ApiController@getFlashCount']);
 
-//图片静态化
-    Route::post('/coverUpload', ['name' => 'coverUpload', 'uses' => 'ApiController@coverUpload']);
+
 //图片静态化
     Route::get('/convertstaticimg', ['name' => 'imagestatic', 'uses' => 'ApiController@imageStatic']);
 //FIND
