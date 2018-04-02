@@ -102,7 +102,7 @@ Route::get('/shop', ['name' => 'shop_index', 'uses' => 'ShopController@index']);
 //活动页面
 Route::get('/act', ['name' => 'act', 'uses' => 'ActivityController@index']);
 //活动详情页面
-Route::get('/activity/{action}', ['name' => 'activity_detail', 'uses' => 'ActivityController@activity']);
+Route::get('/activity/{action}', 'ActivityController@activity')->name('activity_detail');
 // PageController 招募页面
 Route::get('/join', ['name' => 'join', 'uses' => 'PageController@join']);
 Route::get('/cooperation', ['name' => 'join', 'uses' => 'PageController@cooperation']);
@@ -155,7 +155,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
 
 //列举最近20个充值的用户
-    Route::get('/activityShow', ['name' => 'activityShow', 'uses' => 'ApiController@getLastChargeUser']);
+    Route::get('/activityShow', 'ApiController@getLastChargeUser')->name('activityShow');
 
 //下载扩充
     Route::get('/download/[{filename:.+}]', ['name' => 'download', 'uses' => 'ApiController@download']);

@@ -52,21 +52,21 @@ class ActivityController extends Controller
      */
     public function activity($action)
     {
-        $active = $this->make('redis')->hgetall('hactive_page');
+        $active = Redis::hgetall('hactive_page');
 
         //先从redis中获取，如果取不到，再去匹配数据库。
         if ($action != $active['url']) {
               $active  = ActivePage::where('url',$action)->first();
               if(empty($active)){
-                  return  new jsonresponse(['status'=>'0','msg'=>'找不到该页面！']);
+                  return  new jsonresponse(['status'=>0,'msg'=>'找不到该页面！']);
               }else{
                   $active = json_decode($active,true);
               }
         }
 
 
-        if (Auth::id() > 0) {
-              $arr['userHasTimes'] = intval($this->make('redis')->hget('hlottery_ary', Auth::id()));
+        if (Auth::check()) {
+              $arr['userHasTimes'] = intval(Redis::hget('hlottery_ary', Auth::id()));
               $arr['nickname'] = Auth::user()->nickname;
               $arr['is_login'] = true;
         } else {
@@ -78,8 +78,7 @@ class ActivityController extends Controller
         }
 
         $arr = array_merge($arr, $active);
-        $arr =  $this->format_jsoncode($arr);
-        return  new JsonResponse($arr);
+        return  new JsonResponse(['data'=>$arr]);
     }
 
     /**
