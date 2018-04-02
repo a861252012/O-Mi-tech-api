@@ -1753,7 +1753,6 @@ class MemberController extends Controller
 
         $result['info']['id'] = $anchor->id;
         return JsonResponse::create(['data' => $result]);
-
     }
 
     /**
