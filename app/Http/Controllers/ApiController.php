@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use App\Services\Safe\SafeService;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class ApiController
@@ -1194,20 +1195,15 @@ class ApiController extends Controller
 
 
     /**
-     * [searchAnchor 不知作用]
-     *
-     * @author  dc <dc#wisdominfo.my>
-     * @version 2015-11-10
-     * @return  [type]     [description]
+     * 搜索主播
      */
-    public function searchAnchor()
+    public function searchAnchor(Request $request)
     {
-        //$uname = isset($_GET['nickname'])?$_GET['nickname']:'';//解码？
-        $uname = $this->make('request')->get('nickname') ?: '';
+        $uname = $request->get('nickname') ?: '';
 
-        $arr = include BASEDIR . '/app/cache/cli-files/anchor-search-data.php';
-        $pageStart = isset($_REQUEST['pageStart']) ? ($_REQUEST['pageStart'] < 1 ? 1 : intval($_REQUEST['pageStart'])) : 1;
-        $pageLimit = isset($_REQUEST['pageLimit']) ? (($_REQUEST['pageLimit'] > 40 || $_REQUEST['pageLimit'] < 1) ? 40 : intval($_REQUEST['pageLimit'])) : 40;
+        $arr= include Storage::path('cache/anchor-search-data.php');;
+        $pageStart = isset($request['pageStart']) ? ($request['pageStart'] < 1 ? 1 : intval($request['pageStart'])) : 1;
+        $pageLimit = isset($request['pageLimit']) ? (($request['pageLimit'] > 40 || $request['pageLimit'] < 1) ? 40 : intval($request['pageLimit'])) : 40;
 
         if ($uname == '') {
             $pageStart = ($pageStart - 1) * $pageLimit;

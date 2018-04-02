@@ -120,7 +120,7 @@ Route::post('/reg', ['name' => 'api_reg', 'uses' => 'ApiController@reg']);
 Route::get('/search', ['name' => 'search', 'uses' => 'PageController@search']);
 
 
-Route::get('/find', ['name' => 'find', 'uses' => 'ApiController@searchAnchor']);
+Route::get('/find', 'ApiController@searchAnchor')->name('find');
 
 // 验证是否登录
 Route::group(['middleware' => ['login_auth']], function () {

@@ -19,21 +19,22 @@ class UserController extends Controller
             $user = Auth::user();
             // 格式化用户信息 过滤掉用户的密码之类的敏感信息
             $userInfo = collect($this->getOutputUser($user));
-            $userInfo->put('points',$user->points);
+            $userInfo->put('points', $user->points);
             if (resolve(UserService::class)->getUserHiddenPermission($userInfo)) {
                 $userInfo['hidden'] = $user['hidden'];
             }
             // 获取用户等级提升还需要的级别
             $levelInfo = $this->getLevelByRole($user);
-            $userInfo=$userInfo->union($levelInfo);
+            $userInfo = $userInfo->union($levelInfo);
 
             $userInfo['mails'] = resolve('messageService')->getMessageNotReadCount($user['uid'], $user['lv_rich']);
 
             // 是贵族才验证 下掉贵族状态
             if ($user['vip'] && ($user['vip_end'] < date('Y-m-d H:i:s'))) {
-                $user->vip = 0;
-                $user->vip_end = '0000-00-00 00:00:00';
-                $user->save();
+                $user->update([
+                    'vip' => 0,
+                    'vip_end'=>'0000-00-00 00:00:00'
+                    ,]);
                 // 删除坐骑
                 Pack::where('uid', $user->uid)->where('gid', '<=', 120107)->where('gid', '>=', 120101)->delete();
                 Redis::hSet('huser_info:' . $user->uid, 'vip', 0);
