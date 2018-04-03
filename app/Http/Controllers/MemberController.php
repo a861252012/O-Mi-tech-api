@@ -329,9 +329,12 @@ class MemberController extends Controller
      */
     public function agents()
     {
-        $agentsPriv = AgentsPriv::where('uid', $this->userInfo['uid'])->with("agents")->first();
+
+        $agentsPriv = AgentsPriv::where('uid', Auth::user()->uid)->with("agents")->first();
+
         if (!$agentsPriv) {
-            return new RedirectResponse('/');
+           // return new RedirectResponse('/');
+            return  new JsonResponse(array('status'=>0,'msg'=>'代理数据为空'));
         }
         $agentsRelationship = AgentsRelationship::where('aid', $agentsPriv->aid)->get()->toArray();
         $uidArray = array_column($agentsRelationship, 'uid');
@@ -360,7 +363,9 @@ class MemberController extends Controller
                 'rebate_points' => $rebate_points,
             ],
         ];
-        return $this->render('Member/agents', ['data' => $list, 'mintimeDate' => $mintimeDate, 'maxtimeDate' => $maxtimeDate]);
+
+
+        return  new JsonResponse( ['data' =>array( 'list'=>$list, 'mintimeDate' => $mintimeDate, 'maxtimeDate' => $maxtimeDate)]);
     }
 
     /**

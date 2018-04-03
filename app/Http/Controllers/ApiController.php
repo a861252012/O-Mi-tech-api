@@ -1481,11 +1481,13 @@ class ApiController extends Controller
     {
         $res = [
             'status' => 0,
-            'msg' => '',
+            'msg' => '获取失败',
         ];
+
         if (Auth::check()) {
             $res['status'] = 1;
-            $res['msg'] = $this->make('redis')->hget('huser_sid', Auth::id());
+            $res['data']['sid'] = $this->make('redis')->hget('huser_sid', Auth::id());
+            $res['msg'] = '获取成功';
         } else {
             $res['msg'] = session_id();
         }
