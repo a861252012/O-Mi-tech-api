@@ -296,9 +296,9 @@ class MobileController extends Controller
     }
 
     /**
-     * 登录验证码
+     * 验证码
      */
-    public function loginCaptcha()
+    public function captcha()
     {
         return $captcha = Captcha::create();
 //        $png = $captcha->getContent();
