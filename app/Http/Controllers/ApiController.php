@@ -180,15 +180,17 @@ class ApiController extends Controller
      */
     public function platExchange()
     {
-        $uid = $this->userInfo['uid'];
-        $origin = $this->userInfo['origin'];
+
+        $uid = Auth::user()->uid;
+        $origin = Auth::user()->origin;
         $request = $this->make('request');
         $money = trim($request->get('money')) ? $request->get('money') : 0;
         $rid = trim($request->get('rid'));
 
         $redis = $this->make('redis');
-        $logPath = BASEDIR . '/app/logs/' . date('Y-m') . '.log';
-        $this->logResult("user exchange:  user id:$uid  origin:$origin  money:$money ", $logPath);
+
+        Log::channel('daily')->info('user exchange',array(" user id:$uid  origin:$origin  money:$money "));
+
         /** 通知java获取*/
         $redis->publish('plat_exchange',
             json_encode([
@@ -213,8 +215,10 @@ class ApiController extends Controller
      */
     public function getTimeCountRoomDiscountInfo()
     {
-        $vip = intval($this->userInfo['vip']);
+
+        $vip = intval(Auth::user()->vip);
         $userGroup = UserGroup::where('level_id', $vip)->with("permission")->first();
+
         if (!$userGroup) {
             return new JsonResponse(['code' => 1, 'info' => ['vip' => 0, 'vipName' => '', 'discount' => 10], 'message' => '非贵族']);
         }
@@ -226,7 +230,7 @@ class ApiController extends Controller
             'vipName' => $userGroup->level_name,
             'discount' => $userGroup->permission->discount,
         ];
-        return new JsonResponse(['code' => 1, 'info' => $info, 'message' => '']);
+        return new JsonResponse(['status' => 1, 'data' => $info, 'msg' => '获取成功']);
     }
 
     public function getLog()
@@ -446,10 +450,11 @@ class ApiController extends Controller
         $create = [
             'uid' => $request->get('uid'),
             'sid' => $request->get('sid'),
-            'ips' => $request->getClientIp(),
+            'ips' =>$request->getClientIp(),
         ];
 
-        FlashCookie::create($create);
+        $result = FlashCookie::create($create);
+        return ['status' => 1,'data'=>$result,'msg'=>'采集成功'];
     }
 
     /**
@@ -1391,9 +1396,7 @@ class ApiController extends Controller
         $error = curl_error($ch);
         curl_close($ch);
 
-        $logPath = BASEDIR . '/app/logs/charge_' . date('Y-m-d') . '.log';
-        $tmp = "$url  rs:" . $response . ' error:' . $error;
-        $this->logResult($tmp, $logPath);
+        Log::channel('daily')->info("ajaxProxy  :",array("$url  rs:" . $response . ' error:' . $error));
 
         if ($error) {
             return Response::create($error);
