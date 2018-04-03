@@ -337,8 +337,10 @@ class ApiController extends Controller
      */
     public function getTimeCountRoomDiscountInfo()
     {
-        $vip = intval($this->userInfo['vip']);
+
+        $vip = intval(Auth::user()->vip);
         $userGroup = UserGroup::where('level_id', $vip)->with("permission")->first();
+
         if (!$userGroup) {
             return new JsonResponse(['code' => 1, 'info' => ['vip' => 0, 'vipName' => '', 'discount' => 10], 'message' => '非贵族']);
         }
@@ -350,7 +352,7 @@ class ApiController extends Controller
             'vipName' => $userGroup->level_name,
             'discount' => $userGroup->permission->discount,
         ];
-        return new JsonResponse(['code' => 1, 'info' => $info, 'message' => '']);
+        return new JsonResponse(['status' => 1, 'data' => $info, 'msg' => '获取成功']);
     }
 
     /**
