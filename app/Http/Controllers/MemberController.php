@@ -1795,7 +1795,7 @@ class MemberController extends Controller
                 'status' => 101,
                 'msg' => '亲，请先登录哦！',
             ];
-            return (new JsonResponse($msg))->setCallback('cb');
+            return new JsonResponse($msg);
         }
         // 取到开通的贵族的数据 判断价格
         $gid = $this->request()->get('gid');
@@ -1811,26 +1811,26 @@ class MemberController extends Controller
         if (!$userGroup || $userGroup['dml_flag'] == 3) {
             $msg['status'] = 1002;
             $msg['msg'] = '该贵族状态异常,请联系客服！';
-            return (new JsonResponse($msg))->setCallback('cb');
+            return new JsonResponse($msg);
         }
 
         // 钱不够
         if ($userGroup['system']['open_money'] > $user->points) {
             $msg['status'] = 102;
             $msg['msg'] = '亲,你的钻石不够啦！赶快充值吧！';
-            return (new JsonResponse($msg))->setCallback('cb');
+            return new JsonResponse($msg);
         }
 
         // 已经开通了高等级的 不能再开通低等级的
         if ($userGroup['level_id'] == $user->vip) {
             $msg['status'] = 1004;
             $msg['msg'] = '你已开通过此贵族，你可以保级或者开通高级贵族！';
-            return (new JsonResponse($msg))->setCallback('cb');
+            return new JsonResponse($msg);
         }
         if ($userGroup['level_id'] < $user->vip) {
             $msg['status'] = 1005;
             $msg['msg'] = '请现有等级过期后再开通，或开通高等级的贵族！';
-            return (new JsonResponse($msg))->setCallback('cb');
+            return new JsonResponse($msg);
         }
 
         // 如果价格够了，就直接开通用户组
@@ -1960,7 +1960,7 @@ class MemberController extends Controller
 
             $msg['status'] = 1003;
             $msg['msg'] = '可能由于网络原因，开通失败！';
-            return (new JsonResponse($msg))->setCallback('cb');
+            return new JsonResponse($msg);
         }
         $msg['msg'] = '开通成功';
         $msg['data'] = [
@@ -1971,7 +1971,7 @@ class MemberController extends Controller
             'name' => $user->username,
         ];
 
-        return (new JsonResponse($msg))->setCallback('cb');
+        return new JsonResponse($msg);
     }
 
     /**

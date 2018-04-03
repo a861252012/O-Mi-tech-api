@@ -79,10 +79,10 @@ class ShopController extends Controller
         if (!$userGroup) {
             $msg['code'] = 1003;
             $msg['msg'] = '数据获取失败';
-            return (new JsonResponse($msg))->setCallback('cb');
+            return new JsonResponse($msg);
         }
         $msg['data'] = $userGroup;
-        return (new JsonResponse($msg))->setCallback('cb');
+        return new JsonResponse($msg);
     }
 
     /**
@@ -94,18 +94,19 @@ class ShopController extends Controller
     public function getGroupAll()
     {
         $msg = array(
-            'status' => 0,
-            'msg' => ''
+            'status' => 1,
+            'msg' => '数据获取成功'
         );
         $userGroup = $this->make('userGroupServer')->getPublicGroup();
         if (!$userGroup) {
             $msg['status'] = 1003;
             $msg['msg'] = '数据获取失败';
-            return (new JsonResponse($msg))->setCallback('cb');
+            return (new JsonResponse($msg));
         }
+
         $msg['data'] = $userGroup;
-        $msg['msg'] = '数据获取成功';
-        return (new JsonResponse($msg))->setCallback('cb');
+
+        return new JsonResponse($msg);
     }
 
 }
