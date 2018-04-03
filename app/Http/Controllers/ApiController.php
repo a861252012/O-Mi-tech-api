@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Facades\SiteSer;
 use App\Models\ActivityClick;
 use App\Models\Agents;
 use App\Models\AgentsRelationship;
@@ -18,9 +19,10 @@ use App\Models\Messages;
 use App\Models\Pack;
 use App\Models\UserGroup;
 use App\Models\Users;
+use App\Services\Auth\JWTGuard;
+use App\Services\Safe\SafeService;
 use App\Services\System\SystemService;
 use App\Services\User\UserService;
-use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -30,8 +32,8 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
-use App\Services\Safe\SafeService;
 use Illuminate\Support\Facades\Storage;
+use Mews\Captcha\Facades\Captcha;
 
 /**
  * Class ApiController
@@ -77,63 +79,62 @@ class ApiController extends Controller
     /**
      * 注册接口
      */
-    public function reg()
+    public function reg(Request $request)
     {
-        $skipCaptcha = $this->container->config['config.SKIP_CAPTCHA_REG'];
-        if (!$skipCaptcha && (strtolower($_POST['captcha']) != strtolower($_SESSION['CAPTCHA_KEY']))) {
-            die(json_encode([
+        $skipCaptcha = SiteSer::config('skip_captcha_reg');
+        if (!$skipCaptcha && !Captcha::check($request->get('captcha'))) {
+            return JsonResponse::create([
                 "status" => 0,
                 "msg" => "验证码错误!",
-            ]));
+            ]);
         }
-
-        $username = isset($_REQUEST['username']) ? trim($_REQUEST['username']) : null;
+        $username = $request->get('username');
         if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $username) || strlen($username) < 5 || strlen($username) > 30) {
-            die(json_encode([
+            return JsonResponse::create([
                 "status" => 0,
                 "msg" => "注册邮箱不符合格式！(5-30位的邮箱)",
-            ]));
+            ]);
         }
-
-        $nickname = isset($_REQUEST['nickname']) ? trim($_REQUEST['nickname']) : null;
-        $agent = isset($_COOKIE['agent']) ? trim($_COOKIE['agent']) : null;
+        $nickname = $request->get('nickname');
+        $agent = $request->get('agent');
         $len = sizeof(preg_split("//u", $nickname, -1, PREG_SPLIT_NO_EMPTY));
 
         //昵称不能使用/:;\空格,换行等符号。
         if ($len < 2 || $len > 8 || !preg_match("/^[^\s\/\:;]+$/", $nickname)) {
-            die(json_encode([
+            return JsonResponse::create([
                 "status" => 0,
                 "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)",
-            ]));
+            ]);
         }
 
-        if (trim($_POST['password1'] != trim($_POST['password2']))) {
-            die(json_encode([
+        if ($request->get('password1') != $request->get('password2')) {
+            return JsonResponse::create([
                 "status" => 0,
                 "msg" => "两次密码输入不一致!",
-            ]));
+            ]);
         }
 
-        $password = $this->decode($_POST['password1']);
+        $password = $this->decode($request->get('password1'));
+//        $password = $request->get('password1');
         if (strlen($password) < 6 || strlen($password) > 22 || preg_match('/^\d{6,22}$/', $password) || !preg_match('/^\w{6,22}$/', $password)) {
-            die(json_encode([
+            return JsonResponse::create([
                 "status" => 0,
                 "msg" => "注册密码不符合格式!",
-            ]));
+            ]);
         }
 
-        $redis = $this->make('redis');
+        $redis = resolve('redis');
         if ($redis->hExists('husername_to_id', $username)) {
-            die(json_encode([
+            return JsonResponse::create([
                 "status" => 0,
                 "msg" => "对不起, 该帐号不可用!",
-            ]));
+            ]);
         }
         if ($redis->hExists('hnickname_to_id', $nickname)) {
-            die(json_encode([
+            return JsonResponse::create([
                 "status" => 0,
                 "msg" => "对不起, 该昵称已被使用!",
-            ]));
+            ]);
         }
 
         $newUser = [
@@ -142,9 +143,9 @@ class ApiController extends Controller
             'password' => md5($password),
             'pic_total_size' => 524288000,
             'pic_used_size' => 0,
-            'rich' => 64143000,
-            'lv_rich' => 28,
-            'origin' => isset($_REQUEST['origin']) ? $_REQUEST['origin'] : 12,
+            'rich' => 64143000,//TODO
+            'lv_rich' => 28,//TODO
+            'origin' => $request->get('origin', 12),
         ];
 
         //跳转过来的
@@ -156,18 +157,20 @@ class ApiController extends Controller
         $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
         $user = Users::find($uid);
         // 此时调用的是单实例登录的session 验证
-        Auth::guard('pc')->login($user);
-        $return = [
-            'status' => 1,
-            'msg' => '',
-        ];
-        if (isset($_REQUEST['client']) && in_array(strtolower($_REQUEST['client']), ['android', 'ios'])) {
-            $jwt = $this->make('JWTAuth');
-            $token = $jwt->login([
-                'username' => $username,
-                'password' => $password,
-            ]);
-            $return['jwt'] = (string)$token;
+        $guard=null;
+        if ( $request->route()->getName()==='m_reg'|| $request->has('client') && in_array(strtolower($request->get('client')), ['android', 'ios'])) {
+            /** @var JWTGuard $guard */
+            $guard=Auth::guard('mobile');
+            $guard->login($user);
+            $return['data'] = [
+                'jwt' => (string)$guard->getToken(),
+            ];
+        } else {
+            $guard=Auth::guard('pc');
+            $guard->login($user);
+            $return['data'] = [
+                Session::getName() => Session::getId(),
+            ];
         }
         return JsonResponse::create($return);
     }
@@ -206,131 +209,6 @@ class ApiController extends Controller
     }
 
     /**
-     * 注册接口api
-     * @return JsonResponse
-     */
-    public function register(Request $request)
-    {
-        $username = trim(urldecode($request->get('username')));
-        $password = trim(urldecode($request->get('password')));
-        $invite_code = trim(urldecode($request->get('invite_code')));
-        $agent = trim($request->get('agent'));
-
-        if (!$username || !$password) {
-            return new JsonResponse(['status' => 0, 'msg' => '对不起！帐号密码不能为空！']);
-        }
-
-        $token = $this->container->config['config.VFPHP_SIGN'];
-
-        $token = md5($username . $token . $password);
-
-        $token = md5($token . $request->get('timestamp'));
-
-        if ($request->get('token') != $token || $request->get('timestamp') + 60 < time()) {
-            return new JsonResponse(['status' => 0, 'msg' => '对不起！验证失败！']);
-        }
-
-        if (Users::where('username', $username)->exists()) {
-
-            return new JsonResponse(['status' => 0, 'msg' => '对不起！该用户已存在！']);
-        }
-
-        $user = $request->input();
-
-        $user['did'] = 0;
-        $user['pic_total_size'] = 524288000;
-        $user['pic_used_size'] = 0;
-        /**
-         * 默认最高财富等级
-         */
-        $user['rich'] = 64143000;
-        $user['lv_rich'] = 28;
-
-        $user['created'] = date('Y-m-d H:i:s');
-        $newUser = Arr::only($user, ['did', 'username', 'password', 'nickname', 'roled', 'exp', 'pop', 'created', 'status', 'province', 'city', 'county', 'video_status', 'rich', 'lv_exp', 'lv_rich', 'pic_total_size', 'pic_used_size', 'lv_type', 'icon_id']);
-        $vip = Arr::get($user, 'vip', 0);
-        $vip_days = $vip ? 30 : 0;
-        $invite = $gid = $code = 0;
-        //邀请码处理
-        if ($invite_code) {
-            $code = substr($invite_code, -8);
-            $gid = substr($invite_code, 0, -8);
-            $invite = InviteCodes::where('code', $code)->where('expiry', '>', date('Y-m-d H:i:s'))->where('status', 0)->with('group')->first();
-            if ($invite) {
-                $vip = $invite->group->vip;
-                $vip_days = $invite->group->vip_days;
-//                if($vip>0 && $vip_days>0){
-//                    $user['vip'] = $vip;
-//                    $user['vip_end'] = date('Y-m-d H:i:s', time()+ (86400 * $vip_days));
-//                }
-
-                if ($agents = $invite->group->agents) {
-                    $user['aid'] = $agents;
-                }
-
-                if ($points = $invite->group->points) {
-                    $newUser['points'] = $points;
-                }
-            } else {
-                return new JsonResponse(['status' => 0, 'msg' => '无效邀请码' . $gid . '|' . $code . '|' . $invite_code]);
-            }
-        }
-        //跳转过来的
-        if ($agent) {
-            $domaid = Domain::where('url', $agent)->where('type', 0)->where('status', 0)->with("agent")->first();
-            $user['aid'] = $domaid->agent->id;
-        }
-
-        $create = Users::create($newUser);
-
-        if ($uid = $create->uid) {
-            if (!Users::where('uid', $uid)->update(['rid' => $uid])) {
-                return new JsonResponse(['status' => 0, 'msg' => '导入过程出现异常']);
-            }
-            $redis = $this->make('redis');
-            resolve(UserService::class)->getUserReset($uid);
-            $redis->hset('husername_to_id', $user['username'], $uid);
-            $redis->hset('hnickname_to_id', $user['nickname'], $uid);
-
-            //更新邀请码
-            if ($invite_code && $invite) {
-                InviteCodes::where(['gid' => $gid, 'status' => 0, 'code' => $code])->update(['uid' => $uid, 'used_at' => date('Y-m-d H:i:s'), 'status' => 1]);
-            }
-
-            //赠送贵族
-            if ($vip && $vip_days) {
-                resolve(UserService::class)->updateUserOfVip($uid, $vip, 1, $vip_days);
-            }
-
-            //添加代理
-
-            $aid = isset($user['aid']) ? $user['aid'] : 0;
-
-            if ($aid) {
-                if (!Agents::find($aid)) {
-                    return new JsonResponse(['status' => 1, 'msg' => '注册成功！但该用户所属代理不存在,导入代理失败！']);
-                }
-                resolve(UserService::class)->setUserAgents($uid, $aid);
-            }
-            $this->userInfo = Users::find($uid)->toArray();
-            $_SESSION['webonline'] = $this->userInfo['uid'];
-            //登录
-            $huser_sid = $this->make('redis')->hget('huser_sid', $this->userInfo['uid']);
-            // 此时调用的是单实例登录的session 验证
-            $this->writeRedis($this->userInfo, $huser_sid);
-            $domainA = isset($_SERVER['host']) ? $_SERVER['host'] : "peach.dev";
-
-            return JsonResponse::create([
-                'status' => 1,
-                'msg' => '',
-                'synstr' => 'http://' . $domainA,
-                'redirect' => 'http://' . $domainA,
-            ]);
-        }
-        return new JsonResponse(['status' => 0, 'msg' => '注册失败']);
-    }
-
-    /**
      * 获取打折数据
      */
     public function getTimeCountRoomDiscountInfo()
@@ -349,26 +227,6 @@ class ApiController extends Controller
             'discount' => $userGroup->permission->discount,
         ];
         return new JsonResponse(['code' => 1, 'info' => $info, 'message' => '']);
-    }
-
-    /**
-     * 注册代理接口
-     * @return JsonResponse
-     */
-    public function registerAgents()
-    {
-        $request = $this->make('request');
-        $agents = $request->input();
-        if (sizeof(array_filter(array_values($agents))) < 2) {
-            return new JsonResponse(['status' => 0, 'message' => '参数不完整,请联系管理员修复同步代理']);
-        }
-
-        $agents = Arr::only($agents, ['id', 'password', 'nickname', 'atype', 'rebate', 'agentname', 'withdrawalname', 'bank', 'bankaccount', 'testaccount', 'agentaccount']);
-        $agents = Agents::updateOrCreate(['id' => $agents['id']], $agents);
-        if ($agents) {
-            return new JsonResponse(['status' => 1, 'message' => '代理操作成功']);
-        }
-        return new JsonResponse(['status' => 0, 'message' => '同步代理到蜜桃站失败,请联系管理员修复同步代理']);
     }
 
     public function getLog()
@@ -536,33 +394,34 @@ class ApiController extends Controller
     /**
      * 写入redis
      **/
-    private function writeRedis($userInfo,$huser_sid){
-        try{
+    private function writeRedis($userInfo, $huser_sid)
+    {
+        try {
             //判断当前用户session是否是最新登陆
-            $this->_online  =  $userInfo['uid'];
+            $this->_online = $userInfo['uid'];
             //设置新session
-            Session::put(self::SEVER_SESS_ID,$userInfo['uid']);
-            setcookie(self::WEB_UID,$userInfo['uid'],0,'/');//用于首页判断
+            Session::put(self::SEVER_SESS_ID, $userInfo['uid']);
+            setcookie(self::WEB_UID, $userInfo['uid'], 0, '/');//用于首页判断
             $this->_sess_id = session_id();
 
-            if(empty($huser_sid)){ //说明以前没登陆过，没必要检查重复登录
-                $this->_redisInstance->hset('huser_sid',$userInfo['uid'],$this->_sess_id);
-            }elseif($huser_sid !=   $this->_sess_id){//有可能重复登录了
+            if (empty($huser_sid)) { //说明以前没登陆过，没必要检查重复登录
+                $this->_redisInstance->hset('huser_sid', $userInfo['uid'], $this->_sess_id);
+            } elseif ($huser_sid != $this->_sess_id) {//有可能重复登录了
                 //更新用户对应的sessid
-                $this->_redisInstance->hset('huser_sid',$userInfo['uid'], $this->_sess_id );
+                $this->_redisInstance->hset('huser_sid', $userInfo['uid'], $this->_sess_id);
                 //删除旧session，踢出用户在上一个浏览器的登录状态
-                $this->_redisInstance->del('PHPREDIS_SESSION:'.$huser_sid);
+                $this->_redisInstance->del('PHPREDIS_SESSION:' . $huser_sid);
             }
-            if( $this->_isGetCache == false){
-                $this->_redisInstance->hset('husername_to_id',$userInfo['username'],$userInfo['uid']);
-                $this->_redisInstance->hset('hnickname_to_id',$userInfo['nickname'],$userInfo['uid']);
-                $this->_redisInstance->hmset('huser_info:'.$userInfo['uid'],$userInfo);
+            if ($this->_isGetCache == false) {
+                $this->_redisInstance->hset('husername_to_id', $userInfo['username'], $userInfo['uid']);
+                $this->_redisInstance->hset('hnickname_to_id', $userInfo['nickname'], $userInfo['uid']);
+                $this->_redisInstance->hmset('huser_info:' . $userInfo['uid'], $userInfo);
             }
             $this->_points = $userInfo['points'];
-        }catch(Exception $e){
-            Session::put(self::SEVER_SESS_ID,$userInfo['uid']);
-            setcookie(self::WEB_UID, null, time()-31536000,'/');
-            $this->_online  = false;
+        } catch (\Exception $e) {
+            Session::put(self::SEVER_SESS_ID, $userInfo['uid']);
+            setcookie(self::WEB_UID, null, time() - 31536000, '/');
+            $this->_online = false;
         }
     }
 
@@ -574,7 +433,7 @@ class ApiController extends Controller
         //get certificate
         $certificate = resolve(SafeService::class)->getLcertificate("socket");
         if (!$certificate) return new JsonResponse(['status' => 0, 'msg' => "票据用完或频率过快"]);
-        return ['status' => 1,'data'=>['datalist'=>$certificate],'msg'=>'获取成功'];
+        return ['status' => 1, 'data' => ['datalist' => $certificate], 'msg' => '获取成功'];
     }
 
     /**
@@ -908,12 +767,12 @@ class ApiController extends Controller
     {
         $lastChargeUsers = $this->make('redis')->lrange('llast_charge_user2', 0, 19);
 
-        if (sizeof($lastChargeUsers) < 1) return new JsonResponse (['status'=>0]);
+        if (sizeof($lastChargeUsers) < 1) return new JsonResponse (['status' => 0]);
 
         foreach ($lastChargeUsers as $user) {
             $users[] = json_decode($user);
         }
-        return JsonResponse::create(['data'=>$users]);
+        return JsonResponse::create(['data' => $users]);
     }
 
 
@@ -929,7 +788,7 @@ class ApiController extends Controller
         //$packname = $this->make('request')->get('packname');
         if (!$filename) return new Response('access is not allowed', 500);
         $file = BASEDIR . DIRECTORY_SEPARATOR . 'Downloads' . DIRECTORY_SEPARATOR . $filename;
-        return $this->make('systemServer')->download($file);
+        return resolve(SystemService::class)->download($file);
     }
 
 
@@ -1110,7 +969,7 @@ class ApiController extends Controller
             return JsonResponse::create($result);
         }
         if (isset($result['ret']) && $result['ret'] === false) {
-            return JsonResponse::create(['data'=>$result]);
+            return JsonResponse::create(['data' => $result]);
         }
 
         //写入redis记录图片地址
@@ -1199,7 +1058,7 @@ class ApiController extends Controller
     {
         $uname = $request->get('nickname') ?: '';
 
-        $arr= include Storage::path('cache/anchor-search-data.php');;
+        $arr = include Storage::path('cache/anchor-search-data.php');;
         $pageStart = isset($request['pageStart']) ? ($request['pageStart'] < 1 ? 1 : intval($request['pageStart'])) : 1;
         $pageLimit = isset($request['pageLimit']) ? (($request['pageLimit'] > 40 || $request['pageLimit'] < 1) ? 40 : intval($request['pageLimit'])) : 40;
 
@@ -1500,9 +1359,9 @@ class ApiController extends Controller
         $uid = $this->make('request')->get('uid');
         $data = [
             'status' => 0,
-            'data'=>[
+            'data' => [
                 'headimg' => '',
-            ]
+            ],
         ];
         if (!$uid) {
             return new JsonResponse($data);

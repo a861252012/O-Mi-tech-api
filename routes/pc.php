@@ -123,8 +123,7 @@ Route::get('/extend/{url}', ['name' => 'business_extend', 'uses' => 'BusinessCon
 Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
 
 
-
-Route::post('/reg', ['name' => 'api_reg', 'uses' => 'ApiController@reg']);
+Route::post('/reg', 'ApiController@reg')->name('api_reg');
 
 // PageController
 Route::get('/search', ['name' => 'search', 'uses' => 'PageController@search']);
@@ -389,13 +388,8 @@ Route::group(['prefix' => 'charge', 'middleware' => ['charge']], function () {
 //连通测试
 Route::get('/ping', ['name' => 'ping', 'uses' => 'ApiController@ping']);
 
-//登录页面
-Route::get('/passport', ['name' => 'passport', 'uses' => 'LoginController@passport']);
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 Route::any('/logout', 'LoginController@logout');
-//Route::match(['POST', 'GET'], '/peachReg', ['name' => 'peachReg', 'uses' => 'LoginController@mitaoReg']);
-Route::match(['POST', 'GET'], '/api/register', ['name' => 'api_register', 'uses' => 'ApiController@register']);
-Route::match(['POST', 'GET'], '/api/register_agents', ['name' => 'api_agents', 'uses' => 'ApiController@registerAgents']);
 
 Route::match(['POST', 'GET'], '/get_lcertificate', ['name' => 'api_agents', 'uses' => 'ApiController@get_lcertificate']);
 

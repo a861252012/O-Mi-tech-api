@@ -8,10 +8,11 @@
 Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('/login/test', 'Mobile\MobileController@logintest');
 });
+Route::post('reg','ApiController@reg')->name('m_reg')->middleware('mobile.session');
 //登录
 Route::post('/login', 'Mobile\MobileController@login')->name('m_login')->middleware('mobile.session');
-//登录验证码
-Route::get('/login/captcha', 'Mobile\MobileController@loginCaptcha')->middleware('mobile.session');
+//验证码
+Route::get('/login/captcha', 'Mobile\MobileController@captcha')->middleware('mobile.session');
 
 Route::get('/room/conf', ['name' => 'm_room_conf', 'uses' => 'Mobile\RoomController@getRoomConf']);
 

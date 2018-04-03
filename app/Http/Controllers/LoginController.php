@@ -384,7 +384,7 @@ class LoginController extends Controller
             'status' => 1,
             'msg' => '登录成功',
             'data'=>[
-                'sid' => Session::getId(),
+               Session::getName() => Session::getId(),
             ]
         ];
     }
