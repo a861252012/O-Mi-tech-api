@@ -177,15 +177,17 @@ class ApiController extends Controller
      */
     public function platExchange()
     {
-        $uid = $this->userInfo['uid'];
-        $origin = $this->userInfo['origin'];
+
+        $uid = Auth::user()->uid;
+        $origin = Auth::user()->origin;
         $request = $this->make('request');
         $money = trim($request->get('money')) ? $request->get('money') : 0;
         $rid = trim($request->get('rid'));
 
         $redis = $this->make('redis');
-        $logPath = BASEDIR . '/app/logs/' . date('Y-m') . '.log';
-        $this->logResult("user exchange:  user id:$uid  origin:$origin  money:$money ", $logPath);
+
+        Log::channel('daily')->info('user exchange',array(" user id:$uid  origin:$origin  money:$money "));
+
         /** 通知java获取*/
         $redis->publish('plat_exchange',
             json_encode([
@@ -587,10 +589,11 @@ class ApiController extends Controller
         $create = [
             'uid' => $request->get('uid'),
             'sid' => $request->get('sid'),
-            'ips' => $request->getClientIp(),
+            'ips' =>$request->getClientIp(),
         ];
 
-        FlashCookie::create($create);
+        $result = FlashCookie::create($create);
+        return ['status' => 1,'data'=>$result,'msg'=>'采集成功'];
     }
 
     /**
