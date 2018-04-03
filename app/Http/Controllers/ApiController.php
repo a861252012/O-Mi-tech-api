@@ -1537,9 +1537,7 @@ class ApiController extends Controller
         $error = curl_error($ch);
         curl_close($ch);
 
-        $logPath = BASEDIR . '/app/logs/charge_' . date('Y-m-d') . '.log';
-        $tmp = "$url  rs:" . $response . ' error:' . $error;
-        $this->logResult($tmp, $logPath);
+        Log::channel('daily')->info("ajaxProxy  :",array("$url  rs:" . $response . ' error:' . $error));
 
         if ($error) {
             return Response::create($error);
