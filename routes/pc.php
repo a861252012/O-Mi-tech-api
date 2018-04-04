@@ -248,7 +248,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/balance', ['name' => 'balance', 'uses' => 'ApiController@Balance']);
 
     //抽奖接口
-    Route::get('/lottery', ['name' => 'lottery', 'uses' => 'ApiController@lottery']);
+    Route::get('/lottery','ApiController@lottery')->name('lottery');
 
     //抽奖信息接口
     Route::get('/lotteryinfo', ['name' => 'lotteryinfo', 'uses' => 'ApiController@lotteryinfo']);

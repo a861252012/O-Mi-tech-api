@@ -39,7 +39,7 @@ class LotteryService extends Service
 	 * @author dc <dc@wisdominfo.my>
 	 * @version 2015-11-09
 	 * @param   array     $array 数组格式 array('id'=>奖项id, 'probality'=>中奖概率);
-	 * @return 中奖奖项id
+	 * @return int 中奖奖项id
 	 */
 	public function LotteryOfProbability($array)
 	{

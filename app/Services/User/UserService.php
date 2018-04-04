@@ -167,7 +167,7 @@ class UserService extends Service
     {
         //if(!is_int(uid) || !$points || !in_array($operation, array('+','-'))) return false;
         if (!$uid || !is_numeric($uid)) {
-            throw new Exception('Please make sure $uid is a numeric');
+            throw new \Exception('Please make sure $uid is a numeric');
         }
         if (intval($points) < 1) return true;
 
