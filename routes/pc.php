@@ -4,6 +4,8 @@ Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginCont
 Route::get('/captcha', 'Controller@captcha');
 // 任务列表
 Route::get('/task', 'TaskController@index')->name('task_index');
+//贵族列表
+Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopController@getGroupAll']);
 
 Route::group(['middleware' => ['login_auth']], function () {
     //上传相册
@@ -32,11 +34,11 @@ Route::group(['prefix' => 'member'], function () {
         // 用户中心 我的关注
         Route::get('attention', 'MemberController@attention')->name('member_attention');
         // 用户中心 我的道具
-        Route::any('scene', 'MemberController@scene')->name('member_scene');
+        Route::get('scene', 'MemberController@scene')->name('member_scene');
+        Route::post('scene/toggle', 'MemberController@sceneToggle')->name('member_scene_toggle');
         // 商城购买
         Route::post('pay', 'MemberController@pay')->name('member_pay');
         // 用户中心 取消装备
-        Route::any('cancelscene', 'MemberController@cancelScene')->name('member_cancelscene');
         // 用户中心 充值记录
         Route::get('charge', 'MemberController@charge')->name('member_charge');
         // 用户中心 消费记录
@@ -102,7 +104,7 @@ Route::get('/shop', ['name' => 'shop_index', 'uses' => 'ShopController@index']);
 //活动页面
 Route::get('/act', ['name' => 'act', 'uses' => 'ActivityController@index']);
 //活动详情页面
-Route::get('/activity/{action}', ['name' => 'activity_detail', 'uses' => 'ActivityController@activity']);
+Route::get('/activity/{action}', 'ActivityController@activity')->name('activity_detail');
 // PageController 招募页面
 Route::get('/join', ['name' => 'join', 'uses' => 'PageController@join']);
 Route::get('/cooperation', ['name' => 'join', 'uses' => 'PageController@cooperation']);
@@ -120,9 +122,8 @@ Route::match(['POST', 'GET'], '/indexinfo', ['name' => 'indexinfo', 'uses' => 'I
 Route::get('/extend/{url}', ['name' => 'business_extend', 'uses' => 'BusinessController@extend']);
 Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
 
-Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopController@getGroupAll']);
 
-Route::post('/reg', ['name' => 'api_reg', 'uses' => 'ApiController@reg']);
+Route::post('/reg', 'ApiController@reg')->name('api_reg');
 
 // PageController
 Route::get('/search', ['name' => 'search', 'uses' => 'PageController@search']);
@@ -146,16 +147,13 @@ Route::group(['middleware' => ['login_auth']], function () {
 //活动送礼接口
     Route::get('/activity', ['name' => 'activity', 'uses' => 'ApiController@Activity']);
 
-//活动页面
-    Route::get('/act', ['name' => 'act', 'uses' => 'ActivityController@index']);
-//活动详情页面
-    Route::get('/activity/{action}', ['name' => 'activity_detail', 'uses' => 'ActivityController@activity']);
+
 
 //魅力之星活动排行榜
     Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
 
 //列举最近20个充值的用户
-    Route::get('/activityShow', ['name' => 'activityShow', 'uses' => 'ApiController@getLastChargeUser']);
+    Route::get('/activityShow', 'ApiController@getLastChargeUser')->name('activityShow');
 
 //下载扩充
     Route::get('/download/[{filename:.+}]', ['name' => 'download', 'uses' => 'ApiController@download']);
@@ -262,25 +260,6 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     // 贵族根据id获取贵族信息
     Route::get('/getgroup', ['name' => 'shop_getgroup', 'uses' => 'ShopController@getgroup']);
-    Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopController@getGroupAll']);
-
-    // 商城页面
-    Route::get('/shop', ['name' => 'shop_index', 'uses' => 'ShopController@index']);
-
-    // 关于 帮助 投诉
-    Route::get('/about/{act:[a-z_]+}', ['uses' => 'PageController@index']);
-
-    // 贵族详情页面
-    Route::get('/noble', ['name' => 'noble', 'uses' => 'PageController@noble']);
-
-    // 活动详情页面
-    Route::get('/nac/{id:\d+}', ['name' => 'ac_info', 'uses' => 'ActivityController@info']);
-
-    // 招募页面
-    Route::match(['POST', 'GET'], '/business/{act:[a-z]+}', ['name' => 'business_url', 'uses' => 'BusinessController@index']);
-
-    // 代理页面
-    Route::get('/extend[/{url:.+}]', ['name' => 'business_extend', 'uses' => 'BusinessController@extend']);
 
     // 主播空间
     Route::get('/space', ['name' => 'shop_space', 'uses' => 'SpaceController@index']);
@@ -362,6 +341,16 @@ Route::get('/m/login', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@
 Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp', 'uses' => 'RoomController@get']);
 
 
+
+
+
+
+
+
+
+
+
+
 // 充值类 TODO 登录验证
 // 验证是否登录
 Route::group(['prefix' => 'charge', 'middleware' => ['charge', 'login_auth']], function () {
@@ -387,13 +376,8 @@ Route::group(['prefix' => 'charge', 'middleware' => ['charge']], function () {
 //连通测试
 Route::get('/ping', ['name' => 'ping', 'uses' => 'ApiController@ping']);
 
-//登录页面
-Route::get('/passport', ['name' => 'passport', 'uses' => 'LoginController@passport']);
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 Route::any('/logout', 'LoginController@logout');
-//Route::match(['POST', 'GET'], '/peachReg', ['name' => 'peachReg', 'uses' => 'LoginController@mitaoReg']);
-Route::match(['POST', 'GET'], '/api/register', ['name' => 'api_register', 'uses' => 'ApiController@register']);
-Route::match(['POST', 'GET'], '/api/register_agents', ['name' => 'api_agents', 'uses' => 'ApiController@registerAgents']);
 
 Route::match(['POST', 'GET'], '/get_lcertificate', ['name' => 'api_agents', 'uses' => 'ApiController@get_lcertificate']);
 

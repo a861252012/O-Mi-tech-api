@@ -40,12 +40,19 @@ class ActivityController extends Controller
     {
         $data = ActivityPag::where('img_text_id', $id)->where('dml_flag', '!=', 3)->first();
         $tmp = ActivityPag::where('pid', $id)->where('dml_flag', '!=', 3)->first();
+        //根据id判断是否有活动详情
+        if(empty($tmp)){
+            $data = "";
+            $status = 0;
+        }else{
+            // 分割活动页面的图片
+            $temp = explode(',', $tmp['temp_name']);
+            $data['image'] = $temp[0]; // 第一个为原图
+            $data['tmp'] = array_slice($temp, 1); // 抛出第一个原图的 后面的才是切割后的图
+            $status = 1;
+        }
 
-        // 分割活动页面的图片
-        $temp = explode(',', $tmp['temp_name']);
-        $data['image'] = $temp[0]; // 第一个为原图
-        $data['tmp'] = array_slice($temp, 1); // 抛出第一个原图的 后面的才是切割后的图
-        return SuccessResponse::create($data,$msg = "获取成功", $status = 1);
+        return SuccessResponse::create($data,$msg = "获取成功", $status);
 
 //        return $this->render('Activity/info',array('activity'=>$data));
     }
@@ -57,21 +64,21 @@ class ActivityController extends Controller
      */
     public function activity($action)
     {
-        $active = $this->make('redis')->hgetall('hactive_page');
+        $active = Redis::hgetall('hactive_page');
 
         //先从redis中获取，如果取不到，再去匹配数据库。
         if ($action != $active['url']) {
               $active  = ActivePage::where('url',$action)->first();
               if(empty($active)){
-                  return  new jsonresponse(['status'=>'0','msg'=>'找不到该页面！']);
+                  return  new jsonresponse(['status'=>0,'msg'=>'找不到该页面！']);
               }else{
                   $active = json_decode($active,true);
               }
         }
 
 
-        if (Auth::id() > 0) {
-              $arr['userHasTimes'] = intval($this->make('redis')->hget('hlottery_ary', Auth::id()));
+        if (Auth::check()) {
+              $arr['userHasTimes'] = intval(Redis::hget('hlottery_ary', Auth::id()));
               $arr['nickname'] = Auth::user()->nickname;
               $arr['is_login'] = true;
         } else {
@@ -83,8 +90,7 @@ class ActivityController extends Controller
         }
 
         $arr = array_merge($arr, $active);
-        $arr =  $this->format_jsoncode($arr);
-        return  new JsonResponse($arr);
+        return  new JsonResponse(['data'=>$arr]);
     }
 
     /**

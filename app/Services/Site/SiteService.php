@@ -102,9 +102,13 @@ class SiteService
 
     protected function loadConfig(): void
     {
-        $this->config = new Config($this->id);
+        $this->config = static::getConfigBySiteID($this->id);
     }
 
+    public static function getConfigBySiteID($id)
+    {
+        return new Config($id);
+    }
     /**
      * 获取缓存，懒加载机制
      * @param null $name    如果没有name会
@@ -172,7 +176,7 @@ class SiteService
         return $this->errors;
     }
 
-    public static function getConfigArrayForSite(Site $site)
+    public static function getDBConfigArrayForSite(Site $site)
     {
         $config = $site->config;
         $configArray = array_combine($config->pluck('k')->toArray(), $config->pluck('v')->toArray());
@@ -187,7 +191,7 @@ class SiteService
     public static function syncConfigForSite(Site $site)
     {
         static::flushConfigCacheForSite($site);
-        $configArray = static::getConfigArrayForSite($site);
+        $configArray = static::getDBConfigArrayForSite($site);
         return Config::hMset($site->id,$configArray);
     }
 
