@@ -387,12 +387,16 @@ class MemberController extends Controller
             RoomAdmin::where('rid', $rid)->where('uid', $uid)->update(['dml_flag' => 3]);
             //删除redis管理员记录
             $this->make('redis')->srem('video:manage:' . $rid, $uid);
-            return new JsonResponse(['status' => 1, 'message' => '删除成功!']);
+            return new JsonResponse(['status' => 1, 'msg' => '删除成功!']);
         }
 
         //管理员数据列表
         $v['roomadmin'] = RoomAdmin::where('rid', $rid)->where('dml_flag', '!=', 3)->with('user')->paginate(30);
-        return $this->render('Member/roomadmin', $v);
+        $res = $v['roomadmin']->toArray();
+        $res['list'] = $res['data'];
+        unset($res['data']);
+        return new JsonResponse(['status' => 1,'data'=>$res,'msg' => '获取成功!']);
+
     }
 
 
@@ -748,14 +752,14 @@ class MemberController extends Controller
         $result['roomlistOneToOne'] = RoomDuration::where('uid', Auth::id())->where('status', 0)
             ->orderBy('starttime', 'DESC')
             ->paginate(10)->appends(['tab' => 'one2one', 'page2' => $page2])->setPageName('page1')->setPath('');
-        for ($i = 0; $i < 25; $i++) {//生成前端的小时下拉框
+       /* for ($i = 0; $i < 25; $i++) {//生成前端的小时下拉框
             if ($i < 10) $result['hoption'][$i]['option'] = '0' . $i;
             else $result['hoption'][$i]['option'] = $i;
         }
         for ($i = 0; $i < 12; $i++) {//生成前端分钟的下拉框,每五分钟一次
             if ($i < 2) $result['ioption'][$i]['option'] = '0' . ($i * 5);
             else $result['ioption'][$i]['option'] = $i * 5;
-        }
+        }*/
 
         //时长房间
         $roomStatus = $this->getRoomStatus(Auth::id(), 6);
