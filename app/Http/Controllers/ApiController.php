@@ -877,7 +877,7 @@ class ApiController extends Controller
         foreach ($lotterys as $lottery) {
             $lotterylist[] = ['id' => $lottery['id'], 'prize' => $lottery['prize']];
         }
-        return JsonResponse::create(['data' => ['list'=>$lotterylist]]);
+        return JsonResponse::create(['data' => ['list' => $lotterylist]]);
     }
 
 
@@ -1092,18 +1092,17 @@ class ApiController extends Controller
      *
      * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
-     * @return  JSON
      */
     public function click()
     {
-        $ip = $this->make('systemServer')->getIpAddress('long');
-        $redis = $this->make('redis');
+        $ip = resolve(SystemService::class)->getIpAddress('long');
+        $redis = resolve('redis');
 
         $ipkey = 'video_click_ip';
 
         $getip = $redis->hget($ipkey, $ip);
 
-        if ($getip) return new JsonResponse(['status' => 2, 'msg' => '失败']);
+        if ($getip) return JsonResponse::create(['status' => 0, 'msg' => '失败']);
 
         //更新redis统计
         $redis->hset($ipkey, $ip, 1);
@@ -1116,8 +1115,7 @@ class ApiController extends Controller
         } else {
             ActivityClick::create(['date_day' => $today, 'clicks' => 1]);
         }
-
-        return new JsonResponse(['status' => 1, 'msg' => '成功']);
+        return JsonResponse::create(['status' => 1, 'msg' => '成功']);
     }
 
     /**

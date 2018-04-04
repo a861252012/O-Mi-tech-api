@@ -102,7 +102,7 @@ class SystemService extends Service
     public function getIpAddress($type = 'string')
     {
 
-        $ip = $this->make('request')->getClientIp();
+        $ip = request()->getClientIp();
 
         $long = sprintf("%u", ip2long($ip));
         if ($type == 'long') return $long;
