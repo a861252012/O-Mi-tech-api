@@ -2,6 +2,7 @@
 
 namespace App\Services\Lottery;
 
+use App\Models\Lottery;
 use App\Services\Service;
 use App\Models;
 
@@ -24,9 +25,7 @@ class LotteryService extends Service
 	 */
 	public function getLotterys()
 	{
-		$lotterys = Models\Lottery::all();
-		if(!is_object($lotterys)) return array();
-
+		$lotterys = Lottery::all();
 		return $lotterys->toArray();
 	}
 
