@@ -313,7 +313,7 @@ class ComposerStaticInit1271a362638dc1e8fdb79a5b7b4bc348
     );
 
     public static $classMap = array (
-        'App\\Console\\Commands\\One2ManyMsgSend' => __DIR__ . '/../..' . '/app/Console/Commands/One2ManyMsgSend.php',
+        'App\\Console\\Commands\\One2ManyMsgSend' => __DIR__ . '/../..',
         'App\\Console\\Commands\\Schedule\\AnchorList' => __DIR__ . '/../..' . '/app/Console/Commands/Schedule/AnchorList.php',
         'App\\Console\\Commands\\Schedule\\AnchorSearch' => __DIR__ . '/../..' . '/app/Console/Commands/Schedule/AnchorSearch.php',
         'App\\Console\\Commands\\Schedule\\OnetoOneStartTip' => __DIR__ . '/../..' . '/app/Console/Commands/Schedule/OnetoOneStartTip.php',
@@ -321,8 +321,8 @@ class ComposerStaticInit1271a362638dc1e8fdb79a5b7b4bc348
         'App\\Console\\Commands\\Schedule\\VipExpire' => __DIR__ . '/../..' . '/app/Console/Commands/Schedule/VipExpire.php',
         'App\\Console\\Commands\\SiteConfig' => __DIR__ . '/../..' . '/app/Console/Commands/SiteConfig.php',
         'App\\Console\\Commands\\SiteInit' => __DIR__ . '/../..' . '/app/Console/Commands/SiteInit.php',
-        'App\\Console\\Commands\\UpdateTotal' => __DIR__ . '/../..' . '/app/Console/Commands/UpdateTotal.php',
-        'App\\Console\\Commands\\UserSalaryTotal' => __DIR__ . '/../..' . '/app/Console/Commands/UserSalaryTotal.php',
+        'App\\Console\\Commands\\UpdateTotal' => __DIR__ . '/../..',
+        'App\\Console\\Commands\\UserSalaryTotal' => __DIR__ . '/../..',
         'App\\Console\\Kernel' => __DIR__ . '/../..' . '/app/Console/Kernel.php',
         'App\\Controller\\Pay\\PayController' => __DIR__ . '/../..' . '/app/Http/Controllers/Pay/PayController.php',
         'App\\Events\\Active' => __DIR__ . '/../..' . '/app/Events/Active.php',
