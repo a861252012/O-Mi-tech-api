@@ -16,6 +16,8 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::post('/coverUpload', 'ApiController@coverUpload')->name('coverUpload');
     // 任务完成领取奖励api
     Route::any('/task/end/{id}', 'TaskController@billTask')->where('end', '[0-9]+');
+    // 投诉
+    Route::post('complaints', 'IndexController@complaints');
 });
 
 /** 用户中心路由组 */
@@ -268,7 +270,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::match(['POST', 'GET'], '/verfiyName', ['uses' => 'IndexController@checkUniqueName']);
     Route::match(['POST', 'GET'], '/setinroomstat', ['name' => 'setinroomstat', 'uses' => 'IndexController@setInRoomStat']);
 
-    Route::post('/complaints', ['uses' => 'IndexController@complaints']);
+
     Route::get('/cliget/{act}', ['uses' => 'IndexController@cliGetRes']);
 
 
