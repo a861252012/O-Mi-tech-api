@@ -847,7 +847,7 @@ class ApiController extends Controller
         Lottery::where('id', $lotteryid)->update(['nums' => $lotteryItem[$lotteryid]['nums'] - 1]);
 
         //记录抽奖次数
-       Redis::hset('hlottery_ary', $uid, $lotteryTimes - 1);
+        Redis::hset('hlottery_ary', $uid, $lotteryTimes - 1);
 
         //给中奖用户增加奖励
         resolve(UserService::class)->updateUserOfPoints($uid, '+', $lotteryItem[$lotteryid]['fenshu'], 6);
@@ -870,16 +870,14 @@ class ApiController extends Controller
      */
     public function lotteryInfo()
     {
-        if (!$this->container->config['LOTTRY_STATUS'])
-            return new JsonResponse(['data' => 0, 'msg' => '活动已经关闭！']);
-
-
-        $lotterys = $this->make('lotteryServer')->getLotterys();
+        if (!SiteSer::config('lottry_status'))
+            return new JsonResponse(['status' => 0, 'msg' => '活动已经关闭！']);
+        $lotterys = resolve(LotteryService::class)->getLotterys();
         $lotterylist = [];
         foreach ($lotterys as $lottery) {
             $lotterylist[] = ['id' => $lottery['id'], 'prize' => $lottery['prize']];
         }
-        return new JsonResponse($lotterylist);
+        return JsonResponse::create(['data' => ['list'=>$lotterylist]]);
     }
 
 

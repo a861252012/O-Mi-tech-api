@@ -248,10 +248,10 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/balance', ['name' => 'balance', 'uses' => 'ApiController@Balance']);
 
     //抽奖接口
-    Route::get('/lottery','ApiController@lottery')->name('lottery');
+    Route::any('/lottery','ApiController@lottery')->name('lottery');
 
     //抽奖信息接口
-    Route::get('/lotteryinfo', ['name' => 'lotteryinfo', 'uses' => 'ApiController@lotteryinfo']);
+    Route::get('/lotteryinfo','ApiController@lotteryinfo')->name('lotteryinfo');
 
     // 房间管理员
     Route::match(['POST', 'GET'], '/member/roomadmin', ['name' => 'roomadmin', 'uses' => 'MemberController@roomadmin']);
