@@ -147,10 +147,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 //活动送礼接口
     Route::get('/activity', ['name' => 'activity', 'uses' => 'ApiController@Activity']);
 
-//活动页面
-    Route::get('/act', ['name' => 'act', 'uses' => 'ActivityController@index']);
-//活动详情页面
-    Route::get('/activity/{action}', ['name' => 'activity_detail', 'uses' => 'ActivityController@activity']);
+
 
 //魅力之星活动排行榜
     Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
@@ -264,10 +261,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     // 贵族根据id获取贵族信息
     Route::get('/getgroup', ['name' => 'shop_getgroup', 'uses' => 'ShopController@getgroup']);
 
-
-    // 代理页面
-    Route::get('/extend[/{url:.+}]', ['name' => 'business_extend', 'uses' => 'BusinessController@extend']);
-
     // 主播空间
     Route::get('/space', ['name' => 'shop_space', 'uses' => 'SpaceController@index']);
 
@@ -347,19 +340,15 @@ Route::get('/m/login', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@
 //rtmp地址
 Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp', 'uses' => 'RoomController@get']);
 
-// 商城页面
-Route::get('/shop', ['name' => 'shop_index', 'uses' => 'ShopController@index']);
-// 关于 帮助 投诉
-Route::get('/about/{act:[a-z_]+}', ['uses' => 'PageController@index']);
 
-// 贵族详情页面
-Route::get('/noble', ['name' => 'noble', 'uses' => 'PageController@noble']);
 
-// 活动详情页面
-Route::get('/nac/{id:\d+}', ['name' => 'ac_info', 'uses' => 'ActivityController@info']);
 
-// 招募页面
-Route::match(['POST', 'GET'], '/business/{act:[a-z]+}', ['name' => 'business_url', 'uses' => 'BusinessController@index']);
+
+
+
+
+
+
 
 
 // 充值类 TODO 登录验证
