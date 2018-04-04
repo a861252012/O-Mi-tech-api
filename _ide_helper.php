@@ -12717,7 +12717,7 @@ namespace App\Facades {
          */ 
         public static function getConfigArrayForSite($site)
         {
-            return \App\Services\Site\SiteService::getConfigArrayForSite($site);
+            return \App\Services\Site\SiteService::getDBConfigArrayForSite($site);
         }
         
         /**

@@ -92,8 +92,8 @@ class SiteConfig extends Command
     public function verifyConfigCache(Site $site)
     {
         $this->info('Verifying site ' . $site->name);
-        $configArray = $this->siteService->getConfigArrayForSite($site);
-        $cache = $this->siteService->getConfigBySiteID($site->id);
+        $configArray = $this->siteService->getDBConfigArrayForSite($site);
+        $cache = $this->siteService->getConfigBySiteID($site->id)->all();
         $intersect = array_intersect_assoc($configArray, $cache);
         $a = array_diff_assoc($cache, $intersect);
         $b = array_diff_assoc($configArray, $intersect);
