@@ -34,11 +34,11 @@ Route::group(['prefix' => 'member'], function () {
         // 用户中心 我的关注
         Route::get('attention', 'MemberController@attention')->name('member_attention');
         // 用户中心 我的道具
-        Route::any('scene', 'MemberController@scene')->name('member_scene');
+        Route::get('scene', 'MemberController@scene')->name('member_scene');
+        Route::post('scene/toggle', 'MemberController@sceneToggle')->name('member_scene_toggle');
         // 商城购买
         Route::post('pay', 'MemberController@pay')->name('member_pay');
         // 用户中心 取消装备
-        Route::any('cancelscene', 'MemberController@cancelScene')->name('member_cancelscene');
         // 用户中心 充值记录
         Route::get('charge', 'MemberController@charge')->name('member_charge');
         // 用户中心 消费记录

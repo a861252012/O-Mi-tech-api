@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
+use App\Libraries\SuccessResponse;
 use App\Models\AgentsPriv;
 use App\Models\AgentsRelationship;
 use App\Models\Anchor;
@@ -42,7 +43,6 @@ use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Mews\Captcha\Facades\Captcha;
-use App\Libraries\SuccessResponse;
 
 class MemberController extends Controller
 {
@@ -333,8 +333,8 @@ class MemberController extends Controller
         $agentsPriv = AgentsPriv::where('uid', Auth::user()->uid)->with("agents")->first();
 
         if (!$agentsPriv) {
-           // return new RedirectResponse('/');
-            return  new JsonResponse(array('status'=>0,'msg'=>'代理数据为空'));
+            // return new RedirectResponse('/');
+            return new JsonResponse(['status' => 0, 'msg' => '代理数据为空']);
         }
         $agentsRelationship = AgentsRelationship::where('aid', $agentsPriv->aid)->get()->toArray();
         $uidArray = array_column($agentsRelationship, 'uid');
@@ -365,7 +365,7 @@ class MemberController extends Controller
         ];
 
 
-        return  new JsonResponse( ['data' =>array( 'list'=>$list, 'mintimeDate' => $mintimeDate, 'maxtimeDate' => $maxtimeDate)]);
+        return new JsonResponse(['data' => ['list' => $list, 'mintimeDate' => $mintimeDate, 'maxtimeDate' => $maxtimeDate]]);
     }
 
     /**
@@ -395,7 +395,7 @@ class MemberController extends Controller
         $res = $v['roomadmin']->toArray();
         $res['list'] = $res['data'];
         unset($res['data']);
-        return new JsonResponse(['status' => 1,'data'=>$res,'msg' => '获取成功!']);
+        return new JsonResponse(['status' => 1, 'data' => $res, 'msg' => '获取成功!']);
 
     }
 
@@ -415,10 +415,10 @@ class MemberController extends Controller
         $startTime = strtotime($user->vip_end) - 30 * 24 * 60 * 60;
 
         if ($user->vip) {
-            $group = LevelRich::where('level_id',$user->vip)->first();
+            $group = LevelRich::where('level_id', $user->vip)->first();
 
             if (!$group) {
-                return SuccessResponse::create('',$status=1,$msg='获取成功');// 用户组都不在了没保级了
+                return SuccessResponse::create('', $status = 1, $msg = '获取成功');// 用户组都不在了没保级了
                 //return true;// 用户组都不在了没保级了
             }
 
@@ -455,7 +455,7 @@ class MemberController extends Controller
         }
         $data = [];
         $data['item'] = $log;
-        return SuccessResponse::create($data,$status=1,$msg='获取成功');
+        return SuccessResponse::create($data, $status = 1, $msg = '获取成功');
 
     }
 
@@ -577,21 +577,27 @@ class MemberController extends Controller
         return JsonResponse::create($data);
     }
 
+    public function sceneToggle(Request $request)
+    {
+        $action=$request->get('action','true');
+        if ($action=='true'){
+            $handle = $this->_getEquipHandle($request->get('gid'));
+            if (is_array($handle)) {
+                return new JsonResponse($handle);
+            }
+            return JsonResponse::create(['status' => 0, 'msg' => '操作出现未知错误！']);
+        }elseif($action=='false'){
+            return $this->cancelScene();
+        }
+        return JsonResponse::create(['status'=>0]);
+    }
+
     /**
      * 用户中心 我的道具
      */
     public function scene(Request $request)
     {
         $uid = Auth::id();
-        //道具装备操作
-        if ($request->get('handle') == 'equip') {
-            $handle = $this->_getEquipHandle($request->get('gid'));
-            if (is_array($handle)) {
-                return new JsonResponse($handle);
-            }
-            return JsonResponse::create(['status' => 0, 'msg' => '操作出现未知错误！']);
-
-        }
         $data = Pack::with('mountGroup')->where('uid', $uid)->paginate();
         //判断是否过期
         $equip = Redis::hgetall('user_car:' . $uid);
@@ -600,8 +606,7 @@ class MemberController extends Controller
         }
         return JsonResponse::create([
             'status' => 1,
-            'data' => $data,
-            'equip' => $equip,
+            'data' => ['list' => $data, 'equip' => $equip,],
         ]);
     }
 
@@ -752,14 +757,14 @@ class MemberController extends Controller
         $result['roomlistOneToOne'] = RoomDuration::where('uid', Auth::id())->where('status', 0)
             ->orderBy('starttime', 'DESC')
             ->paginate(10)->appends(['tab' => 'one2one', 'page2' => $page2])->setPageName('page1')->setPath('');
-       /* for ($i = 0; $i < 25; $i++) {//生成前端的小时下拉框
-            if ($i < 10) $result['hoption'][$i]['option'] = '0' . $i;
-            else $result['hoption'][$i]['option'] = $i;
-        }
-        for ($i = 0; $i < 12; $i++) {//生成前端分钟的下拉框,每五分钟一次
-            if ($i < 2) $result['ioption'][$i]['option'] = '0' . ($i * 5);
-            else $result['ioption'][$i]['option'] = $i * 5;
-        }*/
+        /* for ($i = 0; $i < 25; $i++) {//生成前端的小时下拉框
+             if ($i < 10) $result['hoption'][$i]['option'] = '0' . $i;
+             else $result['hoption'][$i]['option'] = $i;
+         }
+         for ($i = 0; $i < 12; $i++) {//生成前端分钟的下拉框,每五分钟一次
+             if ($i < 2) $result['ioption'][$i]['option'] = '0' . ($i * 5);
+             else $result['ioption'][$i]['option'] = $i * 5;
+         }*/
 
         //时长房间
         $roomStatus = $this->getRoomStatus(Auth::id(), 6);
@@ -1032,11 +1037,11 @@ class MemberController extends Controller
     public function reservation(Request $request)
     {
         $type = $request->get('type', 1);
-        $rooms =[];
-        $recommend =[];
-        $data= [
-            'rooms'=>&$rooms,
-            'recommend'=>&$recommend,
+        $rooms = [];
+        $recommend = [];
+        $data = [
+            'rooms' => &$rooms,
+            'recommend' => &$recommend,
         ];
         $userServer = resolve(UserService::class);
         switch ($type) {
@@ -1045,7 +1050,7 @@ class MemberController extends Controller
                 break;
             case 1:
             default:
-            $rooms = RoomDuration::where('reuid', Auth::id())
+                $rooms = RoomDuration::where('reuid', Auth::id())
                     ->where('starttime', '>', time() . '-duration')
                     ->orderBy('starttime', 'DESC')
                     ->paginate();
@@ -1065,7 +1070,7 @@ class MemberController extends Controller
         }
         $page = $request->get('page') ?: 1;
         //我的预约推荐是从redis中取数据的，先全部取出数据，做排序
-        $recommend = collect($this->getReservation(Auth::id()))->forPage($page,6);
+        $recommend = collect($this->getReservation(Auth::id()))->forPage($page, 6);
 
         $redis = resolve('redis');
         $image_server = SiteSer::config('img_host') . '/';
@@ -1079,7 +1084,7 @@ class MemberController extends Controller
             $cover = $redis->get('shower:cover:version:' . $userinfo['uid']);
             $value['cover'] = $cover ? $image_server . $cover : false;
         }
-        return JsonResponse::create(['data'=>$data]);
+        return JsonResponse::create(['data' => $data]);
     }
 
     /**
@@ -1728,7 +1733,7 @@ class MemberController extends Controller
             return JsonResponse::create($result);
         }
         if (isset($result['ret']) && $result['ret'] === false) {
-            return JsonResponse::create(['data'=>$result]);
+            return JsonResponse::create(['data' => $result]);
         }
         //更新用户头像
         Users::where('uid', $user['uid'])->update(['headimg' => $result['info']['md5']]);
@@ -1755,7 +1760,7 @@ class MemberController extends Controller
             return JsonResponse::create($result);
         }
         if (isset($result['ret']) && $result['ret'] === false) {
-            return JsonResponse::create(['data'=>$result]);
+            return JsonResponse::create(['data' => $result]);
         }
 
         $anchor = Anchor::create(['uid' => Auth::id(), 'file' => $result['info']['md5'], 'size' => $result['info']['size'], 'jointime' => time()]);
