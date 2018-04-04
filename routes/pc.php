@@ -265,21 +265,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/getgroup', ['name' => 'shop_getgroup', 'uses' => 'ShopController@getgroup']);
 
 
-    // 商城页面
-    Route::get('/shop', ['name' => 'shop_index', 'uses' => 'ShopController@index']);
-
-    // 关于 帮助 投诉
-    Route::get('/about/{act:[a-z_]+}', ['uses' => 'PageController@index']);
-
-    // 贵族详情页面
-    Route::get('/noble', ['name' => 'noble', 'uses' => 'PageController@noble']);
-
-    // 活动详情页面
-    Route::get('/nac/{id:\d+}', ['name' => 'ac_info', 'uses' => 'ActivityController@info']);
-
-    // 招募页面
-    Route::match(['POST', 'GET'], '/business/{act:[a-z]+}', ['name' => 'business_url', 'uses' => 'BusinessController@index']);
-
     // 代理页面
     Route::get('/extend[/{url:.+}]', ['name' => 'business_extend', 'uses' => 'BusinessController@extend']);
 
@@ -361,6 +346,20 @@ Route::get('/m/test', ['name' => 'm_testasds', 'uses' => 'Mobile\MobileControlle
 Route::get('/m/login', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@login']);
 //rtmp地址
 Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp', 'uses' => 'RoomController@get']);
+
+// 商城页面
+Route::get('/shop', ['name' => 'shop_index', 'uses' => 'ShopController@index']);
+// 关于 帮助 投诉
+Route::get('/about/{act:[a-z_]+}', ['uses' => 'PageController@index']);
+
+// 贵族详情页面
+Route::get('/noble', ['name' => 'noble', 'uses' => 'PageController@noble']);
+
+// 活动详情页面
+Route::get('/nac/{id:\d+}', ['name' => 'ac_info', 'uses' => 'ActivityController@info']);
+
+// 招募页面
+Route::match(['POST', 'GET'], '/business/{act:[a-z]+}', ['name' => 'business_url', 'uses' => 'BusinessController@index']);
 
 
 // 充值类 TODO 登录验证
