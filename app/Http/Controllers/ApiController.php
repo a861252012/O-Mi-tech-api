@@ -465,12 +465,17 @@ class ApiController extends Controller
 
     {
         //获取用户信息
-        $userInfo = resolve(UserService::class)->getUserByUid(Auth::id());
+        $userInfo = Auth::user();
 
         //判断非主播返回0
-        if (!$userInfo || $userInfo['roled'] != 3) return new Response(0);
-
-        return new Response($this->getUserAttensCount(Auth::id()));
+        if (!$userInfo->isHost()) return JsonResponse::create([
+            'status' => 0,
+            'data' => ['num' => 0],
+        ]);
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => ['num' => $this->getUserAttensCount(Auth::id())],
+        ]);
     }
 
 

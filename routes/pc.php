@@ -71,6 +71,8 @@ Route::group(['prefix' => 'user'], function () {
     Route::group(['middleware' => 'login_auth'], function () {
         Route::get('current', 'UserController@getCurrentUser')->name('user_current');
         Route::get('following', 'UserController@following')->name('user_current');
+        //获取关注用户接口
+        Route::get('followed/count', ['name' => '', 'uses' => 'ApiController@getUserFollows'])->name('getuseratten');
     });
 });
 
@@ -237,8 +239,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     //获取用户信息
     Route::get('/getuser/{id:\d+}', ['name' => 'getuser', 'uses' => 'ApiController@getUserByDes']);
 
-    //获取关注用户接口
-    Route::get('/getuseratten/{id}', ['name' => '', 'uses' => 'ApiController@getUserFollows'])->name('getuseratten')->where('id', '[0-9]+');
 
 
     //私信接口  v2版本中去掉了

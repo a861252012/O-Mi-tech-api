@@ -39,4 +39,9 @@ class Users extends Authenticatable
     {
         return $this->status != 1;
     }
+
+    public function isHost()
+    {
+        return $this->roled==3;
+    }
 }
