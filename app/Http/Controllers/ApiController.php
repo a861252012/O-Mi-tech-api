@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Facades\SiteSer;
 use App\Models\ActivityClick;
-use App\Models\Agents;
 use App\Models\AgentsRelationship;
 use App\Models\Conf;
 use App\Models\Domain;
@@ -12,7 +11,6 @@ use App\Models\FlashCookie;
 use App\Models\GiftActivity;
 use App\Models\GiftCategory;
 use App\Models\Goods;
-use App\Models\InviteCodes;
 use App\Models\LevelRich;
 use App\Models\Lottery;
 use App\Models\Messages;
@@ -26,7 +24,6 @@ use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
@@ -157,16 +154,16 @@ class ApiController extends Controller
         $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
         $user = Users::find($uid);
         // 此时调用的是单实例登录的session 验证
-        $guard=null;
-        if ( $request->route()->getName()==='m_reg'|| $request->has('client') && in_array(strtolower($request->get('client')), ['android', 'ios'])) {
+        $guard = null;
+        if ($request->route()->getName() === 'm_reg' || $request->has('client') && in_array(strtolower($request->get('client')), ['android', 'ios'])) {
             /** @var JWTGuard $guard */
-            $guard=Auth::guard('mobile');
+            $guard = Auth::guard('mobile');
             $guard->login($user);
             $return['data'] = [
                 'jwt' => (string)$guard->getToken(),
             ];
         } else {
-            $guard=Auth::guard('pc');
+            $guard = Auth::guard('pc');
             $guard->login($user);
             $return['data'] = [
                 Session::getName() => Session::getId(),
@@ -189,7 +186,7 @@ class ApiController extends Controller
 
         $redis = $this->make('redis');
 
-        Log::channel('daily')->info('user exchange',array(" user id:$uid  origin:$origin  money:$money "));
+        Log::channel('daily')->info('user exchange', [" user id:$uid  origin:$origin  money:$money "]);
 
         /** 通知java获取*/
         $redis->publish('plat_exchange',
@@ -450,11 +447,11 @@ class ApiController extends Controller
         $create = [
             'uid' => $request->get('uid'),
             'sid' => $request->get('sid'),
-            'ips' =>$request->getClientIp(),
+            'ips' => $request->getClientIp(),
         ];
 
         $result = FlashCookie::create($create);
-        return ['status' => 1,'data'=>$result,'msg'=>'采集成功'];
+        return ['status' => 1, 'data' => $result, 'msg' => '采集成功'];
     }
 
     /**
@@ -770,7 +767,7 @@ class ApiController extends Controller
      */
     public function getLastChargeUser()
     {
-        $lastChargeUsers = $this->make('redis')->lrange('llast_charge_user2', 0, 19);
+        $lastChargeUsers = Redis::lrange('llast_charge_user2', 0, 19);
 
         if (sizeof($lastChargeUsers) < 1) return new JsonResponse (['status' => 0]);
 
@@ -806,7 +803,7 @@ class ApiController extends Controller
      */
     public function shortUrl()
     {
-        return $this->make('systemServer')->getShortUrl();
+        return resolve(SystemService::class)->getShortUrl();
     }
 
 
@@ -886,24 +883,23 @@ class ApiController extends Controller
      *
      * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
-     * @return  json
      */
-    public function flashCount()
+    public function flashCount(Request $request)
     {
         $array_map = ['apply' => 'kaircli:apply', 'version' => 'kaircli:version', 'kaircli:install'];
-        $type = $this->make('request')->get('type');
-        $v = $this->make('request')->get('v');
+        $type = $request->get('type');
+        $v = $request->get('v');
 
         if (!isset($array_map[$type]) || ($type == 'version' && (!$v || $v <= 0))) {
-            return new JsonResponse(['data' => '传入参数有问题', 'status' => 0]);
+            return new JsonResponse(['msg' => '传入参数有问题', 'status' => 0]);
         }
 
 
         if ($type == 'version') $array_map[$type] .= $v;
         $mapkey = $array_map[$type] . date('Ymd');
-        $this->make('redis')->incr($mapkey); //不存在，默认从1开始不用检查key是否存在
+        Redis::incr($mapkey); //不存在，默认从1开始不用检查key是否存在
 
-        return new JsonResponse(['data' => 1, 'status' => 1]);
+        return new JsonResponse(['data' => ['count' => 1], 'status' => 1]);
     }
 
 
@@ -1027,23 +1023,22 @@ class ApiController extends Controller
      *
      * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
-     * @return  [json]
      */
-    public function imageStatic()
+    public function imageStatic(Request $request)
     {
-        $redis = $this->make('redis');
-        $uid = $this->make('request')->get('uid') ?: 0;
+        $redis = resolve('redis');
+        $uid = $request->get('uid') ?: 0;
 
         $redis_token = $uid ? $redis->get('shower:cover:token:' . $uid) : null;
 
-        $token = $this->make('request')->get('otken') ?: null;
+        $token = $request->get('otken') ?: null;
         //if( !$redis_token && $redis_token != $token) return new JsonResponse(array('status'=>1, 'data'=>'验证有问题'));
         $redis_token && $redis->del('shower:cover:token:' . $uid);
         $img = $redis->get('shower:cover:' . $uid);
 
         //if(!$img) return new JsonResponse(array('status'=>2, 'data'=>'二进制图片不存在'));
 
-        $savename = $this->make('request')->get('v') . '.jpg';
+        $savename = $request->get('v') . '.jpg';
 
         //定义存储路径
         $dir = DIRECTORY_SEPARATOR;
@@ -1398,7 +1393,7 @@ class ApiController extends Controller
         $error = curl_error($ch);
         curl_close($ch);
 
-        Log::channel('daily')->info("ajaxProxy  :",array("$url  rs:" . $response . ' error:' . $error));
+        Log::channel('daily')->info("ajaxProxy  :", ["$url  rs:" . $response . ' error:' . $error]);
 
         if ($error) {
             return Response::create($error);

@@ -27,7 +27,7 @@ class SystemService extends Service
     public function download($resource, $filename = null)
     {
         $filename = $filename ?: basename($resource);
-        $filesize = is_file($resource) ? filesize($resource) : 0;
+        $filesize = is_file($resource) ? filesize($resource) : strlen($resource);
         //重写http头
         $response = new Response();
         $response->headers->set('Cache-Control', 'private');
@@ -45,7 +45,7 @@ class SystemService extends Service
                 $response->headers->set('Content-Disposition', 'attachment; filename=' . $filename);
             }
         $response->sendHeaders();
-        $response->setContent(readfile($resource));
+        $response->setContent(is_file($resource) ? readfile($resource) : $resource);
 
         $response->send();
     }
@@ -83,12 +83,11 @@ class SystemService extends Service
         $filename = $filename ?: 'desktop.url';
         $shortcut = '';
         $shortcut .= '[InternetShortcut]' . PHP_EOL;
-        $shortcut .= 'URL=http://' . $this->make('request')->headers->get('http_host') . PHP_EOL;
+        $shortcut .= 'URL=' . request()->getSchemeAndHttpHost() . PHP_EOL;
         $shortcut .= 'IDList=[{000214A0-0000-0000-C000-000000000046}]' . PHP_EOL;
         $shortcut .= 'Prop3=19,2';
 
         return $this->download($shortcut, $filename);
-
     }
 
 
@@ -190,6 +189,6 @@ class SystemService extends Service
         $error = curl_error($ch);
         curl_close($ch);
         if (!$result) return ['status' => 0, 'msg' => $error];
-        return json_decode($result,true);
+        return json_decode($result, true);
     }
 }

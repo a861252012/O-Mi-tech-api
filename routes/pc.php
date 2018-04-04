@@ -159,17 +159,17 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/download/[{filename:.+}]', ['name' => 'download', 'uses' => 'ApiController@download']);
 
 //获取桌面图标
-    Route::get('/shorturl', ['name' => 'shorturl', 'uses' => 'ApiController@shortUrl']);
+    Route::get('/shorturl', 'ApiController@shortUrl')->name('shorturl');
 
 //roomcnt
-    Route::get('/roomcnt', ['name' => 'flashcount', 'uses' => 'ApiController@flashCount']);
+    Route::get('/roomcnt', 'ApiController@flashCount')->name('flashcount');
 
 //findroomcnt
     Route::get('/findroomcnt', ['name' => 'getflashcount', 'uses' => 'ApiController@getFlashCount']);
 
 
 //图片静态化
-    Route::get('/convertstaticimg', ['name' => 'imagestatic', 'uses' => 'ApiController@imageStatic']);
+    Route::get('/convertstaticimg', 'ApiController@imageStatic')->name('imagestatic');
 //FIND
 
 //更新点击数
@@ -236,7 +236,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/getuser/{id:\d+}', ['name' => 'getuser', 'uses' => 'ApiController@getUserByDes']);
 
     //获取关注用户接口
-    Route::get('/getuseratten/{id:\d+}', ['name' => 'getuseratten', 'uses' => 'ApiController@getUserFollows']);
+    Route::get('/getuseratten/{id}', ['name' => '', 'uses' => 'ApiController@getUserFollows'])->name('getuseratten')->where('id', '[0-9]+');
 
 
     //私信接口  v2版本中去掉了
