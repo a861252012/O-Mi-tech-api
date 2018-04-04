@@ -35,12 +35,19 @@ class ActivityController extends Controller
     {
         $data = ActivityPag::where('img_text_id', $id)->where('dml_flag', '!=', 3)->first();
         $tmp = ActivityPag::where('pid', $id)->where('dml_flag', '!=', 3)->first();
+        //根据id判断是否有活动详情
+        if(empty($tmp)){
+            $data = "";
+            $status = 0;
+        }else{
+            // 分割活动页面的图片
+            $temp = explode(',', $tmp['temp_name']);
+            $data['image'] = $temp[0]; // 第一个为原图
+            $data['tmp'] = array_slice($temp, 1); // 抛出第一个原图的 后面的才是切割后的图
+            $status = 1;
+        }
 
-        // 分割活动页面的图片
-        $temp = explode(',', $tmp['temp_name']);
-        $data['image'] = $temp[0]; // 第一个为原图
-        $data['tmp'] = array_slice($temp, 1); // 抛出第一个原图的 后面的才是切割后的图
-        return SuccessResponse::create($data,$msg = "获取成功", $status = 1);
+        return SuccessResponse::create($data,$msg = "获取成功", $status);
 
 //        return $this->render('Activity/info',array('activity'=>$data));
     }
