@@ -9,8 +9,10 @@ use App\Models\UserBuyGroup;
 use App\Models\UserGroup;
 use App\Models\Users;
 use App\Models\VideoMail;
+use App\Models\VideoPack;
 use App\Services\Service;
 use DB;
+use Illuminate\Support\Facades\Redis;
 
 class UserGroupService extends Service
 {
@@ -167,6 +169,21 @@ class UserGroupService extends Service
     }
 
 
+    public function cancelVip($uid=0){
+        $user['uid'] = $uid;
+        Users::query()->where('uid',$user['uid'])->update(array('vip'=>0,'vip_end'=>'','hidden'=>0));
+        Redis::hmset('huser_info:'.$user['uid'],[
+            'vip'=>'0',
+            'hidden'=>'0',
+            'vip_end'=>'',
+        ]);
+        $pack = VideoPack::query()->where('uid',$user['uid'])->whereBetween('gid',[120101,120107])->delete();
+        Redis::del('user_car:'.$user['uid']);
+        return true;
+    }
+    public function checkVip($uid=0){
+
+    }
     /**
      * 根据id获取用户组
      * 格式化

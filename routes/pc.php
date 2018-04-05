@@ -257,7 +257,8 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/lotteryinfo', 'ApiController@lotteryinfo')->name('lotteryinfo');
 
     // 房间管理员
-    Route::match(['POST', 'GET'], '/member/roomadmin', ['name' => 'roomadmin', 'uses' => 'MemberController@roomadmin']);
+    Route::get('/member/roomadmin', ['name' => 'roomadmin', 'uses' => 'MemberController@roomadmin']);
+    Route::post( '/member/roomadmindelete', ['name' => 'roomadmin', 'uses' => 'MemberController@roomadmindelete']);
 
 
     // 开通贵族

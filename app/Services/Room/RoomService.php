@@ -106,7 +106,6 @@ class RoomService extends Service
     {
         /** @var \Redis $redis */
         $redis = $this->make('redis');
-        $logPath = BASEDIR . '/app/logs/room'.date('Y-m').'.log';
 
         //一对一
         if ($one2one = resolve('one2one')->getData()) {
@@ -116,7 +115,7 @@ class RoomService extends Service
         //一对多
         if ($one2more = resolve('one2more')->getData()) {
             $this->extend_room = $one2more;
-            $this->make('systemServer')->logResult('getCurrentRoomStatus rid' . $this->rid . ' uid' . $this->cur_login_uid . 'hroom_whitelist:'.$this->rid.':'.$v, $logPath);
+            Log::channel()->info('getCurrentRoomStatus rid' . $this->rid . ' uid' . $this->cur_login_uid . 'hroom_whitelist:'.$this->rid.':'.$one2more['id']);
             return $this->current_tid = 8;
         }
 
@@ -251,43 +250,6 @@ class RoomService extends Service
             }
         }
         return $httphost;
-    }
-    public function getPlatPayUrl($origin){
-        $key = "";
-        switch ($origin){
-            case 51: $key = "xo_backurl"; break;
-            case 61: $key = "l_backurl"; break;
-            default: return "{}";
-        }
-        return $this->make('redis')->hget('hconf', $key) ?: "{}";
-    }
-    public function getXOPayUrl()
-    {
-        return $this->parseXOUrl($this->make('redis')->hget('hconf', 'xo_pay_url')) ?: '';
-    }
-    public function getXOHallUrl()
-    {
-        return $this->parseXOUrl($this->make('redis')->hget('hconf', 'xo_hall_url')) ?: '';
-    }
-
-    public function parseXOUrl($url)
-    {
-        $xo_httphost=$this->getXOHost();
-        if (!$xo_httphost) return '';
-        $url= parse_url($url);
-        $xo_httphost=parse_url($xo_httphost);
-        $parse_url= array_merge($url, $xo_httphost);
-        if (empty($xo_httphost['port']))
-            unset($parse_url['port']);
-        return
-            ((isset($parse_url['scheme'])) ? $parse_url['scheme'] . '://' : 'http://')
-            .((isset($parse_url['user'])) ? $parse_url['user'] . ((isset($parse_url['pass'])) ? ':' . $parse_url['pass'] : '') .'@' : '')
-            .((isset($parse_url['host'])) ? $parse_url['host'] : '')
-            .((isset($parse_url['port'])) ? ':' . $parse_url['port'] : '')
-            .((isset($parse_url['path'])) ? $parse_url['path'] : '')
-            .((isset($parse_url['query'])) ? '?' . $parse_url['query'] : '')
-            .((isset($parse_url['fragment'])) ? '#' . $parse_url['fragment'] : '')
-            ;
     }
 
     /*

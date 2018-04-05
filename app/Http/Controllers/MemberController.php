@@ -378,18 +378,6 @@ class MemberController extends Controller
     public function roomadmin()
     {
         $rid = Auth::id();
-        $request = $this->make('request');
-
-        //删除操作
-        if ($request->getMethod() == 'POST' && $request->get('type') == 'delete') {
-            $uid = $request->get('uid');
-            //管理员软删除操作
-            RoomAdmin::where('rid', $rid)->where('uid', $uid)->update(['dml_flag' => 3]);
-            //删除redis管理员记录
-            $this->make('redis')->srem('video:manage:' . $rid, $uid);
-            return new JsonResponse(['status' => 1, 'msg' => '删除成功!']);
-        }
-
         //管理员数据列表
         $v['roomadmin'] = RoomAdmin::where('rid', $rid)->where('dml_flag', '!=', 3)->with('user')->paginate(30);
         $res = $v['roomadmin']->toArray();
@@ -397,6 +385,20 @@ class MemberController extends Controller
         unset($res['data']);
         return new JsonResponse(['status' => 1, 'data' => $res, 'msg' => '获取成功!']);
 
+    }
+
+    public  function  roomadmindelete(){
+        $rid = Auth::id();
+        $request = $this->make('request');
+        $uid = $request->get('uid');
+        if(!$uid){
+            return new JsonResponse(['status' => 0, 'msg' => '会员id为空!']);
+        }
+        //管理员软删除操作
+        RoomAdmin::where('rid', $rid)->where('uid', $uid)->update(['dml_flag' => 3]);
+        //删除redis管理员记录
+        $this->make('redis')->srem('video:manage:' . $rid, $uid);
+        return new JsonResponse(['status' => 1, 'msg' => '删除成功!']);
     }
 
 
@@ -2025,7 +2027,7 @@ class MemberController extends Controller
             return new JsonResponse($msg);
         }
 
-        if ($this->userInfo['vip'] < $userGroup['level_id']) {
+        if (Auth::user()->vip < $userGroup['level_id']) {
             $msg['status'] = 1003;
             $msg['msg'] = '你还不够领取此级别的坐骑！';
             return new JsonResponse($msg);
@@ -2036,11 +2038,12 @@ class MemberController extends Controller
         $pack->uid = Auth::id();
         $pack->gid = $mid;
         $pack->num = 1;
-        $pack->expires = strtotime($this->userInfo['vip_end']);
+        $pack->expires = strtotime(Auth::user()->vip_end);
         $res = $pack->save();
 
         if ($res !== false) {
-            $msg['status'] = '开通成功！';
+            $msg['msg'] = '开通成功！';
+            $msg['status']  = 1;
             return new JsonResponse($msg);
         }
 

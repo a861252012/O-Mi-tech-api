@@ -7,8 +7,11 @@ use App\Models\ActivePage;
 use App\Models\ActivityPag;
 use App\Models\CharmRank;
 use App\Models\ExtremeRank;
+use App\Models\Users;
 use App\Services\User\UserService;
 use Core\Exceptions\NotFoundHttpException;
+//use Debugbar;
+use DebugBar\DebugBar;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Redis;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,6 +22,8 @@ class ActivityController extends Controller
 
     public function index()
     {
+        $users = Users::query()->first();
+        dd(DebugBar::info('products:'.$users->uid));
 
         $data = Redis::get('huodong_cache');
         $list = collect(json_decode($data))->where('pid', 0);

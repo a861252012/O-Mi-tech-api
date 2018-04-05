@@ -59,8 +59,8 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::post('user/unmount/{gid}', ['name' => 'm_userunmount', 'uses' => 'Mobile\MobileController@unmount']);
     //关注
     Route::match(['POST', 'GET'], 'follow', ['name' => 'm_follow', 'uses' => 'Mobile\MobileController@follow']);
-    //预约列表 type=1 一对一，type=2 一对多,type=3 所有
-    Route::get('room/reservation/{type}', ['name' => 'm_userroomreservation', 'uses' => 'Mobile\RoomController@listReservation']);
+    //预约列表 type=1 一对一，type=2 一对多
+    Route::get('room/reservation/{type}',  'Mobile\RoomController@listReservation')->where('type',"[1,2]")->name('m_userroomreservation');
     //隐身
     Route::any('user/stealth/{status}', 'Mobile\MobileController@stealth')->where('status','[0,1]')->name('m_stealths');
     //购买一对一
@@ -69,7 +69,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     /** 检查密码房密码 */
     Route::post('room/checkPwd', ['name' => 'm_room_checkpwd', 'uses' => 'Mobile\RoomController@checkPwd']);
     /** 获取RTMP地址 */
-    Route::get('room/rtmp/{rid:\d+}', ['name' => 'm_room_rtmp', 'uses' => 'RoomController@getRTMP']);
+    Route::get('room/rtmp/{rid}', 'RoomController@getRTMP')->where('rid','[0-9]+')->name('m_room_rtmp');
 
     //移动端创建一对多
     Route::post('OneToMore/create', ['name' => 'OneToMore', 'uses' => 'Mobile\RoomController@createOne2More']);
@@ -95,6 +95,8 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
 
 
 });
+
+Route::get('find', ['name' => 'm_find', 'uses' => 'Mobile\MobileController@searchAnchor']);
 Route::get('oort2bunny', ['name' => 'guanggao', 'uses' => 'AdsController@getAd']);//广告接口
 Route::get('domains', ['name' => 'guanggao', 'uses' => 'Mobile\MobileController@domains']);//广告接口
 // 充值类 TODO 登录验证

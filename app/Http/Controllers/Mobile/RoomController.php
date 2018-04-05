@@ -17,6 +17,7 @@ use App\Models\RoomDuration;
 use App\Models\RoomStatus;
 use App\Models\UserBuyOneToMore;
 use App\Models\Users;
+use App\Services\Room\One2MoreRoomService;
 use App\Services\Room\RoomService;
 use App\Services\Room\SocketService;
 use App\Services\Room\NoSocketChannelException;
@@ -166,19 +167,17 @@ class RoomController extends Controller
         if (empty($onetomany) || empty($uid)) return JsonResponse::create(['status' => 0, 'msg' => '参数错误']);
         /** @var \Redis $redis */
         $redis = $this->make('redis');
-        $room = $redis->hgetall("hroom_whitelist:$rid:$onetomany");
+        $room = resolve('one2more')->getDataById($onetomany);
         if (empty($room)) return JsonResponse::create(['status' => 0, 'msg' => '房间不存在']);
 
         $points = $room['points'];
-        if (isset($room['uids']) && in_array($uid, explode(',', $room['uids']))) return JsonResponse::create(['status' => 0, 'msg' => '您已有资格进入该房间，请从“我的预约”进入。']);
-        if (isset($room['tickets']) && in_array($uid, explode(',', $room['tickets']))) return JsonResponse::create(['status' => 0, 'msg' => '您已有资格进入该房间，请从“我的预约”进入。']);
+        if (resolve('one2more')->checkBuyUser($uid,$onetomany)) return JsonResponse::create(['status' => 0, 'msg' => '您已有资格进入该房间，请从“我的预约”进入。']);
         /** 检查余额 */
         $user = resolve(UserService::class)->getUserByUid($uid);
         if ($user['points'] < $points) return JsonResponse::create(['status' => 0, 'msg' => '余额不足', 'cmd' => 'topupTip']);
         if ($redis->hGet("hvediosKtv:$rid", "status") == 0) return JsonResponse::create(['status' => 0, 'msg' => '主播不在播，不能购买！']);
 
-        $logPath =  base_path() . '/storage/logs/one2more_' . date('Ym') . '.log';
-        $this->logResult('makeUpOneToMore ' . json_encode(['rid' => $rid, 'uid' => $uid, 'onetomore' => $onetomany,]), $logPath);
+        Log::channel('room')->info('makeUpOneToMore ' . json_encode(['rid' => $rid, 'uid' => $uid, 'onetomore' => $onetomany,]));
         /** 通知java送礼*/
         $redis->publish('makeUpOneToMore',
             json_encode([
@@ -197,84 +196,6 @@ class RoomController extends Controller
         }
         return JsonResponse::create(['status' => 0, 'msg' => '购买失败']);
     }
-    /**
-     * @TODO copy from MemberController/doOneToMore()
-     */
-    /*
-    public function buyOneToMany()
-    {
-        return false;
-        $origin = $this->request()->input('origin');
-        if (!$origin || !in_array($origin, static::$ORIGINS)) {
-            return JsonResponse::create([
-                'status' => 0,
-                'msg' => '非法来源'
-            ]);
-        }
-        $rid = $this->make('request')->input('rid');
-        $flag = $this->request()->get('flag');
-        if (empty($rid) || empty($flag)) return JsonResponse::create(['status' => 408, 'msg' => L('MEMBER.DORESERVATION.ERROR')]);
-        $duroom = RoomOneToMore::find($rid);
-        if (empty($duroom)) return new JsonResponse(array('status' => 410, 'msg' => L('MEMBER.DORESERVATION.ERROR')));
-        if ($duroom['status'] == 1) return new JsonResponse(array('status' => 402, 'msg' => L('MEMBER.DORESERVATION.OFFLINE')));
-        if ($duroom['uid'] == Auth::id()) return new JsonResponse(array('status' => 404, 'msg' => L('MEMBER.DORESERVATION.SELF')));
-        if ($this->userInfo['points'] < $duroom['points']) return new JsonResponse(array('status' => 405, 'msg' => L('MEMBER.DORESERVATION.POINTS_NOT_ENOUGH')));
-        if ($duroom['endtime'] < date('Y-m-d H:i:s')) return new JsonResponse(array('status' => 406, 'msg' => L('MEMBER.DOONETOMORE.END')));
-        if (UserBuyOneToMore::where('onetomore', $rid)->where('uid', Auth::id())->first()) return new JsonResponse(array('status' => 407, 'msg' => L('MEMBER.DOONETOMORE.HAS_ROOM')));
-
-        //关键点，这个时段内有没有其他的房间重复，标志位为flag 默认值为false 当用户确认后传入的值为true
-        if ($flag == 'false' && !$this->notBuyRepeat($duroom['starttime'], $duroom['endtime'])) return new JsonResponse(array('status' => 408, 'msg' => L('MEMBER.DORESERVATION.CONFIRM')));
-
-        //加入白名单
-        $duroom->tickets += 1;
-        $duroom->save();
-
-        $buy_item = [
-            'rid' => $duroom['uid'],
-            'onetomore' => $rid,
-            'uid' => Auth::id(),
-            'type' => 2,
-            'created' => date('Y-m-d H:i:s'),
-            'starttime' => $duroom['starttime'],
-            'endtime' => $duroom['endtime'],
-            'duration' => $duroom['duration'],
-            'points' => $duroom['points'],
-            'origin' => $origin,
-        ];
-        $buy = UserBuyOneToMore::create($buy_item);
-        $auto_id = $buy->id;
-        $hbuy = $this->make('redis')->hmset('hbuy_one_to_more:' . $duroom['uid'] . ':' . $auto_id, $buy_item);
-        $this->make('redis')->expire('hbuy_one_to_more:' . $duroom['uid'] . ':' . $auto_id, $duroom['duration'] + 86400);
-
-        //添加白名单
-        $uids = $this->make('redis')->hget('hroom_whitelist:' . $duroom['uid'] . ':' . $rid, 'uids');
-        if ($uids) {
-            if (!in_array(Auth::id(), explode(',', $uids))) {
-                $uids .= ',' . Auth::id();
-            }
-        } else {
-            $uids = Auth::id();
-        }
-        $temp = [
-            'nums' => $duroom['tickets'],
-            'uids' => $uids,
-        ];
-        $this->make('redis')->hmset('hroom_whitelist:' . $duroom['uid'] . ':' . $rid, $temp);
-
-        //扣减钻石
-        DB::table('video_user')->where('uid', Auth::id())->decrement('points', $duroom['points']);
-        DB::table('video_user')->where('uid', Auth::id())->increment('rich', $duroom['points']);
-        resolve(UserService::class)->getUserReset(Auth::id());
-
-        $logPath = BASEDIR . '/app/logs/one2more_' . date('Ym') . '.log';
-        $one2moreLog = 'uid:' . Auth::id() . ' id:' . $rid . '用户钻石：' . $this->userInfo['points'] . '+';
-        $one2moreLog .= $duroom['points'];
-        $this->logResult('doOneToMore ' . $one2moreLog, $logPath);
-
-        //更新排行榜
-        //$this->updateRank($duroom['uid'],$duroom['points']);
-        return JsonResponse::create(['status' => 1, 'msg' => L('MEMBER.DORESERVATION.OK')]);
-    }*/
 
     public function listReservation($type = 0b11)
     {

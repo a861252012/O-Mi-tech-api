@@ -571,9 +571,8 @@ class MobileController extends Controller
     public function searchAnchor()
     {
         //$uname = isset($_GET['nickname'])?$_GET['nickname']:'';//解码？
-        $uname = $this->make('request')->get('nickname') ?: '';
-
-        $arr = include BASEDIR . '/app/cache/cli-files/anchor-search-data.php';
+        $uname = $this->make('request')->get('nickname','');
+        $arr = include Storage::get('cache/anchor-search-data.php');//BASEDIR . '/app/cache/cli-files/anchor-search-data.php';
         $pageStart = isset($_REQUEST['pageStart']) ? ($_REQUEST['pageStart'] < 1 ? 1 : intval($_REQUEST['pageStart'])) : 1;
         $pageLimit = isset($_REQUEST['pageLimit']) ? (($_REQUEST['pageLimit'] > 40 || $_REQUEST['pageLimit'] < 1) ? 40 : intval($_REQUEST['pageLimit'])) : 40;
 

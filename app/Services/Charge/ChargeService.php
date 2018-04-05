@@ -46,25 +46,21 @@ class ChargeService extends Service
         $this->remoteUrl = resolve(SiteService::class)->config('pay_call_url');
         $this->noticeUrl = resolve(SiteService::class)->config('pay_notice_url');
         $this->returnUrl = resolve(SiteService::class)->config('pay_reback_url');
-        $this->randId();
+        $this->randValue = $this->generateOrderId();
+        ////随意给的，只是让校验产生随机性质
+        $this->messageNo = $this->serviceCode . $this->randValue;;
         $this->dataNo = $this->getDataNo();
     }
 
-    private function randId() : void
+    public function generateOrderId()
     {
-        $serviceCode = $this->serviceCode;//查询接口的名称FC0029
-        $date_array = explode(" ", microtime());
-        $milliseconds = $date_array[1] . ($date_array[0] * 10000);
-        $milliseconds = explode(".", $milliseconds);
-        $this->randValue = substr($milliseconds[0], -4);
-        ////随意给的，只是让校验产生随机性质
-        $this->messageNo = $serviceCode . date('YmdHis') . $this->randValue;//随意给的，只是让校验产生随机性质
+        $uid = Auth::id();
+        return date('ymdHis') . mt_rand(10, 99) . sprintf('%08s', strrev($uid)) . '';
     }
 
     public function getDataNo()
     {
-        $orderDate = date('YmdHis');
-        return 'FCDATA' . $orderDate . $this->randValue;
+        return 'FCDATA' . $this->generateOrderId();
     }
 
     public function remote()
