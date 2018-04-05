@@ -62,6 +62,9 @@ class Handler extends ExceptionHandler
             switch ($data['statusCode']) {
                 case Response::HTTP_TOO_MANY_REQUESTS:
                     break;
+                case Response::HTTP_UNAUTHORIZED:
+                    return parent::render($request, $exception);
+                    break;
                 default;
                     break;
 

@@ -9,6 +9,7 @@ use App\Services\Site\SiteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use Mews\Captcha\Facades\Captcha;
@@ -211,12 +212,12 @@ class LoginController extends Controller
     {
 
         //获取值
-        $user_name = $request->get('uname') ?: '';
+        $username = $request->get('username') ?: '';
         $password = $request->get('password') ?: '';
         if (!isset($_REQUEST['_m'])) {
             $password = $this->decode($password); // 密码传递解密
         }
-        $retval = $this->solveUserLogin($user_name, $password, app(SiteService::class)->config('skip_captcha_login'));
+        $retval = $this->solveUserLogin($username, $password, app(SiteService::class)->config('skip_captcha_login'));
 
 
         return JsonResponse::create($retval);
@@ -350,7 +351,7 @@ class LoginController extends Controller
         //$times = intval($this->make('redis')->hget('hlogin_authcode', $userinfo['uid'])) ?: 0;
         //if (!isset($_REQUEST['_m']) && $times >= 5 && !$skipCaptcha && !$this->make('captcha')->Verify($this->make('request')->get('sCode'))) {
         //todo 验证码是否更换
-        if (!$skipCaptcha && !Captcha::check(request('sCode'))) {
+        if (!$skipCaptcha && !Captcha::check(request('captcha'))) {
             return [
                 "status" => 0,
                 "msg" => "验证码错误，请重新输入！",
@@ -362,7 +363,7 @@ class LoginController extends Controller
         if (!$auth->attempt([
             'username' => $username,
             'password' => $password,
-        ], request('v_remember'))) {
+        ], request('remember'))) {
             return [
                 'status' => 0,
                 'msg' => '用户名密码错误！',
@@ -465,7 +466,10 @@ class LoginController extends Controller
             return $keyc . str_replace('=', '', base64_encode($result));
         }
     }
-
+    public function captcha()
+    {
+        return Captcha::create();
+    }
 
     /**
      * @param $username

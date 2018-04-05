@@ -630,11 +630,6 @@ class Controller extends BaseController
     }
 
 
-    public function captcha()
-    {
-        return Captcha::create();
-    }
-
     /**获取推荐的房间ID
      * @param $uid
      * @return mixed

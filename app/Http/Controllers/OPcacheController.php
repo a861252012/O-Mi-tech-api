@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class OPcacheController extends Controller
 {
@@ -18,6 +19,6 @@ class OPcacheController extends Controller
 
     public function flush()
     {
-        return opcache_reset();
+        dd(opcache_reset());
     }
 }
