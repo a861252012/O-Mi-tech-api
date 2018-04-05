@@ -1,5 +1,9 @@
 <?php
-
+Route::group(['prefix'=>'opcache'],function (){
+   Route::get('status','OPcacheController@status');
+   Route::get('config','OPcacheController@config');
+   Route::get('flush','OPcacheController@flush');
+});
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 Route::get('/captcha', 'Controller@captcha');
 // 任务列表
@@ -16,6 +20,10 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::post('/coverUpload', 'ApiController@coverUpload')->name('coverUpload');
     // 任务完成领取奖励api
     Route::any('/task/end/{id}', 'TaskController@billTask')->where('end', '[0-9]+');
+    // 投诉
+    Route::post('complaints', 'IndexController@complaints');
+    // 商城购买
+    Route::post('shop/buy', 'MemberController@pay')->name('shop_buy');
 });
 
 /** 用户中心路由组 */
@@ -36,8 +44,6 @@ Route::group(['prefix' => 'member'], function () {
         // 用户中心 我的道具
         Route::get('scene', 'MemberController@scene')->name('member_scene');
         Route::post('scene/toggle', 'MemberController@sceneToggle')->name('member_scene_toggle');
-        // 商城购买
-        Route::post('pay', 'MemberController@pay')->name('member_pay');
         // 用户中心 取消装备
         // 用户中心 充值记录
         Route::get('charge', 'MemberController@charge')->name('member_charge');
@@ -69,6 +75,8 @@ Route::group(['prefix' => 'user'], function () {
     Route::group(['middleware' => 'login_auth'], function () {
         Route::get('current', 'UserController@getCurrentUser')->name('user_current');
         Route::get('following', 'UserController@following')->name('user_current');
+        //获取关注用户接口
+        Route::get('followed/count', ['name' => '', 'uses' => 'ApiController@getUserFollows'])->name('getuseratten');
     });
 });
 
@@ -83,6 +91,7 @@ Route::get('/recvSskey', ['name' => 'recvSskey', 'uses' => 'ApiController@platfo
 Route::get('/{rid:\d+}[/{h5:h5|h5hls}]', ['name' => 'room', 'uses' => 'RoomController@index']);
 //APP下载
 Route::get('/download', ['name' => 'download', 'uses' => 'PageController@download']);
+Route::get('/download/qr.png', ['name' => 'downloadQR', 'uses' => 'PageController@downloadQR']);
 
 // 首页房间数据json
 Route::get('/videoList', ['name' => 'index_videoList', 'uses' => 'IndexController@videoList']);
@@ -148,7 +157,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/activity', ['name' => 'activity', 'uses' => 'ApiController@Activity']);
 
 
-
 //魅力之星活动排行榜
     Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
 
@@ -159,17 +167,17 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/download/[{filename:.+}]', ['name' => 'download', 'uses' => 'ApiController@download']);
 
 //获取桌面图标
-    Route::get('/shorturl', ['name' => 'shorturl', 'uses' => 'ApiController@shortUrl']);
+    Route::get('/shorturl', 'ApiController@shortUrl')->name('shorturl');
 
 //roomcnt
-    Route::get('/roomcnt', ['name' => 'flashcount', 'uses' => 'ApiController@flashCount']);
+    Route::get('/roomcnt', 'ApiController@flashCount')->name('flashcount');
 
 //findroomcnt
     Route::get('/findroomcnt', ['name' => 'getflashcount', 'uses' => 'ApiController@getFlashCount']);
 
 
 //图片静态化
-    Route::get('/convertstaticimg', ['name' => 'imagestatic', 'uses' => 'ApiController@imageStatic']);
+    Route::get('/convertstaticimg', 'ApiController@imageStatic')->name('imagestatic');
 //FIND
 
 //更新点击数
@@ -235,9 +243,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     //获取用户信息
     Route::get('/getuser/{id:\d+}', ['name' => 'getuser', 'uses' => 'ApiController@getUserByDes']);
 
-    //获取关注用户接口
-    Route::get('/getuseratten/{id:\d+}', ['name' => 'getuseratten', 'uses' => 'ApiController@getUserFollows']);
-
 
     //私信接口  v2版本中去掉了
 //    Route::match(['POST', 'GET'], '/letter', ['name' => 'letter', 'uses' => 'ApiController@Letter']);
@@ -246,10 +251,10 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/balance', ['name' => 'balance', 'uses' => 'ApiController@Balance']);
 
     //抽奖接口
-    Route::get('/lottery', ['name' => 'lottery', 'uses' => 'ApiController@lottery']);
+    Route::any('/lottery', 'ApiController@lottery')->name('lottery');
 
     //抽奖信息接口
-    Route::get('/lotteryinfo', ['name' => 'lotteryinfo', 'uses' => 'ApiController@lotteryinfo']);
+    Route::get('/lotteryinfo', 'ApiController@lotteryinfo')->name('lotteryinfo');
 
     // 房间管理员
     Route::match(['POST', 'GET'], '/member/roomadmin', ['name' => 'roomadmin', 'uses' => 'MemberController@roomadmin']);
@@ -262,13 +267,13 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/getgroup', ['name' => 'shop_getgroup', 'uses' => 'ShopController@getgroup']);
 
     // 主播空间
-    Route::get('/space', ['name' => 'shop_space', 'uses' => 'SpaceController@index']);
+    Route::get('space', 'SpaceController@index')->name('space');
 
 
     Route::match(['POST', 'GET'], '/verfiyName', ['uses' => 'IndexController@checkUniqueName']);
     Route::match(['POST', 'GET'], '/setinroomstat', ['name' => 'setinroomstat', 'uses' => 'IndexController@setInRoomStat']);
 
-    Route::post('/complaints', ['uses' => 'IndexController@complaints']);
+
     Route::get('/cliget/{act}', ['uses' => 'IndexController@cliGetRes']);
 
 
@@ -339,16 +344,6 @@ Route::get('/m/test', ['name' => 'm_testasds', 'uses' => 'Mobile\MobileControlle
 Route::get('/m/login', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@login']);
 //rtmp地址
 Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp', 'uses' => 'RoomController@get']);
-
-
-
-
-
-
-
-
-
-
 
 
 // 充值类 TODO 登录验证

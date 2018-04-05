@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Schedule;
 
 use App\Models\Ad;
 use App\Models\AdTotal;

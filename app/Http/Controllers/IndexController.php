@@ -8,10 +8,11 @@ use App\Models\RoomDuration;
 use App\Models\RoomStatus;
 use App\Models\UserBuyOneToMore;
 use App\Models\Users;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 class IndexController extends Controller
@@ -342,7 +343,7 @@ class IndexController extends Controller
             $downloadUrl = json_encode($res);
         }
 
-        $flashVersion=SiteSer::config('flash_version');
+        $flashVersion = SiteSer::config('flash_version');
         // 获取我的关注的数据主播的数据
         $myfav = [];
         if ($uid) {
@@ -535,58 +536,44 @@ class IndexController extends Controller
      * 投诉建议
      * @return Response
      */
-    public function complaints()
+    public function complaints(Request $request)
     {
-        if (Auth::guest()) {
-            return new Response(json_encode(
-                [
-                    'ret' => false,
-                    'msg' => '还没有登录，请登录',
-                ]
-            ));
-        }
         $date = date('Y-m-d H:i:s');
         $today_nu = date('Ymd');
-        $uid = $this->request()->getSession()->get(self::SEVER_SESS_ID);
+        $uid = $request->getSession()->get(self::SEVER_SESS_ID);
         $hname = 'keys_complaints_flag:' . $uid . ':' . $today_nu;
         $times = Redis::get($hname);
         if (empty($times)) {
             Redis::set($hname, 1);
         } else {
-            if ($times >= 10) return new Response(json_encode(
-                [
-                    'ret' => false,
-                    'times' => $times,
-                    'msg' => '处理成功！',
-                ]
-            ));
+            if ($times >= 10) return JsonResponse::create([
+                'status' => 0,
+                'data' => ['times' => $times],
+                'msg' => '处理成功！',
+            ]);
             Redis::set($hname, $times + 1);
         }
         $data = [
-            'cid' => $this->request()->get('sername'),
-            'uid' => $this->getCurUid($this->request()),
-            'type' => intval($this->request()->get('sertype')),
-            'content' => $this->request()->get('sercontent'),
+            'cid' => $request->get('sername'),
+            'uid' => Auth::id(),
+            'type' => intval($request->get('sertype')),
+            'content' => $request->get('sercontent'),
             'created' => $date,
             'edit_time' => $date,
         ];
         if (!$data['content']) {
-            return new Response(json_encode(
-                [
-                    'ret' => false,
-                    'times' => $times,
-                    'msg' => '缺少投诉内容',
-                ]
-            ));
+            return JsonResponse::create([
+                'status' => 0,
+                'data' => ['times' => $times],
+                'msg' => '缺少投诉内容',
+            ]);
         }
         Complaints::create($data);
-        return new Response(json_encode(
-            [
-                'ret' => true,
-                'times' => $times,
-                'msg' => '处理成功！',
-            ]
-        ));
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => ['times' => $times],
+            'msg' => '处理成功',
+        ]);
     }
 
     /**

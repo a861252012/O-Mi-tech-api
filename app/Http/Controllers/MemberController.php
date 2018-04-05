@@ -935,11 +935,11 @@ class MemberController extends Controller
         $password = '';
         if ($room_radio == 'true') $password = $this->make('request')->get('password');
         if (empty($password) && $room_radio == 'true') {
-            return new JsonResponse(['code' => 2, 'msg' => '密码不能为空']);
+            return new JsonResponse(['status' => 2, 'msg' => '密码不能为空']);
         }
         if ($room_radio == 'true')//判断密码格式,密码格式和用户注册的密码格式是一样的
             if ($room_radio == 'true' && strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
-                return new JsonResponse(['code' => 3, 'msg' => '密码格式不对']);
+                return new JsonResponse(['status' => 3, 'msg' => '密码格式不对']);
             }
 //        $this->getRedis();
         $this->make('redis')->hset('hroom_status:' . Auth::id() . ':2', 'pwd', $password);
@@ -948,9 +948,10 @@ class MemberController extends Controller
 //        $roomtype->setPwd($password);
 //        $em->persist($roomtype);
 //        $em->flush();
+
         $roomtype = RoomStatus::where('uid', Auth::id())->where('tid', 2)->update(['pwd' => $password]);
-        if ($room_radio == 'false') return new JsonResponse(['code' => 1, 'msg' => '密码关闭成功']);
-        return new JsonResponse(['code' => 1, 'msg' => '密码修改成功']);
+        if ($room_radio == 'false') return new JsonResponse(['status' => 1, 'msg' => '密码关闭成功']);
+        return new JsonResponse(['status' => 1, 'msg' => '密码修改成功']);
     }
 
     /**
@@ -1892,7 +1893,10 @@ class MemberController extends Controller
                     'rec_uid' => $user->uid,
                     'content' => '您首次开通 ' . $userGroup['level_name'] . ' 贵族，获得了赠送礼包的' . $userGroup['system']['gift_money'] . '钻石',
                 ];
-                $this->make('messageServer')->sendSystemToUsersMessage($message);
+
+               // $this->make('messageServer')->sendSystemToUsersMessage($message);
+                $messageService = resolve(MessageService::class);
+                $messageService->sendSystemToUsersMessage($message);
             }
 
             // 写入购买用户组的记录 user_buy_group
@@ -1932,7 +1936,9 @@ class MemberController extends Controller
                 'rec_uid' => $user->uid,
                 'content' => '贵族开通成功提醒：您已成功开通 ' . $userGroup['level_name'] . ' 贵族，到期日：' . $exp,
             ];
-            $this->make('messageServer')->sendSystemToUsersMessage($message);
+           // $this->make('messageServer')->sendSystemToUsersMessage($message);
+            $messageService = resolve(MessageService::class);
+            $messageService->sendSystemToUsersMessage($message);
 
             // 如果设置了房间属性 就给主播返现
             $casheback = 0;
@@ -1968,9 +1974,11 @@ class MemberController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             //记录下日志
-            $logPath = base_path() . '/storage/logs/test_' . date('Y-m-d') . '.log';
+      /*      $logPath = base_path() . '/storage/logs/test_' . date('Y-m-d') . '.log';
             $loginfo = date('Y-m-d H:i:s') . ' uid' . Auth::id() . "\n 购买贵族 事务结果: \n" . $e->getMessage() . "\n";
-            $this->logResult($loginfo, $logPath);
+            $this->logResult($loginfo, $logPath);*/
+            Log::channel('daily')->info('开通贵族', array(date('Y-m-d H:i:s') . ' uid' . Auth::id() . "\n 购买贵族 事务结果: \n" . $e->getMessage() . "\n"));
+
 
             $msg['status'] = 1003;
             $msg['msg'] = '可能由于网络原因，开通失败！';
@@ -2144,7 +2152,7 @@ class MemberController extends Controller
      */
     public function pay(Request $request)
     {
-        $type = $request->get('type');
+        $type = $request->get('type',0);
         $gid = $request->get('gid');
         $nums = $request->get('nums');
         if (!$this->buyGoods($type, $gid, $nums)) {

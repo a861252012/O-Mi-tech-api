@@ -2,8 +2,8 @@
 
 namespace Illuminate\Console\Scheduling;
 
-use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
+use Illuminate\Console\Command;
 
 class ScheduleRunCommand extends Command
 {

@@ -3,20 +3,20 @@
 namespace Illuminate\Console;
 
 use Closure;
-use Illuminate\Contracts\Console\Application as ApplicationContract;
-use Illuminate\Contracts\Container\Container;
-use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\ProcessUtils;
-use Symfony\Component\Console\Application as SymfonyApplication;
-use Symfony\Component\Console\Command\Command as SymfonyCommand;
+use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Contracts\Container\Container;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\ArrayInput;
-use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\BufferedOutput;
-use Symfony\Component\Console\Output\ConsoleOutput;
-use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\PhpExecutableFinder;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Application as SymfonyApplication;
+use Symfony\Component\Console\Command\Command as SymfonyCommand;
+use Illuminate\Contracts\Console\Application as ApplicationContract;
 
 class Application extends SymfonyApplication implements ApplicationContract
 {

@@ -2,6 +2,7 @@
 
 namespace App\Services\Lottery;
 
+use App\Models\Lottery;
 use App\Services\Service;
 use App\Models;
 
@@ -24,9 +25,7 @@ class LotteryService extends Service
 	 */
 	public function getLotterys()
 	{
-		$lotterys = Models\Lottery::all();
-		if(!is_object($lotterys)) return array();
-
+		$lotterys = Lottery::all();
 		return $lotterys->toArray();
 	}
 
@@ -39,7 +38,7 @@ class LotteryService extends Service
 	 * @author dc <dc@wisdominfo.my>
 	 * @version 2015-11-09
 	 * @param   array     $array 数组格式 array('id'=>奖项id, 'probality'=>中奖概率);
-	 * @return 中奖奖项id
+	 * @return int 中奖奖项id
 	 */
 	public function LotteryOfProbability($array)
 	{

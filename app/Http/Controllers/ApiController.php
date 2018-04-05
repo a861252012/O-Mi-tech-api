@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Facades\SiteSer;
 use App\Models\ActivityClick;
-use App\Models\Agents;
 use App\Models\AgentsRelationship;
 use App\Models\Conf;
 use App\Models\Domain;
@@ -12,7 +11,6 @@ use App\Models\FlashCookie;
 use App\Models\GiftActivity;
 use App\Models\GiftCategory;
 use App\Models\Goods;
-use App\Models\InviteCodes;
 use App\Models\LevelRich;
 use App\Models\Lottery;
 use App\Models\Messages;
@@ -20,13 +18,14 @@ use App\Models\Pack;
 use App\Models\UserGroup;
 use App\Models\Users;
 use App\Services\Auth\JWTGuard;
+use App\Services\Lottery\LotteryService;
+use App\Services\Message\MessageService;
 use App\Services\Safe\SafeService;
 use App\Services\System\SystemService;
 use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
@@ -157,16 +156,16 @@ class ApiController extends Controller
         $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
         $user = Users::find($uid);
         // 此时调用的是单实例登录的session 验证
-        $guard=null;
-        if ( $request->route()->getName()==='m_reg'|| $request->has('client') && in_array(strtolower($request->get('client')), ['android', 'ios'])) {
+        $guard = null;
+        if ($request->route()->getName() === 'm_reg' || $request->has('client') && in_array(strtolower($request->get('client')), ['android', 'ios'])) {
             /** @var JWTGuard $guard */
-            $guard=Auth::guard('mobile');
+            $guard = Auth::guard('mobile');
             $guard->login($user);
             $return['data'] = [
                 'jwt' => (string)$guard->getToken(),
             ];
         } else {
-            $guard=Auth::guard('pc');
+            $guard = Auth::guard('pc');
             $guard->login($user);
             $return['data'] = [
                 Session::getName() => Session::getId(),
@@ -189,7 +188,7 @@ class ApiController extends Controller
 
         $redis = $this->make('redis');
 
-        Log::channel('daily')->info('user exchange',array(" user id:$uid  origin:$origin  money:$money "));
+        Log::channel('daily')->info('user exchange', [" user id:$uid  origin:$origin  money:$money "]);
 
         /** 通知java获取*/
         $redis->publish('plat_exchange',
@@ -444,11 +443,11 @@ class ApiController extends Controller
         $create = [
             'uid' => $request->get('uid'),
             'sid' => $request->get('sid'),
-            'ips' =>$request->getClientIp(),
+            'ips' => $request->getClientIp(),
         ];
 
         $result = FlashCookie::create($create);
-        return ['status' => 1,'data'=>$result,'msg'=>'采集成功'];
+        return ['status' => 1, 'data' => $result, 'msg' => '采集成功'];
     }
 
     /**
@@ -462,12 +461,17 @@ class ApiController extends Controller
 
     {
         //获取用户信息
-        $userInfo = resolve(UserService::class)->getUserByUid(Auth::id());
+        $userInfo = Auth::user();
 
         //判断非主播返回0
-        if (!$userInfo || $userInfo['roled'] != 3) return new Response(0);
-
-        return new Response($this->getUserAttensCount(Auth::id()));
+        if (!$userInfo->isHost()) return JsonResponse::create([
+            'status' => 0,
+            'data' => ['num' => 0],
+        ]);
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => ['num' => $this->getUserAttensCount(Auth::id())],
+        ]);
     }
 
 
@@ -764,7 +768,7 @@ class ApiController extends Controller
      */
     public function getLastChargeUser()
     {
-        $lastChargeUsers = $this->make('redis')->lrange('llast_charge_user2', 0, 19);
+        $lastChargeUsers = Redis::lrange('llast_charge_user2', 0, 19);
 
         if (sizeof($lastChargeUsers) < 1) return new JsonResponse (['status' => 0]);
 
@@ -800,7 +804,7 @@ class ApiController extends Controller
      */
     public function shortUrl()
     {
-        return $this->make('systemServer')->getShortUrl();
+        return resolve(SystemService::class)->getShortUrl();
     }
 
 
@@ -810,21 +814,19 @@ class ApiController extends Controller
      * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
      * @return  JsonResponse
-     * @throws HttpException
      */
     public function lottery()
     {
         $uid = Auth::id();
-        $user = $this->userInfo;
-        if (!$uid || !$user) throw new HttpException('Your are login failled');
+        $user = Auth::user();
+
         //if(!$user['safemail']) return new JsonResponse(['data'=>0, 'msg'=>'您好，您还未进行邮箱验证，验证邮箱后才能获取3次抽奖机会。']);
 
-        $redis = $this->make('redis');
-        $lotteryTimes = $redis->hget('hlottery_ary', $uid);
-        if (!$lotteryTimes) return new JsonResponse(['data' => 0, 'msg' => '抱歉，您无法抽奖。只有新注册用户才可参加该活动，或是您的抽奖次数已经用完']);
+        $lotteryTimes = Redis::hget('hlottery_ary', $uid);
+        if (!$lotteryTimes) return new JsonResponse(['status' => 0, 'msg' => '抱歉，您无法抽奖。只有新注册用户才可参加该活动，或是您的抽奖次数已经用完']);
 
         //进行抽奖活动
-        $lotterys = $this->make('lotteryServer')->getLotterys();
+        $lotterys = resolve(LotteryService::class)->getLotterys();
         $possibility = $lotteryItem = [];
         foreach ($lotterys as $v) {
             $possibility[$v['id']] = $v['probability'];
@@ -832,14 +834,14 @@ class ApiController extends Controller
         }
 
         //开始抽奖算法
-        $lotteryid = $this->make('lotteryServer')->LotteryOfProbability($possibility);
-        if ($lotteryItem[$lotteryid]['nums'] < 1) return new JsonResponse(['data' => 0, 'msg' => '该奖品已经抽完']);
+        $lotteryid = resolve(LotteryService::class)->LotteryOfProbability($possibility);
+        if ($lotteryItem[$lotteryid]['nums'] < 1) return new JsonResponse(['status' => 0, 'msg' => '该奖品已经抽完']);
 
         //奖项id-1
         Lottery::where('id', $lotteryid)->update(['nums' => $lotteryItem[$lotteryid]['nums'] - 1]);
 
         //记录抽奖次数
-        $this->make('redis')->hset('hlottery_ary', $uid, $lotteryTimes - 1);
+        Redis::hset('hlottery_ary', $uid, $lotteryTimes - 1);
 
         //给中奖用户增加奖励
         resolve(UserService::class)->updateUserOfPoints($uid, '+', $lotteryItem[$lotteryid]['fenshu'], 6);
@@ -848,7 +850,7 @@ class ApiController extends Controller
         resolve(UserService::class)->getUserReset($uid);
 
         //发信给用户
-        $this->make('messageServer')->sendSystemToUsersMessage(['send_uid' => 0, 'rec_uid' => $uid, 'content' => '通过抽奖奖励，恭喜您获得' . $lotteryItem[$lotteryid]['fenshu'] . '钻石，抽奖次数剩余' . $lotteryTimes . '次']);
+        resolve(MessageService::class)->sendSystemToUsersMessage(['send_uid' => 0, 'rec_uid' => $uid, 'content' => '通过抽奖奖励，恭喜您获得' . $lotteryItem[$lotteryid]['fenshu'] . '钻石，抽奖次数剩余' . $lotteryTimes . '次']);
         return new JsonResponse(['data' => ['lotteryId' => $lotteryid, 'times' => $lotteryTimes], 'msg' => '恭喜中奖！']);
     }
 
@@ -862,16 +864,14 @@ class ApiController extends Controller
      */
     public function lotteryInfo()
     {
-        if (!$this->container->config['LOTTRY_STATUS'])
-            return new JsonResponse(['data' => 0, 'msg' => '活动已经关闭！']);
-
-
-        $lotterys = $this->make('lotteryServer')->getLotterys();
+        if (!SiteSer::config('lottry_status'))
+            return new JsonResponse(['status' => 0, 'msg' => '活动已经关闭！']);
+        $lotterys = resolve(LotteryService::class)->getLotterys();
         $lotterylist = [];
         foreach ($lotterys as $lottery) {
             $lotterylist[] = ['id' => $lottery['id'], 'prize' => $lottery['prize']];
         }
-        return new JsonResponse($lotterylist);
+        return JsonResponse::create(['data' => ['list' => $lotterylist]]);
     }
 
 
@@ -880,24 +880,23 @@ class ApiController extends Controller
      *
      * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
-     * @return  json
      */
-    public function flashCount()
+    public function flashCount(Request $request)
     {
         $array_map = ['apply' => 'kaircli:apply', 'version' => 'kaircli:version', 'kaircli:install'];
-        $type = $this->make('request')->get('type');
-        $v = $this->make('request')->get('v');
+        $type = $request->get('type');
+        $v = $request->get('v');
 
         if (!isset($array_map[$type]) || ($type == 'version' && (!$v || $v <= 0))) {
-            return new JsonResponse(['data' => '传入参数有问题', 'status' => 0]);
+            return new JsonResponse(['msg' => '传入参数有问题', 'status' => 0]);
         }
 
 
         if ($type == 'version') $array_map[$type] .= $v;
         $mapkey = $array_map[$type] . date('Ymd');
-        $this->make('redis')->incr($mapkey); //不存在，默认从1开始不用检查key是否存在
+        Redis::incr($mapkey); //不存在，默认从1开始不用检查key是否存在
 
-        return new JsonResponse(['data' => 1, 'status' => 1]);
+        return new JsonResponse(['data' => ['count' => 1], 'status' => 1]);
     }
 
 
@@ -1021,23 +1020,22 @@ class ApiController extends Controller
      *
      * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
-     * @return  [json]
      */
-    public function imageStatic()
+    public function imageStatic(Request $request)
     {
-        $redis = $this->make('redis');
-        $uid = $this->make('request')->get('uid') ?: 0;
+        $redis = resolve('redis');
+        $uid = $request->get('uid') ?: 0;
 
         $redis_token = $uid ? $redis->get('shower:cover:token:' . $uid) : null;
 
-        $token = $this->make('request')->get('otken') ?: null;
+        $token = $request->get('otken') ?: null;
         //if( !$redis_token && $redis_token != $token) return new JsonResponse(array('status'=>1, 'data'=>'验证有问题'));
         $redis_token && $redis->del('shower:cover:token:' . $uid);
         $img = $redis->get('shower:cover:' . $uid);
 
         //if(!$img) return new JsonResponse(array('status'=>2, 'data'=>'二进制图片不存在'));
 
-        $savename = $this->make('request')->get('v') . '.jpg';
+        $savename = $request->get('v') . '.jpg';
 
         //定义存储路径
         $dir = DIRECTORY_SEPARATOR;
@@ -1088,18 +1086,17 @@ class ApiController extends Controller
      *
      * @author  dc <dc#wisdominfo.my>
      * @version 2015-11-10
-     * @return  JSON
      */
     public function click()
     {
-        $ip = $this->make('systemServer')->getIpAddress('long');
-        $redis = $this->make('redis');
+        $ip = resolve(SystemService::class)->getIpAddress('long');
+        $redis = resolve('redis');
 
         $ipkey = 'video_click_ip';
 
         $getip = $redis->hget($ipkey, $ip);
 
-        if ($getip) return new JsonResponse(['status' => 2, 'msg' => '失败']);
+        if ($getip) return JsonResponse::create(['status' => 0, 'msg' => '失败']);
 
         //更新redis统计
         $redis->hset($ipkey, $ip, 1);
@@ -1112,8 +1109,7 @@ class ApiController extends Controller
         } else {
             ActivityClick::create(['date_day' => $today, 'clicks' => 1]);
         }
-
-        return new JsonResponse(['status' => 1, 'msg' => '成功']);
+        return JsonResponse::create(['status' => 1, 'msg' => '成功']);
     }
 
     /**
@@ -1392,7 +1388,7 @@ class ApiController extends Controller
         $error = curl_error($ch);
         curl_close($ch);
 
-        Log::channel('daily')->info("ajaxProxy  :",array("$url  rs:" . $response . ' error:' . $error));
+        Log::channel('daily')->info("ajaxProxy  :", ["$url  rs:" . $response . ' error:' . $error]);
 
         if ($error) {
             return Response::create($error);

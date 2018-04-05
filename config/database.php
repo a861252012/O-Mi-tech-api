@@ -1,5 +1,38 @@
 <?php
 
+if (!function_exists('env_assoc')) {
+    function env_assoc($key)
+    {
+        $data = [];
+        foreach ($_ENV as $k => $v) {
+            $matches = [];
+            if (preg_match('/^' . $key . '_([0-9]+)$/', $k, $matches)) {
+                if (isset($matches[1])) {
+                    $data[$matches[1]] = $v;
+                }
+            }
+        }
+        return $data;
+    }
+}
+if (!function_exists('env_array')) {
+    function env_array($key)
+    {
+        return array_values(env_assoc($key));
+    }
+}
+if (!function_exists('env_map')) {
+    function env_map($string)
+    {
+        $data = [];
+        foreach (explode(',', $string) as $kv) {
+            list($k, $v) = explode(':', $kv);
+            $data[$k] = $v;
+        }
+        return $data;
+    }
+}
+
 return [
 
     /*
@@ -40,13 +73,20 @@ return [
         ],
 
         'mysql' => [
+            'read' => array_map(function ($write) {
+                return env_map($write);
+            }, env_array('DB_READ')),
+            'write' => array_map(function ($write) {
+                return env_map($write);
+            }, env_array('DB_WRITE')),
             'driver' => 'mysql',
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
+//            'host' => env('DB_HOST', '127.0.0.1'),
+//            'port' => env('DB_PORT', '3306'),
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
             'password' => env('DB_PASSWORD', ''),
             'unix_socket' => env('DB_SOCKET', ''),
+            'sticky' => true,
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
@@ -115,7 +155,7 @@ return [
             'database' => 0,
         ],
 
-       'ceri' => [
+        'ceri' => [
             'host' => env('REDIS_HOST', '127.0.0.1'),
             'password' => env('REDIS_PASSWORD', null),
             'port' => env('REDIS_PORT', 6379),
@@ -128,8 +168,8 @@ return [
             'password' => env('REDIS_PASSWORD', null),
             'port' => env('REDIS_PORT', 6379),
             'database' => 0,
-            'persistent'=>true,
-            'prefix'=>'PHPREDIS_SESSION:'
+            'persistent' => true,
+            'prefix' => 'PHPREDIS_SESSION:',
         ],
 
     ],
