@@ -935,11 +935,11 @@ class MemberController extends Controller
         $password = '';
         if ($room_radio == 'true') $password = $this->make('request')->get('password');
         if (empty($password) && $room_radio == 'true') {
-            return new JsonResponse(['code' => 2, 'msg' => '密码不能为空']);
+            return new JsonResponse(['status' => 2, 'msg' => '密码不能为空']);
         }
         if ($room_radio == 'true')//判断密码格式,密码格式和用户注册的密码格式是一样的
             if ($room_radio == 'true' && strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
-                return new JsonResponse(['code' => 3, 'msg' => '密码格式不对']);
+                return new JsonResponse(['status' => 3, 'msg' => '密码格式不对']);
             }
 //        $this->getRedis();
         $this->make('redis')->hset('hroom_status:' . Auth::id() . ':2', 'pwd', $password);
@@ -948,9 +948,10 @@ class MemberController extends Controller
 //        $roomtype->setPwd($password);
 //        $em->persist($roomtype);
 //        $em->flush();
+
         $roomtype = RoomStatus::where('uid', Auth::id())->where('tid', 2)->update(['pwd' => $password]);
-        if ($room_radio == 'false') return new JsonResponse(['code' => 1, 'msg' => '密码关闭成功']);
-        return new JsonResponse(['code' => 1, 'msg' => '密码修改成功']);
+        if ($room_radio == 'false') return new JsonResponse(['status' => 1, 'msg' => '密码关闭成功']);
+        return new JsonResponse(['status' => 1, 'msg' => '密码修改成功']);
     }
 
     /**

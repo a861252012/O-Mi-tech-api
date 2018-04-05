@@ -7,6 +7,9 @@ use App\Models\Faq;
 use Core\Exceptions\NotFoundHttpException;
 use Illuminate\Http\JsonResponse;
 use App\Libraries\SuccessResponse;
+use Illuminate\Http\Response;
+use SimpleSoftwareIO\QrCode\BaconQrCodeGenerator;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PageController extends Controller
 {
@@ -76,8 +79,37 @@ class PageController extends Controller
      */
     public function download()
     {
-        return  new JsonResponse(['status'=>1,'data'=>'下载']);
-       // return $this->render('Page/download');
+        $downloadUrl = $this->make('redis')->hget('hconf', 'down_url');
+        if(!empty($downloadUrl)){
+            $downloadUrl = json_decode($downloadUrl);
+        }else{
+            $downloadUrl =array(
+                'PC'=>'',
+                'ANDROID'=>'',
+                'IOS'=>''
+            );
+        }
+
+
+       return new JsonResponse(['data'=>$downloadUrl]);
+    }
+    public function downloadQR()
+    {
+       $redis = $this->make('redis');
+        $download =  $redis->hGet("hconf", "down_url");
+        $data = json_decode($download,true);
+
+        //如果没有配置qrcode_url,生成的二维码取当前链接
+        if(!isset($data['QRCODE'])){
+            $qrcode_url = $this->request()->getUri();
+        }else{
+            $qrcode_url = $data['QRCODE'];
+        }
+
+        $qrcode = new BaconQrCodeGenerator;
+        $img = $qrcode->format('png')->size(200)->generate('www.baidu.com');
+        return Response::create($img)->header('Content-Type','image/png')
+            ->setMaxAge(300)->setPublic()->header('Age',300);
     }
 
     /**
