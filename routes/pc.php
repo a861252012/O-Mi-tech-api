@@ -83,6 +83,7 @@ Route::get('/recvSskey', ['name' => 'recvSskey', 'uses' => 'ApiController@platfo
 Route::get('/{rid:\d+}[/{h5:h5|h5hls}]', ['name' => 'room', 'uses' => 'RoomController@index']);
 //APP下载
 Route::get('/download', ['name' => 'download', 'uses' => 'PageController@download']);
+Route::get('/download/qr.png', ['name' => 'downloadQR', 'uses' => 'PageController@downloadQR']);
 
 // 首页房间数据json
 Route::get('/videoList', ['name' => 'index_videoList', 'uses' => 'IndexController@videoList']);
