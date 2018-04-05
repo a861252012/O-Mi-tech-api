@@ -2025,7 +2025,7 @@ class MemberController extends Controller
             return new JsonResponse($msg);
         }
 
-        if ($this->userInfo['vip'] < $userGroup['level_id']) {
+        if (Auth::user()->vip < $userGroup['level_id']) {
             $msg['status'] = 1003;
             $msg['msg'] = '你还不够领取此级别的坐骑！';
             return new JsonResponse($msg);
@@ -2036,11 +2036,12 @@ class MemberController extends Controller
         $pack->uid = Auth::id();
         $pack->gid = $mid;
         $pack->num = 1;
-        $pack->expires = strtotime($this->userInfo['vip_end']);
+        $pack->expires = strtotime(Auth::user()->vip_end);
         $res = $pack->save();
 
         if ($res !== false) {
-            $msg['status'] = '开通成功！';
+            $msg['msg'] = '开通成功！';
+            $msg['status']  = 1;
             return new JsonResponse($msg);
         }
 
