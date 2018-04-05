@@ -1893,7 +1893,10 @@ class MemberController extends Controller
                     'rec_uid' => $user->uid,
                     'content' => '您首次开通 ' . $userGroup['level_name'] . ' 贵族，获得了赠送礼包的' . $userGroup['system']['gift_money'] . '钻石',
                 ];
-                $this->make('messageServer')->sendSystemToUsersMessage($message);
+
+               // $this->make('messageServer')->sendSystemToUsersMessage($message);
+                $messageService = resolve(MessageService::class);
+                $messageService->sendSystemToUsersMessage($message);
             }
 
             // 写入购买用户组的记录 user_buy_group
@@ -1933,7 +1936,9 @@ class MemberController extends Controller
                 'rec_uid' => $user->uid,
                 'content' => '贵族开通成功提醒：您已成功开通 ' . $userGroup['level_name'] . ' 贵族，到期日：' . $exp,
             ];
-            $this->make('messageServer')->sendSystemToUsersMessage($message);
+           // $this->make('messageServer')->sendSystemToUsersMessage($message);
+            $messageService = resolve(MessageService::class);
+            $messageService->sendSystemToUsersMessage($message);
 
             // 如果设置了房间属性 就给主播返现
             $casheback = 0;
@@ -1969,9 +1974,11 @@ class MemberController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             //记录下日志
-            $logPath = base_path() . '/storage/logs/test_' . date('Y-m-d') . '.log';
+      /*      $logPath = base_path() . '/storage/logs/test_' . date('Y-m-d') . '.log';
             $loginfo = date('Y-m-d H:i:s') . ' uid' . Auth::id() . "\n 购买贵族 事务结果: \n" . $e->getMessage() . "\n";
-            $this->logResult($loginfo, $logPath);
+            $this->logResult($loginfo, $logPath);*/
+            Log::channel('daily')->info('开通贵族', array(date('Y-m-d H:i:s') . ' uid' . Auth::id() . "\n 购买贵族 事务结果: \n" . $e->getMessage() . "\n"));
+
 
             $msg['status'] = 1003;
             $msg['msg'] = '可能由于网络原因，开通失败！';
