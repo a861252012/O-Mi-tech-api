@@ -29,7 +29,6 @@ class ComposerStaticInit1271a362638dc1e8fdb79a5b7b4bc348
         'T' => 
         array (
             'TijsVerkoyen\\CssToInlineStyles\\' => 31,
-            'Tests\\' => 6,
         ),
         'S' => 
         array (
@@ -119,10 +118,6 @@ class ComposerStaticInit1271a362638dc1e8fdb79a5b7b4bc348
         'TijsVerkoyen\\CssToInlineStyles\\' => 
         array (
             0 => __DIR__ . '/..' . '/tijsverkoyen/css-to-inline-styles/src',
-        ),
-        'Tests\\' => 
-        array (
-            0 => __DIR__ . '/../..' . '/tests',
         ),
         'Symfony\\Polyfill\\Php72\\' => 
         array (
@@ -368,6 +363,7 @@ class ComposerStaticInit1271a362638dc1e8fdb79a5b7b4bc348
         'App\\Http\\Controllers\\Mobile\\MobileController' => __DIR__ . '/../..' . '/app/Http/Controllers/Mobile/MobileController.php',
         'App\\Http\\Controllers\\Mobile\\PaymentController' => __DIR__ . '/../..' . '/app/Http/Controllers/Mobile/PaymentController.php',
         'App\\Http\\Controllers\\Mobile\\RoomController' => __DIR__ . '/../..' . '/app/Http/Controllers/Mobile/RoomController.php',
+        'App\\Http\\Controllers\\OPcacheController' => __DIR__ . '/../..' . '/app/Http/Controllers/OPcacheController.php',
         'App\\Http\\Controllers\\PageController' => __DIR__ . '/../..' . '/app/Http/Controllers/PageController.php',
         'App\\Http\\Controllers\\PasswordController' => __DIR__ . '/../..' . '/app/Http/Controllers/PasswordController.php',
         'App\\Http\\Controllers\\RankController' => __DIR__ . '/../..' . '/app/Http/Controllers/RankController.php',
@@ -496,6 +492,7 @@ class ComposerStaticInit1271a362638dc1e8fdb79a5b7b4bc348
         'App\\Services\\Auth\\SessionGuard' => __DIR__ . '/../..' . '/app/Services/Auth/SessionGuard.php',
         'App\\Services\\Charge\\ChargeGroupService' => __DIR__ . '/../..' . '/app/Services/Charge/ChargeGroupService.php',
         'App\\Services\\Charge\\ChargeService' => __DIR__ . '/../..' . '/app/Services/Charge/ChargeService.php',
+        'App\\Services\\Charge\\PaymentService' => __DIR__ . '/../..' . '/app/Services/Charge/PaymentService.php',
         'App\\Services\\Lottery\\LotteryService' => __DIR__ . '/../..' . '/app/Services/Lottery/LotteryService.php',
         'App\\Services\\Message\\MessageService' => __DIR__ . '/../..' . '/app/Services/Message/MessageService.php',
         'App\\Services\\Mobile\\MobileService' => __DIR__ . '/../..' . '/app/Services/Mobile/MobileService.php',
@@ -2820,10 +2817,6 @@ class ComposerStaticInit1271a362638dc1e8fdb79a5b7b4bc348
         'Symfony\\Component\\VarDumper\\VarDumper' => __DIR__ . '/..' . '/symfony/var-dumper/VarDumper.php',
         'Symfony\\Polyfill\\Mbstring\\Mbstring' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/Mbstring.php',
         'Symfony\\Polyfill\\Php72\\Php72' => __DIR__ . '/..' . '/symfony/polyfill-php72/Php72.php',
-        'Tests\\CreatesApplication' => __DIR__ . '/../..' . '/tests/CreatesApplication.php',
-        'Tests\\Feature\\ExampleTest' => __DIR__ . '/../..' . '/tests/Feature/ExampleTest.php',
-        'Tests\\TestCase' => __DIR__ . '/../..' . '/tests/TestCase.php',
-        'Tests\\Unit\\ExampleTest' => __DIR__ . '/../..' . '/tests/Unit/ExampleTest.php',
         'TijsVerkoyen\\CssToInlineStyles\\CssToInlineStyles' => __DIR__ . '/..' . '/tijsverkoyen/css-to-inline-styles/src/CssToInlineStyles.php',
         'TijsVerkoyen\\CssToInlineStyles\\Css\\Processor' => __DIR__ . '/..' . '/tijsverkoyen/css-to-inline-styles/src/Css/Processor.php',
         'TijsVerkoyen\\CssToInlineStyles\\Css\\Property\\Processor' => __DIR__ . '/..' . '/tijsverkoyen/css-to-inline-styles/src/Css/Property/Processor.php',
