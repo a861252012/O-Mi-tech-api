@@ -2,13 +2,13 @@
 
 namespace Illuminate\Broadcasting;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Broadcasting\Broadcaster;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Support\Arr;
 use ReflectionClass;
 use ReflectionProperty;
+use Illuminate\Support\Arr;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Contracts\Broadcasting\Broadcaster;
 
 class BroadcastEvent implements ShouldQueue
 {

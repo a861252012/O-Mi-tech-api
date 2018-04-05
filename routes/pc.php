@@ -18,6 +18,8 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::any('/task/end/{id}', 'TaskController@billTask')->where('end', '[0-9]+');
     // 投诉
     Route::post('complaints', 'IndexController@complaints');
+    // 商城购买
+    Route::post('shop/buy', 'MemberController@pay')->name('shop_buy');
 });
 
 /** 用户中心路由组 */
@@ -38,8 +40,6 @@ Route::group(['prefix' => 'member'], function () {
         // 用户中心 我的道具
         Route::get('scene', 'MemberController@scene')->name('member_scene');
         Route::post('scene/toggle', 'MemberController@sceneToggle')->name('member_scene_toggle');
-        // 商城购买
-        Route::post('pay', 'MemberController@pay')->name('member_pay');
         // 用户中心 取消装备
         // 用户中心 充值记录
         Route::get('charge', 'MemberController@charge')->name('member_charge');
@@ -153,7 +153,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/activity', ['name' => 'activity', 'uses' => 'ApiController@Activity']);
 
 
-
 //魅力之星活动排行榜
     Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
 
@@ -241,7 +240,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/getuser/{id:\d+}', ['name' => 'getuser', 'uses' => 'ApiController@getUserByDes']);
 
 
-
     //私信接口  v2版本中去掉了
 //    Route::match(['POST', 'GET'], '/letter', ['name' => 'letter', 'uses' => 'ApiController@Letter']);
 
@@ -249,10 +247,10 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/balance', ['name' => 'balance', 'uses' => 'ApiController@Balance']);
 
     //抽奖接口
-    Route::any('/lottery','ApiController@lottery')->name('lottery');
+    Route::any('/lottery', 'ApiController@lottery')->name('lottery');
 
     //抽奖信息接口
-    Route::get('/lotteryinfo','ApiController@lotteryinfo')->name('lotteryinfo');
+    Route::get('/lotteryinfo', 'ApiController@lotteryinfo')->name('lotteryinfo');
 
     // 房间管理员
     Route::match(['POST', 'GET'], '/member/roomadmin', ['name' => 'roomadmin', 'uses' => 'MemberController@roomadmin']);
@@ -265,7 +263,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/getgroup', ['name' => 'shop_getgroup', 'uses' => 'ShopController@getgroup']);
 
     // 主播空间
-    Route::get('/space', ['name' => 'shop_space', 'uses' => 'SpaceController@index']);
+    Route::get('space', 'SpaceController@index')->name('space');
 
 
     Route::match(['POST', 'GET'], '/verfiyName', ['uses' => 'IndexController@checkUniqueName']);
@@ -342,16 +340,6 @@ Route::get('/m/test', ['name' => 'm_testasds', 'uses' => 'Mobile\MobileControlle
 Route::get('/m/login', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@login']);
 //rtmp地址
 Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp', 'uses' => 'RoomController@get']);
-
-
-
-
-
-
-
-
-
-
 
 
 // 充值类 TODO 登录验证

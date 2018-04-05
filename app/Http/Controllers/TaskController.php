@@ -49,8 +49,6 @@ class TaskController extends Controller
     public function billTask($task_id)
     {
         $online = Auth::id();
-
-
         $taskService = resolve(TaskService::class);
         $taskService->setUid($online);
         $flag = $taskService->billTask($task_id);

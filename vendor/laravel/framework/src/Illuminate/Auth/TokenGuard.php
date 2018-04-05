@@ -2,9 +2,9 @@
 
 namespace Illuminate\Auth;
 
+use Illuminate\Http\Request;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Auth\UserProvider;
-use Illuminate\Http\Request;
 
 class TokenGuard implements Guard
 {
@@ -36,7 +36,7 @@ class TokenGuard implements Guard
      *
      * @param  \Illuminate\Contracts\Auth\UserProvider  $provider
      * @param  \Illuminate\Http\Request  $request
-     * @param. string  $inputKey
+     * @param  string  $inputKey
      * @param  string  $storageKey
      * @return void
      */

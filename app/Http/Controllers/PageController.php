@@ -107,9 +107,14 @@ class PageController extends Controller
         }
 
         $qrcode = new BaconQrCodeGenerator;
-        $img = $qrcode->format('png')->size(200)->generate('www.baidu.com');
+        $img = $qrcode->format('png')->size(200)->generate($qrcode_url);
+        $img=gzencode($img);
         return Response::create($img)->header('Content-Type','image/png')
-            ->setMaxAge(300)->setPublic()->header('Age',300);
+            ->setMaxAge(300 )
+            ->setSharedMaxAge(300)
+            ->header('Content-Encoding','gzip')
+//            ->header('Content-Length',strlen($img))
+            ;
     }
 
     /**

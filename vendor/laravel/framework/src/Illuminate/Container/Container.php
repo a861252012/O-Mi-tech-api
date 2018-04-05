@@ -2,13 +2,13 @@
 
 namespace Illuminate\Container;
 
-use ArrayAccess;
 use Closure;
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Illuminate\Contracts\Container\Container as ContainerContract;
+use ArrayAccess;
 use LogicException;
 use ReflectionClass;
 use ReflectionParameter;
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Contracts\Container\Container as ContainerContract;
 
 class Container implements ArrayAccess, ContainerContract
 {

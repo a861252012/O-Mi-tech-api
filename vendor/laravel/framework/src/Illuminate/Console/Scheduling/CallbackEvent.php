@@ -2,9 +2,9 @@
 
 namespace Illuminate\Console\Scheduling;
 
-use Illuminate\Contracts\Container\Container;
-use InvalidArgumentException;
 use LogicException;
+use InvalidArgumentException;
+use Illuminate\Contracts\Container\Container;
 
 class CallbackEvent extends Event
 {
@@ -60,8 +60,12 @@ class CallbackEvent extends Event
             return;
         }
 
-        register_shutdown_function(function () {
-            $this->removeMutex();
+        $pid = getmypid();
+
+        register_shutdown_function(function () use ($pid) {
+            if ($pid === getmypid()) {
+                $this->removeMutex();
+            }
         });
 
         parent::callBeforeCallbacks($container);

@@ -2145,7 +2145,7 @@ class MemberController extends Controller
      */
     public function pay(Request $request)
     {
-        $type = $request->get('type');
+        $type = $request->get('type',0);
         $gid = $request->get('gid');
         $nums = $request->get('nums');
         if (!$this->buyGoods($type, $gid, $nums)) {
