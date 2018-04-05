@@ -63,25 +63,7 @@ class PaymentController extends MobileController
         $uid = Auth::id();
 
         $user = resolve(UserService::class)->getUserByUid($uid);
-        $open = resolve("redis")->hget("hconf", "open_pay") ?: 0;
-        $request = resolve('request');
-        $origin = $request->get('origin',12);
         $token =  Auth::getToken();
-        if ($open) {
-            $var['options'] = PayOptions::with('channels')->where('device', 'MOBILE')->orderBy('sid','desc')->get();
-            $var['payConfig'] = PayConfig::where('open', 1)->get(['id', 'cid', 'bus', 'channel']);
-            $var['origin'] = $origin;
-            $var['jwt'] = $token;
-            //右边广告图
-            $var['ad'] = '';
-            $ad = $this->make('redis')->hget('img_cache', 3);// 获取右边的广告栏的数据
-            if ($ad) {
-                $a = json_decode($ad, true);
-                $var['ad'] = $a[0];
-            }
-            $var['pay'] = 2;
-            return SuccessResponse::create($var);
-        }
 
         // 没有充值的权限
         if (resolve('chargeGroup')->close($uid))
@@ -142,7 +124,7 @@ class PaymentController extends MobileController
         $amount = isset($_POST['price']) ? number_format(intval($_POST['price']), 2, '.', '') : 0;
 
         if (!$amount || $amount < 1) {
-            $msg = L('CHARGE.PAY.WRONG_AMOUNT');
+            $msg = '请输入正确的金额!';
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
         }
         //获取下渠道
@@ -152,7 +134,7 @@ class PaymentController extends MobileController
         $plat = isset($_POST['plat']) ? $_POST['plat'] : "";
         //判断下渠道存不存在
         if (empty($channel)) {
-            $msg = L('CHARGE.PAY.WRONG_CHANEL');
+            $msg = '请选择充值渠道!';
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
         }
 
@@ -169,7 +151,7 @@ class PaymentController extends MobileController
                 $origin = 32;
                 break;
             default:
-                $origin = 12;
+                $origin = 22;
         }
         Recharge::create(
             array(

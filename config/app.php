@@ -164,6 +164,8 @@ return [
         \App\Providers\SiteServiceProvider::class,
         \App\Providers\SocketServiceProvider::class,
         \App\Providers\RoomServiceProvider::class,
+
+        Barryvdh\Debugbar\ServiceProvider::class,
     ],
 
     /*
@@ -217,5 +219,6 @@ return [
         'SiteSer' =>\App\Facades\SiteSer::class,
         'UserSer'=>\App\Facades\UserSer::class,
         'Mobile'=>\App\Facades\Mobile::class,
+        'Debugbar' => Barryvdh\Debugbar\Facade::class,
     ],
 ];

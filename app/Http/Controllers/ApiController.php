@@ -277,10 +277,8 @@ class ApiController extends Controller
         $sskey = $this->request()->get("sskey");
         $callback = $this->request()->get("callback");
         $sign = $this->request()->get("sign");
-        $httphost = $this->request()->get("httphost") ?: 0;
-        $origin = $this->request()->get("origin") ?: 0;
-        //$origin = 51;
-        //$origin = 71;
+        $httphost = $this->request()->get("httphost",0);
+        $origin = $this->request()->get("origin",0);
         if (!$this->make("redis")->exists("hplatforms:$origin")) return new Response("1001 接入方提供参数不对");
 
         $platforms = $this->make("redis")->hgetall("hplatforms:$origin");
@@ -373,7 +371,7 @@ class ApiController extends Controller
         $this->userInfo['logined'] = $time;
 
         // 此时调用的是单实例登录的session 验证
-        if(!Auth::check()){
+        if(Auth::guest()){
             if(!Auth::attempt([
                 'username'=>$this->userInfo['username'],
                 'password'=>$this->userInfo['password'],
@@ -387,41 +385,6 @@ class ApiController extends Controller
         $h5 = $this->container->config['config.H5'] ? "/h5" : "";
         return RedirectResponse::create("/$room$h5");
     }
-
-    /**
-     * 写入redis
-     **/
-    private function writeRedis($userInfo, $huser_sid)
-    {
-        try {
-            //判断当前用户session是否是最新登陆
-            $this->_online = $userInfo['uid'];
-            //设置新session
-            Session::put(self::SEVER_SESS_ID, $userInfo['uid']);
-            setcookie(self::WEB_UID, $userInfo['uid'], 0, '/');//用于首页判断
-            $this->_sess_id = session_id();
-
-            if (empty($huser_sid)) { //说明以前没登陆过，没必要检查重复登录
-                $this->_redisInstance->hset('huser_sid', $userInfo['uid'], $this->_sess_id);
-            } elseif ($huser_sid != $this->_sess_id) {//有可能重复登录了
-                //更新用户对应的sessid
-                $this->_redisInstance->hset('huser_sid', $userInfo['uid'], $this->_sess_id);
-                //删除旧session，踢出用户在上一个浏览器的登录状态
-                $this->_redisInstance->del('PHPREDIS_SESSION:' . $huser_sid);
-            }
-            if ($this->_isGetCache == false) {
-                $this->_redisInstance->hset('husername_to_id', $userInfo['username'], $userInfo['uid']);
-                $this->_redisInstance->hset('hnickname_to_id', $userInfo['nickname'], $userInfo['uid']);
-                $this->_redisInstance->hmset('huser_info:' . $userInfo['uid'], $userInfo);
-            }
-            $this->_points = $userInfo['points'];
-        } catch (\Exception $e) {
-            Session::put(self::SEVER_SESS_ID, $userInfo['uid']);
-            setcookie(self::WEB_UID, null, time() - 31536000, '/');
-            $this->_online = false;
-        }
-    }
-
     /**
      *
      */
