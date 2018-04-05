@@ -3,10 +3,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Libraries\SuccessResponse;
 use App\Models\Faq;
 use Core\Exceptions\NotFoundHttpException;
 use Illuminate\Http\JsonResponse;
-use App\Libraries\SuccessResponse;
 use Illuminate\Http\Response;
 use SimpleSoftwareIO\QrCode\BaconQrCodeGenerator;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -32,7 +32,7 @@ class PageController extends Controller
     public function index($act)
     {
 
-        if (!in_array($act, array('aboutus', 'help', 'state', 'help_old'))) {
+        if (!in_array($act, ['aboutus', 'help', 'state', 'help_old'])) {
             throw new NotFoundHttpException();
         }
         $data = [];
@@ -58,9 +58,9 @@ class PageController extends Controller
                 $redis->set('video:faq:list', json_encode($data));
             }
         }
-        return SuccessResponse::create($data,$msg = "获取成功", $status = 1);
-    //    return  new JsonResponse($data);
-       // return $this->render('Page/' . $act, compact('data'));
+        return SuccessResponse::create($data, $msg = "获取成功", $status = 1);
+        //    return  new JsonResponse($data);
+        // return $this->render('Page/' . $act, compact('data'));
     }
 
     /**
@@ -69,7 +69,7 @@ class PageController extends Controller
      */
     public function noble()
     {
-        return  new JsonResponse(['status'=>1,'data'=>'贵族']);
+        return new JsonResponse(['status' => 1, 'data' => '贵族']);
         //return $this->render('Page/noble');
     }
 
@@ -80,41 +80,39 @@ class PageController extends Controller
     public function download()
     {
         $downloadUrl = $this->make('redis')->hget('hconf', 'down_url');
-        if(!empty($downloadUrl)){
+        if (!empty($downloadUrl)) {
             $downloadUrl = json_decode($downloadUrl);
-        }else{
-            $downloadUrl =array(
-                'PC'=>'',
-                'ANDROID'=>'',
-                'IOS'=>''
-            );
+        } else {
+            $downloadUrl = [
+                'PC' => '',
+                'ANDROID' => '',
+                'IOS' => '',
+            ];
         }
 
 
-       return new JsonResponse(['data'=>$downloadUrl]);
+        return new JsonResponse(['data' => $downloadUrl]);
     }
+
     public function downloadQR()
     {
-       $redis = $this->make('redis');
-        $download =  $redis->hGet("hconf", "down_url");
-        $data = json_decode($download,true);
+        $redis = $this->make('redis');
+        $download = $redis->hGet("hconf", "down_url");
+        $data = json_decode($download, true);
 
         //如果没有配置qrcode_url,生成的二维码取当前链接
-        if(!isset($data['QRCODE'])){
+        if (!isset($data['QRCODE'])) {
             $qrcode_url = $this->request()->getUri();
-        }else{
+        } else {
             $qrcode_url = $data['QRCODE'];
         }
 
-        $qrcode = new BaconQrCodeGenerator;
-        $img = $qrcode->format('png')->size(200)->generate($qrcode_url);
-        $img=gzencode($img);
-        return Response::create($img)->header('Content-Type','image/png')
-            ->setMaxAge(300 )
+        $img = QrCode::format('png')->size(200)->generate($qrcode_url);
+        $img = gzencode($img);
+        return Response::create($img)->header('Content-Type', 'image/png')
+            ->setMaxAge(300)
             ->setSharedMaxAge(300)
-            ->header('Content-Encoding','gzip')
-//            ->header('Content-Length',strlen($img))
-            ;
+            ->header('Content-Encoding', 'gzip');
     }
 
     /**
@@ -123,8 +121,8 @@ class PageController extends Controller
      */
     public function join()
     {
-        return  new JsonResponse(['status'=>1,'data'=>'招募']);
-       // return $this->render('Page/join');
+        return new JsonResponse(['status' => 1, 'data' => '招募']);
+        // return $this->render('Page/join');
     }
 
     /**

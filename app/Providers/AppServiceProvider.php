@@ -26,8 +26,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->app->singleton(SiteService::class);
-        $this->app->singleton(MobileSession::class);
         $this->app->singleton(UserGroupService::class);
         $this->app->singleton(ActiveService::class);
         $this->app->singleton(ChargeService::class);

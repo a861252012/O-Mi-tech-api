@@ -164,7 +164,6 @@ return [
         \App\Providers\SiteServiceProvider::class,
         \App\Providers\SocketServiceProvider::class,
         \App\Providers\RoomServiceProvider::class,
-        SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class,
     ],
 
     /*
@@ -218,6 +217,5 @@ return [
         'SiteSer' =>\App\Facades\SiteSer::class,
         'UserSer'=>\App\Facades\UserSer::class,
         'Mobile'=>\App\Facades\Mobile::class,
-        'QrCode' => SimpleSoftwareIO\QrCode\Facades\QrCode::class,
     ],
 ];
