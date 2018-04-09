@@ -63,7 +63,7 @@ class SiteService
     {
         $this->host = $request->getHttpHost();
         $this->loadDomainInfo();
-        if (!is_null($this->id)){
+        if (!is_null($this->id)) {
             $this->loadConfig();
             $this->checkConfigValidity();
         }
@@ -109,6 +109,7 @@ class SiteService
     {
         return new Config($id);
     }
+
     /**
      * 获取缓存，懒加载机制
      * @param null $name    如果没有name会
@@ -188,11 +189,32 @@ class SiteService
         return Config::flushByID($site->id);
     }
 
+    public static function flushDomainCacheForSite(Site $site)
+    {
+        $redis = resolve('redis');
+        $keys = $redis->keys(static::KEY_SITE_DOMAIN . '*');
+        return collect($keys)->each(function ($key) use ($redis, $site) {
+            if ($redis->hget($key, 'site_id') == $site->id) {
+                $redis->del($key);
+            }
+        });
+    }
+
     public static function syncConfigForSite(Site $site)
     {
         static::flushConfigCacheForSite($site);
         $configArray = static::getDBConfigArrayForSite($site);
-        return Config::hMset($site->id,$configArray);
+        return Config::hMset($site->id, $configArray);
+    }
+
+    public static function syncDomainForSite(Site $site)
+    {
+        static::flushDomainCacheForSite($site);
+        return resolve('redis')->pipeline(function ($pipe) use ($site) {
+            $site->domains()->each(function ($domain) use ($pipe) {
+                $pipe->hset(static::KEY_SITE_DOMAIN . $domain->domain, 'site_id', $domain->site_id);
+            });
+        });
     }
 
     public static function getIDs(): Collection

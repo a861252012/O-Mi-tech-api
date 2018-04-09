@@ -14,4 +14,9 @@ class Site extends Model
     {
         return $this->hasMany(SiteConfig::class,'site_id','id');
     }
+
+    public function domains()
+    {
+        return $this->hasMany(SiteDomain::class,'site_id','id');
+    }
 }
