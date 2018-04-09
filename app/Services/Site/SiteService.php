@@ -202,8 +202,8 @@ class SiteService
 
     public static function syncConfigForSite(Site $site)
     {
-        static::flushConfigCacheForSite($site);
         $configArray = static::getDBConfigArrayForSite($site);
+        static::flushConfigCacheForSite($site);
         return Config::hMset($site->id, $configArray);
     }
 

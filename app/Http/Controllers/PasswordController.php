@@ -51,7 +51,7 @@ class PasswordController extends Controller
         $token = Crypt::decrypt($token);
         $errors = new MessageBag();
 
-        if (time() > $token['time'] + 86400) {
+        if ($token && time() > $token['time'] + 86400) {
             $errors->add('mail', '验证链接已过期！');
             return RedirectResponse::create('/member/mailverify/mailFail?' . http_build_query(['errors' => $errors->toJson()]));
         }

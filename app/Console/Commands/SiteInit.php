@@ -38,7 +38,6 @@ class SiteInit extends Command
      */
     public function handle()
     {
-        $this->call('site:config',['action'=>'sync']);
         $this->call('route:cache');
         $this->call('config:cache');
         $this->call('view:clear');
