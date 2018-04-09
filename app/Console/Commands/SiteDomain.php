@@ -25,6 +25,7 @@ class SiteDomain extends Command
     public $actions = [
         'flush',
         'sync',
+        'verify',
     ];
     /**
      * @var SiteService
@@ -70,6 +71,9 @@ class SiteDomain extends Command
             case 'sync':
                 $sites->each([$this, 'syncDomainToCache']);
                 break;
+            case 'verify':
+                $sites->each([$this, 'verifyDomainCache']);
+                break;
             default:
 
         }
@@ -83,5 +87,31 @@ class SiteDomain extends Command
     public function flushDomain(Site $site)
     {
         return $this->siteService->flushDomainCacheForSite($site);
+    }
+
+    public function verifyDomainCache(Site $site)
+    {
+        $this->info('Verifying site ' . $site->name);
+        $configArray = $this->siteService->getDBConfigArrayForSite($site);
+        $cache = $this->siteService->getConfigBySiteID($site->id)->all();
+        $intersect = array_intersect_assoc($configArray, $cache);
+        $a = array_diff_assoc($cache, $intersect);
+        $b = array_diff_assoc($configArray, $intersect);
+        $union = [];
+        foreach ($a as $k => $v) {
+            $union[] = [
+                'name' => $k,
+                'db' => '❌',
+                'cache' => '✓',
+            ];
+        }
+        foreach ($b as $k => $v) {
+            $union[] = [
+                'name' => $k,
+                'db' => '✓',
+                'cache' => '❌',
+            ];
+        }
+        $this->table(['字段', '数据库', '缓存'], $union);
     }
 }

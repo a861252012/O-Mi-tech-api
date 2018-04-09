@@ -357,7 +357,7 @@ class LoginController extends Controller
                 "msg" => "验证码错误，请重新输入！",
             ];
         }
-
+        
         //取uid
         $auth = Auth::guard();
         if (!$auth->attempt([

@@ -11,8 +11,10 @@ class ThrottleRoutes extends ThrottleRequestsWithRedis
     protected function resolveRequestSignature($request)
     {
         $prefix = 'throttle:';
+        //有路由名，使用路由名
         if (!($routeName = $request->route()->getName())) {
-            $routeName = $request->method() . '|' . $request->path();
+            //没有路由名，使用schema+uri
+            $routeName = $request->getScheme() . '|' . $request->path();
         }
         if ($user = $request->user()) {
             return $prefix . sha1($user->getAuthIdentifier() . '|' . $routeName);
