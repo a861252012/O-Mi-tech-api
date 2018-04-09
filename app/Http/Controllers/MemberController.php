@@ -2054,13 +2054,15 @@ class MemberController extends Controller
      */
     public function getmoney()
     {
+
         return new JsonResponse(
             [
-                'status' => 0,
-                'info' => [
-                    'nickname' => $this->userInfo['nickname'],
-                    'money' => $this->userInfo['points'],
+                'status' => 1,
+                'data' => [
+                    'nickname' =>  Auth::user()->nickname,
+                    'money' =>  Auth::user()->points,
                 ],
+                'msg'=>'获取成功',
             ]
         );
     }
