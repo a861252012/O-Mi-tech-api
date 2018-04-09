@@ -121,6 +121,7 @@ class PaymentController extends MobileController
      */
     public function pay(Request $request)
     {
+        echo "as"; die();
         $amount = isset($_POST['price']) ? number_format(intval($_POST['price']), 2, '.', '') : 0;
 
         if (!$amount || $amount < 1) {
