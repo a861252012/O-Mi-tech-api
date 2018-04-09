@@ -216,7 +216,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     //pc端添加一第一
     Route::post('/member/roomSetDuration', ['name' => 'member_roomSetDuration', 'uses' => 'MemberController@roomSetDuration']);
     //pc端预约一对一
-    Route::post('/member/doReservation', ['uses' => 'MemberController@doReservation']);
+    Route::post('/member/doReservation', ['name' => 'member_doReservation','uses' => 'MemberController@doReservation']);
     //pc端修改房间时长
     Route::get('/member/roomUpdateDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@roomUpdateDuration']);
     //pc端删除一对一
