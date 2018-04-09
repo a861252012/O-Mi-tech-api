@@ -1,11 +1,11 @@
 <?php
-Route::group(['prefix'=>'opcache','middleware'=>['auth.basic']],function (){
-   Route::get('status','OPcacheController@status');
-   Route::get('config','OPcacheController@config');
-   Route::get('flush','OPcacheController@flush');
-});
+//Route::group(['prefix'=>'opcache'],function (){
+//   Route::get('status','OPcacheController@status');
+//   Route::get('config','OPcacheController@config');
+//   Route::get('flush','OPcacheController@flush');
+//});
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
-Route::get('/captcha', 'LoginController@captcha');
+Route::get('/captcha', 'Controller@captcha');
 // 任务列表
 Route::get('/task', 'TaskController@index')->name('task_index');
 //贵族列表
