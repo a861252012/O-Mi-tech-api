@@ -212,7 +212,7 @@ class SiteService
         static::flushDomainCacheForSite($site);
         return resolve('redis')->pipeline(function ($pipe) use ($site) {
             $site->domains()->each(function ($domain) use ($pipe) {
-                $pipe->hset(static::KEY_SITE_DOMAIN . $domain->domain, 'site_id', $domain->site_id);
+                $pipe->hmset(static::KEY_SITE_DOMAIN . $domain->domain, $domain->toArray());
             });
         });
     }
