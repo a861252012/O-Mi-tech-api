@@ -6,6 +6,7 @@ use App\Http\Middleware\Charge;
 use App\Http\Middleware\FormatResponse;
 use App\Http\Middleware\LoginAuth;
 use App\Http\Middleware\MobileSession;
+use App\Http\Middleware\ThrottleRoutes;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -74,7 +75,8 @@ class Kernel extends HttpKernel
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
-        'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        'throttle' => \Illuminate\Routing\Middleware\ThrottleRequestsWithRedis::class,//根据用户id或ip进行全局限制，不同路由使用同一个限制key
+        'throttle.route' => ThrottleRoutes::class,//自定义限制，基于redis，前缀throttle:，不同路由分开限制
         'login_auth' => LoginAuth::class,
         'charge' => Charge::class,
         'mobile.session' => MobileSession::class,

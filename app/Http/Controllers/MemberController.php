@@ -576,7 +576,7 @@ class MemberController extends Controller
         $userServer = resolve(UserService::class);
         $data = $userServer->getUserAttens(Auth::id(), $page)
             ->setPath($request->getPathInfo());
-        return JsonResponse::create($data);
+        return JsonResponse::create(['data'=>$data]);
     }
 
     public function sceneToggle(Request $request)
@@ -2157,7 +2157,7 @@ class MemberController extends Controller
     {
         $type = $request->get('type',0);
         $gid = $request->get('gid');
-        $nums = $request->get('nums');
+        $nums = $request->get('num');
         if (!$this->buyGoods($type, $gid, $nums)) {
             $retData = [
                 'msg' => '购买失败！可能钱不够',

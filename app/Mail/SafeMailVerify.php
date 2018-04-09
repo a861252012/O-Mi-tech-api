@@ -35,8 +35,7 @@ class SafeMailVerify extends Mailable implements ShouldQueue
 
         $this->to($email);
         $siteConfig = app(SiteService::class)->config();
-        dd($siteConfig);
-        $siteName = $siteConfig->get('name', '');
+        $siteName = $siteConfig->get('name');
         $subject = $siteName . '安全邮箱验证';
         $mail_from = $siteConfig->get('mail_from', config('mail.from.address'));
         $mail_reply_to = $siteConfig->get('$mail_reply_to');

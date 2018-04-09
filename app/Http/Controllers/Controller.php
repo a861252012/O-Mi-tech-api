@@ -1152,7 +1152,7 @@ class Controller extends BaseController
             return false;
         }
 
-        $userinfo = $this->userInfo;
+        $userinfo = Auth::user();
         $months = 0;
         if ($type == 0) {
             $total_price = $goodsObj->price * $nums;
@@ -1172,7 +1172,7 @@ class Controller extends BaseController
         $expireTime = $total_num * 86400;
 
         try {
-            $criteria = ['uid' => $this->_online, 'gid' => $gid];
+            $criteria = ['uid' => Auth::id(), 'gid' => $gid];
             $gidExpireTime = 0;
             $packEntity = Pack::where($criteria)->first();
 

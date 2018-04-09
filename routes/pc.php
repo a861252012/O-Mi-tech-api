@@ -33,7 +33,7 @@ Route::group(['prefix' => 'member'], function () {
     Route::group(['middleware' => 'login_auth'], function () {
         Route::get('menu', 'MemberController@getMenu');
         Route::get('index', 'MemberController@index')->name('member_index');
-        Route::post('mail/verify/send', 'PasswordController@sendVerifyMail')->middleware('throttle:5:1')->name('mail_verify_send');
+        Route::post('mail/verify/send', 'PasswordController@sendVerifyMail')->middleware('throttle.route:1,1')->name('mail_verify_send');
         // 用户中心消息  type 是可有可无的 必须放到最后
         Route::get('message/{type?}', 'MemberController@msglist')->where('type', '[0-9]+')->name('member_msglist');
         Route::post('/member/domsg', ['uses' => 'MemberController@domsg']);
@@ -72,6 +72,8 @@ Route::group(['prefix' => 'member'], function () {
 
 
 Route::group(['prefix' => 'user'], function () {
+    Route::post('pwdreset/submit', 'PasswordController@pwdResetSubmit')->middleware('throttle.route:10,1')->name('pwdreset_submit');
+    Route::post('pwdreset/reset','PasswordController@pwdResetConfirm');
     Route::group(['middleware' => 'login_auth'], function () {
         Route::get('current', 'UserController@getCurrentUser')->name('user_current');
         Route::get('following', 'UserController@following')->name('user_current');
@@ -184,9 +186,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/clickadd', ['name' => 'click', 'uses' => 'ApiController@click']);
 
 
-//取回密码验证
-    Route::match(['GET', 'POST'], '/resetpassword[/{token:.+}]', ['name' => 'resetpassword', 'uses' => 'PasswordController@resetPassword']);
-
     Route::match(['GET', 'POST'], '/majax/{action}', ['name' => 'majax', 'uses' => 'MemberController@ajax']);
 
 
@@ -258,7 +257,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     // 房间管理员
     Route::get('/member/roomadmin', ['name' => 'roomadmin', 'uses' => 'MemberController@roomadmin']);
-    Route::post( '/member/roomadmindelete', ['name' => 'roomadmin', 'uses' => 'MemberController@roomadmindelete']);
+    Route::post('/member/roomadmindelete', ['name' => 'roomadmin', 'uses' => 'MemberController@roomadmindelete']);
 
 
     // 开通贵族

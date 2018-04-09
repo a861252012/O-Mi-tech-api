@@ -3,16 +3,17 @@
 namespace App\Http\Controllers;
 
 
+use App\Mail\PwdReset;
 use App\Mail\SafeMailVerify;
 use App\Models\Users;
 use App\Services\User\UserService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\MessageBag;
-use Illuminate\Support\ViewErrorBag;
-use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -35,14 +36,13 @@ class PasswordController extends Controller
     }
 
 
-
-    public function sendVerifyMail()
+    public function sendVerifyMail(Request $request)
     {
         $user = Auth::user();
         if ($user->safemail) {
             return JsonResponse::create(['status' => 0, 'msg' => '你已验证过安全邮箱！',]);
         }
-        $email = Request::get('mail');
+        $email = $request->get('mail');
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return JsonResponse::create(['status' => 0, 'msg' => '安全邮箱地址格式不正确',]);
         }
@@ -66,35 +66,35 @@ class PasswordController extends Controller
     public function VerifySafeMail($token)
     {
         $token = Crypt::decrypt($token);
-        $errors=new MessageBag();
+        $errors = new MessageBag();
 
         if (time() > $token['time'] + 86400) {
-            $errors->add('mail','验证链接已过期！');
-            return RedirectResponse::create('/member/mailverify/mailFail?'.http_build_query(['errors'=>$errors->toJson()]));
+            $errors->add('mail', '验证链接已过期！');
+            return RedirectResponse::create('/member/mailverify/mailFail?' . http_build_query(['errors' => $errors->toJson()]));
         }
 
         $user = resolve(UserService::class)->getUserByUid($token['uid']);
         if ($user->safemail) {
-            $errors->add('mail','你已验证过安全邮箱！');
-            return RedirectResponse::create('/member/mailverify/mailFail?'.http_build_query(['errors'=>$errors->toJson()]));
+            $errors->add('mail', '你已验证过安全邮箱！');
+            return RedirectResponse::create('/member/mailverify/mailFail?' . http_build_query(['errors' => $errors->toJson()]));
         }
 
         //$getMailStatus =  $this->getDoctrine()->getManager()->getRepository('Video\ProjectBundle\Entity\VideoUser')->findOneBy(array('safemail' => $email));
         $getMailStatus = Users::where('safemail', $token['email'])->toJson();
         if ($getMailStatus) {
-            $errors->add('mail','对不起！该邮箱已绑定其他帐号！');
-            return RedirectResponse::create('/member/mailverify/mailFail?'.http_build_query(['errors'=>$errors->toJson()]));
+            $errors->add('mail', '对不起！该邮箱已绑定其他帐号！');
+            return RedirectResponse::create('/member/mailverify/mailFail?' . http_build_query(['errors' => $errors->toJson()]));
         }
         if (!Users::where('uid', $token['uid'])->update(['safemail' => $token['email'], 'safemail_at' => date('Y-m-d H:i:s')])) {
-            $errors->add('mail','更新安全邮箱失败！');
-            return RedirectResponse::create('/member/mailverify/mailFail?'.http_build_query(['errors'=>$errors->toJson()]));
+            $errors->add('mail', '更新安全邮箱失败！');
+            return RedirectResponse::create('/member/mailverify/mailFail?' . http_build_query(['errors' => $errors->toJson()]));
         }
 
         resolve(UserService::class)->getUserReset($token['uid']);
         //赠送砖石奖励
         //$this->addUserPoints($uid,500, array('date'=>date('Y-m-d H:i:s'),'pay_type'=>5 ,'nickname'=>$user['nickname']?:$user['username']), array('mailcontent'=>'你通过“安全邮箱验证”获得500钻石奖励！','date'=>date('Y-m-d H:i:s')), $dm);
-        $errors->add('mail','更新安全邮箱成功！');
-        return RedirectResponse::create('/member/mailverify/mailSuccess?'.http_build_query(['errors'=>$errors->toJson()]));
+        $errors->add('mail', '更新安全邮箱成功！');
+        return RedirectResponse::create('/member/mailverify/mailSuccess?' . http_build_query(['errors' => $errors->toJson()]));
     }
 
 
@@ -113,34 +113,47 @@ class PasswordController extends Controller
 
     /**
      * 安全邮箱找回密码成功
-     * @return Render
-     * @author Young,D.C
+     * @author Nicholas
      */
-    public function getPwdSuccess()
+    public function pwdResetSubmit(Request $request)
     {
-        $mail = $this->make('request')->get('mail');
+        $mail = $request->get('email');
         if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
-            return $this->render('Password/mailfail', ['error' => '安全邮箱地址格式不正确']);
+            return JsonResponse::create(['status' => 0, 'msg' => '邮箱格式不正确']);
         }
 
-//        $user = $this->getDoctrine()->getManager()->getRepository('Video\ProjectBundle\Entity\VideoUser')->findOneBy(array('safemail'=>$mail));
         $user = Users::where('safemail', $mail)->first();
         if (!$user) {
-            return $this->render('Password/getpwdfail', ["error" => "该邮箱没有通过安全邮箱验证, 验证安全邮箱才能使用此功能。"]);
+            return JsonResponse::create(['status' => 0, 'msg' => '该邮箱没有通过安全邮箱验证, 验证安全邮箱才能使用此功能。']);
         }
+        $mail = new PwdReset($user);
+        Mail::send($mail);
+        return JsonResponse::create(['status' => 1]);
+    }
 
-        $time = time();
-        $token = $this->make('Core\Des')->Encode($user->uid . '$' . $time . '$' . md5(md5($user->uid) . $time . '1room'), 'key@1ROOM');
-        echo $tokenUrl = 'http://' . $this->make('request')->getHost() . '/resetpassword/' . $token;
-
-        $mailer = $this->make('mail')->post($mail, $this->container->config['config.REPASS_FROM_MAIL'], '蜜桃儿重置用户密码', $this->_getPasswordEmailTemplate($user->username, $tokenUrl));
-
-        if (!$mailer) {
-            return $this->render('Password/mailfail', ['error' => '邮件发送失败请与客服联系！']);
+    public function pwdResetConfirm(Request $request)
+    {
+        $token = $request->get('pwdreset_token');
+        if (!$token || !Redis::exists('pwdreset.token:' . $token)) {
+            return JsonResponse::create(['status' => 0,  'msg'=>'链接已过期']);
         }
-
-        return $this->render('Password/getpwdsuccess', ['msg' => '<h2>密码找回邮件已经发送到您的安全邮箱，请查收！</h2><p>如未收到邮件请在“垃圾箱”查找或重新发送密码找回邮件。<br/>点击邮件后请及时在“个人中心”中修改密码。</p>']);
-
+        $tokenData=Crypt::decrypt($token);
+        if (empty($uid=$tokenData['uid'])){
+            return JsonResponse::create(['status' => 0, 'msg'=>'链接已过期']);
+        }
+        $pwd = $request->get('password');
+        $pwd_confirm = $request->get('password_confirmation');
+        if (strlen($pwd) < 6){
+            return JsonResponse::create(['status'=>0,'msg'=>'密码格式无效！']);
+        }
+        if ($pwd!==$pwd_confirm){
+            return JsonResponse::create(['status'=>0,'msg'=>'两次输入的密码不一致']);
+        }
+        $hash= md5($pwd);
+        $reset = Users::where('uid', $uid)->update(['password' => md5($pwd)]);
+        Redis::hset('huser_info:'.$uid,'password',$hash);
+        Redis::del('pwdreset.token:' . $token);
+        return JsonResponse::create(['status'=>1,'msg'=>'密码修改成功']);
     }
 
     /**
@@ -151,31 +164,10 @@ class PasswordController extends Controller
      */
     public function resetPassword($token)
     {
-
-        if (!$token) {
-            return $this->render('Password/getpwdfail', ['error' => '该链接无效！']);
-        }
-
-        list($uid, $time, $token) = explode('$', $this->make('Core\Des')->Decode($token, 'key@1ROOM'));
-        if (time() > $time + 21600) {
-            return $this->render('Password/getpwdfail', ['error' => '该链接已过期！']);
-        }
-        if (md5(md5($uid) . $time . '1room') != $token) {
-            return $this->render('Password/getpwdfail', ['error' => '该链接无效！']);
-        }
-
-
         if ($this->make('request')->getMethod() == 'POST') {
-            $password1 = $this->make('request')->get('password1');
-            $password2 = $this->make('request')->get('password2');
+            $password1 = $this->make('request')->get('password');
+            $password2 = $this->make('request')->get('password_confirmation');
 
-            if (strlen($password1) < 6 || strlen($password2) < 6) {
-                return $this->render('Password/getpwdfail', ['error' => '密码格式无效！']);
-            }
-
-            if ($password1 != $password2) {
-                return $this->render('Password/getpwdfail', ['error' => '两次输入密码不一致！']);
-            }
             $reset = Users::where('uid', $uid)->update(['password' => md5($password1)]);
             if (!$reset) {
                 return $this->render('Password/getpwdfail', ['error' => '找回密码失败更新错误！' . $reset]);
