@@ -1182,17 +1182,17 @@ class ApiController extends Controller
     {
         $uid = $this->make('request')->get('uid');
         if (!$uid) {
-            return new JsonResponse([]);
+            return new JsonResponse(['data'=>'','status'=>0,'请输入会员id']);
         }
         $score = $this->make('redis')->zscore('zvideo_live_times', $uid);
 //lvideo_live_list:2653776:103
         $lrange_key = 'lvideo_live_list:' . $uid . ':' . $score;
         $lrange = $this->make('redis')->lrange($lrange_key, 0, 50);
         if (empty($lrange)) {
-            return new JsonResponse([]);
+            return new JsonResponse(['data'=>'','status'=>0]);
         }
         $data = $this->_formatLiveList($lrange);
-        return new JsonResponse($data);
+        return new JsonResponse(['data'=>$data,'msg'=>'获取成功']);
     }
 
 
@@ -1210,7 +1210,7 @@ class ApiController extends Controller
          */
         $uid = $this->make('request')->get('uid');
         if (!$uid) {
-            return new JsonResponse([]);
+           return new JsonResponse(['data'=>'','status'=>0,'请输入会员id']);
         }
 
         /**
@@ -1218,9 +1218,9 @@ class ApiController extends Controller
          * 返回格式： ['uid'=>'score']
          */
         $zrange_key = 'zrange_gift_week:' . $uid;
-        $score = $this->make('redis')->ZREVRANGEBYSCORE($zrange_key, '+inf', '-inf', ['limit' => [0, 30], 'withscores' => TRUE]);
+        $score = $this->make('redis')->ZREVRANGEBYSCORE($zrange_key, '+inf', '-inf', ['limit' => ['offset'=>0,'count'=>30], 'withscores' => TRUE]);
         if (empty($score)) {
-            return new JsonResponse([]);
+            return new JsonResponse(['data'=>'','status'=>0]);
         }
         /**
          * 格式化数据返回，获取用户的信息
@@ -1237,7 +1237,7 @@ class ApiController extends Controller
             $arr['name'] = $user['nickname'];
             $data[] = $arr;
         }
-        return new JsonResponse($data);
+        return new JsonResponse(['data'=>$data,'msg'=>'获取成功']);
 
     }
 
