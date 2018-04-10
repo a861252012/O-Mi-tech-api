@@ -15,7 +15,7 @@ class GuiZuReg extends Command
      *
      * @var string
      */
-    protected $signature = 'guizureg {n? : 生成用户数量，默认1} {p? : 钻石数量，默认1000} {v? : vip代号，默认1101}';
+    protected $signature = 'guizureg {--n=1 : 生成用户数量} {--p=1000 : 钻石数量} {--v=1101 : vip代号}';
 
     /**
      * The console command description.
@@ -41,9 +41,9 @@ class GuiZuReg extends Command
      */
     public function handle()
     {
-        $num=$this->argument('n')?:1;
-        $p=$this->argument('p')?:1000;
-        $v=(string)$this->argument('v')?:'1101';
+        $num=$this->option('n');
+        $p=$this->option('p');
+        $v=(string)$this->option('v');
         //分组配置，nums是产生对应的数量用户，points钱数，道具id，expire道具赠送天数
         $created = $logined = date('Y-m-d H:i:s');
         $end_time = date('Y-m-d H:i:s', time() + 86400 * 40);
@@ -107,6 +107,7 @@ class GuiZuReg extends Command
 
             //插入数据库
             $newUser = Users::create($userdata);
+            $newUser=Users::onWriteConnection()->find($newUser->uid);
             //增加开通记录--后台赠送
             if ($is_vip && $newUser) {
                 $group = LevelRich::find($vip);
