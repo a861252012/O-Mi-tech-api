@@ -43,6 +43,7 @@ use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Mews\Captcha\Facades\Captcha;
+use  App\Services\UserGroup\UserGroupService;
 
 class MemberController extends Controller
 {
@@ -1824,7 +1825,8 @@ class MemberController extends Controller
 
         $user = DB::table('video_user')->where('uid', Auth::user()->uid)->first();
         // 用户组服务
-        $userGroup = $this->make('userGroupServer')->getGroupById($gid);
+        $userGroup = resolve(UserGroupService::class)->getGroupById($gid);
+
         if (!$userGroup || $userGroup['dml_flag'] == 3) {
             $msg['status'] = 1002;
             $msg['msg'] = '该贵族状态异常,请联系客服！';

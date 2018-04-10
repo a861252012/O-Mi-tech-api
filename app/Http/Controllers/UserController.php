@@ -8,6 +8,7 @@ use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
+use App\Services\Message\MessageService;
 
 class UserController extends Controller
 {
@@ -27,7 +28,7 @@ class UserController extends Controller
             $levelInfo = $this->getLevelByRole($user);
             $userInfo = $userInfo->union($levelInfo);
 
-            $userInfo['mails'] = resolve('messageService')->getMessageNotReadCount($user['uid'], $user['lv_rich']);
+            $userInfo['mails'] = resolve(MessageService::class)->getMessageNotReadCount($user['uid'], $user['lv_rich']);
 
             // 是贵族才验证 下掉贵族状态
             if ($user['vip'] && ($user['vip_end'] < date('Y-m-d H:i:s'))) {
