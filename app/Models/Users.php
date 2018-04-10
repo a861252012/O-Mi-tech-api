@@ -13,7 +13,7 @@ class Users extends Authenticatable
     protected $primaryKey = 'uid';
     protected $guarded = ['uid'];
     public $timestamps = false;
-    protected $hidden=['password'];
+    protected $hidden=[];
 
     /**
      * 关联的用户的贵族的信息
