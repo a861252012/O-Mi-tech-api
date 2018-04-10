@@ -1826,6 +1826,7 @@ class MemberController extends Controller
         $user = DB::table('video_user')->where('uid', Auth::user()->uid)->first();
         // 用户组服务
         $userGroup = resolve(UserGroupService::class)->getGroupById($gid);
+
         if (!$userGroup || $userGroup['dml_flag'] == 3) {
             $msg['status'] = 1002;
             $msg['msg'] = '该贵族状态异常,请联系客服！';
