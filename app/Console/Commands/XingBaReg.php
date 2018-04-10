@@ -2,20 +2,21 @@
 
 namespace App\Console\Commands;
 
-use App\Models\LevelRich;
-use App\Models\UserBuyGroup;
+use App\Models\Pack;
+use App\Models\Recharge;
+use App\Models\UserMexp;
 use App\Models\Users;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Redis;
 
-class GuiZuReg extends Command
+class XingBaReg extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'guizureg {--n=1 : 生成用户数量} {--p=1000 : 钻石数量} {--v=1101 : vip代号}';
+    protected $signature = 'xingbareg {--n=1 : 生成用户数量} {--p=0 : 钻石数量} {--gid=} {--expire=} {--rich=} {--lv_rich=}';
 
     /**
      * The console command description.
@@ -41,17 +42,17 @@ class GuiZuReg extends Command
      */
     public function handle()
     {
-        $num=$this->option('n');
-        $p=$this->option('p');
-        $v=(string)$this->option('v');
+        $num = $this->option('n');
+        $p = $this->option('p');
+        $gid = $this->option('gid');
+        $expire = $this->option('expire');
+        $rich = $this->option('rich');
+        $lv_rich = $this->option('lv_rich');
         //分组配置，nums是产生对应的数量用户，points钱数，道具id，expire道具赠送天数
-        $created = $logined = date('Y-m-d H:i:s');
-        $end_time = date('Y-m-d H:i:s', time() + 86400 * 40);
-//线上配置 46
         $groupArr = [
-            ['nums' => $num, 'did' => 1, 'points' => $p, 'vip_end' => $end_time, 'vip' => $v],
-            //array('nums'=>500, 'did'=>46, 'points'=>1000,'vip_end'=>$end_time,'vip'=>'1101'),
+            ['nums' => $num, 'did' => 17, 'points' => $p, 'gid' => $gid, 'expire' => $expire, 'rich' => $rich, 'lv_rich' =>$lv_rich],
         ];
+        $created = $logined = date('Y-m-d H:i:s');
         //1天秒数目
         $oneday = 86400;
         $password = md5('sex8vip888');//$mailpreFix,$mailSuffix,$groupArr可配置
@@ -60,7 +61,7 @@ class GuiZuReg extends Command
         foreach ($groupArr as $item) {
             $this->genRegUsers($item, $oneday, $created, $logined, $password);
         }
-       $this->info('处理完成，耗时'.intval(microtime(true) - $time1) . 's');
+        $this->info('处理完成，耗时' . intval(microtime(true) - $time1) . 's');
     }
 
     //获取随机的昵称，要与用户表对比
@@ -70,17 +71,14 @@ class GuiZuReg extends Command
         for ($i = 0; $i < $arr['nums']; $i++) {
             $username = $this->checkUsername($this->getUserNameRand());
             $nickname = $this->checkNickName($this->getNickNameRand());
+            $password = $this->getPassWordRand();
             //查看是否有赠送等级
-            $vip = isset($arr['vip']) ? $arr['vip'] : 0;
-            $vip_end = isset($arr['vip_end']) ? $arr['vip_end'] : 0;
-            $did = isset($arr['did']) ? $arr['did'] : 0;
-            $is_rich = $is_points = $is_vip = false;
+            $is_rich = $is_points = false;
             $userdata = [
-                'did' => $did,
-                //'roled'=> 3,        //todo
+                'did' => isset($arr['did']) ? $arr['did'] : 0,
                 'username' => $username,
                 'nickname' => $nickname,
-                'password' => md5($password),
+                'password' => $password,
                 'created' => $created,
                 'logined' => $logined,
             ];
@@ -96,42 +94,47 @@ class GuiZuReg extends Command
                 $is_points = true;
             }
 
-
-            //开通贵族
-            if (!empty($arr['vip']) && !empty($arr['vip_end'])) {
-                $userdata['vip'] = $arr['vip'];
-                $userdata['vip_end'] = $arr['vip_end'];
-                $is_vip = true;
-            }
-
             //插入数据库
             $newUser = Users::create($userdata);
-            $newUser=Users::onWriteConnection()->find($newUser->uid);
-            //增加开通记录--后台赠送
-            if ($is_vip && $newUser) {
-                $group = LevelRich::find($vip);
-                $system = unserialize($group['system']);
-                UserBuyGroup::create([
+            $newUser = Users::onWriteConnection()->find($newUser->uid);
+            //将送钱的记录放入到记录表
+            if ($is_points) {
+                Recharge::create([
                     'uid' => $newUser->uid,
-                    'gid' => $group['gid'],
-                    'level_id' => $vip,
-                    'type' => 3,
-                    'rid' => 0,
-                    'create_at' => date('Y-m-d H:i:s'),
-                    'end_time' => $arr['vip_end'],
-                    'status' => 1,
-                    'open_money' => $system['open_money'],
-                    'keep_level' => $system['keep_level'],
+                    'points' => $arr['points'],
+                    'created' => date('Y-m-d H:i:s', time()),
+                    'pay_type' => 5,
+                    'pay_status' => 1,
+                    'nickname' => $nickname,
                 ]);
             }
-
-
+            //如有赠送等级则插入送经验记录
+            if ($is_rich) {
+                UserMexp::create([
+                    'uid' => $newUser->uid,
+                    'exp' => $arr['rich'],
+                    'status' => 2,
+                    'type' => 1,
+                    'roled' => 0,
+                    'curr_exp' => 0,
+                ]);
+            }
+            if( !empty($arr['expire'])  &&  !empty($arr['gid']) ){
+                $expire = $arr['expire']*$oneday;
+                //将赠送的道具，绑定给指定用户
+                Pack::create(array(
+                    'uid'=>$newUser->uid,
+                    'gid'=> $arr['gid'],
+                    'num'=> 1,
+                    'expires'=> time()+$expire
+                ));
+            }
             Redis::hmset('huser_info:' . $newUser->uid, $newUser->toArray());
 
             Redis::hset('husername_to_id', $username, $newUser->uid);
             Redis::hset('hnickname_to_id', $nickname, $newUser->uid);
 
-            logger()->info('贵族用户生成', $newUser->toArray());
+            logger()->info('性吧用户生成', $newUser->toArray());
         }
     }
 
