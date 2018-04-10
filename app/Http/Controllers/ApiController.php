@@ -621,19 +621,13 @@ class ApiController extends Controller
      * @description 迁移自原 activityAction
      * @return JsonResponse
      */
-    public function Activity()
+    public function Activity(Request $request)
     {
         $timestamp = time();
-        $config = $this->make('config');
-        /**
-         * @var $request
-         */
-        $request = $this->make('request');
-        if (!$config['config.FIRST_RECHARGE_STATUS']) return new JsonResponse(['status' => 0, 'msg' => '活动已经停止！']);
-
+        if (!SiteSer::config('first_recharge_status')) return JsonResponse::create(['status' => 0, 'msg' => '活动已经停止！']);
 
         //活动有效期判断
-        $recharge_datetime = Conf::whereName('recharge_datetime')->first()->value;
+        $recharge_datetime = SiteSer::config('recharge_datetime');
         if (!$recharge_datetime) abort(404, 'Get recharge date time was empty');
         $recharge_datetime = json_decode($recharge_datetime, true);
         if (!(strtotime($recharge_datetime['begintime']) < $timestamp && strtotime($recharge_datetime['endtime']) > $timestamp)) return new JsonResponse(['status' => 0, 'msg' => '活动已经停止！']);
@@ -1133,7 +1127,7 @@ class ApiController extends Controller
         /**
          * 返回json给前台 用了一个array_values格式化为 0 开始的索引数组
          */
-        return new JsonResponse(array_values($data));
+        return new JsonResponse(['data'=>['list'=>array_values($data)]]);
     }
 
     protected function isLuck($gid)
