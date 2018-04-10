@@ -14,6 +14,7 @@ use App\Models\UserGroupPermission;
 use App\Models\UserModNickName;
 use App\Models\Users;
 use App\Services\Service;
+use App\Services\UserGroup\UserGroupService;
 use DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Redis\RedisManager;
@@ -576,7 +577,7 @@ class UserService extends Service
             return true;
         } else {
             // 根据等级计算 对应的值
-            $userGroup = $this->container->make('userGroupServer');
+            $userGroup = resolve(UserGroupService::class);
             $lvs = $userGroup->getLevelGroup();
             $rich = $lvs[$lv_rich]['level_value'];
         }

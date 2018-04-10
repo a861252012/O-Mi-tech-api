@@ -31,7 +31,7 @@ class SocketService extends Service
 
     public function getNextServerAvailable($uid)
     {
-        $redis = $this->make('redis');
+        $redis = resolve('redis');
         $channels_update = collect($redis->hgetall('channel_update'));
 //        $minLoadChannel = null;
         $channelIDs = collect();//可用的channel id

@@ -1,7 +1,7 @@
 <?php
 /**
  * A helper file for Laravel 5, to provide autocomplete information to your IDE
- * Generated for Laravel 5.6.15 on 2018-04-05 15:24:08.
+ * Generated for Laravel 5.6.15 on 2018-04-09 22:06:24.
  *
  * This file should not be included in your code, only analyzed by your IDE!
  *
@@ -12761,9 +12761,29 @@ namespace App\Facades {
          *
          * @static 
          */ 
+        public static function flushDomainCacheForSite($site)
+        {
+            return \App\Services\Site\SiteService::flushDomainCacheForSite($site);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
         public static function syncConfigForSite($site)
         {
             return \App\Services\Site\SiteService::syncConfigForSite($site);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function syncDomainForSite($site)
+        {
+            return \App\Services\Site\SiteService::syncDomainForSite($site);
         }
         
         /**
@@ -12901,6 +12921,30 @@ namespace App\Facades {
         public static function checkUserVipStatus($uid)
         {
             return \App\Services\User\UserService::checkUserVipStatus($uid);
+        }
+        
+        /**
+         * [checkVipStatus 检查vip状态]
+         *
+         * @author dc <dc#wisdominfo.my>
+         * @version 2015-11-11
+         * @param int $uid 用户id
+         * @return object|false 
+         * @static 
+         */ 
+        public static function checkVip($uid)
+        {
+            return \App\Services\User\UserService::checkVip($uid);
+        }
+        
+        /**
+         * 
+         *
+         * @static 
+         */ 
+        public static function cancelVip($uid = 0)
+        {
+            return \App\Services\User\UserService::cancelVip($uid);
         }
         
         /**

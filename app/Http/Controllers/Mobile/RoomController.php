@@ -420,7 +420,7 @@ class RoomController extends Controller
 
         $room = $roomService->getRoom($rid, Auth::id());
         /** @var SocketService $socketService */
-        $socketService = $this->make('socketService');
+        $socketService = resolve(SocketService::class);
         $chatServer = [];
         if (!empty($room) && !empty($room['channel_id'])) {
             $chatServer = $socketService->getServer($room['channel_id']);

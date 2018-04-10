@@ -51,7 +51,7 @@ class RoomService extends Service
         $redis = $this->make('redis');
         $hktvKey = "hvediosKtv:$rid";
 
-        $channelInfo = $this->make('socketServices')->getNextServerAvailable($uid);
+        $channelInfo = resolve(SocketService::class)->getNextServerAvailable($uid);
         $redis->hset($hktvKey, "channel_id", $channelInfo['id']);
         $str = "===addRoom rid===" . $rid . "===uid===" . $uid . "===serverIds size===" . json_encode($channelInfo);
         Log::channel('room')->info($str);

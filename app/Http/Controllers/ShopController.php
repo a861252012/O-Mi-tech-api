@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Goods;
+use App\Services\UserGroup\UserGroupService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
 
@@ -24,7 +25,7 @@ class ShopController extends Controller
             ->with('mountGroup')->get();
 
         // 通过服务调用用户组
-        $group = $this->make('userGroupServer')->getPublicGroup();
+        $group = resolve(UserGroupService::class)->getPublicGroup();
 
         $result['lists'] = $lists;
         $result['vipmount'] = $vipmount;
@@ -75,7 +76,7 @@ class ShopController extends Controller
             'status' => 1,
             'msg' => '数据获取成功'
         );
-        $userGroup = $this->make('userGroupServer')->getGroupById($gid);
+        $userGroup = resolve(UserGroupService::class)->getGroupById($gid);
         if (!$userGroup) {
             $msg['code'] = 1003;
             $msg['msg'] = '数据获取失败';
@@ -97,7 +98,7 @@ class ShopController extends Controller
             'status' => 1,
             'msg' => '数据获取成功'
         );
-        $userGroup = $this->make('userGroupServer')->getPublicGroup();
+        $userGroup = resolve(UserGroupService::class)->getPublicGroup();
         if (!$userGroup) {
             $msg['status'] = 1003;
             $msg['msg'] = '数据获取失败';

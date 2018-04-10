@@ -13,6 +13,7 @@ use App\Services\Room\One2OneRoomService;
 use App\Services\Room\SocketService;
 use App\Services\Safe\SafeService;
 use App\Services\Site\SiteService;
+use App\Services\System\SystemService;
 use App\Services\UserGroup\UserGroupService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\ServiceProvider;
@@ -32,10 +33,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ChargeGroupService::class);
         $this->app->singleton(MessageService::class);
         $this->app->singleton(MobileService::class);
+        $this->app->singleton(UserGroupService::class);
+        $this->app->singleton(SocketService::class);
+        $this->app->singleton(SafeService::class);
+        $this->app->singleton(SocketService::class);
+        $this->app->singleton(SystemService::class);
 
-        $this->app->singleton('userGroupServer', function () {
-            return new UserGroupService();
-        });
+
         $this->app->singleton('active', function () {
             return new ActiveService();
         });
@@ -44,12 +48,6 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton('chargeGroup', function () {
             return new ChargeGroupService();
-        });
-        $this->app->singleton('messageService', function () {
-            return new MessageService();
-        });
-        $this->app->singleton('safeService', function () {
-            return new SafeService();
         });
         $this->app->singleton('mobile', function () {
             return new MobileService();
@@ -60,9 +58,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton('one2more', function ($app) {
             return new One2MoreRoomService($app['request']);
         });
-        $this->app->singleton('socketService', function () {
-            return new SocketService();
-        });
+
         if (config('app.env') !== 'production' || config('app.debug') == true) {
             Artisan::call('route:clear');
             Artisan::call('config:clear');

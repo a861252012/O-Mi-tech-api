@@ -5,11 +5,14 @@
 //   Route::get('flush','OPcacheController@flush');
 //});
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
-Route::get('/captcha', 'Controller@captcha');
+Route::get('/captcha', 'LoginController@captcha');
 // 任务列表
 Route::get('/task', 'TaskController@index')->name('task_index');
 //贵族列表
 Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopController@getGroupAll']);
+Route::get('room/{rid}/{h5?}','RoomController@index')
+    ->where('rid', '[0-9]+')
+    ->where('h5', '(h5|h5hls)');
 
 Route::group(['middleware' => ['login_auth']], function () {
     //上传相册
@@ -73,7 +76,7 @@ Route::group(['prefix' => 'member'], function () {
 
 Route::group(['prefix' => 'user'], function () {
     Route::post('pwdreset/submit', 'PasswordController@pwdResetSubmit')->middleware('throttle.route:10,1')->name('pwdreset_submit');
-    Route::post('pwdreset/reset','PasswordController@pwdResetConfirm');
+    Route::post('pwdreset/reset', 'PasswordController@pwdResetConfirm');
     Route::group(['middleware' => 'login_auth'], function () {
         Route::get('current', 'UserController@getCurrentUser')->name('user_current');
         Route::get('following', 'UserController@following')->name('user_current');
@@ -90,7 +93,7 @@ Route::get('/room/rtmp/{rid}', 'RoomController@getRTMP')->where('rid', '[0-9]+')
 /****** 合作平台接口 ******/
 Route::get('/recvSskey', ['name' => 'recvSskey', 'uses' => 'ApiController@platform']);
 //直播间
-Route::get('/{rid:\d+}[/{h5:h5|h5hls}]', ['name' => 'room', 'uses' => 'RoomController@index']);
+
 //APP下载
 Route::get('/download', ['name' => 'download', 'uses' => 'PageController@download']);
 Route::get('/download/qr.png', ['name' => 'downloadQR', 'uses' => 'PageController@downloadQR']);
@@ -215,7 +218,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     //pc端添加一第一
     Route::post('/member/roomSetDuration', ['name' => 'member_roomSetDuration', 'uses' => 'MemberController@roomSetDuration']);
     //pc端预约一对一
-    Route::post('/member/doReservation', ['name' => 'member_doReservation','uses' => 'MemberController@doReservation']);
+    Route::post('/member/doReservation', ['name' => 'member_doReservation', 'uses' => 'MemberController@doReservation']);
     //pc端修改房间时长
     Route::get('/member/roomUpdateDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@roomUpdateDuration']);
     //pc端删除一对一
@@ -287,8 +290,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     //注册
     //  Route::get('/m/register', ['name' => 'm_register', 'uses' => 'MobileController@register']);
 
-
-    // Route::get('/{rid:\d+}[/{h5:h5}]',['as'=>'room','uses'=>'RoomController@index']);
 
     // 获取用户有多少钱
     Route::post('/getmoney', ['name' => 'shop_getmoney', 'uses' => 'MemberController@getmoney']);

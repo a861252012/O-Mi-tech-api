@@ -4,10 +4,15 @@
 namespace App\Http\Controllers;
 
 
+use App\Facades\SiteSer;
+use App\Services\Room\NoSocketChannelException;
+use App\Services\Room\RoomService;
+use App\Services\Room\SocketService;
+use App\Services\Safe\SafeService;
 use App\Services\User\UserService;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class RoomController extends Controller
 {
@@ -19,103 +24,98 @@ class RoomController extends Controller
      */
     public function index($rid, $h5 = false)
     {
-        if ($this->make('config')['config.open_safe'])
-            if (!$this->make('safeService')->auth(Auth::id())) return new RedirectResponse('/');
+        if (SiteSer::config('open_safe')) {
+            if (!resolve(SafeService::class)->auth(Auth::id())) {
+                JsonResponse::create(['status' => 0]);
+            }
+        }
 
-        if ($rid <= 0) return $this->render('Room/no_room');
         $user = resolve(UserService::class)->getUserByUid($rid);
-        if (!$user || $user['roled'] != 3) return $this->render('Room/no_room');
-
+        if (!$user || !$user->isHost()) return JsonResponse::create(['status' => 0, 'msg' => '房间不存在']);
+        $logger = Log::channel('room');
         //get certificate
-        $certificate = $this->make('safeService')->getLcertificate('socket');
+        $certificate = resolve(SafeService::class)->getLcertificate('socket');
 
-        /** @var RoomService $roomService */
-        $roomService = $this->make('roomService');
+        $roomService = resolve(RoomService::class);
         //$xo_httphost = $roomService->getXOHost();
         //check kickout
         $timeleft = $roomService->checkKickOut($rid, Auth::id());
         if ($timeleft !== true) {
-            return $this->render('Room/kicked', ['timeleft' => ceil($timeleft / 60)]);
+            return JsonResponse::create(['status' => 0, 'msg' => '您被踢出房间，请等待' . ceil($timeleft / 60) . '分钟后重试']);
         }
         $room = $roomService->getRoom($rid, Auth::id());
-        /** @var SocketService $socketService */
-        $socketService = $this->make('socketService');
+        $socketService = resolve(SocketService::class);
         if (!empty($room) && !empty($room['channel_id'])) {
             $chatServer = $socketService->getServer($room['channel_id']);
         }
+        $user = Auth::user();
         if (empty($room) || empty($chatServer)) {
             //创建房间
-            if ($this->userInfo['rid'] == $rid) {   //最近一次与当前一致
+            if ($user['rid'] == $rid) {   //最近一次与当前一致
                 try {
                     $room = $roomService->addRoom($rid, $rid, Auth::id());
                     $chatServer = $socketService->getServer($room['channel_id']);
                 } catch (NoSocketChannelException $e) {
-//                    die($e->getMessage());
-                    return $this->render('Room/no_room');
+                    return JsonResponse::create(['status' => 0, 'msg' => '房间不存在']);
                 }
             }
         }
-        $logPath = BASEDIR . '/app/logs/room' . date('Y-m') . '.log';
         $getRoomKey = '';
         if (!empty($chatServer)) {
             $host = $this->getUserHost($chatServer, $this->isHost($rid));
-//            setrawcookie('room_host', $host . ':' . $chatServer['port'], time() + 604800, '/');  //一周
-            //php setcookie 不支持写入逗号，直接调用header
-            header('Set-Cookie: room_host="' . $host . ':' . $chatServer['port'] . '"; Max-Age=604800; Path=/');  //一周
             $getRoomKey = $host . ':' . $chatServer['port'];
-            $this->make('systemServer')->logResult('enter_room:' . $rid . ":" . Auth::id() . ':' . $room['channel_id'] . ':' . $getRoomKey, $logPath);
-            header("Cache-Control: no-cache");
-            header("Cache-Control: no-store");
-            header("Pragma: no-cache");
-            header("Expires: 0");
+            $logger->info('enter_room:' . $rid . ":" . Auth::id() . ':' . $room['channel_id'] . ':' . $getRoomKey);
         }
 
-        $redis = $this->make('redis');
-        if (!isset($this->userInfo['origin'])) $this->userInfo['origin'] = 12;
-        if (!isset($this->userInfo['created'])) $this->userInfo['created'] = "";
-        $origin = $this->userInfo['origin'];
+        $redis = resolve('redis');
+        if (!isset($user['origin'])) $user['origin'] = 12;
+        if (!isset($user['created'])) $user['created'] = "";
+        $origin = $user['origin'];
 
         if (!$this->isHost($rid)) {   //不是主播自己进自己房间
             $tid = $roomService->getCurrentRoomStatus();
-            $this->make('systemServer')->logResult('current_tid:' . $tid, $logPath);
+            $logger->info('current_tid:' . $tid);
             switch ($tid) {
                 case 4:   //一对一房间
-                    $handle = $this->userInfo ? 'no_order' : 'login';
+                    $handle = $user ? 'no_order' : 'login';
                     if (!$roomService->checkCanIn()) {
-                        if ($h5 === 'h5hls')
-                            return JsonResponse::create(['status' => 0]);
-                        return $this->render('Room/no_order_room', [
-                            'handle' => $handle,
-                        ]);
+                        return JsonResponse::create(['status' => 0, 'data' => ['handle' => $handle]]);
                     }
                     break;
                 case 6:   //时长房间
-                    $handle = $this->userInfo ? 'timecost' : 'login';
+                    $handle = $user ? 'timecost' : 'login';
                     if (!$roomService->checkDuration()) {
-                        if ($h5 === 'h5hls')
-                            return JsonResponse::create(['status' => 0]);
-                        return $this->render('Room/no_timecost_watch_room', [
-                            'room' => &$room,
-                            'handle' => $handle,
+                        return JsonResponse::create([
+                            'status' => 0, 'data' => [
+                                'handle' => $handle,
+                                'rid' => $rid,
+                                'timecost' => $room['room_status'][6]['timecost'],
+                                'discount' => $room['discount']['discount'],
+                                'discountValue' => $room['discount']['discountValue'],
+                            ],
                         ]);
                     }
                     break;
                 case 7:   //时长房间和密码房
-                    $handle = $this->userInfo ? 'roompwd|timecost' : 'login';
+                    $handle = $user ? 'roompwd|timecost' : 'login';
                     if (!($roomService->checkDuration() && $roomService->checkPassword())) {
-                        if ($h5 === 'h5hls')
-                            return JsonResponse::create(['status' => 0]);
-                        return $this->render('Room/no_timecost_watch_pwd_room', [
-                            'room' => &$room,
-                            'handle' => $handle,
+                        return JsonResponse::create([
+                            'status' => 0, 'data' => [
+                                'handle' => $handle,
+                                'rid' => $rid,
+                                'timecost' => $room['room_status'][6]['timecost'],
+                                'discount' => $room['discount']['discount'],
+                                'discountValue' => $room['discount']['discountValue'],
+                            ],
                         ]);
                     }
                     break;
                 case 8: //一对多
-                    $handle = $this->userInfo ? 'room_one_to_many' : 'login';
+                    $handle = $user ? 'room_one_to_many' : 'login';
                     if (!$roomService->whiteList()) {
-                        if ($h5 === 'h5hls')
+                        if ($h5 === 'h5hls'){
                             return JsonResponse::create(['status' => 0]);
+                        }
                         $data = [
                             'id' => $roomService->extend_room['onetomore'],
                             'rid' => $rid,
@@ -132,24 +132,20 @@ class RoomController extends Controller
                         $hplat_info = [];
 
                         if ($hplat == 'plat_whitename_room') {
-                            $uid = $this->userInfo['uid'];
+                            $uid = $user['uid'];
                             $plat_backurl = $roomService->getPlatUrl($origin);
                             $hplat_info = $redis->hgetall("hplatforms:$origin");
 
-                            $logPath = BASEDIR . '/app/logs/' . date('Y-m') . '.log';
-                            $this->logResult("user exchange:  user id:$uid  origin:$origin ", $logPath);
+                            $logger->info("user exchange:  user id:$uid  origin:$origin ");
                             $hplat_user = $this->getMoney($uid, $rid, $origin);
                         }
-//
-//                        var_dump($this->userInfo);
-//                        die;
 
-                        return $this->render('Room/' . $hplat, [
+                        return JsonResponse::create(['data' => [
                             //房间信息
                             'room' => &$room,
-                            'user' => $this->userInfo,
+                            'user' => $user,
                             //一对多房间数据
-                            'data' => base64_encode(json_encode($data, JSON_FORCE_OBJECT)),
+                            'data' => $data,
                             'handle' => $handle,
                             //平台跳转信息
                             'plat_url' => json_encode($plat_backurl, JSON_FORCE_OBJECT),
@@ -157,17 +153,17 @@ class RoomController extends Controller
                             'hplat_info' => json_encode($hplat_info),
                             //平台用户信息
                             'hplat_user' => json_encode($hplat_user),
-                        ]);
+                        ]]);
                     }
 
                     break;
                 case 2:     //密码房间
-                    $handle = $this->userInfo ? 'roompwd' : 'login';
+                    $handle = $user ? 'roompwd' : 'login';
                     if (!$roomService->checkPassword()) {
                         if ($h5 === 'h5hls')
                             return JsonResponse::create(['status' => 0]);
                         return $this->render('Room/no_passwd_room', [
-                            'room' => &$room,
+                            'rid' => $rid,
                             'handle' => $handle,
                         ]);
                     }
@@ -177,37 +173,32 @@ class RoomController extends Controller
             }
         }
         $channel_id = isset($room['channel_id']) ? $room['channel_id'] : 0;
-        $this->make('systemServer')->logResult('in:' . $rid . ":" . Auth::id() . ':' . $channel_id, $logPath);
+        $logger->info('in:' . $rid . ":" . Auth::id() . ':' . $channel_id);
 
         $plat_backurl = $roomService->getPlatUrl($origin);
         //$httphost = $roomService->getPlatHost();
         $data = [
-            'userInfo' => $this->userInfo,
-            'new_user' => $this->userInfo['created'] > $this->container->config['config.USER_TIME_DIVISION'] ? 1 : 0,
             'room' => &$room,
             'rid' => $rid,
             'origin' => $origin,
             'plat_url' => json_encode($plat_backurl, JSON_FORCE_OBJECT),
             'in_limit_points' => $redis->hget('hconf', 'in_limit_points') ?: 0,
             'in_limit_safemail' => $redis->hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
-            'flash_version' => $redis->get('flash_version') ?: 'v201504092044',
-            'flash_ver_h5' => $redis->get('flash_ver_h5') ?: 'v201504092044',
             'certificate' => $certificate,
-            'publish_version' => $redis->get('publish_version') ?: 'v2017090701' //young添加
         ];
         $data['getRoomKey'] = $getRoomKey;
         if (!$h5) {
-            return $this->render('Room/room', $data);
+            return JsonResponse::create(['data' => $data]);
         }
         if ($h5 === 'h5') {
-            return $this->render('Room/roomh5', $data);
+            return JsonResponse::create(['data' => $data]);
         }
         if ($h5 === 'h5hls') {
             unset($data['getRoomKey']);
             $data['status'] = 1;
             $data['chat_ws'] = $redis->smembers('schatws');
             $data['hls_addr'] = $this->getHLS($rid);
-            return JsonResponse::create($data);
+            return JsonResponse::create(['data' => $data]);
         }
     }
 
@@ -424,7 +415,7 @@ class RoomController extends Controller
 
     protected function getUserRTMP($uid = null)
     {
-        return $this->userInfo['rtmp_ip'] ?: $this->make('redis')->get('rtmp_ip') ?: [];
+        return Auth::user()['rtmp_ip'] ?: $this->make('redis')->get('rtmp_ip') ?: [];
     }
 
     protected function getRTMPServers()
@@ -476,7 +467,7 @@ class RoomController extends Controller
 
     protected function getBroadcastType($uid = null)
     {
-        return $this->userInfo['broadcast_type'];
+        return Auth::user()['broadcast_type'];
     }
 
     private function getRid($uid = null)
