@@ -181,14 +181,14 @@ class IndexController extends Controller
     public function setInRoomStat()
     {
         $roomid = $this->make('request')->get('roomid');
-        if (!$roomid) return new JsonResponse(['code' => 2, 'msg' => '无效的参数']);
+        if (!$roomid) return new JsonResponse(['status' => 2, 'msg' => '无效的参数']);
 
         $data = RoomStatus::where('uid', $roomid)
             ->where('tid', 6)->where('status', 1)->first();
-        if (!$data) return new JsonResponse(['code' => 3, 'msg' => '不是时长房间']);
+        if (!$data) return new JsonResponse(['status' => 3, 'msg' => '不是时长房间']);
 
         Redis::hset('htimecost_watch:' . $roomid, Auth::id(), $roomid);
-        return new JsonResponse(['code' => 1, 'msg' => '设置状态成功']);
+        return new JsonResponse(['status' => 1, 'msg' => '设置状态成功']);
     }
 
     /**
