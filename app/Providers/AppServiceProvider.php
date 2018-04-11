@@ -59,11 +59,6 @@ class AppServiceProvider extends ServiceProvider
             return new One2MoreRoomService($app['request']);
         });
 
-        if (config('app.env') !== 'production' || config('app.debug') == true) {
-            Artisan::call('route:clear');
-            Artisan::call('config:clear');
-        }
-
     }
 
     /**

@@ -3,8 +3,8 @@
 namespace Fideloper\Proxy;
 
 use Closure;
-use Illuminate\Contracts\Config\Repository;
 use Illuminate\Http\Request;
+use Illuminate\Contracts\Config\Repository;
 
 class TrustProxies
 {
