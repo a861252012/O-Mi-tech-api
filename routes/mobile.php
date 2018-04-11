@@ -32,8 +32,6 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('register', ['name' => 'm_register', 'uses' => 'Mobile\MobileController@register']);
     //轮播图获取
     Route::get('sliderlist', ['name' => 'm_sliderlist', 'uses' => 'Mobile\MobileController@sliderList']);
-    //活动列表
-    Route::get('activitylist', ['name' => 'm_activitylist', 'uses' => 'Mobile\MobileController@activityList']);
     //活动详情
     Route::get('activitydetail/{id}', ['name' => 'm_activitydetail', 'uses' => 'Mobile\MobileController@activityDetail']);
     //主播列表
@@ -94,6 +92,10 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
 
 
 });
+//活动列表
+Route::get('activitylist', ['name' => 'm_activitylist', 'uses' => 'Mobile\MobileController@activityList']);
+/** 进房间 */
+Route::post('get_room/{rid}', 'Mobile\RoomController@getRoom')->where('rid','[0-9]{5,15}')->name('m_get_room');
 
 Route::get('find', ['name' => 'm_find', 'uses' => 'Mobile\MobileController@searchAnchor']);
 Route::get('oort2bunny', ['name' => 'guanggao', 'uses' => 'AdsController@getAd']);//广告接口

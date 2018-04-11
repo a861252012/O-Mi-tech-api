@@ -94,6 +94,8 @@ Route::group(['prefix' => 'user'], function () {
 Route::get('/room/rtmp/{rid}', 'RoomController@getRTMP')->where('rid', '[0-9]+')->name('room_rtmp');
 /****** 合作平台接口 ******/
 Route::get('/recvSskey', ['name' => 'recvSskey', 'uses' => 'ApiController@platform']);
+// 测试接口
+Route::post('/live/checked', ['name' => 'recvSskey', 'uses' => 'ApiController@platformGetUser']);
 //直播间
 
 //APP下载
@@ -353,12 +355,14 @@ Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp
 Route::group(['prefix' => 'charge', 'middleware' => ['charge', 'login_auth']], function () {
     Route::match(['POST', 'GET'], 'pay', ['name' => 'charge_pay', 'uses' => 'ChargeController@pay']);
     Route::match(['POST', 'GET'], '/order', ['name' => 'charge_order', 'uses' => 'ChargeController@order']);
+    Route::match(['POST', 'GET'], 'checkCharge', ['name' => 'check_charge', 'uses' => 'ChargeController@checkCharge']);
     Route::match(['POST', 'GET'], '/order2', ['name' => 'charge_order2', 'uses' => 'ChargeController@order2']);
     Route::match(['POST', 'GET'], '/pay2', ['name' => 'charge_pay2', 'uses' => 'ChargeController@pay2']);
     Route::match(['POST', 'GET'], '/translate', ['name' => 'translate', 'uses' => 'ChargeController@translate']);
 
 });
 
+Route::post('charge/chongti', 'ChargeController@chongti')->name('chongti');
 //通知
 Route::group(['prefix' => 'charge', 'middleware' => ['charge']], function () {
     Route::match(['POST', 'GET'], 'notice2', ['name' => 'notice2', 'uses' => 'ChargeController@notice2']);
