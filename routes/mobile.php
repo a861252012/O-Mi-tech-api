@@ -20,7 +20,7 @@ Route::get('/room/conf', ['name' => 'm_room_conf', 'uses' => 'Mobile\RoomControl
 Route::get('/app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
 Route::get('conf',['name'=>'m_conf', 'uses'=>'Mobile\RoomController@getConf']);
 Route::get('/room/conf',['name'=>'m_room_conf', 'uses'=>'Mobile\RoomController@getRoomConf']);
-
+Route::get('/oort2bunny', ['name' => 'm_guanggao', 'uses' => 'AdsController@getAd']);//广告接口
 //移动端登录验证
 Route::group(['middleware' => ['login_auth:mobile']], function () {
 
