@@ -2077,14 +2077,14 @@ class MemberController extends Controller
      */
     public function hidden($status)
     {
-        if (!in_array($status, ['0', '1'])) return new JsonResponse(['status' => 0, 'message' => '参数错误']);
+        if (!in_array($status, ['0', '1'])) return new JsonResponse(['status' => 0, 'msg' => '参数错误']);
 
         $uid = Auth::id();
-        if (!$uid) return new JsonResponse(['status' => 0, 'message' => '用户错误']);
+        if (!$uid) return new JsonResponse(['status' => 0, 'msg' => '用户错误']);
         $user = Users::where('uid', $uid)->with('vipGroup')->first();
 
         //判断用户是否有隐身权限
-        if (!resolve(UserService::class)->getUserHiddenPermission($user)) return new JsonResponse(['status' => 0, 'message' => '没有权限!']);
+        if (!resolve(UserService::class)->getUserHiddenPermission($user)) return new JsonResponse(['status' => 0, 'msg' => '没有权限!']);
 
         //更新数据库隐身状态
         $hidden = Users::where('uid', $uid)->update(['hidden' => $status]);
@@ -2092,7 +2092,7 @@ class MemberController extends Controller
         //更新用户redis
         resolve(UserService::class)->getUserReset($uid);
 
-        return new JsonResponse(['status' => 1, 'message' => '操作成功']);
+        return new JsonResponse(['status' => 1, 'msg' => '操作成功']);
     }
 
 

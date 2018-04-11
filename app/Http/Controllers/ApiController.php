@@ -67,12 +67,12 @@ class ApiController extends Controller
         $userInfo = $userService->getUserByUid($uid);
 
         //获取用户信息失败返回
-        if (!$userInfo) return new JsonResponse(['ret' => false, 'info' => '无效用户']);
+        if (!$userInfo) return new JsonResponse(['status' => 0, 'msg' => '无效用户']);
 
         $data = $this->getOutputUser($userInfo, 40, false);
         //加密输出结果
         $desData = $userService->get3Des($data, $this->container->config['config.DES_ENCRYT_KEY']);
-        return new JsonResponse(['ret' => true, 'info' => $desData]);
+        return new JsonResponse(['status' => 1, 'data' => $desData]);
     }
 
     /**
