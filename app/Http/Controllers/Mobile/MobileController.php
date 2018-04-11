@@ -9,9 +9,6 @@ use App\Facades\SiteSer;
 use App\Facades\UserSer;
 use App\Http\Controllers\Controller;
 use App\Models\AppCrash;
-use App\Models\AppVersion;
-use App\Models\AppVersionIOS;
-use App\Models\Domain;
 use App\Models\DomainList;
 use App\Models\Goods;
 use App\Models\ImagesText;
@@ -20,12 +17,12 @@ use App\Models\Pack;
 use App\Models\Users;
 use App\Services\Site\SiteService;
 use App\Services\User\UserService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Mews\Captcha\Facades\Captcha;
-use Illuminate\Http\JsonResponse;
 
 class MobileController extends Controller
 {
@@ -65,16 +62,18 @@ class MobileController extends Controller
         }
         return JsonResponse::create($lists);
     }
-    public function domains(Request $request){
+
+    public function domains(Request $request)
+    {
         try {
-            $site = $request->get('site',1);
+            $site = $request->get('site', 1);
             $result = DomainList::query()->get();
             $return = [
                 'status' => 1,
                 'data' => [
                     'greenips' => [],
                     'ips' => [],
-                ]
+                ],
             ];
             foreach ($result as $row) {
                 if ($row->green)
@@ -85,13 +84,13 @@ class MobileController extends Controller
             $return = json_encode($return);
             Redis::set('domain:list', $return);
         } catch (\Exception $e) {
-            $return =  json_encode([
+            $return = json_encode([
                 'status' => 0,
                 'msg' => $e->getTraceAsString(),
                 'data' => [
                     'greenips' => [],
                     'ips' => [],
-                ]
+                ],
             ]);
         }
         return $return;
@@ -141,21 +140,21 @@ class MobileController extends Controller
             ]);
         }
         return JsonResponse::create([
-                'status' => 1,
-                'uid' => $userinfo->uid,
-                'nickname' => $userinfo->nickname,
-                'headimg' => $this->getHeadimg($userinfo->headimg),
-                'points' => $userinfo->points,
-                'roled' => $userinfo->roled,
-                'rid' => $userinfo->rid,
-                'vip' => $userinfo->vip,
-                'vip_end' => $userinfo->vip_end,
-                'lv_rich' => $userinfo->lv_rich,
-                'lv_exp' => $userinfo->lv_exp,
-                'safemail' => $userinfo->safemail ?? '',
+            'status' => 1,
+            'uid' => $userinfo->uid,
+            'nickname' => $userinfo->nickname,
+            'headimg' => $this->getHeadimg($userinfo->headimg),
+            'points' => $userinfo->points,
+            'roled' => $userinfo->roled,
+            'rid' => $userinfo->rid,
+            'vip' => $userinfo->vip,
+            'vip_end' => $userinfo->vip_end,
+            'lv_rich' => $userinfo->lv_rich,
+            'lv_exp' => $userinfo->lv_exp,
+            'safemail' => $userinfo->safemail ?? '',
 //                'mails' => $this->make('messageServer')->getMessageNotReadCount($userinfo->uid, $userinfo->lv_rich),// 通过服务取到数量
-                'icon_id' => intval($userinfo->icon_id),
-            ]);
+            'icon_id' => intval($userinfo->icon_id),
+        ]);
     }
 
     /**
@@ -176,8 +175,8 @@ class MobileController extends Controller
         // 是贵族才验证 下掉贵族状态
         if ($user->vip && ($user->vip_end < date('Y-m-d H:i:s'))) {
             $user->update([
-                'vip'=>0,
-                'vip_end'=>null
+                'vip' => 0,
+                'vip_end' => null,
             ]);
 
             // 删除坐骑
@@ -339,7 +338,27 @@ class MobileController extends Controller
             'ip' => $request->getClientIp(),
             'statis_date' => $statis_date,
         ]);
-        return JsonResponse::create(['status' => 1, 'jwt' => (string)$jwt->getToken()]);
+        return JsonResponse::create([
+            'status' => 1,
+            'data' =>
+                [
+                    'jwt' => (string)$jwt->getToken(),
+                    'user' => [
+                        'status' => 1,
+                        'uid' => $user->uid,
+                        'nickname' => $user->nickname,
+                        'headimg' => $this->getHeadimg($user->headimg),
+                        'points' => $user->points,
+                        'roled' => $user->roled,
+                        'rid' => $user->rid,
+                        'vip' => $user->vip,
+                        'vip_end' => $user->vip_end,
+                        'lv_rich' => $user->lv_rich,
+                        'lv_exp' => $user->lv_exp,
+                        'safemail' => $user->safemail ?? '',
+                        'icon_id' => intval($user->icon_id),
+                    ],
+                ]]);
     }
 
     public function logintest()
@@ -563,7 +582,7 @@ class MobileController extends Controller
                 Mobile::getLastIosVersion($branch) :
                 Mobile::getLastAndroidVersion($branch);
 
-            if($version) $versions[$branch] = $version;
+            if ($version) $versions[$branch] = $version;
         }
         return JsonResponse::create(['status' => empty($versions) ? 0 : 1, 'data' => $versions]);
     }
@@ -571,7 +590,7 @@ class MobileController extends Controller
     public function searchAnchor()
     {
         //$uname = isset($_GET['nickname'])?$_GET['nickname']:'';//解码？
-        $uname = $this->make('request')->get('nickname','');
+        $uname = $this->make('request')->get('nickname', '');
         $arr = include Storage::get('cache/anchor-search-data.php');//BASEDIR . '/app/cache/cli-files/anchor-search-data.php';
         $pageStart = isset($_REQUEST['pageStart']) ? ($_REQUEST['pageStart'] < 1 ? 1 : intval($_REQUEST['pageStart'])) : 1;
         $pageLimit = isset($_REQUEST['pageLimit']) ? (($_REQUEST['pageLimit'] > 40 || $_REQUEST['pageLimit'] < 1) ? 40 : intval($_REQUEST['pageLimit'])) : 40;

@@ -16,9 +16,9 @@ Route::get('/login/captcha', 'Mobile\MobileController@captcha')->middleware('mob
 
 Route::get('/room/conf', ['name' => 'm_room_conf', 'uses' => 'Mobile\RoomController@getRoomConf']);
 
-//app版本ｈ
+//app版本
 Route::get('/app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
-Route::get('/conf',['name'=>'m_conf', 'uses'=>'Mobile\RoomController@getConf']);
+Route::get('conf',['name'=>'m_conf', 'uses'=>'Mobile\RoomController@getConf']);
 Route::get('/room/conf',['name'=>'m_room_conf', 'uses'=>'Mobile\RoomController@getRoomConf']);
 
 //移动端登录验证
@@ -44,7 +44,6 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::post('app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
     Route::post('app/versionIOS', ['name' => 'm_app_ver_ios', 'uses' => 'Mobile\MobileController@appVersionIOS']);
     /** 获取配置 */
-    Route::get('conf', ['name' => 'm_conf', 'uses' => 'Mobile\RoomController@getConf']);
     Route::get('room/conf', ['name' => 'm_room_conf', 'uses' => 'Mobile\RoomController@getRoomConf']);
     Route::get('room/{rid}/checkAccess', ['name' => 'm_room_checkAccess', 'uses' => 'Mobile\RoomController@getRoomAccess']);
    //关注列表

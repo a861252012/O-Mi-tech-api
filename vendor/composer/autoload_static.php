@@ -324,6 +324,7 @@ class ComposerStaticInit1271a362638dc1e8fdb79a5b7b4bc348
     );
 
     public static $classMap = array (
+        'App\\Console\\Commands\\GuiZuReg' => __DIR__ . '/../..' . '/app/Console/Commands/GuiZuReg.php',
         'App\\Console\\Commands\\Schedule\\AnchorList' => __DIR__ . '/../..' . '/app/Console/Commands/Schedule/AnchorList.php',
         'App\\Console\\Commands\\Schedule\\AnchorSearch' => __DIR__ . '/../..' . '/app/Console/Commands/Schedule/AnchorSearch.php',
         'App\\Console\\Commands\\Schedule\\One2ManyMsgSend' => __DIR__ . '/../..' . '/app/Console/Commands/Schedule/One2ManyMsgSend.php',
@@ -335,6 +336,7 @@ class ComposerStaticInit1271a362638dc1e8fdb79a5b7b4bc348
         'App\\Console\\Commands\\SiteDomain' => __DIR__ . '/../..' . '/app/Console/Commands/SiteDomain.php',
         'App\\Console\\Commands\\SiteInit' => __DIR__ . '/../..' . '/app/Console/Commands/SiteInit.php',
         'App\\Console\\Commands\\UserClear' => __DIR__ . '/../..' . '/app/Console/Commands/UserClear.php',
+        'App\\Console\\Commands\\XingBaReg' => __DIR__ . '/../..' . '/app/Console/Commands/XingBaReg.php',
         'App\\Console\\Commands\\test\\UserInsertSql' => __DIR__ . '/../..' . '/app/Console/Commands/test/UserInsertSql.php',
         'App\\Console\\Kernel' => __DIR__ . '/../..' . '/app/Console/Kernel.php',
         'App\\Controller\\Pay\\PayController' => __DIR__ . '/../..' . '/app/Http/Controllers/Pay/PayController.php',
@@ -381,6 +383,7 @@ class ComposerStaticInit1271a362638dc1e8fdb79a5b7b4bc348
         'App\\Http\\Middleware\\LoginAuth' => __DIR__ . '/../..' . '/app/Http/Middleware/LoginAuth.php',
         'App\\Http\\Middleware\\MobileSession' => __DIR__ . '/../..' . '/app/Http/Middleware/MobileSession.php',
         'App\\Http\\Middleware\\RedirectIfAuthenticated' => __DIR__ . '/../..' . '/app/Http/Middleware/RedirectIfAuthenticated.php',
+        'App\\Http\\Middleware\\ThrottleRoutes' => __DIR__ . '/../..' . '/app/Http/Middleware/ThrottleRoutes.php',
         'App\\Http\\Middleware\\TrimStrings' => __DIR__ . '/../..' . '/app/Http/Middleware/TrimStrings.php',
         'App\\Http\\Middleware\\TrustProxies' => __DIR__ . '/../..' . '/app/Http/Middleware/TrustProxies.php',
         'App\\Http\\Middleware\\VerifyCsrfToken' => __DIR__ . '/../..' . '/app/Http/Middleware/VerifyCsrfToken.php',
@@ -389,6 +392,7 @@ class ComposerStaticInit1271a362638dc1e8fdb79a5b7b4bc348
         'App\\Listeners\\Charge' => __DIR__ . '/../..' . '/app/Listeners/Charge.php',
         'App\\Listeners\\EventListener' => __DIR__ . '/../..' . '/app/Listeners/EventListener.php',
         'App\\Listeners\\Test' => __DIR__ . '/../..' . '/app/Listeners/Test.php',
+        'App\\Mail\\PwdReset' => __DIR__ . '/../..' . '/app/Mail/PwdReset.php',
         'App\\Mail\\SafeMailVerify' => __DIR__ . '/../..' . '/app/Mail/SafeMailVerify.php',
         'App\\Models\\Active' => __DIR__ . '/../..' . '/app/Models/Active.php',
         'App\\Models\\ActivePage' => __DIR__ . '/../..' . '/app/Models/ActivePage.php',

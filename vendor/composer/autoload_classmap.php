@@ -6,6 +6,7 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'App\\Console\\Commands\\GuiZuReg' => $baseDir . '/app/Console/Commands/GuiZuReg.php',
     'App\\Console\\Commands\\Schedule\\AnchorList' => $baseDir . '/app/Console/Commands/Schedule/AnchorList.php',
     'App\\Console\\Commands\\Schedule\\AnchorSearch' => $baseDir . '/app/Console/Commands/Schedule/AnchorSearch.php',
     'App\\Console\\Commands\\Schedule\\One2ManyMsgSend' => $baseDir . '/app/Console/Commands/Schedule/One2ManyMsgSend.php',
@@ -17,6 +18,7 @@ return array(
     'App\\Console\\Commands\\SiteDomain' => $baseDir . '/app/Console/Commands/SiteDomain.php',
     'App\\Console\\Commands\\SiteInit' => $baseDir . '/app/Console/Commands/SiteInit.php',
     'App\\Console\\Commands\\UserClear' => $baseDir . '/app/Console/Commands/UserClear.php',
+    'App\\Console\\Commands\\XingBaReg' => $baseDir . '/app/Console/Commands/XingBaReg.php',
     'App\\Console\\Commands\\test\\UserInsertSql' => $baseDir . '/app/Console/Commands/test/UserInsertSql.php',
     'App\\Console\\Kernel' => $baseDir . '/app/Console/Kernel.php',
     'App\\Controller\\Pay\\PayController' => $baseDir . '/app/Http/Controllers/Pay/PayController.php',
@@ -63,6 +65,7 @@ return array(
     'App\\Http\\Middleware\\LoginAuth' => $baseDir . '/app/Http/Middleware/LoginAuth.php',
     'App\\Http\\Middleware\\MobileSession' => $baseDir . '/app/Http/Middleware/MobileSession.php',
     'App\\Http\\Middleware\\RedirectIfAuthenticated' => $baseDir . '/app/Http/Middleware/RedirectIfAuthenticated.php',
+    'App\\Http\\Middleware\\ThrottleRoutes' => $baseDir . '/app/Http/Middleware/ThrottleRoutes.php',
     'App\\Http\\Middleware\\TrimStrings' => $baseDir . '/app/Http/Middleware/TrimStrings.php',
     'App\\Http\\Middleware\\TrustProxies' => $baseDir . '/app/Http/Middleware/TrustProxies.php',
     'App\\Http\\Middleware\\VerifyCsrfToken' => $baseDir . '/app/Http/Middleware/VerifyCsrfToken.php',
@@ -71,6 +74,7 @@ return array(
     'App\\Listeners\\Charge' => $baseDir . '/app/Listeners/Charge.php',
     'App\\Listeners\\EventListener' => $baseDir . '/app/Listeners/EventListener.php',
     'App\\Listeners\\Test' => $baseDir . '/app/Listeners/Test.php',
+    'App\\Mail\\PwdReset' => $baseDir . '/app/Mail/PwdReset.php',
     'App\\Mail\\SafeMailVerify' => $baseDir . '/app/Mail/SafeMailVerify.php',
     'App\\Models\\Active' => $baseDir . '/app/Models/Active.php',
     'App\\Models\\ActivePage' => $baseDir . '/app/Models/ActivePage.php',

@@ -398,15 +398,14 @@ class RoomController extends Controller
     public function getConf()
     {
         $conf = [
-            'OPEN_WEB' => SiteSer::config('open_web'),
-            'IMG_HOST' => SiteSer::config('remote_pic_url'),
-            'PIC_CDN_STATIC' => SiteSer::config('pic_cdn_static'),
-            'flash_version' => SiteSer::config('flash_version') ?: 'v201504092044',
-            'publish_version' => SiteSer::config('publish_version') ?: 'v2017090701', //young添加
+            'img_host' => SiteSer::config('img_host'),
+            'cdn_host' => SiteSer::config('cdn_host'),
+            'flash_version' => SiteSer::config('flash_version'),
+            'publish_version' => SiteSer::config('publish_version'), //young添加
             'in_limit_points' => Redis::hget('hconf', 'in_limit_points') ?: 0,
             'in_limit_safemail' => Redis::hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
         ];
-        return JsonResponse::create($conf);
+        return JsonResponse::create(['data'=>$conf]);
     }
 
     /**
