@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pack;
 use App\Models\Users;
 use App\Services\Message\MessageService;
 use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
-use App\Services\Message\MessageService;
 
 class UserController extends Controller
 {

@@ -70,6 +70,8 @@ Route::group(['prefix' => 'member'], function () {
         Route::get('commission', 'MemberController@commission')->name('member_commission');
         // 用户中心 直播统计
         Route::get('live', 'MemberController@live')->name('member_live');
+        // 用户中心修改基本信息
+        Route::post('edituserinfo',  'MemberController@editUserInfo')->name('member_edituserinfo');
     });
 });
 
@@ -295,8 +297,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::post('/getmoney', ['name' => 'shop_getmoney', 'uses' => 'MemberController@getmoney']);
     // 用户领取坐骑
     Route::post('/getvipmount', ['name' => 'shop_getvipmount', 'uses' => 'MemberController@getVipMount']);
-    // 用户中心修改基本信息
-    Route::post('/member/edituserinfo', ['name' => 'member_edituserinfo', 'uses' => 'MemberController@editUserInfo']);
+
     // 用户中心 预约房间设置
 
 

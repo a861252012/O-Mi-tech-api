@@ -950,35 +950,33 @@ class Controller extends BaseController
     {
 
         // 到提交的时候
-        $postData = $this->make('request')->request->all();
+        $postData = request()->only(['nickname', 'birthday', 'headimg', 'sex', 'description', 'province', 'city', 'county']);
 
-        $postData = Arr::only($postData, ['nickname', 'birthday', 'headimg', 'sex', 'description', 'province', 'city', 'county']);
 
         if (empty($postData)) {
-            $msg = [
-                'ret' => false,
-                'info' => '非法提交',
-            ];
-            return new JsonResponse($msg);
+            return new JsonResponse([
+                'status' => 0,
+                'msg' => '非法提交',
+            ]);
         }
 
         // 初始化一个用户服务器 并初始化用户
         $userServer = resolve(UserService::class);
-        $userServer = $userServer->setUser((new Users)->forceFill($userServer->getUserByUid(Auth::id())));
+        $user=Auth::user();
         $msg = [
-            'ret' => false,
-            'info' => '',
+            'status' => 0,
+            'msg' => '',
         ];
         //昵称重复
-        if (isset($postData['nickname']) && ($postData['nickname'] != $this->userInfo['nickname'])) {
+        if (isset($postData['nickname']) && ($postData['nickname'] != $user['nickname'])) {
 
             // 判断长度 和 格式 是否正确
             $len = $this->count_chinese_utf8($postData['nickname']);
             //昵称不能使用/:;\空格,换行等符号。
             if ($len < 2 || $len > 8 || !preg_match("/^[^\s\/\:;]+$/", $postData['nickname'])) {
                 $msg = [
-                    'info' => '注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)',
-                    'ret' => false,
+                    'msg' => '注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)',
+                    'status' => 0,
                 ];
                 return new JsonResponse($msg);
             }
@@ -995,7 +993,7 @@ class Controller extends BaseController
                 foreach ($query as $v) {
                     $v['keyword'] = addcslashes($v['keyword'], '.^$*+?()[]{}|\\');
                     if (preg_match("/{$v['keyword']}/i", $postData['nickname'])) {
-                        return new JsonResponse(['info' => '昵称中含有非法字符，请修改后再提交!', 'ret' => false]);
+                        return new JsonResponse(['msg' => '昵称中含有非法字符，请修改后再提交!', 'status' => 0]);
                     }
                 }
             }
@@ -1003,8 +1001,8 @@ class Controller extends BaseController
             // 判断昵称的唯一性
             if (!$userServer->checkNickNameUnique($postData['nickname'])) {
                 $msg = [
-                    'info' => '昵称重复！',
-                    'ret' => false,
+                    'msg' => '昵称重复！',
+                    'status' => 0,
                 ];
                 return new JsonResponse($msg);
             }
@@ -1012,12 +1010,12 @@ class Controller extends BaseController
             //判断是否可以修改昵称 通过权限判断
             $status = $userServer->getModNickNameStatus();
             if ($status['num'] == 0) {
-                $msg['info'] = '你已经不能修改昵称了！';
-                $msg['ret'] = false;
+                $msg['msg'] = '你已经不能修改昵称了！';
+                $msg['status'] = false;
                 return new JsonResponse($msg);
             }
             //查询购买记录
-            $redis = $this->make('redis');
+            $redis =resolve('redis');
             $boughtModifyNickname = intval($redis->hget('modify.nickname', Auth::id()));
             if ($boughtModifyNickname >= 1) {//重置
                 $redis->del('modify.nickname', Auth::id());
@@ -1030,15 +1028,15 @@ class Controller extends BaseController
             unset($postData['headimg']);
         }
         // 修改用户表
-        $res = Users::where('uid', $this->userInfo['uid'])->update($postData);
+        $user->update($postData);
 
         //维护redis中的hnickname_to_id 用于注册时验证是否重名
-        if (isset($postData['nickname']) && ($postData['nickname'] != $this->userInfo['nickname'])) {
-            Redis::hset('hnickname_to_id', $postData['nickname'], $this->userInfo['uid']);
+        if (isset($postData['nickname']) && ($postData['nickname'] != $user['nickname'])) {
+            Redis::hset('hnickname_to_id', $postData['nickname'], $user['uid']);
             // 修改昵称成功后 就记录日志
             $modNameLog = [
-                'uid' => $this->userInfo['uid'],
-                'before' => $this->userInfo['nickname'],
+                'uid' => $user['uid'],
+                'before' => $user['nickname'],
                 'after' => $postData['nickname'],
                 'update_at' => time(),
                 'init_time' => date('Y-m-d H:i:s', time()),
@@ -1048,12 +1046,10 @@ class Controller extends BaseController
             UserModNickName::create($modNameLog);
         }
 
-        // 更新对象的数据 顺序在这儿 改变顺序上面的逻辑会受影响
-        $this->userInfo = UserSer::getUserByUid($this->userInfo['uid'])->toArray();
 
         $msg = [
-            'info' => '更新成功！',
-            'ret' => true,
+            'msg' => '更新成功！',
+            'status' => 0,
         ];
         return new JsonResponse($msg);
     }
