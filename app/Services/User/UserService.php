@@ -19,6 +19,7 @@ use DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use Mockery\Exception;
@@ -142,8 +143,7 @@ class UserService extends Service
 
 
         } catch (\Exception $e) {
-            $logPath = BASEDIR . '/app/logs/business_' . date('Y-m-d') . '.log';
-            $this->make("systemServer")->logResult("注册 事务结果：" . $e->getMessage() . "\n", $logPath);
+            Log::info("注册 事务结果：" . $e->getMessage() . "\n");
             DB::rollback();
             return false;
         }
@@ -223,13 +223,15 @@ class UserService extends Service
             return null;
         }
         $hashtable = static::KEY_USER_INFO . $uid;
-
         if ($this->redis->Hexists($hashtable, 'uid')) {
             $user = (new Users())->forceFill($this->redis->hgetall($hashtable));
         } else {
             $user = Users::find($uid);
             if ($user&&$user->exists) {
-                $this->redis->hmset($hashtable, $user->toArray());
+                $this->redis->hmset($hashtable, array_merge(
+                    $user->toArray(),
+                    ['password'=>$user->getAuthPassword()]
+                ));
             }
         }
         return $this->user = $user;
