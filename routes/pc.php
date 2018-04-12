@@ -283,18 +283,6 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     Route::get('/cliget/{act}', ['uses' => 'IndexController@cliGetRes']);
 
-
-    //mobile 移动端
-    //首页
-    //   Route::get('/m/index', ['name' => 'm_index', 'uses' => 'MobileController@index']);
-    //排行
-    //  Route::get('/m/rank', ['name' => 'm_rank', 'uses' => 'MobileController@rank']);
-    //登录
-    //  Route::get('/m/login', ['name' => 'm_login', 'uses' => 'MobileController@login']);
-    //注册
-    //  Route::get('/m/register', ['name' => 'm_register', 'uses' => 'MobileController@register']);
-
-
     // 获取用户有多少钱
     Route::post('/getmoney', ['name' => 'shop_getmoney', 'uses' => 'MemberController@getmoney']);
     // 用户领取坐骑
@@ -392,28 +380,12 @@ Route::post('/getpwdsuccess', ['name' => 'shop_getpwdsuccess', 'uses' => 'Passwo
 // 找回密码
 Route::get('/islogin', ['name' => 'islogin', 'uses' => 'LoginController@isLogin']);
 
-//==================================================================================
-/**
- * 移动端相关路由
- **/
-
-
-Route::get('/m/find', ['name' => 'm_find', 'uses' => 'Mobile\MobileController@searchAnchor']);
-//统计接口
-Route::match(['POST', 'GET'], '/m/statistic', ['name' => 'm_statistic', 'uses' => 'Mobile\MobileController@statistic']);
-
 Route::get('/oort2bunny', ['name' => 'guanggao', 'uses' => 'AdsController@getAd']);//广告接口
-Route::post('/send_crash', ['name' => 'send_crash', 'uses' => 'Mobile\MobileController@saveCrash']);//app报错接口
 
 
-Route::match(['POST', 'GET'], '/pay/g2p', ['name' => 'pay_g2p', 'uses' => 'Pay\PayController@index']);
-//Route::match(['POST', 'GET'], '/pay/{action}', ['name' => 'pay_notify', 'uses' => 'Pay\PayController@notify']);
-//Route::match(['POST', 'GET'], '/pay/{action}', function(){
-//    echo json_encode($_POST);
-//    file_put_contents(BASEDIR.'/app/logs/inner.log',json_encode($_POST));
-//});
+//Route::match(['POST', 'GET'], '/pay/g2p', ['name' => 'pay_g2p', 'uses' => 'Pay\PayController@index']);
 Route::match(['POST', 'GET'], '/getss', ['name' => 'getss', 'uses' => 'ApiController@getLog']);
 
 //古都通知接口
-Route::post('/v2pay/inner', 'ChargeController@noticeGD')->name('gd_notice');
-Route::post('/gd_test', 'ChargeController@testNoticeGD')->name('gd_test');
+Route::post('v2pay/inner', 'ChargeController@noticeGD')->name('gd_notice');
+Route::post('gd_test', 'ChargeController@testNoticeGD')->name('gd_test');
