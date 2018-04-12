@@ -950,8 +950,7 @@ class Controller extends BaseController
     {
 
         // 到提交的时候
-        $postData = request()->only(['nickname', 'birthday', 'headimg', 'sex', 'description', 'province', 'city', 'county']);
-
+        $postData = request()->only(['nickname', 'birthday', 'headimg', 'sex', 'province', 'city', 'county']);
 
         if (empty($postData)) {
             return new JsonResponse([
@@ -1045,11 +1044,11 @@ class Controller extends BaseController
             ];
             UserModNickName::create($modNameLog);
         }
-
+        $userServer->getUserReset($user->uid);
 
         $msg = [
             'msg' => '更新成功！',
-            'status' => 0,
+            'status' => 1,
         ];
         return new JsonResponse($msg);
     }
