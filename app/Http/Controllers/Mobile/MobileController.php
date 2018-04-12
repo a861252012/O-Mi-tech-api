@@ -318,7 +318,6 @@ class MobileController extends Controller
             if (empty($captcha)) {
                 return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
             }
-            dd($request->session());
             if (!Captcha::check($captcha)) {
                 return JsonResponse::create(['status' => 0, 'msg' => '验证码错误01']);
             }
