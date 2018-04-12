@@ -54,13 +54,13 @@ class MobileController extends Controller
         foreach ($lists as $key => &$list) {
             $list['data'] = json_decode($redis->get('m:index:list:' . $key));
             if (!$list['data']) {
-                $tmpList = json_decode(@file_get_contents($_SERVER['DOCUMENT_ROOT'] . "/videolist$key.json"));
+                $tmpList = json_decode(@file_get_contents(base_path() . "/storage/app/public/s1/videolist$key.json"));
                 $rooms = empty($tmpList->rooms) ? [] : $tmpList->rooms;
                 $list['data'] = array_slice($rooms, 0, $list['num']);
                 $redis->set('m:index:list:' . $key, json_encode($list['data']), 180);
             }
         }
-        return JsonResponse::create($lists);
+        return JsonResponse::create(['data'=>$lists,'msg'=>'获取成功']);
     }
 
     public function domains(Request $request)

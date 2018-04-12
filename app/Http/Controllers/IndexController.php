@@ -85,9 +85,7 @@ class IndexController extends Controller
                 $list = Redis::get('home_' . $type . '_' . $flashVer);
                 $list = str_replace(['cb(', ');'], '', $list);
         }
-
-//        $list = json_decode($list, true);
-        return JsonResponse::create()->setContent($list ?: '{}');
+        return new JsonResponse(['data'=>json_decode($list)]);
     }
 
     public function registerAction()
