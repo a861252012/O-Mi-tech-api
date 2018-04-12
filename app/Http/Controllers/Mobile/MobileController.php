@@ -319,7 +319,7 @@ class MobileController extends Controller
                 return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
             }
             if (!Captcha::check($captcha)) {
-                return JsonResponse::create(['status' => 0, 'msg' => '验证码错误01']);
+                return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
             }
         }
         if (!$username || !$password) {
