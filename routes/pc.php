@@ -94,6 +94,8 @@ Route::group(['prefix' => 'user'], function () {
 Route::get('/room/rtmp/{rid}', 'RoomController@getRTMP')->where('rid', '[0-9]+')->name('room_rtmp');
 /****** 合作平台接口 ******/
 Route::get('/recvSskey', ['name' => 'recvSskey', 'uses' => 'ApiController@platform']);
+// 测试接口
+Route::post('/live/checked', ['name' => 'recvSskey', 'uses' => 'ApiController@platformGetUser']);
 //直播间
 
 //APP下载
@@ -281,18 +283,6 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     Route::get('/cliget/{act}', ['uses' => 'IndexController@cliGetRes']);
 
-
-    //mobile 移动端
-    //首页
-    //   Route::get('/m/index', ['name' => 'm_index', 'uses' => 'MobileController@index']);
-    //排行
-    //  Route::get('/m/rank', ['name' => 'm_rank', 'uses' => 'MobileController@rank']);
-    //登录
-    //  Route::get('/m/login', ['name' => 'm_login', 'uses' => 'MobileController@login']);
-    //注册
-    //  Route::get('/m/register', ['name' => 'm_register', 'uses' => 'MobileController@register']);
-
-
     // 获取用户有多少钱
     Route::post('/getmoney', ['name' => 'shop_getmoney', 'uses' => 'MemberController@getmoney']);
     // 用户领取坐骑
@@ -353,12 +343,14 @@ Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp
 Route::group(['prefix' => 'charge', 'middleware' => ['charge', 'login_auth']], function () {
     Route::match(['POST', 'GET'], 'pay', ['name' => 'charge_pay', 'uses' => 'ChargeController@pay']);
     Route::match(['POST', 'GET'], '/order', ['name' => 'charge_order', 'uses' => 'ChargeController@order']);
+    Route::match(['POST', 'GET'], 'checkCharge', ['name' => 'check_charge', 'uses' => 'ChargeController@checkCharge']);
     Route::match(['POST', 'GET'], '/order2', ['name' => 'charge_order2', 'uses' => 'ChargeController@order2']);
     Route::match(['POST', 'GET'], '/pay2', ['name' => 'charge_pay2', 'uses' => 'ChargeController@pay2']);
     Route::match(['POST', 'GET'], '/translate', ['name' => 'translate', 'uses' => 'ChargeController@translate']);
 
 });
 
+Route::post('charge/chongti', 'ChargeController@chongti')->name('chongti');
 //通知
 Route::group(['prefix' => 'charge', 'middleware' => ['charge']], function () {
     Route::match(['POST', 'GET'], 'notice2', ['name' => 'notice2', 'uses' => 'ChargeController@notice2']);
@@ -388,24 +380,12 @@ Route::post('/getpwdsuccess', ['name' => 'shop_getpwdsuccess', 'uses' => 'Passwo
 // 找回密码
 Route::get('/islogin', ['name' => 'islogin', 'uses' => 'LoginController@isLogin']);
 
-//==================================================================================
-/**
- * 移动端相关路由
- **/
-
-
-Route::get('/m/find', ['name' => 'm_find', 'uses' => 'Mobile\MobileController@searchAnchor']);
-//统计接口
-Route::match(['POST', 'GET'], '/m/statistic', ['name' => 'm_statistic', 'uses' => 'Mobile\MobileController@statistic']);
-
 Route::get('/oort2bunny', ['name' => 'guanggao', 'uses' => 'AdsController@getAd']);//广告接口
-Route::post('/send_crash', ['name' => 'send_crash', 'uses' => 'Mobile\MobileController@saveCrash']);//app报错接口
 
 
-Route::match(['POST', 'GET'], '/pay/g2p', ['name' => 'pay_g2p', 'uses' => 'Pay\PayController@index']);
-//Route::match(['POST', 'GET'], '/pay/{action}', ['name' => 'pay_notify', 'uses' => 'Pay\PayController@notify']);
-//Route::match(['POST', 'GET'], '/pay/{action}', function(){
-//    echo json_encode($_POST);
-//    file_put_contents(BASEDIR.'/app/logs/inner.log',json_encode($_POST));
-//});
+//Route::match(['POST', 'GET'], '/pay/g2p', ['name' => 'pay_g2p', 'uses' => 'Pay\PayController@index']);
 Route::match(['POST', 'GET'], '/getss', ['name' => 'getss', 'uses' => 'ApiController@getLog']);
+
+//古都通知接口
+Route::post('v2pay/inner', 'ChargeController@noticeGD')->name('gd_notice');
+Route::post('gd_test', 'ChargeController@testNoticeGD')->name('gd_test');

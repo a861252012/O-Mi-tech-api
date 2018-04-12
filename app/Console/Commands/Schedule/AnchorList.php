@@ -68,6 +68,7 @@ class AnchorList extends Command
             'home_gen_' => ['才艺主播', 'gen'],
             //'home_vip_'=> array('会员专区','vip'),
             'home_mobile_' => ['手机直播', 'mobile'],
+            'home_one_many_'=> ['一对多','ticket'],
         ];
 //$json = '{';
         foreach ($conf_arr as $key => $item) {

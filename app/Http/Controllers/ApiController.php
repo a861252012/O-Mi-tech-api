@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Facades\SiteSer;
+use App\Facades\UserSer;
 use App\Models\ActivityClick;
 use App\Models\AgentsRelationship;
 use App\Models\Conf;
@@ -21,9 +22,11 @@ use App\Services\Auth\JWTGuard;
 use App\Services\Lottery\LotteryService;
 use App\Services\Message\MessageService;
 use App\Services\Safe\SafeService;
+use App\Services\Site\Config;
 use App\Services\System\SystemService;
 use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -32,6 +35,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Mews\Captcha\Facades\Captcha;
 
 /**
@@ -270,32 +274,62 @@ class ApiController extends Controller
         readfile($filename);
         return new Response("");
     }
+    public function platformGetUser(){
+        return JsonResponse::create(['data'=>[
+            'uuid'=>0 ? '888'.mt_rand(10000,90000) : 88876597,
+            'nickename'=>0 ? 'test'.mt_rand(100,900) : "test767",
+            'token'=>time(),
+        ]]);
+    }
     /**
      * @return Response
      *
      */
 //接收XO跳转过来的sskey,callback,sign 并验证sign是否正确防攻击
 //@RequestMapping("/recvSskey")
-    public function platform()
+    public function platform(Request $request)
     {
-        $sskey = $this->request()->get("sskey");
-        $callback = $this->request()->get("callback");
-        $sign = $this->request()->get("sign");
-        $httphost = $this->request()->get("httphost",0);
-        $origin = $this->request()->get("origin",0);
+
+        $attributes = [
+            'sskey'    => 'sskey',
+            'sign'   => 'sign',
+            'callback'  => 'callback',
+            'httphost'  => '地址',
+        ];
+        $validator = Validator::make($request->all(),[
+            'sskey'=>'required',
+            'sign'=>'required',
+            'httphost'=>'required',
+            'callback' => 'required|max:15|min:5',
+        ],[
+            'sskey'  => ':attribute不能为空',
+            'sign'   => ':attribute不能为空',
+            'callback'       => ':attribute长度（数值）不对',
+            'httphost'  => ':attribute不能为空',
+        ],$attributes);
+        if ($validator->fails()) {
+            return new Response($validator->errors()->all());         //显示所有错误组成的数组
+            return new Response("1002 接入方提供参数不对");
+        }
+
+        $sskey = $request->get("sskey");
+        $callback = $request->get("callback");
+        $sign = $request->get("sign");
+        $httphost = $request->get("httphost",0);
+        $origin = $request->get("origin",0);
         if (!$this->make("redis")->exists("hplatforms:$origin")) return new Response("1001 接入方提供参数不对");
 
         $platforms = $this->make("redis")->hgetall("hplatforms:$origin");
         $open = isset($platforms['open']) ? $platforms['open'] : 1;
         $plat_code = $platforms['code'];
         if (!$open) return new Response("接入已关闭");
-        if (empty($sskey) || empty($callback) || empty($sign) || empty($httphost)) return new Response("1002 接入方提供参数不对");
+        //if (empty($sskey) || empty($callback) || empty($sign) || empty($httphost)) return new Response("1002 接入方提供参数不对");
 
         $key = $platforms['key'];
-        $logPath = BASEDIR . "/app/logs/{$plat_code}_" . date('Y-m-d') . '.log';
-        $this->make("systemServer")->logResult("L项目 dealSign:sskey=$sskey, callback=$callback, sign=$sign, httphost=$httphost", $logPath);
-        $estimatedSign = MD5($sskey . $callback . $key);
-        if ($estimatedSign != $sign) return new Response("接入方校验失败");
+        Log::channel('plat')->info("$plat_code 项目 dealSign:sskey=$sskey, callback=$callback, sign=$sign, httphost=$httphost");
+        $sign_data = [$sskey,$callback,$key];
+        if (!$this->checkSign($sign_data,$sign) && config('app.debug') == false) return new Response("接入方校验失败");
+//        if ($estimatedSign != $sign) return new Response("接入方校验失败");
 //    $callback = 2650010;
         $room = $callback;
         if (!resolve(UserService::class)->getUserByUid($room)) return new Response("房间不存在");
@@ -326,20 +360,22 @@ class ApiController extends Controller
         if (empty($data)) return new Response("接入方数据获取失败" . $url . " $data" . "  返回：$res");
         if (empty($data['uuid'])) return new Response("接入方uuid不存在");
 
-        $users = Users::where('origin', $origin)->where('uuid', $data['uuid'])->first();
 
         //注册
         $prefix = $platforms['prefix'];
+        $username = $prefix . '_' . $data['nickename'] . "@platform.com";
+        $users =  UserSer::getUserByUsername($username);//Users::where('origin', $origin)->where('uuid', $data['uuid'])->first();
+        $password_key = "asdfwe";
+        $password = $data['nickename'] . $password_key;
         if (empty($users)) {
-            $password_key = "asdfwe";
             $user = [
-                'username' => $prefix . '_' . $data['nickename'] . "@platform.com",
+                'username' => $username,
                 'nickname' => $prefix . '_' . $data['nickename'],
                 'sex' => 0,
                 'uuid' => $data['uuid'],
                 'rich' => 64143000,
                 'lv_rich' => 28,
-                'password' => $data['nickename'] . $password_key,
+                'password' => $password,
                 'xtoken' => $data['token'],
                 'origin' => $origin,
             ];
@@ -360,7 +396,7 @@ class ApiController extends Controller
                 return new Response("获取用户信息失败" . json_encode($user) . $uid . $res);
             }
         } else {
-            $this->userInfo = $users->toArray();
+            $this->userInfo = $users;
             if ($this->userInfo['xtoken'] != $data['token']) {
                 Users::where('uid', $this->userInfo['uid'])->update([
                     'xtoken' => $data['token'],
@@ -373,21 +409,28 @@ class ApiController extends Controller
             'logined' => $time,
         ]);
         $this->userInfo['logined'] = $time;
+        Redis::hmset('huser_info:'.$this->userInfo['uid'],[
+            'logined' => $time,
+            'xtoken' => $this->userInfo['xtoken'],
+        ]);
 
         // 此时调用的是单实例登录的session 验证
         if(Auth::guest()){
             if(!Auth::attempt([
                 'username'=>$this->userInfo['username'],
-                'password'=>$this->userInfo['password'],
+                'password'=>$password,
             ])){
-                return JsonResponse::create(['status' => 0, 'msg' => '用户名密码错误']);
+                return JsonResponse::create(['status' => 0,'data'=>$this->userInfo['username'].$password, 'msg' => '用户名密码错误']);
             };
         }
 
-        $_SESSION['httphost'] = $httphost;
+        Session::put('httphost',$httphost);
 
-        $h5 = $this->container->config['config.H5'] ? "/h5" : "";
+        $h5 = SiteSer::config('h5') ? "/h5" : "";
         return RedirectResponse::create("/$room$h5");
+    }
+    public function checkSign($sign_data,$expect_sign){
+        return md5(implode('',$sign_data))==$expect_sign;
     }
     /**
      *

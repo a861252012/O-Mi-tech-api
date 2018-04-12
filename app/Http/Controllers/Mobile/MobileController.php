@@ -4,7 +4,6 @@
 namespace App\Http\Controllers\Mobile;
 
 use App\Facades\Mobile;
-use App\Facades\Site;
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
 use App\Http\Controllers\Controller;
@@ -54,13 +53,13 @@ class MobileController extends Controller
         foreach ($lists as $key => &$list) {
             $list['data'] = json_decode($redis->get('m:index:list:' . $key));
             if (!$list['data']) {
-                $tmpList = json_decode(@file_get_contents($_SERVER['DOCUMENT_ROOT'] . "/videolist$key.json"));
+                $tmpList = json_decode(@file_get_contents(base_path() . "/storage/app/public/s1/videolist$key.json"));
                 $rooms = empty($tmpList->rooms) ? [] : $tmpList->rooms;
                 $list['data'] = array_slice($rooms, 0, $list['num']);
                 $redis->set('m:index:list:' . $key, json_encode($list['data']), 180);
             }
         }
-        return JsonResponse::create($lists);
+        return JsonResponse::create(['data' => $lists, 'msg' => '获取成功']);
     }
 
     public function domains(Request $request)
@@ -73,7 +72,7 @@ class MobileController extends Controller
                 'data' => [
                     'greenips' => [],
                     'ips' => [],
-                ],
+                ]
             ];
             foreach ($result as $row) {
                 if ($row->green)
@@ -90,7 +89,7 @@ class MobileController extends Controller
                 'data' => [
                     'greenips' => [],
                     'ips' => [],
-                ],
+                ]
             ]);
         }
         return $return;
@@ -141,19 +140,21 @@ class MobileController extends Controller
         }
         return JsonResponse::create([
             'status' => 1,
-            'uid' => $userinfo->uid,
-            'nickname' => $userinfo->nickname,
-            'headimg' => $this->getHeadimg($userinfo->headimg),
-            'points' => $userinfo->points,
-            'roled' => $userinfo->roled,
-            'rid' => $userinfo->rid,
-            'vip' => $userinfo->vip,
-            'vip_end' => $userinfo->vip_end,
-            'lv_rich' => $userinfo->lv_rich,
-            'lv_exp' => $userinfo->lv_exp,
-            'safemail' => $userinfo->safemail ?? '',
+            'data'=>[
+                'uid' => $userinfo->uid,
+                'nickname' => $userinfo->nickname,
+                'headimg' => $this->getHeadimg($userinfo->headimg),
+                'points' => $userinfo->points,
+                'roled' => $userinfo->roled,
+                'rid' => $userinfo->rid,
+                'vip' => $userinfo->vip,
+                'vip_end' => $userinfo->vip_end,
+                'lv_rich' => $userinfo->lv_rich,
+                'lv_exp' => $userinfo->lv_exp,
+                'safemail' => $userinfo->safemail ?? '',
 //                'mails' => $this->make('messageServer')->getMessageNotReadCount($userinfo->uid, $userinfo->lv_rich),// 通过服务取到数量
-            'icon_id' => intval($userinfo->icon_id),
+                'icon_id' => intval($userinfo->icon_id),
+            ],
         ]);
     }
 
@@ -318,7 +319,7 @@ class MobileController extends Controller
                 return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
             }
             if (!Captcha::check($captcha)) {
-                return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
+                return JsonResponse::create(['status' => 0, 'msg' => '验证码错误01']);
             }
         }
         if (!$username || !$password) {
@@ -379,7 +380,7 @@ class MobileController extends Controller
                 'img_name' => $img->temp_name,
             ];
         });
-        return JsonResponse::create($list);
+        return new JsonResponse(['data'=>$list]);
     }
 
     /**
@@ -432,8 +433,8 @@ class MobileController extends Controller
      */
     public function videoList($type)
     {
-        header('Content-type: application:json;charset=utf-8');
-        header('Location: ' . "/videolist$type.json");
+         header('Content-type: application:json;charset=utf-8');
+         header('Location: ' . "/api/storage/s1/videolist$type.json");
 //        $list = @file_get_contents($_SERVER['DOCUMENT_ROOT'] . "/videolist$type.json") ?: '[]';
 //        return JsonResponse::create()->setContent($list);
     }

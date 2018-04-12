@@ -33,7 +33,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ChargeGroupService::class);
         $this->app->singleton(MessageService::class);
         $this->app->singleton(MobileService::class);
-        $this->app->singleton(UserGroupService::class);
         $this->app->singleton(SocketService::class);
         $this->app->singleton(SafeService::class);
         $this->app->singleton(SocketService::class);
@@ -56,6 +55,9 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton('one2one', function ($app) {
             return new One2OneRoomService($app['request']);
+        });
+        $this->app->singleton('userGroupServer', function () {
+            return new UserGroupService();
         });
         $this->app->singleton('one2more', function ($app) {
             return new One2MoreRoomService($app['request']);

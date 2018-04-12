@@ -25,6 +25,7 @@ use App\Services\User\UserService;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Response;
 use Mews\Captcha\Facades\Captcha;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
@@ -200,7 +201,7 @@ class RoomController extends Controller
     public function listReservation($type = 0b11)
     {
         $lists = [];
-        $flashVersion = $this->make('redis')->get('flash_version') ?: 'v201504092044';
+        $flashVersion = SiteSer::config('flash_version') ?: 'v201504092044';
         if ($type & static::FLAG_ONE_TO_ONE) {//一对一
             $lists['oneToOne'] = $this->getReserveOneToOneByUid(Auth::id(), $flashVersion);
         }

@@ -34,6 +34,11 @@ class One2OneRoomService extends Service
 
     }
 
+    public function set($rid=0){
+        $this->rid = $rid;
+        $this->key_room_status = "hroom_status:" . $this->rid . ":4";
+        $this->room = $this->_getData();
+    }
     public function checkRunning(){
         return !empty($this->getRunningData());
     }
@@ -52,6 +57,12 @@ class One2OneRoomService extends Service
     }
     public function checkPermission(){
         return !empty($this->room);
+    }
+    public function getHomeBookList($flashVersion) : array
+    {
+        $ordRooms = Redis::get('home_ord_' . $flashVersion);
+        $ordRooms = str_replace(['cb(', ');'], ['', ''], $ordRooms);
+        return (array)json_decode($ordRooms, true);
     }
 
 

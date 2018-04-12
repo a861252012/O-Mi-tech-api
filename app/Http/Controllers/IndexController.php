@@ -87,7 +87,7 @@ class IndexController extends Controller
         }
 
 //        $list = json_decode($list, true);
-        return JsonResponse::create()->setContent($list ?: '{}');
+        return JsonResponse::create(['data'=>json_decode($list?:'{}')]);
     }
 
     public function registerAction()

@@ -9,6 +9,7 @@
 namespace App\Services\Charge;
 
 
+use App\Models\Recharge;
 use App\Models\Users;
 use App\Services\Auth\JWTGuard;
 use App\Services\Service;
@@ -77,19 +78,6 @@ class ChargeService extends Service
         return json_encode($postdataArr);
     }
 
-    public function getFindRequest($orderId="") : array
-    {
-        $Datas = array(
-            array(
-                "dataNo" => $orderId,
-                "orderId" => $orderId,
-                "payOrderId" => "",
-                "type" => 1 //查询接口类型
-            )
-        );
-        return $this->decorateDataSign($Datas);
-    }
-
     public function getDatas($amount, $channel): array
     {
         //通知地址
@@ -111,16 +99,18 @@ class ChargeService extends Service
             )
         );
     }
-    public function checkMobile(){
-        return config()->get('auth.defaults.guard') == JWTGuard::guard;
-    }
-
-    //支付数据  postData
 
     public function nickname()
     {
         return Auth::user()['username'];
     }
+
+    public function checkMobile()
+    {
+        return config()->get('auth.defaults.guard') == JWTGuard::guard;
+    }
+
+    //支付数据  postData
 
     public function decorateDataSign(array $Datas): array
     {
@@ -134,7 +124,7 @@ class ChargeService extends Service
      * @param $Datas
      * @return array
      */
-    private function decorateData($Datas) : array
+    private function decorateData($Datas): array
     {
         return array(
             'serviceCode' => $this->serviceCode,
@@ -193,10 +183,24 @@ class ChargeService extends Service
         return MD5($str);
     }
 
-    public function getTestNoticeData($orderID,$amount)
+    public function getFindRequest($orderId = ""): array
+    {
+        $Datas = array(
+            array(
+                "dataNo" => $orderId,
+                "orderId" => $orderId,
+                "payOrderId" => "",
+                "type" => 1 //查询接口类型
+            )
+        );
+        return $this->decorateDataSign($Datas);
+    }
+
+    public function getTestNoticeData($orderID)
     {
         $jsondatas['Datas']['0']['dataNo'] = $this->getDataNo();
-        $jsondatas['Datas']['0']['amount'] = $amount;
+        $recharge = Recharge::query()->where('order_id', $orderID)->first();
+        $jsondatas['Datas']['0']['amount'] = number_format($recharge->points / 10, 2);
         $jsondatas['sMessageNo'] = $orderID;
         echo "$orderID $amount 转化成充提中心给我的json格式\n";
         $datas = array(
@@ -224,7 +228,7 @@ class ChargeService extends Service
         return $this->priviteKey;
     }
 
-    public function chargeAfter($uid) : void
+    public function chargeAfter($uid): void
     {
         Users::where('uid', $uid)->whereNull('first_charge_time')->update(array('first_charge_time' => date('Y-m-d H:i:s')));
         $this->make('redis')->hset('huser_info:' . $uid, 'first_charge_time', date('Y-m-d H:i:s', time()));
