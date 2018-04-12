@@ -39,6 +39,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SocketService::class);
         $this->app->singleton(SystemService::class);
 
+        $this->app->singleton(MobileSession::class);
+
 
         $this->app->singleton('active', function () {
             return new ActiveService();

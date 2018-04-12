@@ -81,6 +81,7 @@ class ApiController extends Controller
     public function reg(Request $request)
     {
         $skipCaptcha = SiteSer::config('skip_captcha_reg');
+
         if (!$skipCaptcha && !Captcha::check($request->get('captcha'))) {
             return JsonResponse::create([
                 "status" => 0,
@@ -154,6 +155,9 @@ class ApiController extends Controller
             $newUser['aid'] = $domaid->agent->id;
         }
         $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
+        if (!$uid){
+            return JsonResponse::create(['status'=>0,'注册失败']);
+        }
         $user = Users::find($uid);
         // 此时调用的是单实例登录的session 验证
         $guard = null;

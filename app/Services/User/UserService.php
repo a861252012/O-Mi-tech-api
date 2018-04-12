@@ -19,6 +19,7 @@ use DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use Mockery\Exception;
@@ -107,7 +108,10 @@ class UserService extends Service
             }
 
             DB::commit();
-
+            //更新redis关联
+            $redis = $this->make('redis');
+            $redis->hset('husername_to_id', $user['username'], $uid);
+            $redis->hset('hnickname_to_id', $user['nickname'], $uid);
 
             //赠送钻石
             if ($points = Arr::get($gift, 'points')) {
@@ -132,18 +136,11 @@ class UserService extends Service
                 }
             }
 
-            //更新redis关联
-            $redis = $this->make('redis');
-            $redis->hset('husername_to_id', $user['username'], $uid);
-            $redis->hset('hnickname_to_id', $user['nickname'], $uid);
-
-
             //注册完成===================================
 
 
         } catch (\Exception $e) {
-            $logPath = BASEDIR . '/app/logs/business_' . date('Y-m-d') . '.log';
-            $this->make("systemServer")->logResult("注册 事务结果：" . $e->getMessage() . "\n", $logPath);
+            Log::info('注册 事务结果:'.$e->getMessage(),$e->getTrace());
             DB::rollback();
             return false;
         }
