@@ -379,7 +379,7 @@ class MobileController extends Controller
                 'img_name' => $img->temp_name,
             ];
         });
-        return JsonResponse::create($list);
+        return new JsonResponse(['data'=>$list]);
     }
 
     /**
@@ -432,8 +432,8 @@ class MobileController extends Controller
      */
     public function videoList($type)
     {
-        header('Content-type: application:json;charset=utf-8');
-        header('Location: ' . "/videolist$type.json");
+         header('Content-type: application:json;charset=utf-8');
+         header('Location: ' . "/api/storage/s1/videolist$type.json");
 //        $list = @file_get_contents($_SERVER['DOCUMENT_ROOT'] . "/videolist$type.json") ?: '[]';
 //        return JsonResponse::create()->setContent($list);
     }
