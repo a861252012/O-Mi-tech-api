@@ -4,7 +4,6 @@
 namespace App\Http\Controllers\Mobile;
 
 use App\Facades\Mobile;
-use App\Facades\Site;
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
 use App\Http\Controllers\Controller;
@@ -60,7 +59,7 @@ class MobileController extends Controller
                 $redis->set('m:index:list:' . $key, json_encode($list['data']), 180);
             }
         }
-        return JsonResponse::create(['data'=>$lists,'msg'=>'获取成功']);
+        return JsonResponse::create(['data' => $lists, 'msg' => '获取成功']);
     }
 
     public function domains(Request $request)
@@ -73,7 +72,7 @@ class MobileController extends Controller
                 'data' => [
                     'greenips' => [],
                     'ips' => [],
-                ],
+                ]
             ];
             foreach ($result as $row) {
                 if ($row->green)
@@ -90,7 +89,7 @@ class MobileController extends Controller
                 'data' => [
                     'greenips' => [],
                     'ips' => [],
-                ],
+                ]
             ]);
         }
         return $return;
