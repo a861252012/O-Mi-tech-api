@@ -396,7 +396,7 @@ class MobileController extends Controller
         $list = ImagesText::where('dml_flag', '<>', 3)->where('pid', 0)->selectRaw('img_text_id id,title,temp_name,url,init_time')
             ->orderBy('sort')->orderBy('img_text_id', 'desc')->simplePaginate(static::ACTIVITY_LIST_PAGE_SIZE);
         $redis->set('image.text:activity.list:page:' . $page, $list->toJson(), 180);
-        return JsonResponse::create($list->toArray());
+        return new JsonResponse(['data'=>$list->toArray(),'msg'=>'获取成功']);
     }
 
     /**
@@ -409,6 +409,7 @@ class MobileController extends Controller
              return JsonResponse::create()->setContent($activity);
          }*/
         $activity = ImagesText::where('dml_flag', '<>', 3)->where('pid', $id)->selectRaw($id . ' id,temp_name,init_time')->first();
+
         //如果为空，返回默认json数据
         $is_array = [
             'id' => $id,
@@ -423,7 +424,8 @@ class MobileController extends Controller
         $activity->setHidden(['temp_name']);
         $redis->set('image.text:activity.detail:id:' . $id, $activity->toJson(), 180);
 
-        return JsonResponse::create($activity);
+     //   return JsonResponse::create($activity);
+        return new JsonResponse(['data'=>$activity,'msg'=>'获取成功']);
     }
 
     /**

@@ -12,13 +12,16 @@ Route::post('reg','ApiController@reg')->name('m_reg')->middleware('mobile.sessio
 //登录
 Route::post('/login', 'Mobile\MobileController@login')->name('m_login')->middleware('mobile.session');
 //验证码
-Route::get('captcha', 'Mobile\MobileController@captcha')->middleware('mobile.session');
+Route::get('/login/captcha', 'Mobile\MobileController@captcha')->middleware('mobile.session');
 
+Route::get('/room/conf', ['name' => 'm_room_conf', 'uses' => 'Mobile\RoomController@getRoomConf']);
 
 //app版本
 Route::get('/app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
 Route::get('conf',['name'=>'m_conf', 'uses'=>'Mobile\RoomController@getConf']);
-Route::get('room/conf',['name'=>'m_room_conf', 'uses'=>'Mobile\RoomController@getRoomConf']);
+Route::get('/room/conf',['name'=>'m_room_conf', 'uses'=>'Mobile\RoomController@getRoomConf']);
+Route::get('/oort2bunny', ['name' => 'm_guanggao', 'uses' => 'AdsController@getAd']);//广告接口
+
 //移动端登录验证
 Route::group(['middleware' => ['login_auth:mobile']], function () {
 
@@ -30,76 +33,61 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('register', ['name' => 'm_register', 'uses' => 'Mobile\MobileController@register']);
     //轮播图获取
     Route::get('sliderlist', ['name' => 'm_sliderlist', 'uses' => 'Mobile\MobileController@sliderList']);
-    //活动详情
-    Route::get('activitydetail/{id}', ['name' => 'm_activitydetail', 'uses' => 'Mobile\MobileController@activityDetail']);
     //主播列表
     Route::get('video/list/{type}', ['name' => 'm_videolist', 'uses' => 'Mobile\MobileController@videoList']);
     // 首页房间数据json
     Route::get('/videoList', ['as' => 'index_videoList', 'uses' => 'IndexController@videoList']);
     //app版本ｈ
-    Route::any('app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
-    Route::any('app/versionIOS', ['name' => 'm_app_ver_ios', 'uses' => 'Mobile\MobileController@appVersionIOS']);
+    Route::get('app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
+    Route::get('app/versionIOS', ['name' => 'm_app_ver_ios', 'uses' => 'Mobile\MobileController@appVersionIOS']);
+    Route::post('app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
+    Route::post('app/versionIOS', ['name' => 'm_app_ver_ios', 'uses' => 'Mobile\MobileController@appVersionIOS']);
     /** 获取配置 */
+    Route::get('room/conf', ['name' => 'm_room_conf', 'uses' => 'Mobile\RoomController@getRoomConf']);
     Route::get('room/{rid}/checkAccess', ['name' => 'm_room_checkAccess', 'uses' => 'Mobile\RoomController@getRoomAccess']);
-
-    Route::group(['prefix'=>'user'],function (){
-        //关注列表
-        Route::get('following', ['name' => 'm_userfollowing', 'uses' => 'Mobile\MobileController@userFollowing']);
-        //用户信息
-        Route::get('info', ['name' => 'm_userinfo', 'uses' => 'Mobile\MobileController@userInfo']);
-        //用户特权
-        Route::get('privilege', ['name' => 'm_userprivilege', 'uses' => 'Mobile\MobileController@userPrivilege']);
-        //座驾列表
-        Route::get('mount/list', ['name' => 'm_usermountlist', 'uses' => 'Mobile\MobileController@mountList']);
-        Route::post('mount/{gid}', ['name' => 'm_usermount', 'uses' => 'Mobile\MobileController@mount']);
-        Route::post('unmount/{gid}', ['name' => 'm_userunmount', 'uses' => 'Mobile\MobileController@unmount']);
-        //隐身
-        Route::any('stealth/{status}', 'Mobile\MobileController@stealth')->where('status','[0,1]')->name('m_stealths');
-    });
-
+   //关注列表
+    Route::get('user/following', ['name' => 'm_userfollowing', 'uses' => 'Mobile\MobileController@userFollowing']);
+    //用户信息
+    Route::get('user/info', ['name' => 'm_userinfo', 'uses' => 'Mobile\MobileController@userInfo']);
+    //用户特权
+    Route::get('user/privilege', ['name' => 'm_userprivilege', 'uses' => 'Mobile\MobileController@userPrivilege']);
+    //座驾列表
+    Route::get('user/mount/list', ['name' => 'm_usermountlist', 'uses' => 'Mobile\MobileController@mountList']);
+    Route::post('user/mount/{gid}', ['name' => 'm_usermount', 'uses' => 'Mobile\MobileController@mount']);
+    Route::post('user/unmount/{gid}', ['name' => 'm_userunmount', 'uses' => 'Mobile\MobileController@unmount']);
     //关注
     Route::match(['POST', 'GET'], 'follow', ['name' => 'm_follow', 'uses' => 'Mobile\MobileController@follow']);
+    //预约列表 type=1 一对一，type=2 一对多
+    Route::get('room/reservation/{type}',  'Mobile\RoomController@listReservation')->where('type',"[1,2]")->name('m_userroomreservation');
+    //隐身
+    Route::any('user/stealth/{status}', 'Mobile\MobileController@stealth')->where('status','[0,1]')->name('m_stealths');
+    //购买一对一
+    Route::post('room/buyOneToOne', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@buyOneToOne']);
 
+    /** 检查密码房密码 */
+    Route::post('room/checkPwd', ['name' => 'm_room_checkpwd', 'uses' => 'Mobile\RoomController@checkPwd']);
+    /** 获取RTMP地址 */
+    Route::get('room/rtmp/{rid}', 'RoomController@getRTMP')->where('rid','[0-9]+')->name('m_room_rtmp');
 
-
-    Route::group(['prefix'=>'room'],function (){
-        //预约列表 type=1 一对一，type=2 一对多
-        Route::get('reservation/{type}',  'Mobile\RoomController@listReservation')->where('type',"[1,2]")->name('m_userroomreservation');
-        //购买一对一
-        Route::post('buyOneToOne', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@buyOneToOne']);
-
-        /** 检查密码房密码 */
-        Route::post('checkPwd', ['name' => 'm_room_checkpwd', 'uses' => 'Mobile\RoomController@checkPwd']);
-        /** 获取RTMP地址 */
-        Route::get('rtmp/{rid}', 'RoomController@getRTMP')->where('rid','[0-9]+')->name('m_room_rtmp');
-
-        //移动端删除一对一
-        Route::post('delRoomOne2One', ['name' => 'member_roomDelOne2One', 'uses' => 'Mobile\RoomController@delRoomOne2One']);
-        //移动端预约一对一
-        Route::post('buyOneToOne', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@buyOneToOne']);
-        //移动端创建一对一
-        Route::post('roomSetDuration', ['name' => 'member_roomSetDuration', 'uses' => 'Mobile\RoomController@roomSetDuration']);
-        //移动端购买一对多
-        Route::post('buyOneToMany', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@makeUpOneToMore']);
-    });
-
-
-
-    Route::group(['prefix'=>'OneToMore'],function(){
-        //app删除一对多房间
-        Route::post('delete', ['name' => 'm_onetomoredel', 'uses' => 'Mobile\RoomController@delRoomOne2More']);
-        //app一对多房间列表
-        Route::get('list', ['as' => 'm_onetomorelist', 'uses' => 'Mobile\RoomController@listOneToMoreByHost']);
-        //移动端创建一对多
-        Route::post('create', ['name' => 'OneToMore', 'uses' => 'Mobile\RoomController@createOne2More']);
-    });
-
-
+    //移动端创建一对多
+    Route::post('OneToMore/create', ['name' => 'OneToMore', 'uses' => 'Mobile\RoomController@createOne2More']);
+    //移动端购买一对多
+    Route::post('room/buyOneToMany', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@makeUpOneToMore']);
+    //app删除一对多房间
+    Route::post('OneToMore/delete', ['name' => 'm_onetomoredel', 'uses' => 'Mobile\RoomController@delRoomOne2More']);
+    //app一对多房间列表
+    Route::get('OneToMore/list', ['as' => 'm_onetomorelist', 'uses' => 'Mobile\RoomController@listOneToMoreByHost']);
     //app判断是否开通一对多和一对一
     Route::get('oneToManyCompetence', ['as' => 'competence', 'uses' => 'Mobile\RoomController@competence']);
     //app直播记录表
     Route::get('showlist', ['as' => 'm_showlist', 'uses' => 'Mobile\RoomController@showlist']);
 
+    //移动端删除一对一
+    Route::post('room/delRoomOne2One', ['name' => 'member_roomDelOne2One', 'uses' => 'Mobile\RoomController@delRoomOne2One']);
+    //移动端预约一对一
+    Route::post('room/buyOneToOne', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@buyOneToOne']);
+    //移动端创建一对一
+    Route::post('room/roomSetDuration', ['name' => 'member_roomSetDuration', 'uses' => 'Mobile\RoomController@roomSetDuration']);
     //移动端一对一房间用户
     Route::get('OneToOne/list', ['name' => 'member_onetoONElist', 'uses' => 'Mobile\MobileController@listOneToOneByHost']);
 
@@ -107,14 +95,14 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
 });
 //活动列表
 Route::get('activitylist', ['name' => 'm_activitylist', 'uses' => 'Mobile\MobileController@activityList']);
+//活动详情
+Route::get('activitydetail/{id}', ['name' => 'm_activitydetail', 'uses' => 'Mobile\MobileController@activityDetail']);
 /** 进房间 */
 Route::post('get_room/{rid}', 'Mobile\RoomController@getRoom')->where('rid','[0-9]{5,15}')->name('m_get_room');
 
 Route::get('find', ['name' => 'm_find', 'uses' => 'Mobile\MobileController@searchAnchor']);
 Route::get('oort2bunny', ['name' => 'guanggao', 'uses' => 'AdsController@getAd']);//广告接口
 Route::get('domains', ['name' => 'guanggao', 'uses' => 'Mobile\MobileController@domains']);//广告接口
-
-
 // 充值类 TODO 登录验证
 // 验证是否登录
 Route::group(['prefix' => 'pay', 'middleware' => ['login_auth:mobile','charge']], function () {
@@ -135,8 +123,3 @@ Route::group(['prefix' => 'pay', 'middleware' => ['charge']], function () {
     Route::match(['POST', 'GET'], 'moniHandler', ['name' => 'moniHandler', 'uses' => 'Mobile\PaymentController@moniHandler']);
     Route::post('del', ['name' => 'charge', 'uses' => 'Mobile\PaymentController@del']);
 });
-
-//统计接口
-Route::get('find', ['name' => 'm_find', 'uses' => 'Mobile\MobileController@searchAnchor']);
-Route::match(['POST', 'GET'], '/statistic', ['name' => 'm_statistic', 'uses' => 'Mobile\MobileController@statistic']);
-Route::post('/send_crash', ['name' => 'send_crash', 'uses' => 'Mobile\MobileController@saveCrash']);//app报错接口
