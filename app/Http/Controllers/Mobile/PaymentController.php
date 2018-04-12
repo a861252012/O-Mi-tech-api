@@ -8,22 +8,19 @@
 
 namespace App\Http\Controllers\Mobile;
 
+use App\Http\Controllers\ChargeController;
 use App\Libraries\ErrorResponse;
 use App\Libraries\SuccessResponse;
-use App\Models\ChargeList;
 use App\Models\GiftActivity;
-use App\Models\PayConfig;
-use App\Models\PayOptions;
+use App\Models\PayAccount;
+use App\Models\PayGD;
 use App\Models\Recharge;
-use App\Models\RechargeConf;
-use App\Models\RechargeWhiteList;
-use App\Models\Users;
 use App\Services\User\UserService;
-use DB;
+use Hashids\Hashids;
 use Illuminate\Container\Container;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 class PaymentController extends MobileController
@@ -63,7 +60,25 @@ class PaymentController extends MobileController
         $uid = Auth::id();
 
         $user = resolve(UserService::class)->getUserByUid($uid);
-        $token =  Auth::getToken();
+        $open = resolve("redis")->hget("hconf", "open_pay") ?: 0;
+        $request = resolve('request');
+        $origin = $request->get('origin', 12);
+        $token = Auth::getToken();
+//        if ($open) {
+//            $var['options'] = PayOptions::with('channels')->where('device', 'MOBILE')->orderBy('sid','desc')->get();
+//            $var['payConfig'] = PayConfig::where('open', 1)->get(['id', 'cid', 'bus', 'channel']);
+//            $var['origin'] = $origin;
+//            $var['jwt'] = $token;
+//            //右边广告图
+//            $var['ad'] = '';
+//            $ad = $this->make('redis')->hget('img_cache', 3);// 获取右边的广告栏的数据
+//            if ($ad) {
+//                $a = json_decode($ad, true);
+//                $var['ad'] = $a[0];
+//            }
+//            $var['pay'] = 2;
+//            return SuccessResponse::create($var);
+//        }
 
         // 没有充值的权限
         if (resolve('chargeGroup')->close($uid))
@@ -121,9 +136,8 @@ class PaymentController extends MobileController
      */
     public function pay(Request $request)
     {
-        echo "as"; die();
         $amount = isset($_POST['price']) ? number_format(intval($_POST['price']), 2, '.', '') : 0;
-
+        $origin = $this->request()->get('origin') ?: 21;
         if (!$amount || $amount < 1) {
             $msg = '请输入正确的金额!';
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
@@ -139,7 +153,21 @@ class PaymentController extends MobileController
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
         }
 
-        $postdata = resolve('charge')->postData($amount,$channel);
+        $fee = 0;
+        if ($giftactive = GiftActivity::query()->where('moneymin', intval($amount))->first()) $fee = $giftactive->fee;
+        /** 古都 */
+        if (intval($mode_type) === ChargeController::CHANNEL_GD_ALI || intval($mode_type) === ChargeController::CHANNEL_GD_BANK) {
+            return $this->processGD([
+                'money' => $amount,
+                'uid' => Auth::id(),
+                'channel' => $channel,
+                'comment' => $this->request()->get('name'),
+                'mode_type' => $mode_type,
+                'fee' => $fee,
+                'origin' => $origin,
+            ]);
+        }
+        $postdata = resolve('charge')->postData($amount, $channel);
 
         //记录下数据库
         $uid = Auth::id();//todo recheck session
@@ -176,6 +204,75 @@ class PaymentController extends MobileController
             'postdata' => $postdata,
             'remoteUrl' => resolve('charge')->remote(),
         );
-        return new JsonResponse(array('status' => 0, 'msg' => $rtn));
+        return new JsonResponse(array('status' => 0, 'data' => $rtn));
+    }
+
+    public function processGD($data)
+    {
+        $money = $data['money'];
+        $comment = $data['comment'];
+        $channel = $data['channel'];
+        $modeType = $data['mode_type'];
+        $fee = $data['fee'];
+        $origin = $data['origin'];
+        $order_id = 'GD' . $this->generateOrderId();
+        $uid = $data['uid'];
+        if ($modeType == ChargeController::CHANNEL_GD_ALI && empty($comment)) {
+            //支付宝转账需要输入名字
+            return JsonResponse::create(['status' => 0, 'msg' => '请输入名称']);
+        } elseif ($modeType == ChargeController::CHANNEL_GD_BANK) {
+            //银行转账生成唯一备注
+            $comment = (new Hashids($uid, 4, 'abcdefghijklmnopqrstuvwxyz1234567890'))
+                ->encode(mt_rand(1, 1000000));
+        }
+        $obj = PayGD::query()->whereNotIn('status', [2, 4])->where('charge_amount', $money)->where('comment', $comment)->orderBy('id', 'desc')->first();
+        if ($obj && strtotime($obj['created_at']) + ChargeController::ORDER_REPEAT_LIMIT_GD * 60 > time()) {
+            $err = "1小时内，不能提同一金额，同一姓名的订单";
+            return JsonResponse::create(['status' => 0, 'msg' => $err]);
+        }
+        $account = PayAccount::query()->orderByRaw('rand()')->first();
+
+        $postdata = [
+            'mode_type' => $modeType,
+            'pay_id' => $order_id,
+            'money' => $money,
+            'remark' => $comment,
+            'bank' => $account->card_name,
+            'rec_name' => $account->name,
+            'account' => $account->account,
+        ];
+
+        $recharge = Recharge::create([
+                'uid' => $uid,
+                'created' => date('Y-m-d H:i:s'),
+                'pay_status' => 0,// 刚开始受理
+                'pay_type' => 1, // 银行充值
+                'del' => 0,
+                'paymoney' => $money,
+                'points' => ceil($money * 10) + $fee,
+                'order_id' => $order_id,
+                'postdata' => json_encode($postdata),
+                'nickname' => $this->userInfo['nickname'],
+                'channel' => $channel,
+                'mode_type' => $modeType,
+                'origin' => $origin,
+            ]
+        );
+
+        PayGD::create([
+            'charge_id' => $recharge->id,
+            'order_id' => $order_id,
+            'comment' => $comment,
+            'charge_amount' => $money,
+            'uid' => $uid,
+        ]);
+
+        return JsonResponse::create(['data' => $postdata]);
+
+    }
+
+    public function generateOrderId()
+    {
+        return date('ymdHis') . mt_rand(10, 99) . sprintf('%08s', strrev(Auth::id())) . '';
     }
 }

@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Facades\SiteSer;
 use App\Libraries\ErrorResponse;
 use App\Libraries\SuccessResponse;
 use App\Models\GiftActivity;
+use App\Models\PayAccount;
 use App\Models\PayConfig;
+use App\Models\PayGD;
 use App\Models\PayOptions;
 use App\Models\Recharge;
 use App\Models\Users;
 use App\Services\Site\SiteService;
 use App\Services\User\UserService;
 use DB;
+use Hashids\Hashids;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +24,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ChargeController extends Controller
 {
+    const NOTICE_TIMEOUT_GD = 30;
+    const CHANNEL_GD_ALI = 7;
+    const CHANNEL_GD_BANK = 8;
+    const ORDER_REPEAT_LIMIT_GD = 60;
     /**
      * dm对象
      */
@@ -137,7 +145,7 @@ class ChargeController extends Controller
         if (hash_hmac('sha256', $jsonData, $key) !== $sign) {
             $signError = "订单号：" . $tradeno . "\n签名没有通过！\n";
             $loginfo .= $signError;
-            Log::channel('chareg')->info($loginfo);
+            Log::channel('charge')->info($loginfo);
             return new JsonResponse(array('status' => -1, 'msg' => $signError));
         }
         $paytradeno = $data['pay_id'];
@@ -168,7 +176,7 @@ class ChargeController extends Controller
         //开启事务
         try {
             DB::beginTransaction();
-            $sql = 'SELECT t.* FROM `video_recharge` t WHERE t.pay_type in(1,50) AND t.pay_status < '.Recharge::SUCCESS.' AND order_id = "' . $tradeno . '" LIMIT 1 FOR UPDATE';
+            $sql = 'SELECT t.* FROM `video_recharge` t WHERE t.pay_type in(1,50) AND t.pay_status < ' . Recharge::SUCCESS . ' AND order_id = "' . $tradeno . '" LIMIT 1 FOR UPDATE';
             //强制查询主库
             //$stmt = DB::select('/*' . MYSQLND_MS_MASTER_SWITCH . '*/' . $sql);
             $stmt = DB::select($sql);
@@ -313,11 +321,6 @@ class ChargeController extends Controller
         return SuccessResponse::create($rtn);
     }
 
-    public function generateOrderId()
-    {
-        return date('ymdHis') . mt_rand(10, 99) . sprintf('%08s', strrev(Auth::id())) . '';
-    }
-
     /**
      * 支付处理
      * 要组的格式
@@ -363,6 +366,18 @@ class ChargeController extends Controller
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
         }
 
+        /** 古都 */
+        if (intval($mode_type) === static::CHANNEL_GD_ALI || intval($mode_type) === static::CHANNEL_GD_BANK) {
+            return $this->processGD([
+                'money' => $amount,
+                'uid' => Auth::id(),
+                'channel' => $channel,
+                'comment' => $this->request()->get('name'),
+                'mode_type' => $mode_type,
+                'fee' => $fee,
+                'origin' => $origin,
+            ]);
+        }
         $postdata = resolve('charge')->postData($amount, $channel);
 
         //记录下数据库
@@ -386,19 +401,236 @@ class ChargeController extends Controller
         );
 
         $rtn = array(
+            'postdata' => $postdata,
             'orderId' => resolve('charge')->getMessageNo(),
-            'gotourl' => ' /charge/translate'
+            'remoteUrl' => resolve('charge')->remote(),
         );
-        //跳转页面需要的信息，设置session数据
+        return new JsonResponse(array('status' => 0, 'data' => $rtn));
+    }
 
-        Session()->put(
-            'orderInfo',
-            array(
-                'postdata' => $postdata,
-                'remoteUrl' => resolve('charge')->remote(),
-            )
+    public function processGD($data)
+    {
+        $money = $data['money'];
+        $comment = $data['comment'];
+        $channel = $data['channel'];
+        $modeType = $data['mode_type'];
+        $fee = $data['fee'];
+        $origin = $data['origin'];
+        $order_id = 'GD' . $this->generateOrderId();
+        $uid = $data['uid'];
+        if ($modeType == static::CHANNEL_GD_ALI && empty($comment)) {
+            //支付宝转账需要输入名字
+            return JsonResponse::create(['status' => 0, 'msg' => '请输入名称']);
+        } elseif ($modeType == static::CHANNEL_GD_BANK) {
+            //银行转账生成唯一备注
+            $comment = (new Hashids($uid, 4, 'abcdefghijklmnopqrstuvwxyz1234567890'))
+                ->encode(mt_rand(1, 1000000));
+        }
+        $obj = PayGD::query()->whereNotIn('status', [2, 4])->where('charge_amount', $money)->where('comment', $comment)->orderBy('id', 'desc')->first();
+        if ($obj && strtotime($obj['created_at']) + static::ORDER_REPEAT_LIMIT_GD * 60 > time()) {
+            $err = "1小时内，不能提同一金额，同一姓名的订单";
+            return JsonResponse::create(['status' => 0, 'msg' => $err]);
+        }
+        $account = PayAccount::query()->orderByRaw('rand()')->first();
+
+        $postdata = [
+            'mode_type' => $modeType,
+            'pay_id' => $order_id,
+            'money' => $money,
+            'remark' => $comment,
+            'bank' => $account->card_name,
+            'rec_name' => $account->name,
+            'account' => $account->account,
+        ];
+
+        $recharge = Recharge::create([
+                'uid' => $uid,
+                'created' => date('Y-m-d H:i:s'),
+                'pay_status' => 0,// 刚开始受理
+                'pay_type' => 1, // 银行充值
+                'del' => 0,
+                'paymoney' => $money,
+                'points' => ceil($money * 10) + $fee,
+                'order_id' => $order_id,
+                'postdata' => json_encode($postdata),
+                'nickname' => $this->userInfo['nickname'],
+                'channel' => $channel,
+                'mode_type' => $modeType,
+                'origin' => $origin,
+            ]
         );
-        return new JsonResponse(array('status' => 0, 'msg' => $rtn));
+
+        PayGD::create([
+            'charge_id' => $recharge->id,
+            'order_id' => $order_id,
+            'comment' => $comment,
+            'charge_amount' => $money,
+            'uid' => $uid,
+        ]);
+
+        $rtn = [
+            'orderId' => $order_id,
+            'gotourl' => '/charge/showGD',
+            'orderInfo',
+            [
+                'postdata' => $postdata,
+                'remoteUrl' => '',
+            ],
+        ];
+        return JsonResponse::create(['status' => 0, 'data' => $rtn]);
+
+    }
+
+    public function generateOrderId()
+    {
+        return date('ymdHis') . mt_rand(10, 99) . sprintf('%08s', strrev(Auth::id())) . '';
+    }
+
+    public function testNoticeGD(Request $request)
+    {
+        $amount = $request->get('amount');
+        $comment = $request->get('comment');
+
+        $data = [
+            'serial_num' => 'gd' . mt_rand(100000, 999999),
+            'bank_id' => 13,
+            'amount' => $amount,
+            'usercard_num' => '',
+            'incomebankcard' => mt_rand(100000, 999999),
+            'fee' => 0,
+            'pay_type' => "",
+            'processtime' => date('Y-m-d H:i:s'),
+            'comment' => $comment,
+        ];
+        $key = SiteSer::config('pay_gd_key');
+        $verifymd5 = MD5($data['amount'] . $data['comment'] . $key);
+        $data = $this->sendCurlRequest(route('gd_notice'), ['data' => json_encode((object)$data), 'verifymd5' => $verifymd5]);
+        dd($data);
+        return new JsonResponse(['data' => 'success']);
+    }
+
+    protected function sendCurlRequest($url, $data)
+    {
+        $ch = curl_init(); //初始化CURL句柄
+        curl_setopt($ch, CURLOPT_URL, $url); //设置请求的URL
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        // curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json','Content-Length: ' . strlen(json_encode($data))));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 20);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 300);
+        $output = curl_exec($ch);
+        $errstr = curl_error($ch);
+        $curl_errno = curl_errno($ch);
+        curl_close($ch);
+        return ['data' => $output, 'errstr' => $errstr, 'errno' => $curl_errno];
+    }
+
+    public function noticeGD()
+    {
+        $data = $this->request()->input('data');
+        $verifymd5 = $this->request()->input('verifymd5');
+        Log::channel('charge')->info('古都通知:' . $data . '\t' . $verifymd5);
+        $obj = json_decode($data);
+        if (!$obj) {
+            return $this->gdResponse($obj, 44);
+        }
+        $serial_num = $obj->serial_num;
+        $bank_id = $obj->bank_id;
+        $amount = $obj->amount;
+        $usercard_num = $obj->usercard_num;
+        $incomebankcard = $obj->incomebankcard;
+        $fee = $obj->fee;
+        $pay_type = $obj->pay_type;
+        $processtime = isset($obj->processtime) ? $obj->processtime : date('Y-m-d H:i:s');
+
+        $strKeyInfo = SiteSer::config('pay_gd_key');
+
+        $strEncypty = "";
+        switch ($bank_id) {
+            case "13":
+                $comment = $obj->comment;
+                $strEncypty = MD5($amount . $comment . $strKeyInfo);
+                break;
+            default:
+                $comment = $obj->comment;
+                $strEncypty = MD5($amount . $incomebankcard . $strKeyInfo);
+        }
+        if ($verifymd5 != $strEncypty) {
+            Log::channel('charge')->info("签名错误 " . $pay_type . " " . $verifymd5 . " " . $strEncypty);
+            return $this->gdResponse($obj, -3);
+        }
+        if (PayGD::where('serial_num', $serial_num)->exists()) {
+            return $this->gdResponse($obj, -78);
+        }
+        //更新
+        $payGD = PayGD::query()->where('charge_amount', $amount)
+            ->where('comment', $comment)
+            ->where('status', 0)
+            ->where('created_at', '>=', date('Y-m-d H:i:s', strtotime('-2 hours')))//只查2个小时内的
+            ->orderBy('created_at', 'desc')->first();
+
+        $time = time();
+        if ($payGD && $payGD->id) {//匹配到订单
+            if (strtotime($payGD->created_at) + static::NOTICE_TIMEOUT_GD * 60 >= $time) {//没超时
+                $status = 2;
+                $chargeResult = 2;
+                $code = 88;
+                $loginfo = "第三方 成功 " . $payGD->toJson();
+            } else {//超时
+                $status = 3;
+                $chargeResult = 3;
+                $code = -56;
+                $loginfo = "第三方 超时 " . $payGD->toJson();
+            }
+            $payGD->update([
+                'serial_num' => $serial_num,
+                'amount' => $amount,
+                'bank_id' => $bank_id,
+                'pay_type' => $pay_type,
+                'usercard_num' => $usercard_num,
+                'fee' => $fee,
+                'incomebankcard' => $incomebankcard,
+                'processtime' => $processtime,
+                'status' => $status,
+            ]);
+
+            $handlerResult = $this->orderHandler($payGD->order_id, $serial_num, $loginfo, $logPath = "", $amount, $chargeResult, '', date('Y-m-d H:i:s', $time));
+            return $this->gdResponse($obj, $code);
+        }
+        //未匹配到订单
+        $status = 1;
+        $payGD = PayGD::create([
+            'serial_num' => $serial_num,
+            'amount' => $amount,
+            'comment' => $comment,
+            'bank_id' => $bank_id,
+            'pay_type' => $pay_type,
+            'usercard_num' => $usercard_num,
+            'fee' => $fee,
+            'incomebankcard' => $incomebankcard,
+            'processtime' => $processtime,
+            'status' => $status,
+        ]);
+        Log::channel('charge')->info('未匹配到订单' . $payGD->toJson());
+        return $this->gdResponse($obj, -77);
+    }
+
+    public function gdResponse($obj, $code)
+    {
+        if (!is_object($obj)) {
+            $obj = (object)$obj;
+        }
+        $delimiter = '^';
+        $r = $obj->comment . $delimiter .
+            $obj->bank_id . $delimiter .
+            $obj->amount . $delimiter . $delimiter .
+            $obj->incomebankcard . $delimiter .
+            $obj->fee . $delimiter .
+            $code;
+        Log::channel('charge')->info('返回给古都:' . $r);
+        return Response::create($code);
     }
 
     /**
@@ -453,35 +685,8 @@ class ChargeController extends Controller
             //存在同一个v项目订单号对应2个以上的财务财务订单号
             if ($chargeResult == 2 && !empty($paytradeno)) break;
         }
-
-        //test code
-//        $tradeno='0000000000000000000000001';
-//        $paytradeno='83170079';
-//        $money=10;
-//        $chargeResult=2;
-//        $logPath = BASEDIR . '/app/logs/charge_' . date('Y-m-d') . '.log';
-//        $loginfo = date('Y-m-d H:i:s') . "\n传输的数据记录: \n" . "\n";
-//        $channel = '';
-//        $complateTime = ''.date('Y-m-d H:i:s');
         return $this->orderHandler($tradeno, $paytradeno, $loginfo = "", $logPath = "", $money, $chargeResult, $channel, $complateTime);
     }
-
-
-//    /**
-//     * 写一个模拟充提handler处理
-//     */
-//    public function moniHandler()
-//    {
-//
-//        $payOrderJson=array(
-//            'orderId'=>'FC0028201507112130551649',
-//            'payOrderId'=>'FC0028201507112130551649',
-//            'amount'=>'500',
-//            'result'=>'2'
-//        );
-//
-//        $this->comHandler($payOrderJson);
-//    }
 
     /**
      * 写一个模拟充提中心的中转
@@ -493,29 +698,12 @@ class ChargeController extends Controller
         }
         //2017.2.23 改为配置文件绝对地址
         $orderID = $request->get('orderid');
-        $amount = $request->get('amount');
+
         $payNoticeUrl = route('charge_notice');
-        $postdataArr = resolve('charge')->getTestNoticeData($orderID, $amount);
+        $postdataArr = resolve('charge')->getTestNoticeData($orderID);
         $send_result = $this->sendCurlRequest($payNoticeUrl, $postdataArr);
         $server_output = $send_result['data'];
         return new Response(json_encode($server_output));
-    }
-
-    protected function sendCurlRequest($url, $data)
-    {
-        $ch = curl_init(); //初始化CURL句柄
-        curl_setopt($ch, CURLOPT_URL, $url); //设置请求的URL
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: text/plain'));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 20);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 300);
-        $output = curl_exec($ch);
-        $errstr = curl_error($ch);
-        $curl_errno = curl_errno($ch);
-        curl_close($ch);
-        return ['data' => $output, 'errstr' => $errstr, 'errno' => $curl_errno];
     }
 
     /**
@@ -526,7 +714,7 @@ class ChargeController extends Controller
     {
         $payOrderJson = file_get_contents("php://input");
         $type = 2;
-        Log::channel('charge')->info('charge_'.$type.' :'.$payOrderJson);
+        Log::channel('charge')->info('charge_' . $type . ' :' . $payOrderJson);
         if (!$payOrderJson) {
             return new JsonResponse(array('status' => 1, 'msg' => '传入的数据存在问题'));
         }
@@ -534,37 +722,21 @@ class ChargeController extends Controller
         if (!$this->verifyUidToken($payOrderJson['uid'], $payOrderJson['token'])) {
             return new JsonResponse(array('status' => 1, 'msg' => '非法操作！'));
         }
-        return $this->comHandler($payOrderJson, $type);
-    }
 
-    /**
-     * 公共的处理函数，log文件类型
-     * “正常支付流程”是app/logs/charge_20150728.log,
-     * ”已完成支付“调用已充值是app/logs/charge_20150728_3.log,
-     * “后台调用支付”是app/logs/charge_20150728_2.log
-     * @param $payOrderJson
-     * @param int $type
-     * @return JsonResponse
-     * @Author Orino
-     */
-    private function comHandler($payOrderJson, $type = 1)
-    {
         $tradeno = $payOrderJson['orderId'];
         $paytradeno = $payOrderJson['payOrderId'];
         $money = $payOrderJson['amount'];
-        $logPath = BASEDIR . '/app/logs/charge_' . date('Y-m-d') . '_' . $type . '.log';
         $loginfo = json_encode($payOrderJson);
         $chargeResult = $payOrderJson['result'];
         $complateTime = $payOrderJson['complateTime'];
         $channel = '';
-        return $this->orderHandler($tradeno, $paytradeno, $loginfo, $logPath, $money, $chargeResult, $channel, $complateTime);
+        return $this->orderHandler($tradeno, $paytradeno, $loginfo, $logPath = "", $money, $chargeResult, $channel, $complateTime);
     }
 
     public function checkKeepVip()
     {
         $msg = file_get_contents("php://input");
-        $logPath = BASEDIR . '/app/logs/charge_' . date('Y-m-d') . '_checkKeepVip.log';
-        $this->logResult($msg, $logPath);
+        Log::channel('charge')->info("checkKeepVip:" . $msg);
         if (!$msg) {
             return new JsonResponse(array('status' => 1, 'msg' => '传入的数据存在问题'));
         }
@@ -576,11 +748,41 @@ class ChargeController extends Controller
     }
 
     /**
+     * 充提中心查询（用于测试）
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function chongti(Request $request)
+    {
+        $data = $request->get('Datas')[0];
+        //print_r($data);
+        //return new JsonResponse((['data'=>$request->get('Datas')]));
+        $recharge = Recharge::query()->where('order_id', $data['orderId'])->first();
+        switch ($data['type']) {
+            case 1:
+                return new JsonResponse([
+                    'data' => ['Datas' => array(
+                        array(
+                            'result' => 2,
+                            'payOrderId' => 'test' . mt_rand(10000, 90000),
+                            'amount' => number_format($recharge->points / 10, 2),
+                            'orderId' => $data['orderId'],
+                            'complateTime' => date('Y-m-d H:i:s'),
+                        )
+                    )
+                    ]]);
+                break;
+            default:
+                ;
+        }
+    }
+
+    /**
      * 通过订单号查询
      * @return Response
      * @Author Orino
      */
-    public function checkCharge()
+    public function checkCharge(Request $request)
     {
         $orderId = isset($_GET['orderId']) ? $_GET['orderId'] : '';
         if (!$orderId) {
@@ -601,30 +803,26 @@ class ChargeController extends Controller
             return new JsonResponse(array('status' => 0, 'msg' => '该订单号支付已经失败,请返回会员中心的"充值记录"查看！'));
         }
         $POST_Array = resolve('charge')->getFindRequest($orderId);
-        $logPath = BASEDIR . '/app/logs/charge_' . date('Y-m-d') . '_3.log';
 
-        $send_result = $this->sendCurlRequest($this->container->config['config.PAY_CALL_URL'], json_encode($POST_Array));
+        $pay_call_url = SiteSer::config('pay_call_url');
+        if (config('app.debug')) {
+            $pay_call_url = route('chongti');
+        }
+        $send_result = $this->sendCurlRequest($pay_call_url, ($POST_Array));
         $output = $send_result['data'];
         $errstr = $send_result['errstr'];
 
-        $this->logResult($this->container->config['config.PAY_CALL_URL'] . PHP_EOL . 'output' . $output . PHP_EOL . 'error' . $errstr, $logPath);
+        Log::channel('charge')->info($pay_call_url . PHP_EOL . 'output' . $output . PHP_EOL . 'error' . $errstr);
         if (!empty($errstr)) {
             return new JsonResponse(array('status' => 1, 'msg' => '充提查询接口出问题：' . $errstr));
         }
         $output = json_decode($output, true);
+        $output = $output['data'];
         if (!isset($output['Datas'])) {
             return new JsonResponse(array('status' => 1, 'msg' => '充提返回数据有问题'));
         }
-        //测试自己内部程序的数据
-        /*   $output['Datas'] = array(array(
-               'result'=> 2,
-               'payOrderId'=> 'FC000V201507110028063180016',
-               'amount'=> '100.00',
-               'orderId'=> $orderId,
-           ));
-        */
         $len = count($output['Datas']);
-        $payOrderJson = '';
+        $payOrderJson = [];
         for ($i = 0; $i < $len; $i++) {
             //存在同一个v项目订单号对应2个以上的财务财务订单号
             if ($output['Datas'][$i]['result'] == 2 && !empty($output['Datas'][$i]['payOrderId'])) {
@@ -633,8 +831,15 @@ class ChargeController extends Controller
             }
         }
         //校验到成功的订单号，应该走原来通知回调的逻辑
-        if (!!$payOrderJson) {
-            return $this->comHandler($payOrderJson, 3);
+        if (!empty($payOrderJson)) {
+            $tradeno = $payOrderJson['orderId'];
+            $paytradeno = $payOrderJson['payOrderId'];
+            $money = $payOrderJson['amount'];
+            $loginfo = json_encode($payOrderJson);
+            $chargeResult = $payOrderJson['result'];
+            $complateTime = $payOrderJson['complateTime'];
+            $channel = '';
+            return $this->orderHandler($tradeno, $paytradeno, $loginfo, $logPath = "", $money, $chargeResult, $channel, $complateTime);
         }
         $sts = $output['Datas'][0]['result'];
         $updat_data = array();

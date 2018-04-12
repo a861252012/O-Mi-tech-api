@@ -413,3 +413,7 @@ Route::match(['POST', 'GET'], '/pay/g2p', ['name' => 'pay_g2p', 'uses' => 'Pay\P
 //    file_put_contents(BASEDIR.'/app/logs/inner.log',json_encode($_POST));
 //});
 Route::match(['POST', 'GET'], '/getss', ['name' => 'getss', 'uses' => 'ApiController@getLog']);
+
+//古都通知接口
+Route::post('/v2pay/inner', 'ChargeController@noticeGD')->name('gd_notice');
+Route::post('/gd_test', 'ChargeController@testNoticeGD')->name('gd_test');
