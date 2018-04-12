@@ -471,11 +471,8 @@ class ChargeController extends Controller
         $rtn = [
             'orderId' => $order_id,
             'gotourl' => '/charge/showGD',
-            'orderInfo',
-            [
-                'postdata' => $postdata,
-                'remoteUrl' => '',
-            ],
+            'postdata' => $postdata,
+            'remoteUrl' => '',
         ];
         return JsonResponse::create(['status' => 0, 'data' => $rtn]);
 
