@@ -225,7 +225,8 @@ class UserService extends Service
         $hashtable = static::KEY_USER_INFO . $uid;
 
         if ($this->redis->Hexists($hashtable, 'uid')) {
-            $user = (new Users())->forceFill($this->redis->hgetall($hashtable));
+            $user = (new Users())->setRawAttributes($this->redis->hgetall($hashtable),true);
+            $user->exists=true;
         } else {
             $user = Users::find($uid);
             if ($user&&$user->exists) {
