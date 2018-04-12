@@ -140,19 +140,21 @@ class MobileController extends Controller
         }
         return JsonResponse::create([
             'status' => 1,
-            'uid' => $userinfo->uid,
-            'nickname' => $userinfo->nickname,
-            'headimg' => $this->getHeadimg($userinfo->headimg),
-            'points' => $userinfo->points,
-            'roled' => $userinfo->roled,
-            'rid' => $userinfo->rid,
-            'vip' => $userinfo->vip,
-            'vip_end' => $userinfo->vip_end,
-            'lv_rich' => $userinfo->lv_rich,
-            'lv_exp' => $userinfo->lv_exp,
-            'safemail' => $userinfo->safemail ?? '',
+            'data'=>[
+                'uid' => $userinfo->uid,
+                'nickname' => $userinfo->nickname,
+                'headimg' => $this->getHeadimg($userinfo->headimg),
+                'points' => $userinfo->points,
+                'roled' => $userinfo->roled,
+                'rid' => $userinfo->rid,
+                'vip' => $userinfo->vip,
+                'vip_end' => $userinfo->vip_end,
+                'lv_rich' => $userinfo->lv_rich,
+                'lv_exp' => $userinfo->lv_exp,
+                'safemail' => $userinfo->safemail ?? '',
 //                'mails' => $this->make('messageServer')->getMessageNotReadCount($userinfo->uid, $userinfo->lv_rich),// 通过服务取到数量
-            'icon_id' => intval($userinfo->icon_id),
+                'icon_id' => intval($userinfo->icon_id),
+            ],
         ]);
     }
 
@@ -316,8 +318,9 @@ class MobileController extends Controller
             if (empty($captcha)) {
                 return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
             }
+            dd($request->session());
             if (!Captcha::check($captcha)) {
-                return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
+                return JsonResponse::create(['status' => 0, 'msg' => '验证码错误01']);
             }
         }
         if (!$username || !$password) {
