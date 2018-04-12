@@ -35,8 +35,10 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     //活动详情
     Route::get('activitydetail/{id}', ['name' => 'm_activitydetail', 'uses' => 'Mobile\MobileController@activityDetail']);
     //主播列表
-    Route::get('video/list/{type}', ['name' => 'm_videolist', 'uses' => 'IndexController@videoList']);
-   //app版本ｈ
+    Route::get('video/list/{type}', ['name' => 'm_videolist', 'uses' => 'Mobile\MobileController@videoList']);
+    // 首页房间数据json
+    Route::get('/videoList', ['as' => 'index_videoList', 'uses' => 'IndexController@videoList']);
+    //app版本ｈ
     Route::get('app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
     Route::get('app/versionIOS', ['name' => 'm_app_ver_ios', 'uses' => 'Mobile\MobileController@appVersionIOS']);
     Route::post('app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);

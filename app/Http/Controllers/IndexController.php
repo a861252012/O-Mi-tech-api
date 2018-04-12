@@ -29,10 +29,11 @@ class IndexController extends Controller
      *
      * @return Response|void
      */
-    public function videoList($type)
+    public function videoList()
     {
         //$type 判断
-        empty($type)?: 'all';
+        $type = request()->get('type', 'all');
+
         //为什么总在$flashVer??
         //updata by Young
         //获取flash版本
