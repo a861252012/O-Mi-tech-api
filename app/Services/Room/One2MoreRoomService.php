@@ -49,6 +49,12 @@ class One2MoreRoomService extends Service
         }
         return [];
     }
+    public function getHomeBookList($flashVersion) : array
+    {
+        $ordRooms = Redis::get('home_one_many_' . $flashVersion);
+        $ordRooms = str_replace(['cb(', ');'], ['', ''], $ordRooms);
+        return (array)json_decode($ordRooms, true);
+    }
     public function getData(){
         return $this->room;
     }
