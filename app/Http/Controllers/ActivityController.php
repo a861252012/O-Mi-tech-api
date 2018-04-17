@@ -22,8 +22,6 @@ class ActivityController extends Controller
 
     public function index()
     {
-        $users = Users::query()->first();
-        dd(DebugBar::info('products:'.$users->uid));
 
         $data = Redis::get('huodong_cache');
         $list = collect(json_decode($data))->where('pid', 0);

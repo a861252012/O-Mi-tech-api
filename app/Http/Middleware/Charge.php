@@ -22,7 +22,8 @@ class Charge
         $origin = $user['origin']??0;
         if ($origin >= 50) {
             $rs = app('roomService');
-            header('Location:' . $rs->getPlatUrl($origin)['pay']);
+            //todo
+            //header('Location:' . $rs->getPlatUrl($origin)['pay']);
         }
         return $next($request);
     }
