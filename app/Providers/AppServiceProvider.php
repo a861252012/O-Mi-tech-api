@@ -62,6 +62,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton('one2more', function ($app) {
             return new One2MoreRoomService($app['request']);
         });
+        $this->app->singleton('safeService', function ($app) {
+            return new SafeService();
+        });
 
     }
 
