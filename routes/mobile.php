@@ -15,8 +15,10 @@ Route::post('/login', 'Mobile\MobileController@login')->name('m_login')->middlew
 Route::get('captcha', 'Mobile\MobileController@captcha')->middleware('mobile.session');
 
 
-//app版本
-Route::get('/app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
+//app版本ｈ
+Route::any('app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
+Route::any('app/versionIOS', ['name' => 'm_app_ver_ios', 'uses' => 'Mobile\MobileController@appVersionIOS']);
+
 Route::get('conf',['name'=>'m_conf', 'uses'=>'Mobile\RoomController@getConf']);
 Route::get('room/conf',['name'=>'m_room_conf', 'uses'=>'Mobile\RoomController@getRoomConf']);
 // 首页房间数据json
@@ -37,9 +39,6 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     //主播列表
     Route::get('video/list/{type}', ['name' => 'm_videolist', 'uses' => 'Mobile\MobileController@videoList']);
 
-    //app版本ｈ
-    Route::any('app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
-    Route::any('app/versionIOS', ['name' => 'm_app_ver_ios', 'uses' => 'Mobile\MobileController@appVersionIOS']);
     /** 获取配置 */
     Route::get('room/{rid}/checkAccess', ['name' => 'm_room_checkAccess', 'uses' => 'Mobile\RoomController@getRoomAccess']);
 
@@ -124,6 +123,10 @@ Route::group(['prefix' => 'pay', 'middleware' => ['login_auth:mobile','charge']]
     Route::match(['POST', 'GET'], '/order2', ['name' => 'charge_order2', 'uses' => 'Mobile\PaymentController@order2']);
     Route::match(['POST', 'GET'], '/pay2', ['name' => 'charge_pay2', 'uses' => 'Mobile\PaymentController@pay2']);
     Route::match(['POST', 'GET'], '/translate', ['name' => 'translate', 'uses' => 'Mobile\PaymentController@translate']);
+});
+
+Route::group(['prefix' => 'pay','namespace'=>'Mobile',],function () {
+    Route::any('/test', ['name' => 'charge_order', 'uses' => 'PaymentController@order']);
 });
 
 //通知

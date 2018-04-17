@@ -373,8 +373,6 @@ class ApiController extends Controller
                 'nickname' => $prefix . '_' . $data['nickename'],
                 'sex' => 0,
                 'uuid' => $data['uuid'],
-                'rich' => 64143000,
-                'lv_rich' => 28,
                 'password' => $password,
                 'xtoken' => $data['token'],
                 'origin' => $origin,
