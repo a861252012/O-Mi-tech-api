@@ -427,7 +427,13 @@ class ApiController extends Controller
         Session::put('httphost',$httphost);
 
         $h5 = SiteSer::config('h5') ? "/h5" : "";
-        return RedirectResponse::create("/$room$h5");
+        //return RedirectResponse::create("/$room$h5");
+        return JsonResponse::create([
+            'data'=>[
+                'httphost'=>$httphost,
+                'h5'=>$h5,
+            ],
+        ]);
     }
     public function checkSign($sign_data,$expect_sign){
         return md5(implode('',$sign_data))==$expect_sign;
