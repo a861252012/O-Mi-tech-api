@@ -8,6 +8,16 @@ use RuntimeException;
 class ThrottleRoutes extends ThrottleRequestsWithRedis
 {
 
+    public static function clear($request)
+    {
+        $instanse = resolve(static::class);
+        $key = $instanse->resolveRequestSignature($request);
+        if ($key) {
+            return $instanse->redis->del($key);
+        }
+        return false;
+    }
+
     protected function resolveRequestSignature($request)
     {
         $prefix = 'throttle:';
