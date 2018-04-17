@@ -140,7 +140,7 @@ class UserService extends Service
 
 
         } catch (\Exception $e) {
-            Log::info("注册 事务结果：" . $e->getMessage() . "\n");
+            Log::info('注册 事务结果:'.$e->getMessage());
             DB::rollback();
             return false;
         }
