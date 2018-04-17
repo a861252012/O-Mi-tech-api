@@ -225,16 +225,11 @@ class RoomController extends Controller
             ->get();
         if (!$myReservation->count()) return $list;
         // 从redis 获取一对一预约数据
-        $ordRooms = $this->make('redis')->get('home_ord_' . $flashVersion);
-        $ordRooms = str_replace(['cb(', ');'], ['', ''], $ordRooms);
-        $ordRooms = json_decode($ordRooms, true);
-        $rooms = $ordRooms['rooms'];
-        foreach ($myReservation as $item) {
-            foreach ($rooms as $room) {
-                if ($item->uid == $room['uid'] && $item->id == $room['id']) {
-                    $room['listType'] = 'myres';
-                    $list[] = $room;
-                }
+        $rooms = resolve('one2one')->getHomeBookList()['rooms']??[];
+        foreach ($rooms as $room) {
+            if($myReservation->where('uid',$room['uid'])->where('onetomore',$room['id'])->first()){
+                $room['listType'] = 'myres';
+                $list[] = $room;
             }
         }
         return $list;
@@ -250,20 +245,13 @@ class RoomController extends Controller
         $list = collect();
 
         $oneToMore = UserBuyOneToMore::where('uid', $uid)->whereRaw('starttime>DATE_SUB(now(),INTERVAL duration  SECOND)')->orderBy('starttime', 'desc')->get();
-        if (!$oneToMore->count()) $list;
+        if (!$oneToMore->count()) return $list;
         // 从redis 获取一对多预约数据
-        $oneManyRooms = $this->make('redis')->get('home_one_many_' . $flashVersion);
-        $oneManyRooms = str_replace(['cb(', ');'], ['', ''], $oneManyRooms);
-        $oneManyRooms = json_decode($oneManyRooms, true);
-        $rooms = $oneManyRooms['rooms'];
-        if ($rooms) {
-            foreach ($oneToMore as $item) {
-                foreach ($rooms as $room) {
-                    if ($item->rid == $room['uid'] && $item->onetomore == $room['id']) {
-                        $room['listType'] = 'myticket';
-                        $list[] = $room;
-                    }
-                }
+        $rooms = resolve('one2more')->getHomeBookList($flashVersion)['rooms'] ?? [];
+        foreach ($rooms as $room) {
+            if($oneToMore->where('rid',$room['uid'])->where('onetomore',$room['id'])->first()){
+                $room['listType'] = 'myticket';
+                $list[] = $room;
             }
         }
         return $list;
@@ -438,6 +426,13 @@ class RoomController extends Controller
             'certificate' => $this->make('safeService')->getLcertificate(),
         ]);
     }
+    public function getRoom($rid){
+        resolve('request')->attributes->set('rid',$rid);
+        $request =  resolve('request');
+       $conf = $this->getRoomConf($request)->getData(true)??[];
+       $access = $this->getRoomAccess($rid)->getData(true)??[];
+        return JsonResponse::create(['data'=>(object)(array_merge($conf,$access))]);
+    }
 
     public function getRoomAccess($rid)
     {
@@ -470,6 +465,7 @@ class RoomController extends Controller
                 $discount = $redis->hget('hgroups:special:' . $this->userInfo['vip'], 'discount') ?: 10;
                 $return['timecost'] = [
                     'price' => $timecost,
+                    'access' => 1,
                     'discount' => $discount,
                     'discountValue' => ceil($timecost * $discount / 10)
                 ];
