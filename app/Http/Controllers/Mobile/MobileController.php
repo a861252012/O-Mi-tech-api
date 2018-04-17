@@ -464,7 +464,7 @@ class MobileController extends Controller
                 }
             }
         }
-        return JsonResponse::create(['data'=>$myfav]);
+        return JsonResponse::create(['data'=>(object)($myfav)]);
     }
 
     /**
