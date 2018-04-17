@@ -9,10 +9,10 @@ class ThrottleRoutes extends ThrottleRequestsWithRedis
 
     public static function clear($request)
     {
-        $instanse = resolve(static::class);
-        $key = $instanse->resolveRequestSignature($request);
+        $instance = resolve(static::class);
+        $key = $instance->resolveRequestSignature($request);
         if ($key) {
-            return $instanse->redis->del($key);
+            return $instance->redis->del($key);
         }
         return false;
     }
