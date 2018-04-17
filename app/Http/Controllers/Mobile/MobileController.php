@@ -453,7 +453,6 @@ class MobileController extends Controller
         foreach ($arr as $value) {
             $hasharr[$value['uid']] = $value;
         }
-        dd($arr);
         unset($arr);
         $myfavArr = $this->make('redis')->zrevrange('zuser_attens:' . Auth::id(), 0, -1);
         $myfav = [];
@@ -465,7 +464,7 @@ class MobileController extends Controller
                 }
             }
         }
-        return JsonResponse::create($myfav);
+        return JsonResponse::create(['data'=>$myfav]);
     }
 
     /**
