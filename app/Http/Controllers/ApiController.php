@@ -227,10 +227,10 @@ class ApiController extends Controller
         $userGroup = UserGroup::where('level_id', $vip)->with("permission")->first();
 
         if (!$userGroup) {
-            return new JsonResponse(['code' => 1, 'info' => ['vip' => 0, 'vipName' => '', 'discount' => 10], 'message' => '非贵族']);
+            return new JsonResponse(['status' => 1, 'data' => ['vip' => 0, 'vipName' => '', 'discount' => 10], 'message' => '非贵族']);
         }
         if (!$userGroup->permission) {
-            return new JsonResponse(['code' => 1, 'info' => ['vip' => $vip, 'vipName' => '', 'discount' => 10], 'message' => '无权限组']);
+            return new JsonResponse(['status' => 1, 'data' => ['vip' => $vip, 'vipName' => '', 'discount' => 10], 'message' => '无权限组']);
         }
         $info = [
             'vip' => $vip,
@@ -644,8 +644,8 @@ class ApiController extends Controller
 
         return new JsonResponse(
             [
-                'ret' => 1,
-                'msg' => ['Pending' => $this->getAvailableBalance($userInfo['uid'], 4)['availmoney'], 'moderated' => $this->getAvailableBalance($userInfo['uid'], 0)['availmoney']],
+                'status' => 1,
+                'data' => ['Pending' => $this->getAvailableBalance($userInfo['uid'], 4)['availmoney'], 'moderated' => $this->getAvailableBalance($userInfo['uid'], 0)['availmoney']],
             ]);
     }
 

@@ -19,6 +19,8 @@ Route::get('captcha', 'Mobile\MobileController@captcha')->middleware('mobile.ses
 Route::get('/app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
 Route::get('conf',['name'=>'m_conf', 'uses'=>'Mobile\RoomController@getConf']);
 Route::get('room/conf',['name'=>'m_room_conf', 'uses'=>'Mobile\RoomController@getRoomConf']);
+// 首页房间数据json
+Route::get('/videoList', ['as' => 'index_videoList', 'uses' => 'IndexController@videoList']);
 //移动端登录验证
 Route::group(['middleware' => ['login_auth:mobile']], function () {
 
@@ -34,8 +36,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('activitydetail/{id}', ['name' => 'm_activitydetail', 'uses' => 'Mobile\MobileController@activityDetail']);
     //主播列表
     Route::get('video/list/{type}', ['name' => 'm_videolist', 'uses' => 'Mobile\MobileController@videoList']);
-    // 首页房间数据json
-    Route::get('/videoList', ['as' => 'index_videoList', 'uses' => 'IndexController@videoList']);
+
     //app版本ｈ
     Route::any('app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
     Route::any('app/versionIOS', ['name' => 'm_app_ver_ios', 'uses' => 'Mobile\MobileController@appVersionIOS']);
