@@ -440,7 +440,7 @@ class RoomController extends Controller
     public function getRoomAccess($rid)
     {
         $return = [];
-        $redis = $this->make('redis');
+        $redis = resolve('redis');
         $now = time();
         $one2more = resolve('one2more');
 
