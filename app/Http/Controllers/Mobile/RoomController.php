@@ -288,35 +288,28 @@ class RoomController extends Controller
         //房间进入密码，超过五次就要输入验证码，这个五次是通过phpsessionid来判断的
         $roomstatus = $this->getRoomStatus($rid, 2);
         $keys_room = 'keys_room_passwd:' . $sessionid . ':' . $rid;
-        $times = $this->make('redis')->get($keys_room);
+        $times = $this->make('redis')->get($keys_room)?:0;
         if ($times >= 5) {
             $captcha = $this->request()->get('captcha');
             if (empty($captcha)) {
-                return new JsonResponse(array('status' => 0, 'msg' => '请输入验证码!', 'times' => $times, 'cmd' => 'showCaptcha'));
+                return new JsonResponse(array('status' => 0, 'msg' => '请输入验证码!', 'data'=>['times' => $times, 'cmd' => 'showCaptcha']));
             }
-            if (!Captcha::check($captcha)) return new JsonResponse(array('status' => 0, 'msg' => '验证码错误!', 'times' => $times));;
+            if (!Captcha::check($captcha)) return new JsonResponse(array('status' => 0, 'msg' => '验证码错误!', 'data'=>['times' => $times]));;
         }
         if (strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
-            $this->make('redis')->set($keys_room, $times + 1);
-            $this->make('redis')->expire($keys_room, 3600);
+            $this->make('redis')->setex($keys_room,3600, $times + 1);
             return new JsonResponse(array(
                 'status' => 0,
                 'msg' => "密码格式错误!",
-                'times' => $times + 1
+                'data'=>['times' => $times + 1]
             ));
         }
         if ($password != $roomstatus['pwd']) {
-            if (empty($times)) {
-                $this->make('redis')->set($keys_room, 1);
-                $this->make('redis')->expire($keys_room, 3600);
-            } else {
-                $this->make('redis')->set($keys_room, $times + 1);
-                $this->make('redis')->expire($keys_room, 3600);
-            }
+            $this->make('redis')->setex($keys_room,3600,  $times + 1);
             return new JsonResponse(array(
                 'status' => 0,
                 'msg' => "密码错误!",
-                'times' => $times + 1
+                'data'=>['times' => $times + 1]
             ));
         }
         $this->make('redis')->hset('keys_room_passwd:' . $rid . ':' . $sessionid, 'status', 1);
