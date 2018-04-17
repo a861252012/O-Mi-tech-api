@@ -391,13 +391,12 @@ class RoomController extends Controller
     }
 
     /**
-     * @return static
      */
     public function getRoomConf(Request $request)
     {
         $rid = $request->get('rid');
-        $redis = $this->make('redis');
-        $roomService = resolve('roomService');
+        $redis = resolve('redis');
+        $roomService = resolve(RoomService::class);
 
         $room = $roomService->getRoom($rid, Auth::id());
         /** @var SocketService $socketService */
@@ -408,7 +407,7 @@ class RoomController extends Controller
         }
         if (empty($room) || empty($chatServer)) {
             //创建房间
-            if ($this->userInfo['rid'] == $rid) {   //最近一次与当前一致
+            if (Auth::id() == $rid) {   //最近一次与当前一致
                 try {
                     $room = $roomService->addRoom($rid, $rid, Auth::id());
                     $chatServer = $socketService->getServer($room['channel_id']);
@@ -418,7 +417,6 @@ class RoomController extends Controller
             }
         }
         return JsonResponse::create([
-            'new_user' => $this->userInfo['created'] > SiteSer::config('user_time_division') ? 1 : 0,
             'rid' => $rid,
             'chatServer' => $chatServer,
             'in_limit_points' => $redis->hget('hconf', 'in_limit_points') ?: 0,
@@ -437,7 +435,7 @@ class RoomController extends Controller
     public function getRoomAccess($rid)
     {
         $return = [];
-        $redis = $this->make('redis');
+        $redis = resolve('redis');
         $now = time();
         $one2more = resolve('one2more');
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Http\Middleware\ThrottleRoutes;
 use App\Mail\PwdReset;
 use App\Mail\SafeMailVerify;
 use App\Models\Users;
@@ -27,13 +28,16 @@ class PasswordController extends Controller
     {
         $user = Auth::user();
         if ($user->safemail) {
+            ThrottleRoutes::clear($request);
             return JsonResponse::create(['status' => 0, 'msg' => '你已验证过安全邮箱！',]);
         }
         $email = $request->get('mail');
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            ThrottleRoutes::clear($request);
             return JsonResponse::create(['status' => 0, 'msg' => '安全邮箱地址格式不正确',]);
         }
         if (Users::where('safemail', $email)->exists()) {
+            ThrottleRoutes::clear($request);
             return JsonResponse::create(['status' => 0, 'msg' => '安全邮件已被使用',]);
         }
         $mail = (new SafeMailVerify($user, $email));
@@ -102,11 +106,13 @@ class PasswordController extends Controller
     {
         $mail = $request->get('email');
         if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
+            ThrottleRoutes::clear($request);
             return JsonResponse::create(['status' => 0, 'msg' => '邮箱格式不正确']);
         }
 
         $user = Users::where('safemail', $mail)->first();
         if (!$user) {
+            ThrottleRoutes::clear($request);
             return JsonResponse::create(['status' => 0, 'msg' => '该邮箱没有通过安全邮箱验证, 验证安全邮箱才能使用此功能。']);
         }
         $mail = new PwdReset($user);

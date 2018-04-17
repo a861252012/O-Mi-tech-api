@@ -3,10 +3,19 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Routing\Middleware\ThrottleRequestsWithRedis;
-use RuntimeException;
 
 class ThrottleRoutes extends ThrottleRequestsWithRedis
 {
+
+    public static function clear($request)
+    {
+        $instance = resolve(static::class);
+        $key = $instance->resolveRequestSignature($request);
+        if ($key) {
+            return $instance->redis->del($key);
+        }
+        return false;
+    }
 
     protected function resolveRequestSignature($request)
     {
@@ -14,14 +23,8 @@ class ThrottleRoutes extends ThrottleRequestsWithRedis
         if (!($routeName = $request->route()->getName())) {
             $routeName = $request->method() . '|' . $request->path();
         }
-        if ($user = $request->user()) {
-            return $prefix . sha1($user->getAuthIdentifier() . '|' . $routeName);
-        }
-
-        if ($route = $request->route()) {
-            return $prefix . sha1($route->getDomain() . '|' . $request->ip() . '|' . $routeName);
-        }
-
-        throw new RuntimeException('Unable to generate the request signature. Route unavailable.');
+        return $prefix
+            . $routeName . ':'
+            . parent::resolveRequestSignature($request);
     }
 }
