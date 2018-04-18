@@ -23,6 +23,11 @@ Route::get('conf',['name'=>'m_conf', 'uses'=>'Mobile\RoomController@getConf']);
 Route::get('room/conf',['name'=>'m_room_conf', 'uses'=>'Mobile\RoomController@getRoomConf']);
 // 首页房间数据json
 Route::get('/videoList', ['as' => 'index_videoList', 'uses' => 'IndexController@videoList']);
+//活动列表
+Route::get('activitylist', ['name' => 'm_activitylist', 'uses' => 'Mobile\MobileController@activityList']);
+//活动详情
+Route::get('activitydetail/{id}', ['name' => 'm_activitydetail', 'uses' => 'Mobile\MobileController@activityDetail']);
+
 //移动端登录验证
 Route::group(['middleware' => ['login_auth:mobile']], function () {
 
@@ -34,9 +39,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('register', ['name' => 'm_register', 'uses' => 'Mobile\MobileController@register']);
     //轮播图获取
     Route::get('sliderlist', ['name' => 'm_sliderlist', 'uses' => 'Mobile\MobileController@sliderList']);
-    //活动详情
-    Route::get('activitydetail/{id}', ['name' => 'm_activitydetail', 'uses' => 'Mobile\MobileController@activityDetail']);
-    //主播列表
+   //主播列表
     Route::get('video/list/{type}', ['name' => 'm_videolist', 'uses' => 'Mobile\MobileController@videoList']);
 
     /** 获取配置 */
@@ -105,8 +108,6 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
 
 
 });
-//活动列表
-Route::get('activitylist', ['name' => 'm_activitylist', 'uses' => 'Mobile\MobileController@activityList']);
 /** 进房间 */
 Route::post('get_room/{rid}', 'Mobile\RoomController@getRoom')->where('rid','[0-9]{5,15}')->name('m_get_room');
 
