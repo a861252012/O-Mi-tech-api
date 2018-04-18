@@ -618,6 +618,43 @@ class MobileController extends Controller
         return new JsonResponse(['data' => ['rooms'=>$data], 'status' => 1]);
     }
 
+    /*
+     * 获取粉丝详情 by desmond 2017-12-21
+     */
+    public function getFans()
+    {
+
+        $uid = Auth::id();
+        $page = $this->request()->input('page') ?: '1';
+        $page_size = $this->request()->input('pageCount') ?: '1';
+        $page_num = $page * $page_size;
+        if (!$uid) return JsonResponse::create(['status' => 0, 'msg' => '该主播id不存在！']);
+        $keys = 'zuser_byattens:' . $uid;
+        $redis = $this->make('redis');
+        $zuser = $redis->zrange($keys, 0, -1);
+        //总页数
+        $count_page = ceil(count($zuser) / $page_size);
+        $zuserinfo = [];
+        foreach ($zuser as $key => $value) {
+            if ($key < $page_num && $key >= $page_num - $page_size) {
+                $zuserinfo[] = $value;
+            }
+        }
+        $insertArr = [];
+        foreach ($zuserinfo as $key => $value) {
+            $user = UserSer::getUserByUid($value);
+            $info = $user ? $user->only(['uid','nickname','rich','headimg','lv_exp','lv_rich','vip','roled']) : [];
+
+            array_push($insertArr, $info);
+        }
+        $result['data']['userinfo'] = $insertArr;
+        $result['data']['page'] = $page;
+        $result['data']['page_count'] = $count_page;
+
+        return JsonResponse::create($result);
+
+    }
+
     public function saveCrash()
     {
         $key = '123';

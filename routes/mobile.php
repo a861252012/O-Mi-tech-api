@@ -30,6 +30,8 @@ Route::get('activitydetail/{id}', ['name' => 'm_activitydetail', 'uses' => 'Mobi
 
 //移动端登录验证
 Route::group(['middleware' => ['login_auth:mobile']], function () {
+//app获取粉丝详情
+    Route::get('OneToMore/getfans', ['as' => 'm_onetomorecreate','uses' => 'Mobile\MobileController@getFans']);
 
     //首页
     Route::get('index', ['name' => 'm_index', 'uses' => 'Mobile\MobileController@index']);
