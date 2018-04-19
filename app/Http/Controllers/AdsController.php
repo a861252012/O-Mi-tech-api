@@ -17,9 +17,12 @@ use Illuminate\Http\JsonResponse;
 
 class   AdsController extends Controller{
     public function getAd(){
-      $device = Input::get('device',1);
+        $device = Input::get('device',1);
+        $site_ids = Input::get('site_ids',1);
 
-        $data = Ads::where('device',$device)->published()->get()->toArray();
+        $data = Ads::where('device',$device)->whereRaw("FIND_IN_SET($site_ids, site_ids)")->published()->get()->toArray();
+
+
         //针对ios和安卓进行广告数据优化
         if($device == 2 || $device == 4){
             foreach($data as $key=>$value){
@@ -29,7 +32,7 @@ class   AdsController extends Controller{
                     unset( $data[$key]['meta']);
                 }
             }
-         }
+        }
 
         //$cdn  = $this->make('config')['config.REMOTE_CDN_PIC_URL'];
         $cdn = SiteSer::config('cdn_host')."/public/oort"; // 'http://s.tnmhl.com/public/oort';
