@@ -10,7 +10,7 @@ Route::get('/captcha', 'LoginController@captcha');
 Route::get('/task', 'TaskController@index')->name('task_index');
 //贵族列表
 Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopController@getGroupAll']);
-Route::get('room/{rid}/{h5?}','RoomController@index')
+Route::get('room/{rid}/{h5?}', 'RoomController@index')
     ->where('rid', '[0-9]+')
     ->where('h5', '(h5|h5hls)');
 
@@ -71,7 +71,7 @@ Route::group(['prefix' => 'member'], function () {
         // 用户中心 直播统计
         Route::get('live', 'MemberController@live')->name('member_live');
         // 用户中心修改基本信息
-        Route::post('edituserinfo',  'MemberController@editUserInfo')->name('member_edituserinfo');
+        Route::post('edituserinfo', 'MemberController@editUserInfo')->name('member_edituserinfo');
     });
 });
 
@@ -332,8 +332,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     Route::get('/ajaxProxy', ['name' => 'ajaxProxy', 'uses' => 'ApiController@ajaxProxy']);
 });
-Route::get('/m/test', ['name' => 'm_testasds', 'uses' => 'Mobile\MobileController@test']);
-Route::get('/m/login', ['name' => 'm_login', 'uses' => 'Mobile\MobileController@login']);
+
 //rtmp地址
 Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp', 'uses' => 'RoomController@get']);
 
@@ -365,7 +364,7 @@ Route::group(['prefix' => 'charge', 'middleware' => ['charge']], function () {
 //连通测试
 Route::get('/ping', ['name' => 'ping', 'uses' => 'ApiController@ping']);
 
-Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
+Route::post('login', 'LoginController@login')->name('login');
 Route::any('/logout', 'LoginController@logout');
 
 Route::match(['POST', 'GET'], '/get_lcertificate', ['name' => 'api_agents', 'uses' => 'ApiController@get_lcertificate']);

@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\SiteSpecific;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class Users extends Authenticatable
 {
-    use Notifiable;
+    use Notifiable,
+        SiteSpecific;
 
+    public $timestamps = false;
     protected $table = 'video_user';
     protected $primaryKey = 'uid';
     protected $guarded = ['uid'];
-    public $timestamps = false;
-    protected $hidden=[];
+    protected $hidden = [];
 
     /**
      * 关联的用户的贵族的信息
@@ -42,6 +44,6 @@ class Users extends Authenticatable
 
     public function isHost()
     {
-        return $this->roled==3;
+        return $this->roled == 3;
     }
 }

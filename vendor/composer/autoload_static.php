@@ -76,6 +76,10 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
             'Intervention\\Image\\' => 19,
             'Illuminate\\' => 11,
         ),
+        'H' => 
+        array (
+            'Hashids\\' => 8,
+        ),
         'G' => 
         array (
             'GuzzleHttp\\Psr7\\' => 16,
@@ -230,6 +234,10 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         'Illuminate\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/framework/src/Illuminate',
+        ),
+        'Hashids\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/hashids/hashids/src',
         ),
         'GuzzleHttp\\Psr7\\' => 
         array (
@@ -406,6 +414,7 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         'App\\Models\\AgentsRelationship' => __DIR__ . '/../..' . '/app/Models/AgentsRelationship.php',
         'App\\Models\\Anchor' => __DIR__ . '/../..' . '/app/Models/Anchor.php',
         'App\\Models\\AnchorGroup' => __DIR__ . '/../..' . '/app/Models/AnchorGroup.php',
+        'App\\Models\\AppCrash' => __DIR__ . '/../..' . '/app/Models/AppCrash.php',
         'App\\Models\\AppVersion' => __DIR__ . '/../..' . '/app/Models/AppVersion.php',
         'App\\Models\\AppVersionIOS' => __DIR__ . '/../..' . '/app/Models/AppVersionIOS.php',
         'App\\Models\\Area' => __DIR__ . '/../..' . '/app/Models/Area.php',
@@ -441,6 +450,7 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         'App\\Models\\Pay' => __DIR__ . '/../..' . '/app/Models/Pay.php',
         'App\\Models\\PayAccount' => __DIR__ . '/../..' . '/app/Models/PayAccount.php',
         'App\\Models\\PayConfig' => __DIR__ . '/../..' . '/app/Models/PayConfig.php',
+        'App\\Models\\PayGD' => __DIR__ . '/../..' . '/app/Models/PayGD.php',
         'App\\Models\\PayNotice' => __DIR__ . '/../..' . '/app/Models/PayNotice.php',
         'App\\Models\\PayOptionChannel' => __DIR__ . '/../..' . '/app/Models/PayOptionChannel.php',
         'App\\Models\\PayOptions' => __DIR__ . '/../..' . '/app/Models/PayOptions.php',
@@ -490,6 +500,7 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         'App\\Providers\\SiteServiceProvider' => __DIR__ . '/../..' . '/app/Providers/SiteServiceProvider.php',
         'App\\Providers\\SocketServiceProvider' => __DIR__ . '/../..' . '/app/Providers/SocketServiceProvider.php',
         'App\\Providers\\UserServiceProvider' => __DIR__ . '/../..' . '/app/Providers/UserServiceProvider.php',
+        'App\\Scopes\\SiteScope' => __DIR__ . '/../..' . '/app/Scopes/SiteScope.php',
         'App\\Services\\ActiveService' => __DIR__ . '/../..' . '/app/Services/ActiveService.php',
         'App\\Services\\Auth\\JWTGuard' => __DIR__ . '/../..' . '/app/Services/Auth/JWTGuard.php',
         'App\\Services\\Auth\\LoginException' => __DIR__ . '/../..' . '/app/Services/Auth/LoginException.php',
@@ -536,6 +547,7 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         'App\\Services\\UserGroup\\UserGroupService' => __DIR__ . '/../..' . '/app/Services/UserGroup/UserGroupService.php',
         'App\\Services\\User\\CaptchaService' => __DIR__ . '/../..' . '/app/Services/User/CaptchaService.php',
         'App\\Services\\User\\UserService' => __DIR__ . '/../..' . '/app/Services/User/UserService.php',
+        'App\\Traits\\SiteSpecific' => __DIR__ . '/../..' . '/app/Traits/SiteSpecific.php',
         'BaconQrCode\\Common\\AbstractEnum' => __DIR__ . '/..' . '/bacon/bacon-qr-code/src/BaconQrCode/Common/AbstractEnum.php',
         'BaconQrCode\\Common\\BitArray' => __DIR__ . '/..' . '/bacon/bacon-qr-code/src/BaconQrCode/Common/BitArray.php',
         'BaconQrCode\\Common\\BitMatrix' => __DIR__ . '/..' . '/bacon/bacon-qr-code/src/BaconQrCode/Common/BitMatrix.php',

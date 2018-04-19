@@ -24,6 +24,7 @@ class IdentifySite
      */
     public function handle($request, Closure $next)
     {
+//        dd($request->getQueryString());
         $this->siteService->fromRequest($request);
         if (!$this->siteService->isValid()) {
             return JsonResponse::create([
