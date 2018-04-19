@@ -81,7 +81,6 @@ return array(
     'App\\Models\\ActivityClick' => $baseDir . '/app/Models/ActivityClick.php',
     'App\\Models\\ActivityPag' => $baseDir . '/app/Models/ActivityPag.php',
     'App\\Models\\Ad' => $baseDir . '/app/Models/Ad.php',
-    'App\\Models\\AdTotal' => $baseDir . '/app/Models/AdTotal.php',
     'App\\Models\\Ads' => $baseDir . '/app/Models/Ads.php',
     'App\\Models\\Agents' => $baseDir . '/app/Models/Agents.php',
     'App\\Models\\AgentsPriv' => $baseDir . '/app/Models/AgentsPriv.php',
