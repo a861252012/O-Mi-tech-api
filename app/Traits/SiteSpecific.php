@@ -3,7 +3,6 @@
 namespace App\Traits;
 
 use App\Facades\SiteSer;
-use App\Observers\SiteObservers;
 use App\Scopes\SiteScope;
 use Illuminate\Database\Eloquent\Model;
 

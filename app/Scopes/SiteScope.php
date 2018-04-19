@@ -26,9 +26,6 @@ class SiteScope implements Scope
      */
     public function apply(Builder $builder, Model $model)
     {
-        $builder->macro('allSites', function (Builder $builder) {
-            return $builder->withoutGlobalScope($this);
-        });
         if (php_sapi_name() === 'cli') {
             return;
         }
