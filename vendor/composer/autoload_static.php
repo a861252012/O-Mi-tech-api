@@ -407,7 +407,6 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         'App\\Models\\ActivityClick' => __DIR__ . '/../..' . '/app/Models/ActivityClick.php',
         'App\\Models\\ActivityPag' => __DIR__ . '/../..' . '/app/Models/ActivityPag.php',
         'App\\Models\\Ad' => __DIR__ . '/../..' . '/app/Models/Ad.php',
-        'App\\Models\\AdTotal' => __DIR__ . '/../..' . '/app/Models/AdTotal.php',
         'App\\Models\\Ads' => __DIR__ . '/../..' . '/app/Models/Ads.php',
         'App\\Models\\Agents' => __DIR__ . '/../..' . '/app/Models/Agents.php',
         'App\\Models\\AgentsPriv' => __DIR__ . '/../..' . '/app/Models/AgentsPriv.php',

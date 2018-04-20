@@ -624,7 +624,7 @@ class RoomController extends Controller
         }
         $getinfo['list'] = $liveinfo;
         $getinfo['duration_total'] = $duration_total;
-        return SuccessResponse::create($getinfo,$status=1,$msg='获取成功');
+        return SuccessResponse::create($getinfo,$msg='获取成功',$status=1);
 
 
     }

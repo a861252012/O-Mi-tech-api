@@ -3,7 +3,6 @@
 namespace App\Console\Commands\Schedule;
 
 use App\Models\Ad;
-use App\Models\AdTotal;
 use App\Models\LiveList;
 use App\Models\MallList;
 use App\Models\Salary;
