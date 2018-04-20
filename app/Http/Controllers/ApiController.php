@@ -915,11 +915,11 @@ class ApiController extends Controller
      * @version 2015-11-10
      * @return  JsonResponse
      */
-    public function getFlashCount()
+    public function getFlashCount(Request $request)
     {
         $array_map = ['apply' => 'kaircli:apply', 'version' => 'kaircli:version', 'kaircli:install'];
-        $type = $this->make('request')->get('type');
-        $v = $this->make('request')->get('v');
+        $type = $request->get('type');
+        $v = $request->get('v');
 
         if (!isset($array_map[$type]) || ($type == 'version' && (!$v || $v <= 0))) {
             return new JsonResponse(['data' => '传入参数有问题', 'status' => 0]);
@@ -927,8 +927,8 @@ class ApiController extends Controller
 
 
         if ($type == 'version' && $v > 0) $array_map .= $v;
-        $redis = $this->make('redis');
-        $ymd = (int)$this->make('request')->get('ymd');
+        $redis = resolve('redis');
+        $ymd = (int)$request->get('ymd');
 
         if ($ymd === 0) {
             $keys = $redis->keys($array_map[$type] . '*');
@@ -940,7 +940,7 @@ class ApiController extends Controller
             $sum = $redis->get($array_map[$type] . $ymd);
         }
 
-        return new JsonResponse(['data' => intval($sum), 'status' => 1]);
+        return new JsonResponse(['data' => ['count'=>intval($sum)], 'status' => 1]);
 
     }
 
