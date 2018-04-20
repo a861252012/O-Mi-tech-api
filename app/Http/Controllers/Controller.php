@@ -626,7 +626,7 @@ class Controller extends BaseController
      */
     public function getHeadimg($headimg, $size = 180)
     {
-        return $headimg ? SiteSer::config('remote_pic_url') . '/' . $headimg . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size) : SiteSer::config('web_cdn_static') . '/public/src/img/head_' . $size . '.png';
+        return $headimg ? $headimg . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size) : '';
     }
 
 

@@ -372,11 +372,6 @@ Route::match(['POST', 'GET'], '/get_lcertificate', ['name' => 'api_agents', 'use
 // 用户flash段调取sid的
 Route::get('/loadsid', ['name' => 'loadsid', 'uses' => 'ApiController@loadSid']);
 
-// 找回密码
-Route::get('/getpwd', ['name' => 'shop_getpwd', 'uses' => 'PasswordController@getpwd']);
-// 找回密码
-Route::post('/getpwdsuccess', ['name' => 'shop_getpwdsuccess', 'uses' => 'PasswordController@getPwdSuccess']);
-// 找回密码
 Route::get('/islogin', ['name' => 'islogin', 'uses' => 'LoginController@isLogin']);
 
 Route::get('/oort2bunny', ['name' => 'guanggao', 'uses' => 'AdsController@getAd']);//广告接口
