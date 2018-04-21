@@ -125,7 +125,9 @@ Route::get('/act', ['name' => 'act', 'uses' => 'ActivityController@index']);
 Route::get('/activity/{action}', 'ActivityController@activity')->name('activity_detail');
 
 //活动路由页面    路由名称约定 /activitydetail/活动名
-Route::get('/activitydetail/{action}', ['name' => 'act', 'uses' => 'ActivityController@activityUrl']);
+Route::get('/activityurl/{action}', ['name' => 'act', 'uses' => 'ActivityController@activityUrl']);
+//活动详情整合   1. /nac/27, 2. /activity/cde + /CharmStar, 3. /activity/cde + /paihang
+Route::get('/act/detail', ['name' => 'act', 'uses' => 'ActivityController@detailtype']);
 
 // PageController 招募页面
 Route::get('/join', ['name' => 'join', 'uses' => 'PageController@join']);

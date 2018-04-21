@@ -27,7 +27,7 @@ class One2OneRoomService extends Service
 
     public function __construct(Request $request)
     {
-        $this->rid = $request->get('rid',0);
+        $this->rid = $request->get('rid',isset($request->rid)?$request->rid:0);
         $this->key_room_status = "hroom_status:" . $this->rid . ":4";
         $this->room = $this->_getData();
         parent::__construct();

@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Redis;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
 use App\Libraries\SuccessResponse;
+use App\Models\ActiveCommon;
+use App\Models\CommonRank;
 class ActivityController extends Controller
 {
 
@@ -34,11 +36,13 @@ class ActivityController extends Controller
      * 活动详情页面
      * @param $id int 活动的详细信息
      */
-    public function info($id)
+    public function     info($id)
     {
+
         $data = ActivityPag::where('img_text_id', $id)->where('dml_flag', '!=', 3)->first();
         $tmp = ActivityPag::where('pid', $id)->where('dml_flag', '!=', 3)->first();
-        //根据id判断是否有活动详情
+
+
         if(empty($tmp)){
             $data = "";
             $status = 0;
@@ -50,7 +54,9 @@ class ActivityController extends Controller
             $status = 1;
         }
 
-        return SuccessResponse::create($data,$msg = "获取成功", $status);
+        return  $data;
+
+     //   return SuccessResponse::create($data,$msg = "获取成功", $status);
 
 //        return $this->render('Activity/info',array('activity'=>$data));
     }
@@ -65,6 +71,7 @@ class ActivityController extends Controller
         $active = Redis::hgetall('hactive_page');
 
         //先从redis中获取，如果取不到，再去匹配数据库。
+
         if ($action != $active['url']) {
               $active  = ActivePage::where('url',$action)->first();
               if(empty($active)){
@@ -88,7 +95,9 @@ class ActivityController extends Controller
         }
 
         $arr = array_merge($arr, $active);
-        return  new JsonResponse(['data'=>$arr]);
+
+        return $arr;
+        //return  new JsonResponse(['data'=>$arr]);
     }
 
     /**
@@ -131,8 +140,8 @@ class ActivityController extends Controller
                 $var['stime'] = 0;
                 $var['starlist'] = array();
                 $var['charmlist'] = array();
-
-                return JsonResponse::create($var);
+                return $var;
+                //return JsonResponse::create($var);
               //  return $this->render('Business/charmstar', $var);
             }
             $var['etime'] = date('Y/m/d H:i:s', strtotime($time['etime'] . ' 23:59:59'));
@@ -170,7 +179,65 @@ class ActivityController extends Controller
             $var['starlist'] = array();
         }
         $var =$this->format_jsoncode($var);
-        return JsonResponse::create($var);
+        return $var;
+      //  return JsonResponse::create($var);
+    }
+
+    /**
+     * 多礼物活动
+     * @return Response
+     */
+    public function mulitRank(){
+        $var = [];
+        $var['stime'] = 0;
+        $var['etime'] = 0;
+        $var['list'] = [];
+
+        //获取活动
+        $dbType = "msyql";
+        $active = [];
+        $active_id = null;
+
+        if ($this->make('redis')->exists('hactive_common')) {
+            $active = $this->make('redis')->hGetAll('hactive_common');
+            $dbType = "redis";
+            $active_id = $active['active_id'];
+        }else{
+            $temp = ActiveCommon::where('etime', '<', date('Y-m-d'))->where('dml_flag', '!=', 3)
+                ->orderBy('etime', 'desc')
+                ->first();
+            $active = $temp;
+            $dbType = "msyql";
+            $active_id = $temp ? $temp['active_id'] : null;
+        }
+
+        //无活动退出
+        if (empty($active)) {
+            return new Response(json_encode($var));
+        }
+
+        //获取排行榜
+        $gidArray = explode(',',$active['gids']);
+        $rank = [];
+
+        foreach($gidArray as $k=>$gid){
+            $charmlist = $this->single($active_id,$gid,1,$dbType);
+            $starlist =  $this->single($active_id,$gid,2,$dbType);
+
+            $rank[$gid][1] = $charmlist;
+            $rank[$gid][2] = $starlist;
+//            array_push($rank,$charmlist);
+//            array_push($rank,$starlist);
+        }
+
+        $var['etime'] = date('Y/m/d H:i:s', strtotime($active['etime'] . ' 23:59:59'));
+        $var['stime'] = date('Y/m/d H:i:s', strtotime($active['stime'] . ' 00:00:00'));
+        $times = $this->countDown($var['etime']);   //倒计时
+        $var['countdown'] = $times;
+        $var['list'] = $rank;
+
+        return $var;
+        //return new Response(json_encode($var));
     }
 
     public function activityUrl($action){
@@ -183,4 +250,112 @@ class ActivityController extends Controller
         }
     }
 
+     public function detailtype(){
+          //根据id获取对应的url
+         $id = isset($_GET['id'])?$_GET['id']:0;
+         $activepage = ActivityPag::where('img_text_id', $id)->where('dml_flag', '!=', 3)->first();
+         $url =  $activepage->toArray()['url'];
+
+         //根据url匹配以下三种情况 nac ; /activity/cde + /CharmStar;/activity/cde + /paihang
+         $url_type = explode('/',$url);
+         if($url_type[1]=='nac'){
+             $data = $this->info($id);
+             return  new jsonresponse(['status'=>1,'data'=>$data]);
+
+         }
+         if($url_type[1]=='activity'){
+
+             $data['activity'] = $this->activity($url_type[2]);
+
+             //单双页排行区分
+             if($data['activity']['type'] == 1){
+                 $data['charmstar'] = $this->charmstar();
+             }
+             if($data['activity']['type'] == 2){
+                 $data['paihang'] = $this->mulitRank();
+             }
+             return  new jsonresponse(['status'=>1,'data'=>$data,'msg'=>'获取成功']);
+         }
+
+         return new JsonResponse(['status'=>0,'msg'=>'找不到页面']);
+
+
+     }
+
+
+
+    /**
+     * 单个排行榜
+     * @param string $gid   物品
+     * @param string $type  主播OR用户
+     * @param string $db    数据源
+     * @return array
+     */
+    private function single($active_id=null,$gid='',$type='1',$db='mysql'){
+        $list = [];
+        if($db=='redis'){
+            $zkey = $type==1 ? "zvideo_charm_gnum" : "zvideo_extreme_gnum";   //zvideo_charm_gnum
+            $zkey .= ':'.$gid;
+            $list = $charm = $this->make('redis')->zRevRange($zkey, 0, 9, true);
+        }else{
+            $charm = CommonRank::where([
+                'active_id'=>$active_id,
+                'gid'=>$gid,
+                'rank_type'=>$type
+            ])->where('dml_flag', '!=', 3)->groupBy('uid')
+                ->orderBy('gnum', 'desc')
+                ->take(10)
+                ->get();
+
+            $charm = $charm->toArray();
+            $values = array_column($charm,'gnum');
+            $keys = array_column($charm,'uid');
+            $list = array_combine($keys,$values);
+        }
+
+        $userServer =  resolve(UserService::class);
+        $no_charm = 1;
+        $charmlist = [];
+        foreach ($list as $key => $value) {
+            $temp = [];
+            $temp['no'] = $no_charm++;
+            $temp['nickname'] = $userServer->getUserByUid($key)['nickname'];
+            $temp['gnum'] = $value;
+            array_push($charmlist,$temp);
+        }
+        return $charmlist;
+    }
+
+    /**
+     * 倒计时
+     * @param $etime
+     * @return mixed
+     */
+    private function countDown($etime){
+        $time = strtotime($etime)-time();
+        if($time<=0){
+            $var['day'] = 0;
+            $var['hour'] = 0;
+            $var['min'] = 0;
+            $var['second'] = 0;
+        }else{
+            $var['day'] = floor($time/86400);
+            if($var['day']<10){
+                $var['day'] = "0".$var['day'];
+            }
+            $time = $time%86400;
+            $var['hour'] = floor($time/3600);
+            if($var['hour']<10){
+                $var['hour'] = "0".$var['hour'];
+            }
+            $time = $time%3600;
+            $var['min'] = floor($time/60);
+            if($var['min']<10){
+                $var['min'] = "0".$var['min'];
+            }
+            $time = $time%60;
+            $var['second'] = $time>=10 ? $time: "0".$time;
+        }
+        return $var;
+    }
 }
