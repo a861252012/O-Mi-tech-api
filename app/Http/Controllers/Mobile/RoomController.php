@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Mews\Captcha\Facades\Captcha;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class RoomController extends Controller
 {
