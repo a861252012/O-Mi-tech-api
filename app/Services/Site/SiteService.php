@@ -3,8 +3,10 @@
 namespace App\Services\Site;
 
 use App\Models\Site;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\MessageBag;
@@ -19,7 +21,13 @@ use RuntimeException;
 class SiteService
 {
     const KEY_SITE_DOMAIN = 'hsite_domains:';
-
+    const SITE_TOKEN_NAME = 'Site-Token';
+    const SITE_TOKEN_LIFETIME_MINUTES = 5;
+    /**
+     * 是否需要刷新site-token
+     * @var bool
+     */
+    protected $siteTokenRefresh;
     /**
      * 当前域名信息，通过网络请求时才会有
      * @var Collection
@@ -54,6 +62,60 @@ class SiteService
         $this->errors = new MessageBag();
     }
 
+    public static function syncConfigForSite(Site $site)
+    {
+        $configArray = static::getDBConfigArrayForSite($site);
+        static::flushConfigCacheForSite($site);
+        return Config::hMset($site->id, $configArray);
+    }
+
+    public static function getDBConfigArrayForSite(Site $site)
+    {
+        $config = $site->config;
+        $configArray = array_combine($config->pluck('k')->toArray(), $config->pluck('v')->toArray());
+        return $configArray;
+    }
+
+    public static function flushConfigCacheForSite(Site $site)
+    {
+        return Config::flushByID($site->id);
+    }
+
+    public static function syncDomainForSite(Site $site)
+    {
+        static::flushDomainCacheForSite($site);
+        return resolve('redis')->pipeline(function ($pipe) use ($site) {
+            $site->domains()->each(function ($domain) use ($pipe) {
+                $pipe->hmset(static::KEY_SITE_DOMAIN . $domain->domain, $domain->toArray());
+            });
+        });
+    }
+
+    public static function flushDomainCacheForSite(Site $site)
+    {
+        $redis = resolve('redis');
+        $keys = $redis->keys(static::KEY_SITE_DOMAIN . '*');
+        return collect($keys)->each(function ($key) use ($redis, $site) {
+            if ($redis->hget($key, 'site_id') == $site->id) {
+                $redis->del($key);
+            }
+        });
+    }
+
+    public static function getIDs(): Collection
+    {
+        $keys = Redis::keys(Config::KEY_SITE_CONFIG . '*');
+        return collect($keys)->map(function ($key) {
+            return str_replace_first(Config::KEY_SITE_CONFIG, '', $key);
+        });
+
+    }
+
+    public function siteTokenNeedsRefresh()
+    {
+        return $this->siteTokenRefresh;
+    }
+
     public function isValid(): bool
     {
         return !$this->errors->any();
@@ -62,22 +124,14 @@ class SiteService
     public function fromRequest(Request $request): SiteService
     {
         $this->host = $request->getHttpHost();
-        $this->loadDomainInfo();
+        if (!$this->validateSiteToken($request)) {
+            $this->siteTokenRefresh = true;
+            $this->loadDomainInfo();
+        }
         if (!is_null($this->id)) {
             $this->loadConfig();
             $this->checkConfigValidity();
         }
-        return $this;
-    }
-
-    public function fromID($id)
-    {
-        if (is_null($id)) {
-            throw new RuntimeException('site id cannot be null');
-        }
-        $this->id = $id;
-        $this->loadConfig();
-        $this->checkConfigValidity();
         return $this;
     }
 
@@ -90,14 +144,38 @@ class SiteService
         }
     }
 
-    public function domain(): Collection
+    public function checkDomainValidity(Collection $domain): bool
     {
-        return $this->domain;
+        if (!$domain->has('site_id')) {
+            $this->errors->add('domain', '域名配置错误，请联系客服！');
+            return false;
+        }
+        return true;
     }
 
-    public function siteId()
+    protected function validateSiteToken(Request $request): bool
     {
-        return $this->id;
+        $siteToken = $this->getSiteTokenFromRequest($request);
+        if (is_null($siteToken)) {
+            return false;
+        }
+        try {
+            list($host, $siteId, $created_at) = Crypt::decrypt($siteToken);
+            if ($host !== $this->host || time() - $created_at >= static::SITE_TOKEN_LIFETIME_MINUTES * 60) {
+                return false;
+            }
+            $this->host=$host;
+            $this->id=$siteId;
+        } catch (DecryptException $e) {
+            return false;
+        }
+        return true;
+    }
+
+    public function getSiteTokenFromRequest(Request $request)
+    {
+        return $request->header(static::SITE_TOKEN_NAME) ?:
+            $request->cookie(static::SITE_TOKEN_NAME);
     }
 
     protected function loadConfig(): void
@@ -108,6 +186,15 @@ class SiteService
     public static function getConfigBySiteID($id)
     {
         return new Config($id);
+    }
+
+    public function checkConfigValidity(): bool
+    {
+        if (!$this->config()->isValid()) {
+            $this->errors->add('config', '站点配置缺失，请联系客服！');
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -126,22 +213,20 @@ class SiteService
         return $this->config;
     }
 
-    public function checkDomainValidity(Collection $domain): bool
+    public function fromID($id)
     {
-        if (!$domain->has('site_id')) {
-            $this->errors->add('domain', '域名配置错误，请联系客服！');
-            return false;
+        if (is_null($id)) {
+            throw new RuntimeException('site id cannot be null');
         }
-        return true;
+        $this->id = $id;
+        $this->loadConfig();
+        $this->checkConfigValidity();
+        return $this;
     }
 
-    public function checkConfigValidity(): bool
+    public function siteId()
     {
-        if (!$this->config()->isValid()) {
-            $this->errors->add('config', '站点配置缺失，请联系客服！');
-            return false;
-        }
-        return true;
+        return $this->id;
     }
 
     public function shareConfigWithViews()
@@ -156,17 +241,17 @@ class SiteService
         View::share('public_path', $this->getPublicPath());
     }
 
+    public function getPublicPath()
+    {
+        return 's' . $this->id;
+    }
+
     /**
      * @return mixed
      */
     public function getDomain()
     {
         return $this->domain;
-    }
-
-    public function getPublicPath()
-    {
-        return 's' . $this->id;
     }
 
     /**
@@ -177,52 +262,17 @@ class SiteService
         return $this->errors;
     }
 
-    public static function getDBConfigArrayForSite(Site $site)
+    public function genSiteToken(): string
     {
-        $config = $site->config;
-        $configArray = array_combine($config->pluck('k')->toArray(), $config->pluck('v')->toArray());
-        return $configArray;
+        $host = $this->host;
+        $siteId = $this->id;
+        $created_at = time();
+        $token = Crypt::encrypt([$host, $siteId, $created_at]);
+        return $token;
     }
 
-    public static function flushConfigCacheForSite(Site $site)
+    public function domain(): Collection
     {
-        return Config::flushByID($site->id);
-    }
-
-    public static function flushDomainCacheForSite(Site $site)
-    {
-        $redis = resolve('redis');
-        $keys = $redis->keys(static::KEY_SITE_DOMAIN . '*');
-        return collect($keys)->each(function ($key) use ($redis, $site) {
-            if ($redis->hget($key, 'site_id') == $site->id) {
-                $redis->del($key);
-            }
-        });
-    }
-
-    public static function syncConfigForSite(Site $site)
-    {
-        $configArray = static::getDBConfigArrayForSite($site);
-        static::flushConfigCacheForSite($site);
-        return Config::hMset($site->id, $configArray);
-    }
-
-    public static function syncDomainForSite(Site $site)
-    {
-        static::flushDomainCacheForSite($site);
-        return resolve('redis')->pipeline(function ($pipe) use ($site) {
-            $site->domains()->each(function ($domain) use ($pipe) {
-                $pipe->hmset(static::KEY_SITE_DOMAIN . $domain->domain, $domain->toArray());
-            });
-        });
-    }
-
-    public static function getIDs(): Collection
-    {
-        $keys = Redis::keys(Config::KEY_SITE_CONFIG . '*');
-        return collect($keys)->map(function ($key) {
-            return str_replace_first(Config::KEY_SITE_CONFIG, '', $key);
-        });
-
+        return $this->domain;
     }
 }

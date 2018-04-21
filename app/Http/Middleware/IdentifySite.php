@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Services\Site\SiteService;
 use Closure;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 class IdentifySite
 {
@@ -24,7 +25,6 @@ class IdentifySite
      */
     public function handle($request, Closure $next)
     {
-//        dd($request->getQueryString());
         $this->siteService->fromRequest($request);
         if (!$this->siteService->isValid()) {
             return JsonResponse::create([
@@ -33,6 +33,13 @@ class IdentifySite
             ]);
         }
         $this->siteService->shareConfigWithViews();
-        return $next($request);
+        /** @var Response $response */
+        $response = $next($request);
+        if ($this->siteService->siteTokenNeedsRefresh()) {
+            $siteToken = $this->siteService->genSiteToken();
+            $response->withCookie(cookie($this->siteService::SITE_TOKEN_NAME, $siteToken, $this->siteService::SITE_TOKEN_LIFETIME_MINUTES, '/', null, false, true));
+            $response->header('Set-' . $this->siteService::SITE_TOKEN_NAME, $siteToken, true);
+        }
+        return $response;
     }
 }
