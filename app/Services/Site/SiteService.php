@@ -135,6 +135,31 @@ class SiteService
         return $this;
     }
 
+    protected function validateSiteToken(Request $request): bool
+    {
+        $siteToken = $this->getSiteTokenFromRequest($request);
+        if (is_null($siteToken)) {
+            return false;
+        }
+        try {
+            list($host, $siteId, $created_at) = Crypt::decrypt($siteToken);
+            if ($host !== $this->host || time() - $created_at >= static::SITE_TOKEN_LIFETIME_MINUTES * 60) {
+                return false;
+            }
+            $this->host = $host;
+            $this->id = $siteId;
+        } catch (DecryptException $e) {
+            return false;
+        }
+        return true;
+    }
+
+    public function getSiteTokenFromRequest(Request $request)
+    {
+        return $request->header(static::SITE_TOKEN_NAME) ?:
+            $request->cookie(static::SITE_TOKEN_NAME);
+    }
+
     protected function loadDomainInfo(): void
     {
         $siteDomain = Redis::hgetall(static::KEY_SITE_DOMAIN . $this->host);
@@ -151,31 +176,6 @@ class SiteService
             return false;
         }
         return true;
-    }
-
-    protected function validateSiteToken(Request $request): bool
-    {
-        $siteToken = $this->getSiteTokenFromRequest($request);
-        if (is_null($siteToken)) {
-            return false;
-        }
-        try {
-            list($host, $siteId, $created_at) = Crypt::decrypt($siteToken);
-            if ($host !== $this->host || time() - $created_at >= static::SITE_TOKEN_LIFETIME_MINUTES * 60) {
-                return false;
-            }
-            $this->host=$host;
-            $this->id=$siteId;
-        } catch (DecryptException $e) {
-            return false;
-        }
-        return true;
-    }
-
-    public function getSiteTokenFromRequest(Request $request)
-    {
-        return $request->header(static::SITE_TOKEN_NAME) ?:
-            $request->cookie(static::SITE_TOKEN_NAME);
     }
 
     protected function loadConfig(): void
