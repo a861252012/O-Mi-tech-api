@@ -75,7 +75,7 @@ class ActivityController extends Controller
         if ($action != $active['url']) {
               $active  = ActivePage::where('url',$action)->first();
               if(empty($active)){
-                  return  new jsonresponse(['status'=>0,'msg'=>'找不到该页面！']);
+                  return ['status'=>0,'msg'=>'找不到该页面！'];
               }else{
                   $active = json_decode($active,true);
               }
@@ -254,6 +254,9 @@ class ActivityController extends Controller
           //根据id获取对应的url
          $id = isset($_GET['id'])?$_GET['id']:0;
          $activepage = ActivityPag::where('img_text_id', $id)->where('dml_flag', '!=', 3)->first();
+         if(empty($activepage)){
+             return new JsonResponse(['status'=>0,'msg'=>'找不到页面']);
+         }
          $url =  $activepage->toArray()['url'];
 
          //根据url匹配以下三种情况 nac ; /activity/cde + /CharmStar;/activity/cde + /paihang
@@ -264,9 +267,10 @@ class ActivityController extends Controller
 
          }
          if($url_type[1]=='activity'){
-
              $data['activity'] = $this->activity($url_type[2]);
-
+             if(isset($data['activity']['status']) && $data['activity']['status'] == 0){
+                 return new JsonResponse(['status'=>0,'msg'=>'找不到页面']);
+             }
              //单双页排行区分
              if($data['activity']['type'] == 1){
                  $data['charmstar'] = $this->charmstar();
