@@ -173,4 +173,14 @@ class ActivityController extends Controller
         return JsonResponse::create($var);
     }
 
+    public function activityUrl($action){
+
+        $active  = ActivePage::where('url',$action)->first();
+        if(empty($active)){
+            return  new jsonresponse(['status'=>0,'msg'=>'找不到该页面！']);
+        }else{
+            return  new jsonresponse(['status'=>1,'msg'=>'获取成功','data'=>['url'=>'activity/'.$active->toArray()['url']]]);
+        }
+    }
+
 }

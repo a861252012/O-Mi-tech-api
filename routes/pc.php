@@ -123,6 +123,10 @@ Route::get('/shop', ['name' => 'shop_index', 'uses' => 'ShopController@index']);
 Route::get('/act', ['name' => 'act', 'uses' => 'ActivityController@index']);
 //活动详情页面
 Route::get('/activity/{action}', 'ActivityController@activity')->name('activity_detail');
+
+//活动路由页面    路由名称约定 /activitydetail/活动名
+Route::get('/activitydetail/{action}', ['name' => 'act', 'uses' => 'ActivityController@activityUrl']);
+
 // PageController 招募页面
 Route::get('/join', ['name' => 'join', 'uses' => 'PageController@join']);
 Route::get('/cooperation', ['name' => 'join', 'uses' => 'PageController@cooperation']);
@@ -139,6 +143,7 @@ Route::match(['POST', 'GET'], '/indexinfo', ['name' => 'indexinfo', 'uses' => 'I
 //代理
 Route::get('/extend/{url}', ['name' => 'business_extend', 'uses' => 'BusinessController@extend']);
 Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
+
 
 
 Route::post('/reg', 'ApiController@reg')->name('api_reg');
