@@ -53,8 +53,11 @@ class ActivityController extends Controller
             $data['tmp'] = array_slice($temp, 1); // 抛出第一个原图的 后面的才是切割后的图
             $status = 1;
         }
+        $result['type'] = $data['type'];
+        unset($data['type']);
+        $result['activity'] = $data;
 
-        return  $data;
+        return  $result;
 
      //   return SuccessResponse::create($data,$msg = "获取成功", $status);
 
@@ -95,8 +98,10 @@ class ActivityController extends Controller
         }
 
         $arr = array_merge($arr, $active);
-
-        return $arr;
+        $result['type'] = $arr['type'];
+        unset($arr['type']);
+        $result['activity'] = $arr;
+        return $result;
         //return  new JsonResponse(['data'=>$arr]);
     }
 
