@@ -23,6 +23,7 @@ use App\Models\Users;
 use App\Services\Room\NoSocketChannelException;
 use App\Services\Room\RoomService;
 use App\Services\Room\SocketService;
+use App\Services\Safe\SafeService;
 use App\Services\User\UserService;
 use DB;
 use Illuminate\Http\JsonResponse;
@@ -425,7 +426,7 @@ class RoomController extends Controller
             'chatServer' => $chatServer,
             'in_limit_points' => $redis->hget('hconf', 'in_limit_points') ?: 0,
             'in_limit_safemail' => $redis->hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
-            'certificate' => $this->make('safeService')->getLcertificate(),
+            'certificate' => resolve(SafeService::class)->getLcertificate(),
         ]);
     }
 
