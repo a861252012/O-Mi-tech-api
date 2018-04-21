@@ -656,4 +656,35 @@ class RoomController extends Controller
         return JsonResponse::create($result);
     }
 
+
+    /*
+       *  一对一房间记录接口
+       */
+    public function listOneToOneByHost()
+    {
+
+        //$this->isLogin() or die;
+
+        $start_date = $this->request()->input('starttime') ? $this->request()->input('starttime') . ' 00:00:00' : date('0000-00-00 00:00:00');
+        $end_date = $this->request()->input('endtime') ? $this->request()->input('endtime') . ' 23:59:59' : date('Y-m-d 23:59:59');
+        $uid = Auth::id();
+
+        $page = $this->request()->get('page');
+        LengthAwarePaginator::currentPageResolver(function () use ($page) {
+            return $page ?: 1;
+        });
+        $result = RoomDuration::where('uid', '=', $uid)
+            ->where('status', '=', 0)
+            ->where('starttime', '>=', $start_date)
+            ->where('starttime', '<=', $end_date)
+            ->orderBy('starttime', '=', 'DESC')
+            ->paginate(15)
+            ->toArray();
+
+
+        return JsonResponse::create(['status' => 1, 'data' => $result,'msg'=>'获取成功']);
+
+
+    }
+
 }

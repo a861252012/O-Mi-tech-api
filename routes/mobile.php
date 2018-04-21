@@ -106,7 +106,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('showlist', ['as' => 'm_showlist', 'uses' => 'Mobile\RoomController@showlist']);
 
     //移动端一对一房间用户
-    Route::get('OneToOne/list', ['name' => 'member_onetoONElist', 'uses' => 'Mobile\MobileController@listOneToOneByHost']);
+    Route::get('OneToOne/list', ['as' => 'member_onetoONElist', 'uses' => 'Mobile\RoomController@listOneToOneByHost']);
 
 
 });
