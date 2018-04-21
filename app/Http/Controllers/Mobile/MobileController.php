@@ -300,7 +300,7 @@ class MobileController extends Controller
      */
     public function captcha()
     {
-        return $captcha = Captcha::create();
+        return Captcha::create()->header(session()->getName(),session()->getId(),true);
 //        $png = $captcha->getContent();
 //        return JsonResponse::create(['captcha' => base64_encode($png), Session::getName() => Session::getId()]);
     }
