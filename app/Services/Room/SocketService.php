@@ -29,30 +29,46 @@ class SocketService extends Service
         return empty($time) || ($time + static::CHANNEL_TIME_MILLS) < microtime(true);
     }
 
-    public function getNextServerAvailable($uid)
+    /**
+     * @return mixed
+     * @throws NoSocketChannelException
+     */
+    public function getNextServerAvailable()
     {
         $redis = resolve('redis');
         $channels_update = collect($redis->hgetall('channel_update'));
-//        $minLoadChannel = null;
-        $channelIDs = collect();//可用的channel id
+        $minLoadChannel = null;
+//        $channelIDs = collect();//可用的channel id
         $channels_update->keys()->map(function ($channelID) use (&$channels_update, &$redis, &$minLoadChannel, &$channelIDs) {
             if (!self::socketExpired($channels_update[$channelID])) {
-                $channelIDs->push($channelID);
-//                $channelInfo = $redis->hgetall('channel_info:' . $channelID);
-//                if ($this->lessLoad($channelInfo, $minLoadChannel)) {
-//                    $minLoadChannel = $channelInfo;
-//                }
+//                $channelIDs->push($channelID);
+                $channelInfo = $redis->hgetall('channel_info:' . $channelID);
+                if ($this->lessLoad($channelInfo, $minLoadChannel)) {
+                    $minLoadChannel = $channelInfo;
+                }
             }
         });
-        if ($channelIDs->count() == 0) {
+//        if ($channelIDs->count() == 0) {
+        if (!$minLoadChannel) {
             throw new NoSocketChannelException('没有可用channel');
         }
-        $idSelected = $channelIDs->get($uid % $channelIDs->count());
-        $channelInfo = $redis->hgetall('channel_info:' . $idSelected);
-        if (empty($channelInfo)) {
+//        $idSelected = $channelIDs->get($uid % $channelIDs->count());
+//        $channelInfo = $redis->hgetall('channel_info:' . $idSelected);
+        if (empty($minLoadChannel)) {
             throw new NoSocketChannelException('获取Socket Channel失败');
         }
-        return $channelInfo;
+        return $minLoadChannel;
+    }
+
+    /**
+     * 比较两个频道负载 return c1<c2
+     * @param $c1
+     * @param $c2
+     * @return bool
+     */
+    protected function lessLoad($c1, $c2)
+    {
+        return !empty($c1) && (empty($c2) || $c1['total'] < $c2['total']);
     }
 
     public function getActiveChannelIDs()
@@ -65,16 +81,5 @@ class SocketService extends Service
                 $channelIDs->push($channelID);
             }
         });
-    }
-
-    /**
-     * 比较两个频道负载 return c1<c2
-     * @param $c1
-     * @param $c2
-     * @return bool
-     */
-    protected function lessLoad($c1, $c2)
-    {
-        return !empty($c1) && (empty($c2) || $c1['total'] < $c2['total']);
     }
 }

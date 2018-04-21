@@ -11,29 +11,26 @@ namespace App\Http\Controllers\Mobile;
 
 use App\Facades\Site;
 use App\Facades\SiteSer;
+use App\Http\Controllers\Controller;
 use App\Libraries\SuccessResponse;
+use App\Models\LiveList;
 use App\Models\MallList;
 use App\Models\RoomDuration;
+use App\Models\RoomOneToMore;
 use App\Models\RoomStatus;
 use App\Models\UserBuyOneToMore;
 use App\Models\Users;
-use App\Services\Room\One2MoreRoomService;
+use App\Services\Room\NoSocketChannelException;
 use App\Services\Room\RoomService;
 use App\Services\Room\SocketService;
-use App\Services\Room\NoSocketChannelException;
 use App\Services\User\UserService;
 use DB;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Response;
-use Mews\Captcha\Facades\Captcha;
 use Illuminate\Http\JsonResponse;
-use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\RoomOneToMore;
-use Illuminate\Pagination\LengthAwarePaginator;
-use App\Models\LiveList;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
+use Mews\Captcha\Facades\Captcha;
 
 class RoomController extends Controller
 {
@@ -56,24 +53,24 @@ class RoomController extends Controller
         if (!$origin || !in_array($origin, static::$ORIGINS)) {
             return JsonResponse::create([
                 'status' => 0,
-                'msg' => '非法来源'
+                'msg' => '非法来源',
             ]);
         }
 
         $rid = $request->input('rid');
         $flag = $request->get('flag');
         if (empty($rid) || empty($flag)) {
-            return new JsonResponse(array('status' => 0, 'msg' => '请求错误'));
+            return new JsonResponse(['status' => 0, 'msg' => '请求错误']);
         }
         $duroom = RoomDuration::find($rid);
 
-        if (empty($duroom)) return new JsonResponse(array('status' => 0, 'msg' =>'您预约的房间不存在'));
-        if ($duroom['status'] == 1) return new JsonResponse(array('status' => 0, 'msg' =>'当前的房间已经下线了'));
-        if ($duroom['reuid'] != '0') return new JsonResponse(array('status' => 0, 'msg' => '当前的房间已经被预定了，请选择其他房间'));
-        if ($duroom['uid'] == Auth::id()) return new JsonResponse(array('status' => 0, 'msg' => '自己不能预约自己的房间'));
-        if (Auth::user()->points < $duroom['points']) return new JsonResponse(array('status' => 0, 'msg' => '余额不足哦，请充值！'));
+        if (empty($duroom)) return new JsonResponse(['status' => 0, 'msg' => '您预约的房间不存在']);
+        if ($duroom['status'] == 1) return new JsonResponse(['status' => 0, 'msg' => '当前的房间已经下线了']);
+        if ($duroom['reuid'] != '0') return new JsonResponse(['status' => 0, 'msg' => '当前的房间已经被预定了，请选择其他房间']);
+        if ($duroom['uid'] == Auth::id()) return new JsonResponse(['status' => 0, 'msg' => '自己不能预约自己的房间']);
+        if (Auth::user()->points < $duroom['points']) return new JsonResponse(['status' => 0, 'msg' => '余额不足哦，请充值！']);
         //关键点，这个时段内有没有其他的房间重复，标志位为flag 默认值为false 当用户确认后传入的值为true
-       //if ($flag == 'false' && !$this->notBuyRepeat($duroom['starttime'], $duroom['endtime'])) return new JsonResponse(array('status' => 0, 'msg' => '您这个时间段有房间预约了，您确定要预约么'));
+        //if ($flag == 'false' && !$this->notBuyRepeat($duroom['starttime'], $duroom['endtime'])) return new JsonResponse(array('status' => 0, 'msg' => '您这个时间段有房间预约了，您确定要预约么'));
 
         $duroom['reuid'] = Auth::id();
         try {
@@ -90,43 +87,43 @@ class RoomController extends Controller
             $duroom['invitetime'] = time();
             $arr = $duroom;
             $rs = $this->make('redis')->hSet($keys, $arr['id'], json_encode($arr));
-            Log::channel('room')->info('buyOneToOne',array("redis hset表：" . $keys . " key:" . $arr['id'] . " 结果:" . $rs . "\n"));
+            Log::channel('room')->info('buyOneToOne', ["redis hset表：" . $keys . " key:" . $arr['id'] . " 结果:" . $rs . "\n"]);
             if ($rs !== false) {
                 DB::commit();
             } else {
                 DB::rollback();
-                return new JsonResponse(array('status' => 0, 'msg' => '错误'));
+                return new JsonResponse(['status' => 0, 'msg' => '错误']);
             }
         } catch (\Exception $e) {
-            Log::channel('room')->info('buyOneToOne',"事务异常：id" . $rid . " 房间号" . $duroom['uid'] . " 预约者" . $duroom['reuid'] . " 事务结果：" . $e->getMessage() . "\n");
+            Log::channel('room')->info('buyOneToOne', "事务异常：id" . $rid . " 房间号" . $duroom['uid'] . " 预约者" . $duroom['reuid'] . " 事务结果：" . $e->getMessage() . "\n");
             DB::rollback();
-            return new JsonResponse(array('status' => 0, 'msg' => '错误'));
+            return new JsonResponse(['status' => 0, 'msg' => '错误']);
         }
 
         //记录一个标志位，在我的预约列表查询中需要优先显示查询已经预约过的主播，已经预约过的主播的ID会写到这个redis中类似关注一样的
         if (!($this->checkUserAttensExists(Auth::id(), $duroom['uid'], true, true))) {
             $this->make('redis')->zadd('zuser_reservation:' . Auth::id(), time(), $duroom['uid']);
         }
-        Users::where('uid', Auth::id())->update(array('points' => (Auth::user()->points  - $duroom['points']), 'rich' => (Auth::user()->rich + $duroom['oints'])));
+        Users::where('uid', Auth::id())->update(['points' => (Auth::user()->points - $duroom['points']), 'rich' => (Auth::user()->rich + $duroom['oints'])]);
         resolve(UserService::class)->getUserReset(Auth::id());// 更新redis TODO 好屌
 
         //增加消费记录查询
-        MallList::create(array(
+        MallList::create([
             'send_uid' => Auth::id(),
             'rec_uid' => $duroom['uid'],
             'gid' => $duroom['roomtid'],
             'gnum' => 1,
             'created' => date('Y-m-d H:i:s'),
             'rid' => $duroom['uid'],
-            'points' => $duroom['points']
-        ));
+            'points' => $duroom['points'],
+        ]);
         // 用户增加预约排行榜的排名
         $this->make('redis')->zIncrBy('zrank_appoint_month' . date('Ym'), 1, $duroom['uid']);
         //修改用户日，周，月排行榜数据
         //zrank_rich_history: 用户历史消费    zrank_rich_week ：用户周消费   zrank_rich_day ：用户日消费  zrank_rich_month ：用户月消费
         $expire_day = strtotime(date('Y-m-d 00:00:00', strtotime('next day'))) - time();
         $expire_week = strtotime(date('Y-m-d 00:00:00', strtotime('next week'))) - time();
-        $zrank_user = array('zrank_rich_history', 'zrank_rich_week', 'zrank_rich_day', 'zrank_rich_month:' . date('Ym'));
+        $zrank_user = ['zrank_rich_history', 'zrank_rich_week', 'zrank_rich_day', 'zrank_rich_month:' . date('Ym')];
         foreach ($zrank_user as $value) {
             $this->make('redis')->zIncrBy($value, $duroom['points'], Auth::id());
             if ('zrank_rich_day' == $value) {
@@ -138,7 +135,7 @@ class RoomController extends Controller
         }
         //修改主播日，周，月排行榜数据
         //zrank_pop_history ：主播历史消费   zrank_pop_month  ：主播周消费 zrank_pop_week ：主播日消费 zrank_pop_day ：主播月消费
-        $zrank_pop = array('zrank_pop_history', 'zrank_pop_month:' . date('Ym'), 'zrank_pop_week', 'zrank_pop_day');
+        $zrank_pop = ['zrank_pop_history', 'zrank_pop_month:' . date('Ym'), 'zrank_pop_week', 'zrank_pop_day'];
         foreach ($zrank_pop as $value) {
             $this->make('redis')->zIncrBy($value, $duroom['points'], $duroom['uid']);
             if ('zrank_pop_day' == $value) {
@@ -150,7 +147,7 @@ class RoomController extends Controller
         }
         $this->make('redis')->lPush('lanchor_is_sub:' . $duroom['uid'], date('YmdHis', strtotime($duroom['starttime'])));
 
-        return new JsonResponse(array('status' => 1, 'msg' => '预约成功'));
+        return new JsonResponse(['status' => 1, 'msg' => '预约成功']);
 
     }
 
@@ -162,7 +159,7 @@ class RoomController extends Controller
         $uid = Auth::id();
         $request = $this->request();
         $rid = intval($request->input('rid'));
-        $origin = intval($request->input('origin'))?:12;
+        $origin = intval($request->input('origin')) ?: 12;
         if ($rid == $uid) return JsonResponse::create(['status' => 0, 'msg' => '不能购买自己房间亲']);
         $onetomany = intval($request->input('onetomore'));
         if (empty($onetomany) || empty($uid)) return JsonResponse::create(['status' => 0, 'msg' => '参数错误']);
@@ -172,7 +169,7 @@ class RoomController extends Controller
         if (empty($room)) return JsonResponse::create(['status' => 0, 'msg' => '房间不存在']);
 
         $points = $room['points'];
-        if (resolve('one2more')->checkBuyUser($uid,$onetomany)) return JsonResponse::create(['status' => 0, 'msg' => '您已有资格进入该房间，请从“我的预约”进入。']);
+        if (resolve('one2more')->checkBuyUser($uid, $onetomany)) return JsonResponse::create(['status' => 0, 'msg' => '您已有资格进入该房间，请从“我的预约”进入。']);
         /** 检查余额 */
         $user = resolve(UserService::class)->getUserByUid($uid);
         if ($user['points'] < $points) return JsonResponse::create(['status' => 0, 'msg' => '余额不足', 'cmd' => 'topupTip']);
@@ -185,7 +182,7 @@ class RoomController extends Controller
                 'rid' => $rid,
                 'uid' => $uid,
                 'onetomore' => $onetomany,
-                'origin' => $origin
+                'origin' => $origin,
             ]));
         /** 检查购买状态 */
         $timeout = microtime(true) + 4;
@@ -225,9 +222,9 @@ class RoomController extends Controller
             ->get();
         if (!$myReservation->count()) return $list;
         // 从redis 获取一对一预约数据
-        $rooms = resolve('one2one')->getHomeBookList()['rooms']??[];
+        $rooms = resolve('one2one')->getHomeBookList()['rooms'] ?? [];
         foreach ($rooms as $room) {
-            if($myReservation->where('uid',$room['uid'])->where('onetomore',$room['id'])->first()){
+            if ($myReservation->where('uid', $room['uid'])->where('onetomore', $room['id'])->first()) {
                 $room['listType'] = 'myres';
                 $list[] = $room;
             }
@@ -249,7 +246,7 @@ class RoomController extends Controller
         // 从redis 获取一对多预约数据
         $rooms = resolve('one2more')->getHomeBookList($flashVersion)['rooms'] ?? [];
         foreach ($rooms as $room) {
-            if($oneToMore->where('rid',$room['uid'])->where('onetomore',$room['id'])->first()){
+            if ($oneToMore->where('rid', $room['uid'])->where('onetomore', $room['id'])->first()) {
                 $room['listType'] = 'myticket';
                 $list[] = $room;
             }
@@ -266,8 +263,8 @@ class RoomController extends Controller
         $password = $this->request()->get('password');
         $rid = $this->request()->get('rid');
         $type = $this->getAnchorRoomType($rid);
-        if ($type != 2) return new JsonResponse(array('status' => 0, 'msg' => '密码房异常,请联系运营重新开启一下密码房间的开关'));
-        if (empty($rid)) return new JsonResponse(array('status' => 0, 'msg' => '房间号错误!'));
+        if ($type != 2) return new JsonResponse(['status' => 0, 'msg' => '密码房异常,请联系运营重新开启一下密码房间的开关']);
+        if (empty($rid)) return new JsonResponse(['status' => 0, 'msg' => '房间号错误!']);
         if (empty($password)) {
             return $this->geterrorsAction();
         }
@@ -276,32 +273,32 @@ class RoomController extends Controller
         //房间进入密码，超过五次就要输入验证码，这个五次是通过phpsessionid来判断的
         $roomstatus = $this->getRoomStatus($rid, 2);
         $keys_room = 'keys_room_passwd:' . $sessionid . ':' . $rid;
-        $times = $this->make('redis')->get($keys_room)?:0;
+        $times = $this->make('redis')->get($keys_room) ?: 0;
         if ($times >= 5) {
             $captcha = $this->request()->get('captcha');
             if (empty($captcha)) {
-                return new JsonResponse(array('status' => 0, 'msg' => '请输入验证码!', 'data'=>['times' => $times, 'cmd' => 'showCaptcha']));
+                return new JsonResponse(['status' => 0, 'msg' => '请输入验证码!', 'data' => ['times' => $times, 'cmd' => 'showCaptcha']]);
             }
-            if (!Captcha::check($captcha)) return new JsonResponse(array('status' => 0, 'msg' => '验证码错误!', 'data'=>['times' => $times]));;
+            if (!Captcha::check($captcha)) return new JsonResponse(['status' => 0, 'msg' => '验证码错误!', 'data' => ['times' => $times]]);;
         }
         if (strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
-            $this->make('redis')->setex($keys_room,3600, $times + 1);
-            return new JsonResponse(array(
+            $this->make('redis')->setex($keys_room, 3600, $times + 1);
+            return new JsonResponse([
                 'status' => 0,
                 'msg' => "密码格式错误!",
-                'data'=>['times' => $times + 1]
-            ));
+                'data' => ['times' => $times + 1],
+            ]);
         }
         if ($password != $roomstatus['pwd']) {
-            $this->make('redis')->setex($keys_room,3600,  $times + 1);
-            return new JsonResponse(array(
+            $this->make('redis')->setex($keys_room, 3600, $times + 1);
+            return new JsonResponse([
                 'status' => 0,
                 'msg' => "密码错误!",
-                'data'=>['times' => $times + 1]
-            ));
+                'data' => ['times' => $times + 1],
+            ]);
         }
         $this->make('redis')->hset('keys_room_passwd:' . $rid . ':' . $sessionid, 'status', 1);
-        return new JsonResponse(array('status' => 1, 'msg' => '登陆成功'));
+        return new JsonResponse(['status' => 1, 'msg' => '登陆成功']);
     }
 
     /**
@@ -313,7 +310,7 @@ class RoomController extends Controller
     public function geterrorsAction()
     {
         $rid = $this->request()->get('roomid');
-        if (empty($rid)) return new JsonResponse(array('status' => 0, 'msg' => '房间号错误!'));
+        if (empty($rid)) return new JsonResponse(['status' => 0, 'msg' => '房间号错误!']);
 //        $this->get('session')->start();
         $session_name = $this->request()->getSession()->getName();
         if (isset($_POST[$session_name])) {
@@ -323,13 +320,13 @@ class RoomController extends Controller
         $keys_room = 'keys_room_errorpasswd:' . $sessionid . ':' . $rid;
         $times = $this->make('redis')->hget($keys_room, 'times');
         if (empty($times)) $times = 0;
-        return new JsonResponse(array('status' => 1, 'times' => $times));
+        return new JsonResponse(['status' => 1, 'times' => $times]);
     }
 
     /**
      * @description 获取房间权限
-     * @author TX
-     * @date 2015.4.20
+     * @author      TX
+     * @date        2015.4.20
      */
     public function getRoomStatus($uid, $tid)
     {
@@ -387,7 +384,16 @@ class RoomController extends Controller
             'in_limit_points' => Redis::hget('hconf', 'in_limit_points') ?: 0,
             'in_limit_safemail' => Redis::hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
         ];
-        return JsonResponse::create(['data'=>$conf]);
+        return JsonResponse::create(['data' => $conf]);
+    }
+
+    public function getRoom($rid)
+    {
+        resolve('request')->attributes->set('rid', $rid);
+        $request = resolve('request');
+        $conf = $this->getRoomConf($request)->getData(true) ?? [];
+        $access = $this->getRoomAccess($rid)->getData(true) ?? [];
+        return JsonResponse::create(['data' => (object)(array_merge($conf, $access))]);
     }
 
     /**
@@ -401,20 +407,18 @@ class RoomController extends Controller
         $room = $roomService->getRoom($rid, Auth::id());
         /** @var SocketService $socketService */
         $socketService = resolve(SocketService::class);
-        $chatServer = [];
-        if (!empty($room) && !empty($room['channel_id'])) {
-            $chatServer = $socketService->getServer($room['channel_id']);
-        }
-        if (empty($room) || empty($chatServer)) {
+        if (empty($room)) {
             //创建房间
-            if (Auth::id() == $rid) {   //最近一次与当前一致
-                try {
-                    $room = $roomService->addRoom($rid, $rid, Auth::id());
-                    $chatServer = $socketService->getServer($room['channel_id']);
-                } catch (NoSocketChannelException $e) {
-                    $chatServer['error'] = $e->getMessage();
-                }
+            if ($this->isHost($rid)) {
+                $room = $roomService->addRoom($rid, $rid, Auth::id());
+            } else {
+                return JsonResponse::create(['status' => 0, 'msg' => '房间不存在']);
             }
+        }
+        try {
+            $chatServer = $socketService->getNextServerAvailable();
+        } catch (NoSocketChannelException $e) {
+            return JsonResponse::create(['status' => 0, 'msg' => $e->getMessage()]);
         }
         return JsonResponse::create([
             'rid' => $rid,
@@ -424,12 +428,10 @@ class RoomController extends Controller
             'certificate' => $this->make('safeService')->getLcertificate(),
         ]);
     }
-    public function getRoom($rid){
-        resolve('request')->attributes->set('rid',$rid);
-        $request =  resolve('request');
-       $conf = $this->getRoomConf($request)->getData(true)??[];
-       $access = $this->getRoomAccess($rid)->getData(true)??[];
-        return JsonResponse::create(['data'=>(object)(array_merge($conf,$access))]);
+
+    protected function isHost($rid)
+    {
+        return Auth::id() == $rid;
     }
 
     public function getRoomAccess($rid)
@@ -465,7 +467,7 @@ class RoomController extends Controller
                     'price' => $timecost,
                     'access' => 1,
                     'discount' => $discount,
-                    'discountValue' => ceil($timecost * $discount / 10)
+                    'discountValue' => ceil($timecost * $discount / 10),
                 ];
             }
         }
@@ -525,13 +527,13 @@ class RoomController extends Controller
     public function createOne2More(Request $request)
     {
 
-        $data = array();
-        $data = $request->only(['mintime','hour','minute','tid','duration','points','origin']);
+        $data = [];
+        $data = $request->only(['mintime', 'hour', 'minute', 'tid', 'duration', 'points', 'origin']);
 
-        $data['uid'] =  Auth::guard()->id();
-        $roomservice  = resolve(RoomService::class);
-        $result  = $roomservice->addOnetomore($data);
-        return  new JsonResponse($result);
+        $data['uid'] = Auth::guard()->id();
+        $roomservice = resolve(RoomService::class);
+        $result = $roomservice->addOnetomore($data);
+        return new JsonResponse($result);
     }
 
     /**
@@ -545,12 +547,12 @@ class RoomController extends Controller
 
         if (!$rid) return JsonResponse::create(['status' => 0, 'msg' => '请求错误']);
         $room = RoomOneToMore::find($rid);
-        if (!$room) return new JsonResponse(array('status' => 0, 'msg' => '房间不存在'));
+        if (!$room) return new JsonResponse(['status' => 0, 'msg' => '房间不存在']);
 
         if ($room->uid != Auth::id()) return JsonResponse::create(['status' => 0, 'msg' => '非法操作']);//只能删除自己房间
         if ($room->status == 1) return new JsonResponse(['status' => 0, 'msg' => '房间已经删除']);
         if ($room->purchase()->exists()) {
-            return new JsonResponse(array('status' => 0, 'msg' => '房间已经被预定，不能删除！'));
+            return new JsonResponse(['status' => 0, 'msg' => '房间已经被预定，不能删除！']);
         }
 
         $redis = $this->make('redis');
@@ -563,34 +565,36 @@ class RoomController extends Controller
     /*
     *  一对多房间记录接口by desmond
     */
-    public function  listOneToMoreByHost(Request $request){
+    public function listOneToMoreByHost(Request $request)
+    {
 
         $start_date = $request->get('starttime') ? $request->get('starttime') . ' 00:00:00' : date('Y-m-d H:i:s');
         $end_date = $request->get('endtime') ? $request->get('endtime') . ' 23:59:59' : date('Y-m-d 23:59:59');
 
-        $result['data'] = RoomOneToMore::where('uid',Auth::id())
-            ->where('status',0)
-            ->whereBetween('starttime',[$start_date,$end_date])
+        $result['data'] = RoomOneToMore::where('uid', Auth::id())
+            ->where('status', 0)
+            ->whereBetween('starttime', [$start_date, $end_date])
             ->orderBy('starttime', 'DESC')
             ->paginate();
 
         return JsonResponse::create($result);
     }
 
-  /*
-   * 判断登录的主播是否开通一对多
-   */
-    public function competence(){
-        $uid = $this->request()->input('uid')?:'';
-        $key = 'hroom_status:'.$uid.':7';
-        $keys = 'hroom_status:'.$uid.':4';
+    /*
+     * 判断登录的主播是否开通一对多
+     */
+    public function competence()
+    {
+        $uid = $this->request()->input('uid') ?: '';
+        $key = 'hroom_status:' . $uid . ':7';
+        $keys = 'hroom_status:' . $uid . ':4';
         $listonetomany = $this->make('redis')->hGetAll($key);
         $listonetoone = $this->make('redis')->hGetAll($keys);
         $result[0] = $listonetomany;
         $result[1] = $listonetoone;
-        if($listonetoone && $listonetoone){
+        if ($listonetoone && $listonetoone) {
             return JsonResponse::create(['status' => 1, 'data' => $result]);
-        }else{
+        } else {
             return JsonResponse::create(['status' => 0, 'data' => '']);
         }
 
@@ -599,39 +603,40 @@ class RoomController extends Controller
     /*
     *  直播记录接口 by desmond
     */
-    public function showlist(Request $request ){
+    public function showlist(Request $request)
+    {
 
-        $start_time =  $request->get('starttime') ? strtotime($request->get('starttime') . ' 00:00:00') : strtotime('-1 month');
-        $end_time   =  $request->get('endtime') ? strtotime($request->get('endtime') . ' 23:59:59') : strtotime('tomorrow') - 1;
-        $uid        =  Auth::id();
+        $start_time = $request->get('starttime') ? strtotime($request->get('starttime') . ' 00:00:00') : strtotime('-1 month');
+        $end_time = $request->get('endtime') ? strtotime($request->get('endtime') . ' 23:59:59') : strtotime('tomorrow') - 1;
+        $uid = Auth::id();
         //Carbon::now()->addHours(1);
-        $result = LiveList::where('uid','=',$uid)
-            ->where('start_time','>=', date("Y-m-d H:i:s",$start_time))
-            ->where('start_time','<=', date("Y-m-d H:i:s",$end_time))
-            ->select('id','created','start_time','rid','duration')
+        $result = LiveList::where('uid', '=', $uid)
+            ->where('start_time', '>=', date("Y-m-d H:i:s", $start_time))
+            ->where('start_time', '<=', date("Y-m-d H:i:s", $end_time))
+            ->select('id', 'created', 'start_time', 'rid', 'duration')
             ->get();
 
 
-
-        $liveinfo = array();
+        $liveinfo = [];
         $duration_total = 0;
-        foreach($result as $key=>$value){
-            $liveinfo[$key]['id']      = $value['id'];
-            $liveinfo[$key]['start_time']  = $value['start_time'];
-            $liveinfo[$key]['end_time'] = date("Y-m-d H:i:s",strtotime($value['start_time'] )+ $value['duration']);
-            $liveinfo[$key]['duration']  = $value['duration'];
-            $duration_total = $duration_total+$value['duration'];
+        foreach ($result as $key => $value) {
+            $liveinfo[$key]['id'] = $value['id'];
+            $liveinfo[$key]['start_time'] = $value['start_time'];
+            $liveinfo[$key]['end_time'] = date("Y-m-d H:i:s", strtotime($value['start_time']) + $value['duration']);
+            $liveinfo[$key]['duration'] = $value['duration'];
+            $duration_total = $duration_total + $value['duration'];
         }
         $getinfo['list'] = $liveinfo;
         $getinfo['duration_total'] = $duration_total;
-        return SuccessResponse::create($getinfo,$msg='获取成功',$status=1);
+        return SuccessResponse::create($getinfo, $msg = '获取成功', $status = 1);
 
 
     }
 
-    public  function    roomSetDuration(Request $request){
+    public function roomSetDuration(Request $request)
+    {
         $data = [];
-        $data = $request->only(['mintime', 'hour', 'minute', 'tid', 'duration','points']);
+        $data = $request->only(['mintime', 'hour', 'minute', 'tid', 'duration', 'points']);
 
         $roomservice = resolve(RoomService::class);
         $result = $roomservice->addOnetoOne($data);
@@ -641,7 +646,8 @@ class RoomController extends Controller
     /*
      * 删除一对一
      */
-    public function delRoomOne2One(){
+    public function delRoomOne2One()
+    {
         $rid = $this->request()->input('rid');
         if (!$rid) return JsonResponse::create(['status' => 0, 'msg' => '请求错误']);
         $roomservice = resolve(RoomService::class);

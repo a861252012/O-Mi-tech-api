@@ -18,24 +18,24 @@ use Illuminate\Support\Facades\Redis;
 class RoomService extends Service
 {
 
+    const BE_KICK_OUT_TIME = 'beKickOutTime';
     public $tid = null;
     public $rid = null;
     public $current_tid = null;
-    public $uid = null;
-    public $cur_login_uid = null; //当前登陆用户
+        public $uid = null; //当前登陆用户
+public $cur_login_uid = null;
     public $rtmp_host = null;
     public $rtmp_port = null;
     public $channel_id = null;
     public $finger_id = null;
     public $extend_room = [];
 
-    const BE_KICK_OUT_TIME='beKickOutTime';
-
     public function __construct(Request $request)
     {
         parent::__construct();
 
     }
+
     /**
      * 检测，并重新分配socket
      * @param $uid
@@ -48,12 +48,9 @@ class RoomService extends Service
         $this->uid = $uid;
         $this->rid = $rid;
 
-        $redis = $this->make('redis');
         $hktvKey = "hvediosKtv:$rid";
 
-        $channelInfo = resolve(SocketService::class)->getNextServerAvailable($uid);
-        $redis->hset($hktvKey, "channel_id", $channelInfo['id']);
-        $str = "===addRoom rid===" . $rid . "===uid===" . $uid . "===serverIds size===" . json_encode($channelInfo);
+        $str = "===addRoom rid===" . $rid . "===uid===" . $uid ;
         Log::channel('room')->info($str);
         //todo 后台申请主播有用到
         //todo set rtmp待测试后确定是否需要添加
@@ -88,11 +85,11 @@ class RoomService extends Service
             4 => $redis->hgetall("hroom_status:$rid:4"),
             6 => $redis->hgetall("hroom_status:$rid:6"),
         ];
-        $timecost=isset($room['room_status'][6]['timecost'])?$room['room_status'][6]['timecost']:0;
-        $discount=$redis->hget('hgroups:special:' . $user['vip'], 'discount')?:10;
+        $timecost = isset($room['room_status'][6]['timecost']) ? $room['room_status'][6]['timecost'] : 0;
+        $discount = $redis->hget('hgroups:special:' . $user['vip'], 'discount') ?: 10;
         $room['discount'] = [
             'discount' => $discount,
-            'discountValue' => ceil($timecost*$discount/10)
+            'discountValue' => ceil($timecost * $discount / 10),
         ];
         return $room;
     }
@@ -115,14 +112,14 @@ class RoomService extends Service
         //一对多
         if ($one2more = resolve('one2more')->getData()) {
             $this->extend_room = $one2more;
-            Log::channel()->info('getCurrentRoomStatus rid' . $this->rid . ' uid' . $this->cur_login_uid . 'hroom_whitelist:'.$this->rid.':'.$one2more['id']);
+            Log::channel()->info('getCurrentRoomStatus rid' . $this->rid . ' uid' . $this->cur_login_uid . 'hroom_whitelist:' . $this->rid . ':' . $one2more['id']);
             return $this->current_tid = 8;
         }
 
         //时长房
         if ($redis->exists("hroom_status:" . $this->rid . ":6") && $redis->hget("hroom_status:" . $this->rid . ":6", "status") == '1' && trim($redis->hget("hroom_status:" . $this->rid . ":2", "pwd")) != '') {
             if ($redis->hget("htimecost:" . $this->rid, "timecost_status")) {
-                if ($redis->exists("hroom_status:" . $this->rid . ":2") && $redis->hget("hroom_status:" . $this->rid . ":2", "status") == '1' && trim($redis->hget("hroom_status:" . $this->rid . ":2", "pwd")) != ''){
+                if ($redis->exists("hroom_status:" . $this->rid . ":2") && $redis->hget("hroom_status:" . $this->rid . ":2", "status") == '1' && trim($redis->hget("hroom_status:" . $this->rid . ":2", "pwd")) != '') {
                     return $this->current_tid = 7;
                 }
                 return $this->current_tid = 6;
@@ -201,11 +198,11 @@ class RoomService extends Service
      */
     public function checkKickOut($rid, $uid)
     {
-        $redis=$this->make('redis');
-        $kickTime=$redis->hget("beKickOut:$rid:$uid",static::BE_KICK_OUT_TIME);
-        if ($kickTime&&($start=strtotime($kickTime))){
-            $timeleft=30*60+$start-time();
-            if ($timeleft>0){
+        $redis = $this->make('redis');
+        $kickTime = $redis->hget("beKickOut:$rid:$uid", static::BE_KICK_OUT_TIME);
+        if ($kickTime && ($start = strtotime($kickTime))) {
+            $timeleft = 30 * 60 + $start - time();
+            if ($timeleft > 0) {
                 return $timeleft;
             }
             return true;
@@ -215,16 +212,28 @@ class RoomService extends Service
 
     public function getXOHost()
     {
-        $xo_httphost=isset($_SESSION['xo_httphost'])?$_SESSION['xo_httphost']:null;
-        if ($xo_httphost){
-            if (!preg_match('/^https?:\/\//',$xo_httphost)){
-                $xo_httphost='http://'.$xo_httphost;
+        $xo_httphost = isset($_SESSION['xo_httphost']) ? $_SESSION['xo_httphost'] : null;
+        if ($xo_httphost) {
+            if (!preg_match('/^https?:\/\//', $xo_httphost)) {
+                $xo_httphost = 'http://' . $xo_httphost;
             }
         }
         return $xo_httphost;
     }
 
-    public function getPlatBackUrl($origin=0){
+    public function getPlatUrl($origin = 0)
+    {
+        $urlList = $this->getPlatBackUrl($origin);
+        $host = $this->getPlatHost();
+        $data = [];
+        foreach ($urlList as $key => $url) {
+            $data[$key] = $host . $url;
+        }
+        return $data;
+    }
+
+    public function getPlatBackUrl($origin = 0)
+    {
         $redis = $this->make('redis');
         $plat_backurl = "{}";
         if ($redis->exists("hplatforms:$origin")) {
@@ -233,20 +242,13 @@ class RoomService extends Service
         }
         return json_decode($plat_backurl, true);
     }
-    public function getPlatUrl($origin=0){
-        $urlList = $this->getPlatBackUrl($origin);
-        $host = $this->getPlatHost();
-        $data = [];
-        foreach ($urlList as $key=>$url){
-            $data[$key] = $host.$url;
-        }
-        return $data;
-    }
-    public function getPlatHost(){
-        $httphost=isset($_SESSION['httphost'])?$_SESSION['httphost']:null;
-        if ($httphost){
-            if (!preg_match('/^https?:\/\//',$httphost)){
-                $httphost='http://'.$httphost;
+
+    public function getPlatHost()
+    {
+        $httphost = isset($_SESSION['httphost']) ? $_SESSION['httphost'] : null;
+        if ($httphost) {
+            if (!preg_match('/^https?:\/\//', $httphost)) {
+                $httphost = 'http://' . $httphost;
             }
         }
         return $httphost;
@@ -258,9 +260,9 @@ class RoomService extends Service
     public function addOnetomore($data)
     {
 
-        if (empty($data['origin']))    $data['origin'] = 11;
-        if (!in_array($data['duration'], array(20,25,30,35,40,45,50,55,60))) return ['status' => 9, 'msg' => '请求错误'];
-        if ($data['points']>99999 || $data['points']<=0) return ['status' => 3, 'msg' => '金额超出范围'];
+        if (empty($data['origin'])) $data['origin'] = 11;
+        if (!in_array($data['duration'], [20, 25, 30, 35, 40, 45, 50, 55, 60])) return ['status' => 9, 'msg' => '请求错误'];
+        if ($data['points'] > 99999 || $data['points'] <= 0) return ['status' => 3, 'msg' => '金额超出范围'];
 
         if (empty($data['mintime']) || empty($data['duration'])) return ['status' => 4, 'msg' => '请求错误'];
         $start_time = date("Y-m-d H:i:s", strtotime($data['mintime'] . ' ' . $data['hour'] . ':' . $data['minute'] . ':00'));
@@ -275,7 +277,6 @@ class RoomService extends Service
 
         $uids = '';
         $tickets = 0;
-
 
 
         //如果结束时间在记录之前并且未结速，则处理。否则忽略
@@ -304,9 +305,9 @@ class RoomService extends Service
                 }
             }
         }
-      /*  if (empty($uids)) {
-            return ['status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间'];
-        }*/
+        /*  if (empty($uids)) {
+              return ['status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间'];
+          }*/
 
 
         //$points = $room_config['timecost'];
@@ -356,29 +357,9 @@ class RoomService extends Service
         ];
         $rs = $this->make('redis')->hmset('hroom_whitelist:' . $duroom['uid'] . ':' . $duroom->id, $temp);
 
-        Log::channel('room')->info('OneToMore'.$duroom->toJson());
+        Log::channel('room')->info('OneToMore' . $duroom->toJson());
         return ['status' => 1, 'msg' => '添加成功'];
 
-    }
-
-    /**
-     * 写充值的 日志 TODO 优化到充值服务中去
-     *
-     * @param string $word
-     * @param string $recodeurl
-     */
-    protected function logResult($word = '', $recodeurl = '')
-    {
-        if ($recodeurl) {
-            $recordLog = $recodeurl;
-        } else {
-            $recordLog = $this->container->config['config.PAY_LOG_FILE'];
-        }
-        $fp = fopen($recordLog, "a");
-        flock($fp, LOCK_EX);
-        fwrite($fp, "执行日期：" . date("Ymd H:i:s", time()) . "\n" . $word . "\n");
-        flock($fp, LOCK_UN);
-        fclose($fp);
     }
 
     /**
@@ -403,11 +384,20 @@ class RoomService extends Service
         return true;
     }
 
+    function array_column_multi(array $input, array $column_keys)
+    {
+        $result = [];
+        $column_keys = array_flip($column_keys);
+        foreach ($input as $key => $el) {
+            $result[$key] = array_intersect_key($el, $column_keys);
+        }
+        return $result;
+    }
 
     /**
      * @param string $stime
      * @param string $etime
-     * @param array $data
+     * @param array  $data
      * @return bool false重叠 true不重叠
      */
     public function checkActiveTime($stime = '', $etime = '', $data = [])
@@ -436,20 +426,6 @@ class RoomService extends Service
         return $flag;
     }
 
-    function array_column_multi(array $input, array $column_keys)
-    {
-        $result = [];
-        $column_keys = array_flip($column_keys);
-        foreach ($input as $key => $el) {
-            $result[$key] = array_intersect_key($el, $column_keys);
-        }
-        return $result;
-    }
-
-
-    /*
-     * app和pc，添加一对一房间
-     */
     public function addOnetoOne($data)
     {
 
@@ -483,8 +459,9 @@ class RoomService extends Service
 
     }
 
+
     /*
-     * 设置时长房间的redis
+     * app和pc，添加一对一房间
      */
 
     public function set_durationredis($durationRoom)
@@ -498,21 +475,46 @@ class RoomService extends Service
     }
 
     /*
-     * 删除一对一 by  desmond
+     * 设置时长房间的redis
      */
 
-    public  function delOnetoOne($data){
+    public function delOnetoOne($data)
+    {
 
         $room = RoomDuration::find($data);
         if (!$room) return ['status' => 0, 'msg' => '房间不存在'];
         if ($room->uid != Auth::id()) return ['status' => 0, 'msg' => '只能删除自己房间'];//只能删除自己房间
-        if ($room->status == 1)  return  ['status' => 0, 'msg' => '房间已经删除'];
+        if ($room->status == 1) return ['status' => 0, 'msg' => '房间已经删除'];
         if ($room->reuid != 0) {
-            return  ['status' => 0, 'msg' => '房间已经被预定，不能删除！'];
+            return ['status' => 0, 'msg' => '房间已经被预定，不能删除！'];
         }
         $this->make('redis')->hdel('hroom_duration:' . $room->uid . ':' . $room->roomtid, $room->id);//删除对应的redis
         $room->delete();
-        return  ['status' => 1, 'msg' => '删除成功'];
+        return ['status' => 1, 'msg' => '删除成功'];
+    }
+
+    /*
+     * 删除一对一 by  desmond
+     */
+
+    /**
+     * 写充值的 日志 TODO 优化到充值服务中去
+     *
+     * @param string $word
+     * @param string $recodeurl
+     */
+    protected function logResult($word = '', $recodeurl = '')
+    {
+        if ($recodeurl) {
+            $recordLog = $recodeurl;
+        } else {
+            $recordLog = $this->container->config['config.PAY_LOG_FILE'];
+        }
+        $fp = fopen($recordLog, "a");
+        flock($fp, LOCK_EX);
+        fwrite($fp, "执行日期：" . date("Ymd H:i:s", time()) . "\n" . $word . "\n");
+        flock($fp, LOCK_UN);
+        fclose($fp);
     }
 
 

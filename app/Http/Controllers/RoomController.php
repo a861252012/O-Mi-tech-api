@@ -45,27 +45,24 @@ class RoomController extends Controller
         }
         $room = $roomService->getRoom($rid, Auth::id());
         $socketService = resolve(SocketService::class);
-        if (!empty($room) && !empty($room['channel_id'])) {
-            $chatServer = $socketService->getServer($room['channel_id']);
-        }
         $user = Auth::user();
-        if (empty($room) || empty($chatServer)) {
+        if (empty($room)) {
             //创建房间
-            if ($user['rid'] == $rid) {   //最近一次与当前一致
-                try {
-                    $room = $roomService->addRoom($rid, $rid, Auth::id());
-                    $chatServer = $socketService->getServer($room['channel_id']);
-                } catch (NoSocketChannelException $e) {
-                    return JsonResponse::create(['status' => 0, 'msg' => '房间不存在']);
-                }
+            if ($this->isHost($rid)) {
+                $room = $roomService->addRoom($rid, $rid, Auth::id());
+            } else {
+                return JsonResponse::create(['status' => 0, 'msg' => '房间不存在']);
             }
         }
-        $getRoomKey = '';
-        if (!empty($chatServer)) {
-            $host = $this->getUserHost($chatServer, $this->isHost($rid));
-            $getRoomKey = $host . ':' . $chatServer['port'];
-            $logger->info('enter_room:' . $rid . ":" . Auth::id() . ':' . $room['channel_id'] . ':' . $getRoomKey);
+        try {
+            $chatServer = $socketService->getNextServerAvailable();
+        } catch (NoSocketChannelException $e) {
+            return JsonResponse::create(['status' => 0, 'msg' => $e->getMessage()]);
         }
+
+        $host = $this->getUserHost($chatServer, $this->isHost($rid));
+        $chat_server_addr = $host . ':' . $chatServer['port'];
+        $logger->info('enter_room:' . $rid . ":" . Auth::id() . ':' . $chatServer['id'] . ':' . $chat_server_addr);
 
         $redis = resolve('redis');
         if (!isset($user['origin'])) $user['origin'] = 12;
@@ -113,7 +110,7 @@ class RoomController extends Controller
                 case 8: //一对多
                     $handle = $user ? 'room_one_to_many' : 'login';
                     if (!$roomService->whiteList()) {
-                        if ($h5 === 'h5hls'){
+                        if ($h5 === 'h5hls') {
                             return JsonResponse::create(['status' => 0]);
                         }
                         $data = [
@@ -172,7 +169,7 @@ class RoomController extends Controller
                     ;
             }
         }
-        $channel_id = isset($room['channel_id']) ? $room['channel_id'] : 0;
+        $channel_id = $chatServer['id'];
         $logger->info('in:' . $rid . ":" . Auth::id() . ':' . $channel_id);
 
         $plat_backurl = $roomService->getPlatUrl($origin);
@@ -186,7 +183,7 @@ class RoomController extends Controller
             'in_limit_safemail' => $redis->hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
             'certificate' => $certificate,
         ];
-        $data['getRoomKey'] = $getRoomKey;
+        $data['chat_server_addr'] = $chat_server_addr;
         if (!$h5) {
             return JsonResponse::create(['data' => $data]);
         }
@@ -200,6 +197,19 @@ class RoomController extends Controller
             $data['hls_addr'] = $this->getHLS($rid);
             return JsonResponse::create(['data' => $data]);
         }
+    }
+
+    protected function isHost($rid)
+    {
+        return Auth::id() == $rid;
+    }
+
+    /**
+     * @return mixed
+     */
+    private function getUserHost($chatServer, $isHost)
+    {
+        return explode('|', $chatServer['host'], 2)[$isHost ? 0 : 1];
     }
 
     private function getMoney($uid, $rid, $origin)
@@ -219,50 +229,6 @@ class RoomController extends Controller
             usleep(100);
         }
         return $redis->exists("hplat_user:$uid") ? $redis->hgetall("hplat_user:" . $uid) : [];
-    }
-
-    /**
-     * @return page
-     * @author Young
-     * @des    用于合作平台测试
-     */
-    public function switchToOne2More()
-    {
-
-        $data = [
-            'id' => '123',
-            'rid' => '456',
-            'points' => '789',
-            'start_time' => '11:11',
-            'end_time' => '12:12',
-            'duration' => '30000',
-            'username' => 'young',
-        ];
-
-        $plat_backurl = [
-            'pay' => '/order/young',
-        ];
-
-        return $this->render('Room/plat_whitename_room', [
-//          'room' => &$room,
-            'data' => json_encode($data),
-//          'handle' => $handle,
-            'plat_url' => json_encode($plat_backurl, JSON_FORCE_OBJECT),
-//          'hplat_info' => $hplat_info,
-        ]);
-    }
-
-    /**
-     * @return mixed
-     */
-    private function getUserHost($chatServer, $isHost)
-    {
-        return explode('|', $chatServer['host'], 2)[$isHost ? 0 : 1];
-    }
-
-    protected function isHost($rid)
-    {
-        return Auth::id() == $rid;
     }
 
     /**
@@ -322,6 +288,37 @@ class RoomController extends Controller
     }
 
     /**
+     * @return page
+     * @author Young
+     * @des    用于合作平台测试
+     */
+    public function switchToOne2More()
+    {
+
+        $data = [
+            'id' => '123',
+            'rid' => '456',
+            'points' => '789',
+            'start_time' => '11:11',
+            'end_time' => '12:12',
+            'duration' => '30000',
+            'username' => 'young',
+        ];
+
+        $plat_backurl = [
+            'pay' => '/order/young',
+        ];
+
+        return $this->render('Room/plat_whitename_room', [
+//          'room' => &$room,
+            'data' => json_encode($data),
+//          'handle' => $handle,
+            'plat_url' => json_encode($plat_backurl, JSON_FORCE_OBJECT),
+//          'hplat_info' => $hplat_info,
+        ]);
+    }
+
+    /**
      * 获取房间的rtmp播放地址
      * @param $rid
      * @return \Symfony\Component\HttpFoundation\Response
@@ -372,17 +369,6 @@ class RoomController extends Controller
         ];
         $data = join('.', $data);
         return JsonResponse::create()->setContent(json_encode(['status' => 1, 'data' => $data], JSON_UNESCAPED_SLASHES));
-    }
-
-    public function get($rid)
-    {
-        $data = $this->request()->get("data");
-        $dataArr = explode('.', $data);
-        $iv = base64_decode($dataArr[0]);
-        $method = 'AES-128-CBC';
-        $key = $this->make('config')->get('config.RTMP_SECRET_KEY');
-        $t_data = openssl_decrypt($dataArr[1], $method, $key, 0, $iv);
-        var_dump($t_data);
     }
 
     /**
@@ -463,6 +449,17 @@ class RoomController extends Controller
             'rtmp' => $rtmp_down,
             'sid' => $redis->hget('hvedios_ktv_set:' . $rid, 'sid'),
         ];
+    }
+
+    public function get($rid)
+    {
+        $data = $this->request()->get("data");
+        $dataArr = explode('.', $data);
+        $iv = base64_decode($dataArr[0]);
+        $method = 'AES-128-CBC';
+        $key = $this->make('config')->get('config.RTMP_SECRET_KEY');
+        $t_data = openssl_decrypt($dataArr[1], $method, $key, 0, $iv);
+        var_dump($t_data);
     }
 
     protected function getBroadcastType($uid = null)
