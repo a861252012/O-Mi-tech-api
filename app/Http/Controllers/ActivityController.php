@@ -185,7 +185,7 @@ class ActivityController extends Controller
         if (empty($var['starlist'])) {
             $var['starlist'] = array();
         }
-        $var =$this->format_jsoncode($var);
+        //$var =$this->format_jsoncode($var);
         return $var;
       //  return JsonResponse::create($var);
     }
@@ -265,7 +265,9 @@ class ActivityController extends Controller
              return new JsonResponse(['status'=>0,'msg'=>'找不到页面']);
          }
          $url =  $activepage->toArray()['url'];
-
+         if(empty($url)){
+             return new JsonResponse(['status'=>0,'msg'=>'未设置url路径']);
+         }
          //根据url匹配以下三种情况 nac ; /activity/cde + /CharmStar;/activity/cde + /paihang
          $url_type = explode('/',$url);
          if($url_type[1]=='nac'){
