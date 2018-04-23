@@ -63,13 +63,13 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     });
 
     //关注
-    Route::match(['POST', 'GET'], 'follow', ['name' => 'm_follow', 'uses' => 'Mobile\MobileController@follow']);
+    Route::any('follow', ['name' => 'm_follow', 'uses' => 'Mobile\MobileController@follow']);
 
 
 
     Route::group(['prefix'=>'room'],function (){
         //预约列表 type=1 一对一，type=2 一对多
-        Route::get('reservation/{type}',  'Mobile\RoomController@listReservation')->where('type',"[1,2]")->name('m_userroomreservation');
+        Route::get('reservation/{type}',  'Mobile\RoomController@listReservation')->where('type',"[1,2,3]")->name('m_userroomreservation');
         //购买一对一
         Route::post('buyOneToOne', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@buyOneToOne']);
 
@@ -147,3 +147,7 @@ Route::group(['prefix' => 'pay', 'middleware' => ['charge']], function () {
 Route::get('find', ['name' => 'm_find', 'uses' => 'Mobile\MobileController@searchAnchor']);
 Route::match(['POST', 'GET'], '/statistic', ['name' => 'm_statistic', 'uses' => 'Mobile\MobileController@statistic']);
 Route::post('/send_crash', ['name' => 'send_crash', 'uses' => 'Mobile\MobileController@saveCrash']);//app报错接口
+
+
+//生成数据
+Route::any('other/homeonetomany', ['name' => 'm_homeonetomany', 'uses' => 'OtherController@createHomeOneToManyList']);

@@ -455,16 +455,17 @@ class MobileController extends Controller
         }
         unset($arr);
         $myfavArr = $this->make('redis')->zrevrange('zuser_attens:' . Auth::id(), 0, -1);
+
         $myfav = [];
         if ($myfavArr) {
             //过滤出主播
-            foreach ($myfavArr as $item) {
-                if (isset($hasharr[$item])) {
-                    $myfav[] = $hasharr[$item];
+            foreach ($myfavArr as $uid) {
+                if (isset($hasharr[$uid])) {
+                    $myfav[] = $hasharr[$uid];
                 }
             }
         }
-        return JsonResponse::create(['data'=>(object)($myfav)]);
+        return JsonResponse::create(['data'=>['data'=>($myfav)]]);
     }
 
     /**
@@ -503,18 +504,17 @@ class MobileController extends Controller
     /**
      * 关注
      */
-    public function follow()
+    public function follow(Request $request)
     {
-        $request = $this->request();
 
         //获取操作类型  请求类型  0:查询 1:添加 2:取消
-        $ret = $request->input('ret');
+        $ret = $request->get('ret');
         //获取被关注用户uid
         $pid = $request->input('pid');
         if (!in_array($ret, [0, 1, 2]) || !$pid) {
             return JsonResponse::create([
                 'status' => 0,
-                'msg' => '请求参数错误',
+                'msg' => '请求参数错误1',
             ]);
         };
         //获取当前用户id
@@ -524,10 +524,10 @@ class MobileController extends Controller
         $userService = resolve(UserService::class);
         $userInfo = $userService->getUserByUid($pid);
 
-        if (!is_array($userInfo)) {
+        if (!$userInfo) {
             return JsonResponse::create([
                 'status' => 0,
-                'msg' => '请求参数错误',
+                'msg' => '请求参数错误2',
             ]);
         };
 
