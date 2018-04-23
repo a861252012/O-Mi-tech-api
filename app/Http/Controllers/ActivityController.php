@@ -98,10 +98,12 @@ class ActivityController extends Controller
         }
 
         $arr = array_merge($arr, $active);
-        $result['type'] = $arr['type'];
+
+
+       /* $result['type'] = $arr['type'];
         unset($arr['type']);
-        $result['activity'] = $arr;
-        return $result;
+        $result['activity'] = $arr;*/
+        return $arr;
         //return  new JsonResponse(['data'=>$arr]);
     }
 
@@ -273,6 +275,10 @@ class ActivityController extends Controller
          }
          if($url_type[1]=='activity'){
              $data['activity'] = $this->activity($url_type[2]);
+
+             $data['type'] = $data['activity']['type'];
+
+
              if(isset($data['activity']['status']) && $data['activity']['status'] == 0){
                  return new JsonResponse(['status'=>0,'msg'=>'找不到页面']);
              }
