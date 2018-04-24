@@ -185,7 +185,7 @@ public $cur_login_uid = null;
      */
     public function checkPassword()
     {
-        $cookie_login_val = $_COOKIE['PHPSESSID'];
+        $cookie_login_val = $_COOKIE['SESSID'];
 
         $redis = $this->make('redis');
         $room_pass_key = "keys_room_passwd:" . $this->rid . ":" . $cookie_login_val;

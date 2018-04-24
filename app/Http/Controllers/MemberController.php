@@ -937,6 +937,8 @@ class MemberController extends Controller
         $room_radio = $this->make('request')->get('room-radio');
         $password = '';
         if ($room_radio == 'true') $password = $this->make('request')->get('password');
+        $password = $this->decode($password);
+
         if (empty($password) && $room_radio == 'true') {
             return new JsonResponse(['status' => 2, 'msg' => '密码不能为空']);
         }
@@ -968,7 +970,7 @@ class MemberController extends Controller
         $password = $this->request()->get('password');
         $rid = $this->request()->get('roomid');
         $type = $this->getAnchorRoomType($rid);
-
+        $password = $this->decode($password);
         if ($type != 2) return new JsonResponse(['status' => 0, 'msg' => '密码房异常,请联系运营重新开启一下密码房间的开关']);
         if (empty($rid)) return new JsonResponse(['status' => 0, 'msg' => '房间号错误!']);
         if (empty($password)) {
