@@ -968,8 +968,9 @@ class MemberController extends Controller
         $password = $this->request()->get('password');
         $rid = $this->request()->get('roomid');
         $type = $this->getAnchorRoomType($rid);
-        if ($type != 2) return new JsonResponse(['code' => 0, 'msg' => '密码房异常,请联系运营重新开启一下密码房间的开关']);
-        if (empty($rid)) return new JsonResponse(['code' => 0, 'msg' => '房间号错误!']);
+
+        if ($type != 2) return new JsonResponse(['status' => 0, 'msg' => '密码房异常,请联系运营重新开启一下密码房间的开关']);
+        if (empty($rid)) return new JsonResponse(['status' => 0, 'msg' => '房间号错误!']);
         if (empty($password)) {
             return $this->geterrorsAction();
         }
@@ -982,19 +983,20 @@ class MemberController extends Controller
         if ($times >= 5) {
             $captcha = $this->request()->get('captcha');
             if (empty($captcha)) {
-                return new JsonResponse(['code' => 4, 'msg' => '请输入验证码!', 'times' => $times]);
+                return new JsonResponse(['status' => 4, 'msg' => '请输入验证码!', 'data' => $times]);
             }
-            if (!Captcha::check($captcha)) return new JsonResponse(['code' => 0, 'msg' => '验证码错误!', 'times' => $times]);
+            if (!Captcha::check($captcha)) return new JsonResponse(['status' => 0, 'msg' => '验证码错误!', 'data' => $times]);
         }
         if (strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
             $this->make('redis')->set($keys_room, $times + 1);
             $this->make('redis')->expire($keys_room, 3600);
             return new JsonResponse([
-                "code" => 0,
+                "status" => 0,
                 "msg" => "密码格式错误!",
-                'times' => $times + 1,
+                'data' => $times + 1,
             ]);
         }
+
         if ($password != $roomstatus['pwd']) {
             if (empty($times)) {
                 $this->make('redis')->set($keys_room, 1);
@@ -1004,13 +1006,13 @@ class MemberController extends Controller
                 $this->make('redis')->expire($keys_room, 3600);
             }
             return new JsonResponse([
-                "code" => 0,
+                "status" => 0,
                 "msg" => "密码错误!",
-                'times' => $times + 1,
+                'data' => $times + 1,
             ]);
         }
         $this->make('redis')->hset('keys_room_passwd:' . $rid . ':' . $sessionid, 'status', 1);
-        return new JsonResponse(['code' => 1, 'msg' => '登陆成功']);
+        return new JsonResponse(['status' => 1, 'msg' => '登陆成功']);
     }
 
     /**

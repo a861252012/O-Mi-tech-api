@@ -335,6 +335,7 @@ class ActivityController extends Controller
         $charmlist = [];
         foreach ($list as $key => $value) {
             $temp = [];
+            $temp['points'] = $charm[0]['num'];
             $temp['no'] = $no_charm++;
             $temp['nickname'] = $userServer->getUserByUid($key)['nickname'];
             $temp['gnum'] = $value;

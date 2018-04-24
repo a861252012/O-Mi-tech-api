@@ -76,7 +76,19 @@ class RoomController extends Controller
                 case 4:   //一对一房间
                     $handle = $user ? 'no_order' : 'login';
                     if (!$roomService->checkCanIn()) {
-                        return JsonResponse::create(['status' => 0, 'data' => ['handle' => $handle]]);
+                        $one2one = resolve('one2one')->getData();
+                        $one2one = $one2one[0];
+                        $result['data'] = $one2one;
+                        $result['data']['rid'] = $one2one['uid'];
+                        $result['data']['start_time'] = $one2one['starttime'];
+                        $end_time =  strtotime($one2one['starttime'])+$one2one['duration'];
+                        $result['data']['end_time'] = date('Y-m-d H:i:s', $end_time);
+                        $userdata = resolve(UserService::class)->getUserByUid($result['data']['uid']);
+                        $result['data']['nickname'] =$userdata['nickname'];
+                        $result['data']['username'] =$userdata['username'];
+                        unset( $result['data']['starttime']);
+                        // return JsonResponse::create(['status' => 0, 'data' => ['handle' => $handle]]);
+                        return JsonResponse::create(['status' => 0, 'data' => $result,'msg'=>'未购买该房间']);
                     }
                     break;
                 case 6:   //时长房间
@@ -113,6 +125,8 @@ class RoomController extends Controller
                         if ($h5 === 'h5hls') {
                             return JsonResponse::create(['status' => 0]);
                         }
+                        $roomService->extend_room  =  $roomService->extend_room[0];
+
                         $data = [
                             'id' => $roomService->extend_room['onetomore'],
                             'rid' => $rid,
@@ -121,6 +135,7 @@ class RoomController extends Controller
                             'end_time' => $roomService->extend_room['endtime'],
                             'duration' => strtotime($roomService->extend_room['endtime']) - strtotime($roomService->extend_room['starttime']),
                             'username' => resolve(UserService::class)->getUserByUid($rid)['nickname'],
+                            'tickets' =>$roomService->extend_room['tickets'],
                         ];
 
                         $hplat = $redis->exists("hplatforms:$origin") ? "plat_whitename_room" : "not_whitename_room";

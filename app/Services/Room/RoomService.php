@@ -112,8 +112,12 @@ public $cur_login_uid = null;
         //一对多
         if ($one2more = resolve('one2more')->getData()) {
             $this->extend_room = $one2more;
-            Log::channel()->info('getCurrentRoomStatus rid' . $this->rid . ' uid' . $this->cur_login_uid . 'hroom_whitelist:' . $this->rid . ':' . $one2more['id']);
-            return $this->current_tid = 8;
+          if(!empty($one2more)) {
+              foreach ($one2more as $key => $value){
+                  Log::channel()->info('getCurrentRoomStatus rid' . $this->rid . ' uid' . $this->cur_login_uid . 'hroom_whitelist:' . $this->rid . ':' . $value['id']);
+             }
+          }
+          return $this->current_tid = 8;
         }
 
         //时长房
