@@ -285,6 +285,10 @@ class IndexController extends Controller
         $uid = Auth::id();
         $ads = Redis::hget('img_cache', 1);
         $ads = json_decode($ads, true);
+       //公告
+        $notice = array();
+        $notice[0] = $this->make('redis')->hget('system_notices',2);
+
         $slider = [];
         if ($ads) {
             foreach ($ads as $ad) {
@@ -426,6 +430,8 @@ class IndexController extends Controller
             'downloadAppurl' => $downloadUrl,
             'downloadUrl' => $downloadpcurl,
             'qrcode_img' => $qrcode,
+            'notice' => $notice,
+
         ]);
 
     }
