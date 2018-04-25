@@ -104,13 +104,53 @@ public $cur_login_uid = null;
         /** @var \Redis $redis */
         $redis = $this->make('redis');
 
+        if($timeRoom = $this->getCurrentTimeRoomStatus()){
+            if($timeRoom==6){
+                if ($redis->exists("hroom_status:" . $this->rid . ":2") && $redis->hget("hroom_status:" . $this->rid . ":2", "status") == '1' && trim($redis->hget("hroom_status:" . $this->rid . ":2", "pwd")) != '') {
+                    return $this->current_tid = 7;
+                }
+                return $this->current_tid = 6;
+            }
+        }
+        //密码房
+        if ($this->getPasswordRoom()) return $this->current_tid = 2;
+
+        return $this->current_tid = 1;
+    }
+
+    public function getPasswordRoom(){
+        /** @var \Redis $redis */
+        $redis = $this->make('redis');
+        //密码房
+        if ($redis->exists("hroom_status:" . $this->rid . ":2")
+            && $redis->hget("hroom_status:" . $this->rid . ":2", "status") == '1'
+            && trim($pwd = $redis->hget("hroom_status:" . $this->rid . ":2", "pwd")) != '')
+            return $pwd;
+        return null;
+    }
+    public function getDurationRoom(){
+        /** @var \Redis $redis */
+        $redis = $this->make('redis');
+        $key_duration = "hroom_status:" . $this->rid . ":6";
+        //时长房
+        if ($redis->exists($key_duration) && $redis->hget($key_duration, "status") == '1') {
+            $timecost = $redis->hGetAll("htimecost:" . $this->rid);
+            $duration = $redis->hGetAll($key_duration);
+            if ($timecost["timecost_status"]) {
+                return array_merge($timecost,$duration);
+            }
+        }
+    }
+    public function  getCurrentTimeRoomStatus(){
+        /** @var \Redis $redis */
+        $redis = $this->make('redis');
         //一对一
-        if ($one2one = resolve('one2one')->getData()) {
+        if ($one2one = resolve('one2one')->getRunningData()) {
             $this->extend_room = $one2one;
             return $this->current_tid = 4;
         }
         //一对多
-        if ($one2more = resolve('one2more')->getData()) {
+        if ($one2more = resolve('one2more')->getRunningData()) {
             $this->extend_room = $one2more;
           if(!empty($one2more)) {
               foreach ($one2more as $key => $value){
@@ -121,18 +161,12 @@ public $cur_login_uid = null;
         }
 
         //时长房
-        if ($redis->exists("hroom_status:" . $this->rid . ":6") && $redis->hget("hroom_status:" . $this->rid . ":6", "status") == '1' && trim($redis->hget("hroom_status:" . $this->rid . ":2", "pwd")) != '') {
+        if ($redis->exists("hroom_status:" . $this->rid . ":6") && $redis->hget("hroom_status:" . $this->rid . ":6", "status") == '1') {
             if ($redis->hget("htimecost:" . $this->rid, "timecost_status")) {
-                if ($redis->exists("hroom_status:" . $this->rid . ":2") && $redis->hget("hroom_status:" . $this->rid . ":2", "status") == '1' && trim($redis->hget("hroom_status:" . $this->rid . ":2", "pwd")) != '') {
-                    return $this->current_tid = 7;
-                }
                 return $this->current_tid = 6;
             }
         }
-        //密码房
-        if ($redis->exists("hroom_status:" . $this->rid . ":2") && $redis->hget("hroom_status:" . $this->rid . ":2", "status") == '1' && trim($redis->hget("hroom_status:" . $this->rid . ":2", "pwd")) != '') return $this->current_tid = 2;
-
-        return $this->current_tid = 1;
+        return null;
     }
 
     /**

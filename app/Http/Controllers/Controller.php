@@ -63,7 +63,12 @@ class Controller extends BaseController
 
     public function __construct()
     {
-        config()->set('auth.defaults.guard', 'pc');
+
+        if(strpos(app('router')->getCurrentRoute()->getPrefix(),"api/m")===0){
+            config()->set('auth.defaults.guard', 'mobile');
+        }else{
+            config()->set('auth.defaults.guard', 'pc');
+        }
         $this->_online = Auth::id();
         $this->userInfo = Auth::user();
         $this->container = app();

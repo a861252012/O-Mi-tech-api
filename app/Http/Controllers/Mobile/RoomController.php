@@ -11,6 +11,7 @@ namespace App\Http\Controllers\Mobile;
 
 use App\Facades\Site;
 use App\Facades\SiteSer;
+use App\Facades\UserSer;
 use App\Http\Controllers\Controller;
 use App\Libraries\SuccessResponse;
 use App\Models\LiveList;
@@ -389,7 +390,101 @@ class RoomController extends Controller
         return JsonResponse::create(['data' => $conf]);
     }
 
+    /**
+     * @param $rid
+     * @return static
+     */
     public function getRoom($rid)
+    {
+        $roomService = resolve('roomService');
+        $room = $roomService->getRoom($rid, Auth::id());
+        $tid = $roomService->getCurrentTimeRoomStatus();
+
+        $user = UserSer::getUserByUid(Auth::id());
+        $roomInfo = [
+            'room_name'=>$room['user']['nickname'],
+            'room_pic'=>$room['user']['heading'],
+            'live_status'=>$room['status'],
+            'live_device_type'=>$room['origin'],
+            'tid'=>$tid ?: 1,
+            'is_password'=>$roomService->getPasswordRoom()?1:0,
+        ];
+
+        $roomExtend = [
+            'start_time'=> null,
+            'end_time'=> null,
+            'user_num'=> $room['total'],
+            'room_price'=> 0,
+        ];
+        switch ($tid){
+            case 8 :
+                $one2more = resolve('one2more')->getRunningData();
+                $roomExtend['start_time'] = $one2more['starttime'];
+                $roomExtend['end_time'] = $one2more['endtime'];
+                $roomExtend['user_num'] = $one2more['nums'];
+                $roomExtend['room_price'] = $one2more['points'];
+                break;
+            case 4:
+                $one2one = resolve('one2one')->getRunningData();
+                $roomExtend['start_time'] = $one2one['starttime'];
+                $roomExtend['end_time'] = date('Y-m-d H:i:s',strtotime($one2one['starttime']) + $one2one['duration']);
+                $roomExtend['user_num'] = $one2one['tickets']?:($one2one['reuid'] ?1:0);
+                $roomExtend['room_price'] = $one2one['points'];
+                break;
+            case 6 :
+                $durRoom = $roomService->getDurationRoom();
+                $roomExtend['start_time'] = null;
+                $roomExtend['end_time'] = null;
+                $roomExtend['user_num'] = $room['total'];
+                $roomExtend['room_price'] = $durRoom['timecost'];
+                break;
+            default:;
+        }
+
+        $room_user = [
+            'authority_in'=>1
+        ];
+
+        if(Auth::guest()){
+            $room_user['authority_in'] = 309;
+        }elseif($roomService->getPasswordRoom()){
+            $room_user['authority_in'] = 307;
+        }else{
+            switch ($tid){
+                case 8:
+                    if(!$roomService->whiteList())   $room_user['authority_in'] = 302;
+                    break;
+                case 4:
+                    if(!$roomService->checkCanIn())   $room_user['authority_in'] = 303;
+                    break;
+                case 6:
+                    if($user['points'] < $roomExtend['room_price'])   $room_user['authority_in'] = 305;
+                    break;
+            }
+       }
+
+
+       $socket = [];
+        /** @var SocketService $socketService */
+        $socketService = resolve(SocketService::class);
+        $chatServer = [];
+        $msg = "";
+        try {
+            $chatServer = $socketService->getNextServerAvailable();
+        } catch (NoSocketChannelException $e) {
+            $msg = $e->getMessage();
+        }
+        $socket['host'] =  $chatServer['host'];
+        $socket['ip'] =  $chatServer['ip'];
+        $socket['port'] =  $chatServer['port'];
+
+        return JsonResponse::create(['data' => array_merge($roomInfo,$roomExtend,$room_user,$socket),'msg'=>$msg]);
+    }
+    /**
+     * @param $rid
+     * @return static
+     */
+    public function _getRoom($rid)
     {
         resolve('request')->attributes->set('rid', $rid);
         $request = resolve('request');

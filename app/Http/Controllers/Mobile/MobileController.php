@@ -28,10 +28,6 @@ class MobileController extends Controller
     const ACTIVITY_LIST_PAGE_SIZE = 15;
     const MOUNT_LIST_PAGE_SIZE = 0;
 
-    public function __construct()
-    {
-        config()->set('auth.defaults.guard', 'mobile');
-    }
 
     /**
      * 移动端首页
