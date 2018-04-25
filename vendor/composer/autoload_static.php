@@ -473,7 +473,6 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         'App\\Models\\Transfer' => __DIR__ . '/../..' . '/app/Models/Transfer.php',
         'App\\Models\\UserBuyGroup' => __DIR__ . '/../..' . '/app/Models/UserBuyGroup.php',
         'App\\Models\\UserBuyOneToMore' => __DIR__ . '/../..' . '/app/Models/UserBuyOneToMore.php',
-        'App\\Models\\UserCheckSign' => __DIR__ . '/../..' . '/app/Models/UserCheckSign.php',
         'App\\Models\\UserCommission' => __DIR__ . '/../..' . '/app/Models/UserCommission.php',
         'App\\Models\\UserDomain' => __DIR__ . '/../..' . '/app/Models/UserDomain.php',
         'App\\Models\\UserExtends' => __DIR__ . '/../..' . '/app/Models/UserExtends.php',

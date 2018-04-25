@@ -147,7 +147,6 @@ return array(
     'App\\Models\\Transfer' => $baseDir . '/app/Models/Transfer.php',
     'App\\Models\\UserBuyGroup' => $baseDir . '/app/Models/UserBuyGroup.php',
     'App\\Models\\UserBuyOneToMore' => $baseDir . '/app/Models/UserBuyOneToMore.php',
-    'App\\Models\\UserCheckSign' => $baseDir . '/app/Models/UserCheckSign.php',
     'App\\Models\\UserCommission' => $baseDir . '/app/Models/UserCommission.php',
     'App\\Models\\UserDomain' => $baseDir . '/app/Models/UserDomain.php',
     'App\\Models\\UserExtends' => $baseDir . '/app/Models/UserExtends.php',
