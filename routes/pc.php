@@ -319,8 +319,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/kw', ['name' => 'json_kw', 'uses' => 'ApiController@kw']);
     // 获取主播房间内的礼物清单
     Route::get('/rank_list_gift', ['name' => 'json_rank_list_gift', 'uses' => 'ApiController@rankListGift']);
-    // 获取主播房间内的礼物排行榜
-    Route::get('/rank_list_gift_week', ['name' => 'json_rank_list_gift_week', 'uses' => 'ApiController@rankListGiftWeek']);
 
 
     //flashCookie记录api
