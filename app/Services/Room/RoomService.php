@@ -145,19 +145,15 @@ public $cur_login_uid = null;
         /** @var \Redis $redis */
         $redis = $this->make('redis');
         //一对一
-        if ($one2one = resolve('one2one')->getRunningData()) {
+        if (!empty($one2one = resolve('one2one')->getRunningData())) {
             $this->extend_room = $one2one;
             return $this->current_tid = 4;
         }
         //一对多
-        if ($one2more = resolve('one2more')->getRunningData()) {
+        if (!empty($one2more = resolve('one2more')->getRunningData())) {
             $this->extend_room = $one2more;
-          if(!empty($one2more)) {
-              foreach ($one2more as $key => $value){
-                  Log::channel()->info('getCurrentRoomStatus rid' . $this->rid . ' uid' . $this->cur_login_uid . 'hroom_whitelist:' . $this->rid . ':' . $value['id']);
-             }
-          }
-          return $this->current_tid = 8;
+            Log::channel()->info('getCurrentRoomStatus rid' . $this->rid . ' uid' . $this->cur_login_uid . 'hroom_whitelist:' . $this->rid . ':' . $one2more['id']);
+            return $this->current_tid = 8;
         }
 
         //时长房
