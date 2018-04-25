@@ -19,15 +19,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class LoginController extends Controller
 {
-    public function passport()
-    {
-        return new RedirectResponse('/?handle=login');
-
-    }
-
-
-
-
 
     /**
      * TODO @1登录
