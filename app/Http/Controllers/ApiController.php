@@ -1265,7 +1265,7 @@ class ApiController extends Controller
         $zrange_key = 'zrange_gift_week:' . $uid;
         $score = $this->make('redis')->ZREVRANGEBYSCORE($zrange_key, '+inf', '-inf', ['limit' => ['offset'=>0,'count'=>30], 'withscores' => TRUE]);
         if (empty($score)) {
-            return new JsonResponse(['data'=>'','status'=>0]);
+            return new JsonResponse(['data'=>'','status'=>0,'msg'=>'数据为空']);
         }
         /**
          * 格式化数据返回，获取用户的信息

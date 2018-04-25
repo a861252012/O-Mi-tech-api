@@ -76,10 +76,6 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
             'Intervention\\Image\\' => 19,
             'Illuminate\\' => 11,
         ),
-        'H' => 
-        array (
-            'Hashids\\' => 8,
-        ),
         'G' => 
         array (
             'GuzzleHttp\\Psr7\\' => 16,
@@ -235,10 +231,6 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         array (
             0 => __DIR__ . '/..' . '/laravel/framework/src/Illuminate',
         ),
-        'Hashids\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/hashids/hashids/src',
-        ),
         'GuzzleHttp\\Psr7\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
@@ -337,7 +329,6 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         'App\\Console\\Commands\\Schedule\\AnchorSearch' => __DIR__ . '/../..' . '/app/Console/Commands/Schedule/AnchorSearch.php',
         'App\\Console\\Commands\\Schedule\\One2ManyMsgSend' => __DIR__ . '/../..' . '/app/Console/Commands/Schedule/One2ManyMsgSend.php',
         'App\\Console\\Commands\\Schedule\\OnetoOneStartTip' => __DIR__ . '/../..' . '/app/Console/Commands/Schedule/OnetoOneStartTip.php',
-        'App\\Console\\Commands\\Schedule\\UpdateTotal' => __DIR__ . '/../..' . '/app/Console/Commands/Schedule/UpdateTotal.php',
         'App\\Console\\Commands\\Schedule\\UserSalaryTotal' => __DIR__ . '/../..' . '/app/Console/Commands/Schedule/UserSalaryTotal.php',
         'App\\Console\\Commands\\Schedule\\VipExpire' => __DIR__ . '/../..' . '/app/Console/Commands/Schedule/VipExpire.php',
         'App\\Console\\Commands\\SiteConfig' => __DIR__ . '/../..' . '/app/Console/Commands/SiteConfig.php',
@@ -345,7 +336,6 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         'App\\Console\\Commands\\SiteInit' => __DIR__ . '/../..' . '/app/Console/Commands/SiteInit.php',
         'App\\Console\\Commands\\UserClear' => __DIR__ . '/../..' . '/app/Console/Commands/UserClear.php',
         'App\\Console\\Commands\\XingBaReg' => __DIR__ . '/../..' . '/app/Console/Commands/XingBaReg.php',
-        'App\\Console\\Commands\\test\\UserInsertSql' => __DIR__ . '/../..' . '/app/Console/Commands/test/UserInsertSql.php',
         'App\\Console\\Kernel' => __DIR__ . '/../..' . '/app/Console/Kernel.php',
         'App\\Controller\\Pay\\PayController' => __DIR__ . '/../..' . '/app/Http/Controllers/Pay/PayController.php',
         'App\\Events\\Active' => __DIR__ . '/../..' . '/app/Events/Active.php',
@@ -403,10 +393,10 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         'App\\Mail\\PwdReset' => __DIR__ . '/../..' . '/app/Mail/PwdReset.php',
         'App\\Mail\\SafeMailVerify' => __DIR__ . '/../..' . '/app/Mail/SafeMailVerify.php',
         'App\\Models\\Active' => __DIR__ . '/../..' . '/app/Models/Active.php',
+        'App\\Models\\ActiveCommon' => __DIR__ . '/../..' . '/app/Models/ActiveCommon.php',
         'App\\Models\\ActivePage' => __DIR__ . '/../..' . '/app/Models/ActivePage.php',
         'App\\Models\\ActivityClick' => __DIR__ . '/../..' . '/app/Models/ActivityClick.php',
         'App\\Models\\ActivityPag' => __DIR__ . '/../..' . '/app/Models/ActivityPag.php',
-        'App\\Models\\Ad' => __DIR__ . '/../..' . '/app/Models/Ad.php',
         'App\\Models\\Ads' => __DIR__ . '/../..' . '/app/Models/Ads.php',
         'App\\Models\\Agents' => __DIR__ . '/../..' . '/app/Models/Agents.php',
         'App\\Models\\AgentsPriv' => __DIR__ . '/../..' . '/app/Models/AgentsPriv.php',
@@ -423,6 +413,7 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         'App\\Models\\CarGameBetBak' => __DIR__ . '/../..' . '/app/Models/CarGameBetBak.php',
         'App\\Models\\ChargeList' => __DIR__ . '/../..' . '/app/Models/ChargeList.php',
         'App\\Models\\CharmRank' => __DIR__ . '/../..' . '/app/Models/CharmRank.php',
+        'App\\Models\\CommonRank' => __DIR__ . '/../..' . '/app/Models/CommonRank.php',
         'App\\Models\\Complaints' => __DIR__ . '/../..' . '/app/Models/Complaints.php',
         'App\\Models\\Conf' => __DIR__ . '/../..' . '/app/Models/Conf.php',
         'App\\Models\\Domain' => __DIR__ . '/../..' . '/app/Models/Domain.php',
@@ -473,9 +464,7 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         'App\\Models\\Transfer' => __DIR__ . '/../..' . '/app/Models/Transfer.php',
         'App\\Models\\UserBuyGroup' => __DIR__ . '/../..' . '/app/Models/UserBuyGroup.php',
         'App\\Models\\UserBuyOneToMore' => __DIR__ . '/../..' . '/app/Models/UserBuyOneToMore.php',
-        'App\\Models\\UserCheckSign' => __DIR__ . '/../..' . '/app/Models/UserCheckSign.php',
         'App\\Models\\UserCommission' => __DIR__ . '/../..' . '/app/Models/UserCommission.php',
-        'App\\Models\\UserDomain' => __DIR__ . '/../..' . '/app/Models/UserDomain.php',
         'App\\Models\\UserExtends' => __DIR__ . '/../..' . '/app/Models/UserExtends.php',
         'App\\Models\\UserGroup' => __DIR__ . '/../..' . '/app/Models/UserGroup.php',
         'App\\Models\\UserGroupPermission' => __DIR__ . '/../..' . '/app/Models/UserGroupPermission.php',
