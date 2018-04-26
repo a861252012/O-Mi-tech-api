@@ -61,10 +61,10 @@ class Controller extends BaseController
     public $container = null;
 
 
-    public function __construct()
+    public function __construct(Request $request)
     {
 
-        if(strpos(app('router')->getCurrentRoute()->getPrefix(),"api/m")===0){
+        if($request->routeIs('/api/m/')){
             config()->set('auth.defaults.guard', 'mobile');
         }else{
             config()->set('auth.defaults.guard', 'pc');

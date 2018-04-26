@@ -8,7 +8,6 @@ use App\Models\Agents;
 use App\Models\AgentsRelationship;
 use App\Models\InviteCodes;
 use App\Models\UserBuyGroup;
-use App\Models\UserDomain;
 use App\Models\UserGroup;
 use App\Models\UserGroupPermission;
 use App\Models\UserModNickName;
@@ -76,10 +75,7 @@ class UserService extends Service
                 DB::table($userTable)->where('uid', $uid)->update(['rid' => $uid]);
             }
 
-            //更新域名用户统计
-            if ($did = Arr::get($newUser, 'did')) {
-                DB::table((new UserDomain)->getTable())->where('id', $did)->increment('users');
-            }
+
 
             //邀请码处理
             if ($invite_code) {
