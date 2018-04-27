@@ -73,7 +73,7 @@ class RoomController extends Controller
         if ($duroom['uid'] == Auth::id()) return new JsonResponse(['status' => 0, 'msg' => '自己不能预约自己的房间']);
         if (Auth::user()->points < $duroom['points']) return new JsonResponse(['status' => 0, 'msg' => '余额不足哦，请充值！']);
         //关键点，这个时段内有没有其他的房间重复，标志位为flag 默认值为false 当用户确认后传入的值为true
-        //if ($flag == 'false' && !$this->notBuyRepeat($duroom['starttime'], $duroom['endtime'])) return new JsonResponse(array('status' => 0, 'msg' => '您这个时间段有房间预约了，您确定要预约么'));
+        if ($flag == 'false' && !$this->checkRoomUnique($duroom, Auth::id())) return new JsonResponse(array('status' => 101, 'msg' => '您这个时间段有房间预约了，您确定要预约么'));
 
         $duroom['reuid'] = Auth::id();
         try {

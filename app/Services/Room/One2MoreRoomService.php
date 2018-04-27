@@ -105,7 +105,7 @@ class One2MoreRoomService extends Service
             $uidArr2 = explode(',',$ord['tickets']);//添加补票入口判断
             if(in_array($uid,$uidArr2)) return $ord;
         }
-        return $ord;
+        return [];
     }
     public function getDataById($onetomore){
         $key = 'hroom_whitelist:'.$this->rid.':'.$onetomore;

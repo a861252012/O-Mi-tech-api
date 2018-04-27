@@ -95,7 +95,7 @@ class One2OneRoomService extends Service
         $starttime = strtotime($ord['starttime']);
         $endtime = $starttime + $ord['duration'];
         if ($uid == $ord['reuid'] && time() >= $starttime && time() <= $endtime) return $ord;
-        return $ord;
+        return [];
     }
 
 }
