@@ -1576,7 +1576,7 @@ class MemberController extends Controller
         $all_data->appends(['type' => $type, 'mintime' => $mint, 'maxtime' => $maxt]);
 
         $var['type'] = $type;
-        $var['data'] = $all_data;
+        $var['list'] = $all_data;
         $var['mintime'] = $mint;
         $var['maxtime'] = $maxt;
         $var['sum_gift_num'] = $sum_gift_num;
