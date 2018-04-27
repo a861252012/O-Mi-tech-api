@@ -222,7 +222,7 @@ class MemberController extends Controller
 
         return JsonResponse::create([
             'status' => 1,
-            'data' => $ms,
+            'data' => ['list'=>$ms],
         ]);
     }
 
@@ -384,7 +384,7 @@ class MemberController extends Controller
         $res = $v['roomadmin']->toArray();
         $res['list'] = $res['data'];
         unset($res['data']);
-        return new JsonResponse(['status' => 1, 'data' => $res, 'msg' => '获取成功!']);
+        return new JsonResponse(['status' => 1, 'data' => ['list'=>$res], 'msg' => '获取成功!']);
 
     }
 
@@ -577,7 +577,7 @@ class MemberController extends Controller
         $userServer = resolve(UserService::class);
         $data = $userServer->getUserAttens(Auth::id(), $page)
             ->setPath($request->getPathInfo());
-        return JsonResponse::create(['data'=>$data]);
+        return JsonResponse::create(['data'=>['list'=>$data]]);
     }
 
     public function sceneToggle(Request $request)
@@ -666,7 +666,7 @@ class MemberController extends Controller
         //获取下用户信息
         $chargelist = Recharge::where('uid', $uid)->where('del', 0)
             ->orderBy('id', 'DESC')->paginate();
-        return JsonResponse::create(['status' => 1, 'msg' => $chargelist]);
+        return JsonResponse::create(['status' => 1, 'data' => ['list'=>$chargelist]]);
     }
 
     /**
@@ -680,7 +680,7 @@ class MemberController extends Controller
             ->orderBy('created', 'DESC')->paginate();
         return JsonResponse::create([
             'status' => 1,
-            'data' => $data,
+            'data' => ['list'=>$data],
         ]);
     }
 
@@ -1048,7 +1048,7 @@ class MemberController extends Controller
         $rooms = [];
         $recommend = [];
         $data = [
-            'rooms' => &$rooms,
+            'list' => &$rooms,
             'recommend' => &$recommend,
         ];
         $userServer = resolve(UserService::class);
@@ -1465,7 +1465,7 @@ class MemberController extends Controller
                 ->orderBy('stime', 'DESC')
                 ->paginate();
         }
-        return JsonResponse::create(['status' => 1, 'data' => $data]);
+        return JsonResponse::create(['status' => 1, 'data' => ['list'=>$data]]);
     }
 
     /**
