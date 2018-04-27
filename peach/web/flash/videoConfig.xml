@@ -54,7 +54,7 @@
           focus="/focus"
           letter="/letter"/>
 
-    <flashcooks url="http://www.v2f.com/api/flashcookie" canUseLocalHttp="1"/>
+
 
     <js roomid="getRid" ukey="getUserKey" login="showLogin" logout="showLogout" reg="showReg" uinfo="showUserCenter"
         upay="showPay" bbs="openbbs" keep="keephttp" uvip="buyvip" hall="gohall" market="gomarket"

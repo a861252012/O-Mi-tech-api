@@ -320,10 +320,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     // 获取主播房间内的礼物清单
     Route::get('/rank_list_gift', ['name' => 'json_rank_list_gift', 'uses' => 'ApiController@rankListGift']);
 
-
-    //flashCookie记录api
-    Route::get('/api/flashcookie', ['name' => 'flashcookie', 'uses' => 'ApiController@FlashCookie']);
-
     //对换
     Route::post('/api/plat_exchange', ['name' => 'plat_exchange', 'uses' => 'ApiController@platExchange']);
 
@@ -332,7 +328,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/switchone2more', ['name' => 'switchone2more', 'uses' => 'RoomController@switchToOne2More']);
 
     //获取时长打折信处
-    Route::get('/getTimeCountRoomDiscountInfo', ['name' => 'flashcookie', 'uses' => 'ApiController@getTimeCountRoomDiscountInfo']);
+    Route::get('/getTimeCountRoomDiscountInfo', ['name' => 'roomdiscountinfo', 'uses' => 'ApiController@getTimeCountRoomDiscountInfo']);
 
 
     Route::get('/ajaxProxy', ['name' => 'ajaxProxy', 'uses' => 'ApiController@ajaxProxy']);

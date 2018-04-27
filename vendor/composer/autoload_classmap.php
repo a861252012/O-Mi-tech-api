@@ -103,7 +103,6 @@ return array(
     'App\\Models\\DomainList' => $baseDir . '/app/Models/DomainList.php',
     'App\\Models\\ExtremeRank' => $baseDir . '/app/Models/ExtremeRank.php',
     'App\\Models\\Faq' => $baseDir . '/app/Models/Faq.php',
-    'App\\Models\\FlashCookie' => $baseDir . '/app/Models/FlashCookie.php',
     'App\\Models\\GiftActivity' => $baseDir . '/app/Models/GiftActivity.php',
     'App\\Models\\GiftCategory' => $baseDir . '/app/Models/GiftCategory.php',
     'App\\Models\\Goods' => $baseDir . '/app/Models/Goods.php',

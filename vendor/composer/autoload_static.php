@@ -420,7 +420,6 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         'App\\Models\\DomainList' => __DIR__ . '/../..' . '/app/Models/DomainList.php',
         'App\\Models\\ExtremeRank' => __DIR__ . '/../..' . '/app/Models/ExtremeRank.php',
         'App\\Models\\Faq' => __DIR__ . '/../..' . '/app/Models/Faq.php',
-        'App\\Models\\FlashCookie' => __DIR__ . '/../..' . '/app/Models/FlashCookie.php',
         'App\\Models\\GiftActivity' => __DIR__ . '/../..' . '/app/Models/GiftActivity.php',
         'App\\Models\\GiftCategory' => __DIR__ . '/../..' . '/app/Models/GiftCategory.php',
         'App\\Models\\Goods' => __DIR__ . '/../..' . '/app/Models/Goods.php',

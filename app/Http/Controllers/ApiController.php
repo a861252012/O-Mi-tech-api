@@ -8,7 +8,6 @@ use App\Models\ActivityClick;
 use App\Models\AgentsRelationship;
 use App\Models\Conf;
 use App\Models\Domain;
-use App\Models\FlashCookie;
 use App\Models\GiftActivity;
 use App\Models\GiftCategory;
 use App\Models\Goods;
@@ -447,22 +446,7 @@ class ApiController extends Controller
         return ['status' => 1, 'data' => ['datalist' => $certificate], 'msg' => '获取成功'];
     }
 
-    /**
-     * 采集flashCookie记录api
-     */
-    public function flashCookie()
-    {
-        $request = $this->make('request');
 
-        $create = [
-            'uid' => $request->get('uid'),
-            'sid' => $request->get('sid'),
-            'ips' => $request->getClientIp(),
-        ];
-
-        $result = FlashCookie::create($create);
-        return ['status' => 1, 'data' => $result, 'msg' => '采集成功'];
-    }
 
     /**
      * [获取用户关注数]

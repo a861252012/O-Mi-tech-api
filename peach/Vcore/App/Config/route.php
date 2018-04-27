@@ -328,10 +328,6 @@ $app->routeDecorator(['decorator' => ['App\Controller\BaseController@notLoginJso
     $openWeb or $app->get('/rank_list_gift_week', ['as' => 'json_rank_list_gift_week', 'uses' => 'App\Controller\ApiController@rankListGiftWeek']);
     $openWeb or $app->get('/get_head_image', ['as' => 'get_head_image', 'uses' => 'App\Controller\ApiController@getUserHeadImage']);
 
-
-    //flashCookie记录api
-    $app->get('/api/flashcookie', ['as'=>'flashcookie', 'uses'=>'App\Controller\ApiController@FlashCookie']);
-
     //对换
     $app->post('/api/plat_exchange', ['as'=>'plat_exchange', 'uses'=>'App\Controller\ApiController@platExchange']);
 
@@ -340,7 +336,7 @@ $app->routeDecorator(['decorator' => ['App\Controller\BaseController@notLoginJso
     $app->get('/switchone2more', ['as'=>'switchone2more', 'uses'=>'App\Controller\RoomController@switchToOne2More']);
 
     //获取时长打折信处
-    $app->get('/getTimeCountRoomDiscountInfo', ['as'=>'flashcookie', 'uses'=>'App\Controller\ApiController@getTimeCountRoomDiscountInfo']);
+    $app->get('/getTimeCountRoomDiscountInfo', ['as'=>'roomdiscountinfo', 'uses'=>'App\Controller\ApiController@getTimeCountRoomDiscountInfo']);
     //rtmp地址
     $openWeb or $app->get('/room/rtmp/{rid:\d+}',['as'=>'room_rtmp','uses'=>'App\Controller\RoomController@getRTMP']);
     //排行榜数据

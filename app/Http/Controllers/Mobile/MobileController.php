@@ -653,6 +653,9 @@ class MobileController extends Controller
 
     public function saveCrash()
     {
+        /*
+         *  一二站合并，原接口处理逻辑删掉，但保留该接口（防止移动端还有调用该接口导致报错）.
+         */
         return JsonResponse::create(['status' => 1, 'msg' => 'success']);
     }
 }
