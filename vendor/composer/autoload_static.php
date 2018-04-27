@@ -425,7 +425,6 @@ class ComposerStaticInitdc68a8e61d8819d06309fccd17daa3c3
         'App\\Models\\Goods' => __DIR__ . '/../..' . '/app/Models/Goods.php',
         'App\\Models\\HostAudit' => __DIR__ . '/../..' . '/app/Models/HostAudit.php',
         'App\\Models\\ImagesText' => __DIR__ . '/../..' . '/app/Models/ImagesText.php',
-        'App\\Models\\InviteCodes' => __DIR__ . '/../..' . '/app/Models/InviteCodes.php',
         'App\\Models\\InviteGroup' => __DIR__ . '/../..' . '/app/Models/InviteGroup.php',
         'App\\Models\\Keywords' => __DIR__ . '/../..' . '/app/Models/Keywords.php',
         'App\\Models\\LeajoyAlipayTransfer' => __DIR__ . '/../..' . '/app/Models/LeajoyAlipayTransfer.php',

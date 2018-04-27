@@ -6,7 +6,6 @@ use App\Facades\SiteSer;
 use App\Facades\UserSer;
 use App\Models\Agents;
 use App\Models\AgentsRelationship;
-use App\Models\InviteCodes;
 use App\Models\UserBuyGroup;
 use App\Models\UserGroup;
 use App\Models\UserGroupPermission;
@@ -73,34 +72,6 @@ class UserService extends Service
             //注册主播房间
             if (Arr::get($user, 'roled') == 3) {
                 DB::table($userTable)->where('uid', $uid)->update(['rid' => $uid]);
-            }
-
-
-
-            //邀请码处理
-            if ($invite_code) {
-                $code = substr($invite_code, -8);
-                $gid = substr($invite_code, 0, -8);
-                $invite = InviteCodes::where('gid', $gid)->where('status', 0)->where('code', $code)->with('group')->first();
-
-                /**
-                 * 邀请码赠送处理
-                 */
-                if ($invite) {
-                    //贵族礼包
-                    $gift['vip'] = $invite->group->vip ?: 0;
-                    $gift['vip_end'] = $invite->group->vip_days ?: 0;
-
-                    //钻石礼包
-                    $gift['points'] = $invite->group->points ?: 0;
-
-                    //所属代理
-                    $agent = $invite->group->agents ?: 0;
-
-                    //注消邀请码
-                    DB::table((new InviteCodes)->getTable())->where('gid', $gid)->where('status', 0)->where('code', $code)->update(['uid' => $uid, 'used_at' => date('Y-m-d H:i:s'), 'status' => 1]);
-
-                }
             }
 
             DB::commit();
