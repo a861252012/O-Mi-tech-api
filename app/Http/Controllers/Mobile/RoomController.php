@@ -415,6 +415,7 @@ class RoomController extends Controller
             'end_time'=> null,
             'user_num'=> $room['total'],
             'room_price'=> 0,
+            'time_length'=> 0,
         ];
         switch ($tid){
             case 8 :
@@ -440,6 +441,7 @@ class RoomController extends Controller
                 break;
             default:;
         }
+        $roomExtend['time_length'] = strtotime($roomExtend['end_time'])-strtotime($roomExtend['start_time']);
 
         $room_user = [
             'authority_in'=>1
