@@ -8,7 +8,7 @@
 
 namespace App\Http\Controllers\Mobile;
 
-
+use Illuminate\Support\Facades\Session;
 use App\Facades\Site;
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
@@ -272,7 +272,7 @@ class RoomController extends Controller
             return $this->geterrorsAction();
         }
 //        $this->get('session')->start();
-        $sessionid = $this->request()->getSession()->getId();
+        $sessionid = Session::getId();
         //房间进入密码，超过五次就要输入验证码，这个五次是通过phpsessionid来判断的
         $roomstatus = $this->getRoomStatus($rid, 2);
         $keys_room = 'keys_room_passwd:' . $sessionid . ':' . $rid;
@@ -301,7 +301,7 @@ class RoomController extends Controller
             ]);
         }
         $this->make('redis')->hset('keys_room_passwd:' . $rid . ':' . $sessionid, 'status', 1);
-        return new JsonResponse(['status' => 1, 'msg' => '登陆成功']);
+        return new JsonResponse(['status' => 1, 'msg' => '验证成功']);
     }
 
     /**
