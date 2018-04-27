@@ -653,18 +653,6 @@ class MobileController extends Controller
 
     public function saveCrash()
     {
-        $key = '123';
-        $crash = $this->request()->input('crash');
-        $sign = $this->request()->input('sign');
-        if (strtolower($sign) !== hash('sha256', $crash . $key)) {
-            return JsonResponse::create(['status' => 0, 'msg' => 'sign error']);
-        }
-        $errors = json_decode(base64_decode($crash), JSON_OBJECT_AS_ARRAY);
-        if ($errors === null) return JsonResponse::create(['status' => 0, 'msg' => 'json error']);
-        foreach ($errors as $error) {
-            AppCrash::create($error);
-        }
         return JsonResponse::create(['status' => 1, 'msg' => 'success']);
-
     }
 }

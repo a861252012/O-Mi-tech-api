@@ -1743,7 +1743,7 @@ namespace Illuminate\Support\Facades {
          */ 
         public static function attempt($credentials = array(), $remember = false)
         {
-            //Method inherited from \Illuminate\Auth\SessionGuard            
+            //Method inherited from \Illuminate\Auth\SessionGuard
             return \App\Services\Auth\SessionGuard::attempt($credentials, $remember);
         }
         
