@@ -107,7 +107,6 @@ return array(
     'App\\Models\\Goods' => $baseDir . '/app/Models/Goods.php',
     'App\\Models\\HostAudit' => $baseDir . '/app/Models/HostAudit.php',
     'App\\Models\\ImagesText' => $baseDir . '/app/Models/ImagesText.php',
-    'App\\Models\\InviteGroup' => $baseDir . '/app/Models/InviteGroup.php',
     'App\\Models\\Keywords' => $baseDir . '/app/Models/Keywords.php',
     'App\\Models\\LeajoyAlipayTransfer' => $baseDir . '/app/Models/LeajoyAlipayTransfer.php',
     'App\\Models\\LevelRich' => $baseDir . '/app/Models/LevelRich.php',
