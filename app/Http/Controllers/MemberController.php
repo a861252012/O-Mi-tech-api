@@ -388,11 +388,12 @@ class MemberController extends Controller
 
     }
 
-    public  function  roomadmindelete(){
+    public function roomadmindelete()
+    {
         $rid = Auth::id();
         $request = $this->make('request');
         $uid = $request->get('uid');
-        if(!$uid){
+        if (!$uid) {
             return new JsonResponse(['status' => 0, 'msg' => '会员id为空!']);
         }
         //管理员软删除操作
@@ -582,35 +583,17 @@ class MemberController extends Controller
 
     public function sceneToggle(Request $request)
     {
-        $action=$request->get('action','true');
-        if ($action=='true'){
+        $action = $request->get('action', 'true');
+        if ($action == 'true') {
             $handle = $this->_getEquipHandle($request->get('gid'));
             if (is_array($handle)) {
                 return new JsonResponse($handle);
             }
             return JsonResponse::create(['status' => 0, 'msg' => '操作出现未知错误！']);
-        }elseif($action=='false'){
+        } elseif ($action == 'false') {
             return $this->cancelScene();
         }
-        return JsonResponse::create(['status'=>0]);
-    }
-
-    /**
-     * 用户中心 我的道具
-     */
-    public function scene(Request $request)
-    {
-        $uid = Auth::id();
-        $data = Pack::with('mountGroup')->where('uid', $uid)->paginate();
-        //判断是否过期
-        $equip = Redis::hgetall('user_car:' . $uid);
-        if ($equip != null && current($equip) < time()) {
-            Redis::del('user_car:' . $uid);//检查过期直接删除对应的缓存key
-        }
-        return JsonResponse::create([
-            'status' => 1,
-            'data' => ['list' => $data, 'equip' => $equip,],
-        ]);
+        return JsonResponse::create(['status' => 0]);
     }
 
     /**
@@ -651,6 +634,35 @@ class MemberController extends Controller
         $redis->del('user_car:' . $uid);
         $redis->hset('user_car:' . $uid, $gid, $pack['expires']);
         return ['status' => 1, 'msg' => '装备成功'];
+    }
+
+    /**
+     * 取消装备道具
+     * @return JsonResponse
+     * @Author Orino
+     */
+    public function cancelScene()
+    {
+        Redis::del('user_car:' . Auth::id());//检查过期直接删除对应的缓存key
+        return new JsonResponse(['status' => 1, 'msg' => '操作成功']);
+    }
+
+    /**
+     * 用户中心 我的道具
+     */
+    public function scene(Request $request)
+    {
+        $uid = Auth::id();
+        $data = Pack::with('mountGroup')->where('uid', $uid)->paginate();
+        //判断是否过期
+        $equip = Redis::hgetall('user_car:' . $uid);
+        if ($equip != null && current($equip) < time()) {
+            Redis::del('user_car:' . $uid);//检查过期直接删除对应的缓存key
+        }
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => ['list' => $data, 'equip' => $equip,],
+        ]);
     }
 
     /**
@@ -780,6 +792,11 @@ class MemberController extends Controller
     }
 
     /**
+     * 一对多设置
+     * @return JsonResponse
+     */
+
+    /**
      * @description 获取房间权限
      * @author      TX
      * @date        2015.4.20
@@ -826,11 +843,6 @@ class MemberController extends Controller
 
         return $data;
     }
-
-    /**
-     * 一对多设置
-     * @return JsonResponse
-     */
 
     /**
      * 一对多记录详情-购买用户
@@ -1783,17 +1795,6 @@ class MemberController extends Controller
     }
 
     /**
-     * 取消装备道具
-     * @return JsonResponse
-     * @Author Orino
-     */
-    public function cancelScene()
-    {
-        Redis::del('user_car:' . Auth::id());//检查过期直接删除对应的缓存key
-        return new JsonResponse(['status' => 1, 'msg' => '操作成功']);
-    }
-
-    /**
      * 开通贵族
      * TODO 提炼到服务中 现阶段过渡期
      * <p>
@@ -1902,7 +1903,7 @@ class MemberController extends Controller
                     'content' => '您首次开通 ' . $userGroup['level_name'] . ' 贵族，获得了赠送礼包的' . $userGroup['system']['gift_money'] . '钻石',
                 ];
 
-               // $this->make('messageServer')->sendSystemToUsersMessage($message);
+                // $this->make('messageServer')->sendSystemToUsersMessage($message);
                 $messageService = resolve(MessageService::class);
                 $messageService->sendSystemToUsersMessage($message);
             }
@@ -1944,7 +1945,7 @@ class MemberController extends Controller
                 'rec_uid' => $user->uid,
                 'content' => '贵族开通成功提醒：您已成功开通 ' . $userGroup['level_name'] . ' 贵族，到期日：' . $exp,
             ];
-           // $this->make('messageServer')->sendSystemToUsersMessage($message);
+            // $this->make('messageServer')->sendSystemToUsersMessage($message);
             $messageService = resolve(MessageService::class);
             $messageService->sendSystemToUsersMessage($message);
 
@@ -1982,10 +1983,10 @@ class MemberController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             //记录下日志
-      /*      $logPath = base_path() . '/storage/logs/test_' . date('Y-m-d') . '.log';
-            $loginfo = date('Y-m-d H:i:s') . ' uid' . Auth::id() . "\n 购买贵族 事务结果: \n" . $e->getMessage() . "\n";
-            $this->logResult($loginfo, $logPath);*/
-            Log::channel('daily')->info('开通贵族', array(date('Y-m-d H:i:s') . ' uid' . Auth::id() . "\n 购买贵族 事务结果: \n" . $e->getMessage() . "\n"));
+            /*      $logPath = base_path() . '/storage/logs/test_' . date('Y-m-d') . '.log';
+                  $loginfo = date('Y-m-d H:i:s') . ' uid' . Auth::id() . "\n 购买贵族 事务结果: \n" . $e->getMessage() . "\n";
+                  $this->logResult($loginfo, $logPath);*/
+            Log::channel('daily')->info('开通贵族', [date('Y-m-d H:i:s') . ' uid' . Auth::id() . "\n 购买贵族 事务结果: \n" . $e->getMessage() . "\n"]);
 
 
             $msg['status'] = 1003;
@@ -2049,7 +2050,7 @@ class MemberController extends Controller
 
         if ($res !== false) {
             $msg['msg'] = '开通成功！';
-            $msg['status']  = 1;
+            $msg['status'] = 1;
             return new JsonResponse($msg);
         }
 
@@ -2161,7 +2162,7 @@ class MemberController extends Controller
      */
     public function pay(Request $request)
     {
-        $type = $request->get('type',0);
+        $type = $request->get('type', 0);
         $gid = $request->get('gid');
         $nums = $request->get('num');
         if (!$this->buyGoods($type, $gid, $nums)) {
@@ -2280,6 +2281,64 @@ class MemberController extends Controller
         }
     }
 
+    public function gift()
+    {
+        $uid = Auth::id();
+        if (!$uid) {
+            throw new NotFoundHttpException();
+        }
+        $type = $this->make('request')->get('type') ?: 'receive';
+        $mint = $this->make('request')->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
+        $maxt = $this->make('request')->get('maxtime') ?: date('Y-m-d');
+
+        $mintime = date('Y-m-d H:i:s', strtotime($mint));
+        $maxtime = date('Y-m-d H:i:s', strtotime($maxt . '23:59:59'));
+
+        $selectTypeName = $type == 'send' ? 'send_uid' : 'rec_uid';
+        $uriParammeters = $this->make('request')->query->all();
+        $var['uri'] = [];
+        foreach ($uriParammeters as $p => $v) {
+            if (strstr($p, '?')) continue;
+            if (!empty($v)) {
+                $var['uri'][$p] = $v;
+            }
+        }
+
+        $all_data = MallList::where($selectTypeName, $uid)
+            ->where('created', '>=', $mintime)
+            ->where('created', '<=', $maxtime)
+            ->where('gid', '>', 10)
+            ->paginate();
+
+        $sum_gift_num = MallList::where($selectTypeName, $uid)
+            ->where('created', '>=', $mintime)
+            ->where('created', '<=', $maxtime)
+            ->where('gid', '>', 10)
+            ->sum('gnum');
+        $sum_points_num = MallList::where($selectTypeName, $uid)
+            ->where('created', '>=', $mintime)
+            ->where('created', '<=', $maxtime)
+            ->where('gid', '>', 10)
+            ->sum('points');
+        $sum_gift_num = $sum_gift_num ?: 0;
+        $sum_points_num = $sum_points_num ?: 0;
+        $all_data->appends(['type' => $type, 'mintime' => $mint, 'maxtime' => $maxt]);
+
+        $var['type'] = $type;
+        $var['data'] = $all_data;
+        $var['mintime'] = $mint;
+        $var['maxtime'] = $maxt;
+        $var['sum_gift_num'] = $sum_gift_num;
+        $var['sum_points_num'] = $sum_points_num;
+        $var = $this->format_jsoncode($var);
+        return new JsonResponse(($var));
+
+    }
+
+    /*
+     * 礼物统计
+     */
+
     /**添加用户到一对多
      * @param     $onetomany
      * @param     $uid
@@ -2340,63 +2399,6 @@ class MemberController extends Controller
             1, '添加成功', 'data' =>
                 ['points' => $points],
         ];
-    }
-
-    /*
-     * 礼物统计
-     */
-    public function gift()
-    {
-        $uid = Auth::id();
-        if (!$uid) {
-            throw new NotFoundHttpException();
-        }
-        $type = $this->make('request')->get('type') ?: 'receive';
-        $mint = $this->make('request')->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
-        $maxt = $this->make('request')->get('maxtime') ?: date('Y-m-d');
-
-        $mintime = date('Y-m-d H:i:s', strtotime($mint));
-        $maxtime = date('Y-m-d H:i:s', strtotime($maxt . '23:59:59'));
-
-        $selectTypeName = $type == 'send' ? 'send_uid' : 'rec_uid';
-        $uriParammeters = $this->make('request')->query->all();
-        $var['uri'] = [];
-        foreach ($uriParammeters as $p => $v) {
-            if (strstr($p, '?')) continue;
-            if (!empty($v)) {
-                $var['uri'][$p] = $v;
-            }
-        }
-
-        $all_data = MallList::where($selectTypeName, $uid)
-            ->where('created', '>=', $mintime)
-            ->where('created', '<=', $maxtime)
-            ->where('gid', '>', 10)
-            ->paginate();
-
-        $sum_gift_num = MallList::where($selectTypeName, $uid)
-            ->where('created', '>=', $mintime)
-            ->where('created', '<=', $maxtime)
-            ->where('gid', '>', 10)
-            ->sum('gnum');
-        $sum_points_num = MallList::where($selectTypeName, $uid)
-            ->where('created', '>=', $mintime)
-            ->where('created', '<=', $maxtime)
-            ->where('gid', '>', 10)
-            ->sum('points');
-        $sum_gift_num = $sum_gift_num ?: 0;
-        $sum_points_num = $sum_points_num ?: 0;
-        $all_data->appends(['type' => $type, 'mintime' => $mint, 'maxtime' => $maxt]);
-
-        $var['type'] = $type;
-        $var['data'] = $all_data;
-        $var['mintime'] = $mint;
-        $var['maxtime'] = $maxt;
-        $var['sum_gift_num'] = $sum_gift_num;
-        $var['sum_points_num'] = $sum_points_num;
-        $var = $this->format_jsoncode($var);
-        return new JsonResponse(($var));
-
     }
 }
 
