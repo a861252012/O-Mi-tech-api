@@ -7,9 +7,7 @@ use App\Libraries\ErrorResponse;
 use App\Libraries\SuccessResponse;
 use App\Models\GiftActivity;
 use App\Models\PayAccount;
-use App\Models\PayConfig;
 use App\Models\PayGD;
-use App\Models\PayOptions;
 use App\Models\Recharge;
 use App\Models\Users;
 use App\Services\Site\SiteService;
@@ -28,19 +26,6 @@ class ChargeController extends Controller
     const CHANNEL_GD_ALI = 7;
     const CHANNEL_GD_BANK = 8;
     const ORDER_REPEAT_LIMIT_GD = 60;
-    /**
-     * dm对象
-     */
-    private $_gm;
-
-    /**
-     * 根路径
-     */
-    private $_appRoot;
-    /**
-     * @var DataModel
-     */
-    private $_dmodel;
 
     private $codeMsg = array(
         -1 => '未知',
@@ -92,7 +77,12 @@ class ChargeController extends Controller
         $var['user_money_min'] = config('const.user_points_min') / 10;
 
         //充值金额删选数组
-        $var['recharge_money'] = $this->make('redis')->get('recharge_money') ?: json_encode(array());
+        $recharge_money = $this->make('redis')->get('recharge_money') ? json_decode($this->make('redis')->get('recharge_money')) : [];
+        $temp = [];
+        foreach ($recharge_money as $k=>$value){
+            if(isset($value->client) && $value->client==1) array_push($temp,$value);
+        }
+        $var['recharge_money'] = json_encode($temp);
         $var['pay'] = 1;
         return SuccessResponse::create($var);
     }
@@ -120,205 +110,6 @@ class ChargeController extends Controller
             'info' => '删除成功！',
             'ret' => true
         ));
-    }
-
-    public function notice2()
-    {
-        //获取下数据
-        $postdata = $_POST['postdata'];
-        //拿到通知的数据
-        if (empty($postdata) || strpos($postdata, '.') === false) {
-            return JsonResponse::create(['status' => -1, 'msg' => 'invalid input!']);
-        }
-        list($jsonData, $sign) = explode('.', $postdata);
-        $jsonData = base64_decode($jsonData);
-        $data = json_decode($jsonData, true);
-        if (json_last_error() > 0) {
-            return JsonResponse::create(['status' => -1, 'msg' => 'JSON format error']);
-        }
-        //记录下日志
-        $loginfo = date('Y-m-d H:i:s') . "\n传输的数据记录: \n" . $jsonData . "\n";
-
-        $tradeno = $data['order_id'];//拿出1个账单号
-        //验证签名
-        $key = resolve(SiteService::class)->config('back_pay_sign_key');
-        if (hash_hmac('sha256', $jsonData, $key) !== $sign) {
-            $signError = "订单号：" . $tradeno . "\n签名没有通过！\n";
-            $loginfo .= $signError;
-            Log::channel('charge')->info($loginfo);
-            return new JsonResponse(array('status' => -1, 'msg' => $signError));
-        }
-        $paytradeno = $data['pay_id'];
-        $money = $data['money'];
-        $chargeResult = $data['result'];
-        $channel = $data['channel'];
-        $complateTime = $data['complateTime'];
-
-        return $this->orderHandler($tradeno, $paytradeno, $loginfo, $logPath = "", $money, $chargeResult, $channel, $complateTime);
-
-
-    }
-
-    /**
-     * @param $tradeno v项目订单号
-     * @param $paytradeno 财务订单号
-     * @param $loginfo 日志
-     * @param $logPath 日志的路径
-     * @param $money 金钱数目
-     * @param $chargeResult 结果
-     * @return JsonResponse
-     * 充提返回值：-1未知 0已接受 1处理中 2处理成功
-     * @Author Orino
-     */
-    private function orderHandler($tradeno, $paytradeno, $loginfo, $logPath, $money, $chargeResult, $channel = '', $complateTime = '')
-    {
-        $loginfo = "";
-        //开启事务
-        try {
-            DB::beginTransaction();
-            $sql = 'SELECT t.* FROM `video_recharge` t WHERE t.pay_type in(1,50) AND t.pay_status < ' . Recharge::SUCCESS . ' AND order_id = "' . $tradeno . '" LIMIT 1 FOR UPDATE';
-            //强制查询主库
-            //$stmt = DB::select('/*' . MYSQLND_MS_MASTER_SWITCH . '*/' . $sql);
-            $stmt = DB::select($sql);
-
-            if (empty($stmt)) {
-                $dealOrCannotFind = "订单号：" . $tradeno . "\n数据已处理完毕，请查看'充值记录！'\n";
-                $loginfo .= $dealOrCannotFind;
-                Log::channel('charge')->info($loginfo);
-                return new JsonResponse(array('status' => 0, 'msg' => $dealOrCannotFind));
-            }
-            $stmt = (array)$stmt[0];
-            //第一步，写日志
-            $loginfo .= "订单号：" . $tradeno . " 收到，并且准备更新：\n";
-            $points = $stmt['points'];
-            DB::table('video_recharge')->where('id', $stmt['id'])->update(array(
-                'paymoney' => $money,
-                'pay_status' => $chargeResult,
-                'ttime' => $complateTime,
-                'pay_id' => $paytradeno
-            ));
-
-            $chargeStatus = false;//成功状态标记位
-            if ($chargeResult == 2 && !empty($paytradeno)) {
-
-                $rs = DB::table('video_user')->where('uid', $stmt['uid'])->increment('points', $points);
-                if ($rs) {
-                    $chargeStatus = true;//成功状态为1
-                } else {
-                    $loginfo .= '充值成功，增加的钱数:' . $points . ' 失败';
-                }
-            }
-
-            DB::commit();
-
-            //刷新redis钻石
-            if ($chargeStatus) {
-                $userObj = DB::table('video_user')->where('uid', $stmt['uid'])->first();//Users::find($stmt['uid']);
-                $loginfo .= '增加的钱数: paymoney ' . $money . ' points:' . $points . ' 最终的钱数:' . $userObj->points;
-                $this->make('redis')->hincrby('huser_info:' . $stmt['uid'], 'points', $points);
-            }
-
-            // 充钱成功后 检测用户的贵族状态
-            $uinfo = Users::find($stmt['uid']);
-            resolve('userGroupServer')->checkUserVipStatus($uinfo);
-
-        } catch (\Exception $e) {
-            Log::channel('charge')->info("订单号：" . $tradeno . " 事务结果：" . $e->getMessage() . "\n");
-            DB::rollback();
-            return new JsonResponse(array('status' => 1, 'msg' => '程序内部异常'));
-        }
-
-        //首次充值时间
-        if ($chargeStatus) resolve('charge')->chargeAfter($stmt['uid']);
-
-        //第二步，更新数据
-        $loginfo .= "订单号：" . $tradeno . " 数据处理成功！\n";
-        //成功才触发充值自动送礼
-        if ($chargeStatus && resolve(SiteService::class)->config('activity_open')) {
-            //活动的调用写到对应的方法内
-            resolve('active')->doHuodong($money, $stmt['uid'], $tradeno);
-        }
-
-        //封装下结果给充提
-        $rtn2back = $this->back2Charge($chargeResult, $tradeno, $paytradeno);
-        Log::channel('charge')->info($loginfo . "返回给充提中心的结果：$rtn2back");
-        return new JsonResponse(array('status' => 0, 'msg' => $rtn2back));
-
-    }
-
-    /**
-     * 返回给充提的结果
-     */
-    public function back2Charge($chargeResult, $tradeno, $paytradeno)
-    {
-        //数据统计好后，根据状态来返回结果
-        if ($chargeResult == 0) {
-            $chargeResult2 = ' 已接受！';
-        } elseif ($chargeResult == 1) {
-            $chargeResult2 = ' 处理中！';
-        } elseif ($chargeResult == 2 && !empty($paytradeno)) {
-            $chargeResult2 = ' 处理成功！';
-        } elseif ($chargeResult == 3) {
-            $chargeResult2 = ' 处理失败！';
-        }
-        //  return '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">订单号：' . $tradeno . $chargeResult2 . ' \n';
-        return $tradeno . $chargeResult2 . $paytradeno;
-    }
-
-    public function pay2()
-    {
-        $option_id = $this->request()->get('oid');
-        $cid = $this->request()->get('cid');
-        $origin = $this->request()->get('origin') ?: 12;
-        $remark = $this->request()->get('remark') ?: '';
-        $option = PayOptions::find($option_id);
-        $errors = [];
-        if (!$option || !$option->exists) {
-            $errors[] = '金额错误，请返回重试';
-            return ErrorResponse::create(compact('errors'));
-        }
-        $amount = number_format(intval($option['rmb']), 2, '.', '');
-        if (!$amount || $amount < 1) {
-            $errors[] = '请输入正确的金额!';
-            return ErrorResponse::create(compact('errors'));
-        }
-        //获取下渠道
-        $channel = PayConfig::where('cid', $cid)->where('open', 1)->first();
-        //判断下渠道存不存在
-        if (!$channel || !$channel->exists) {
-            $errors[] = '请选择充值渠道!';
-            return ErrorResponse::create(compact('errors'));
-        }
-        $rtn = [];
-        if (empty($errors)) {
-            try {
-                //跳转页面需要的信息，设置session数据
-                $rtn = [
-                    'postdata' => resolve('payment')->postData($amount, $cid, $remark, $origin),
-                    'remoteUrl' => resolve('payment')->remote(),
-                ];
-                $record = Recharge::create([
-                    'uid' => Auth::id(),
-                    'created' => date('Y-m-d H:i:s'),
-                    'pay_status' => 0,// 刚开始受理
-                    'pay_type' => Recharge::PAY_TYPE_CHONGTI, // 银行充值
-                    'del' => 0,
-                    'paymoney' => $amount,
-                    'points' => $option->points,
-                    'order_id' => resolve('payment')->order_id,
-                    'postdata' => $rtn['postdata'],
-                    'nickname' => $this->userInfo['nickname'],
-                    'channel' => $cid,
-                    'origin' => $origin
-                ]);
-            } catch (\Exception $e) {
-                $rtn['errors'] = ['创建订单失败'];
-                return ErrorResponse::create($rtn);
-            }
-        } else {
-            $rtn['errors'] = $errors;
-        }
-        return SuccessResponse::create($rtn);
     }
 
     /**
@@ -628,6 +419,112 @@ class ChargeController extends Controller
             $code;
         Log::channel('charge')->info('返回给古都:' . $r);
         return Response::create($code);
+    }
+
+    /**
+     * @param $tradeno v项目订单号
+     * @param $paytradeno 财务订单号
+     * @param $loginfo 日志
+     * @param $logPath 日志的路径
+     * @param $money 金钱数目
+     * @param $chargeResult 结果
+     * @return JsonResponse
+     * 充提返回值：-1未知 0已接受 1处理中 2处理成功
+     * @Author Orino
+     */
+    private function orderHandler($tradeno, $paytradeno, $loginfo, $logPath, $money, $chargeResult, $channel = '', $complateTime = '')
+    {
+        $loginfo = "";
+        //开启事务
+        try {
+            DB::beginTransaction();
+            $sql = 'SELECT t.* FROM `video_recharge` t WHERE t.pay_type in(1,50) AND t.pay_status < ' . Recharge::SUCCESS . ' AND order_id = "' . $tradeno . '" LIMIT 1 FOR UPDATE';
+            //强制查询主库
+            //$stmt = DB::select('/*' . MYSQLND_MS_MASTER_SWITCH . '*/' . $sql);
+            $stmt = DB::select($sql);
+
+            if (empty($stmt)) {
+                $dealOrCannotFind = "订单号：" . $tradeno . "\n数据已处理完毕，请查看'充值记录！'\n";
+                $loginfo .= $dealOrCannotFind;
+                Log::channel('charge')->info($loginfo);
+                return new JsonResponse(array('status' => 0, 'msg' => $dealOrCannotFind));
+            }
+            $stmt = (array)$stmt[0];
+            //第一步，写日志
+            $loginfo .= "订单号：" . $tradeno . " 收到，并且准备更新：\n";
+            $points = $stmt['points'];
+            DB::table('video_recharge')->where('id', $stmt['id'])->update(array(
+                'paymoney' => $money,
+                'pay_status' => $chargeResult,
+                'ttime' => $complateTime,
+                'pay_id' => $paytradeno
+            ));
+
+            $chargeStatus = false;//成功状态标记位
+            if ($chargeResult == 2 && !empty($paytradeno)) {
+
+                $rs = DB::table('video_user')->where('uid', $stmt['uid'])->increment('points', $points);
+                if ($rs) {
+                    $chargeStatus = true;//成功状态为1
+                } else {
+                    $loginfo .= '充值成功，增加的钱数:' . $points . ' 失败';
+                }
+            }
+
+            DB::commit();
+
+            //刷新redis钻石
+            if ($chargeStatus) {
+                $userObj = DB::table('video_user')->where('uid', $stmt['uid'])->first();//Users::find($stmt['uid']);
+                $loginfo .= '增加的钱数: paymoney ' . $money . ' points:' . $points . ' 最终的钱数:' . $userObj->points;
+                $this->make('redis')->hincrby('huser_info:' . $stmt['uid'], 'points', $points);
+            }
+
+            // 充钱成功后 检测用户的贵族状态
+            $uinfo = Users::find($stmt['uid']);
+            resolve('userGroupServer')->checkUserVipStatus($uinfo);
+
+        } catch (\Exception $e) {
+            Log::channel('charge')->info("订单号：" . $tradeno . " 事务结果：" . $e->getMessage() . "\n");
+            DB::rollback();
+            return new JsonResponse(array('status' => 1, 'msg' => '程序内部异常'));
+        }
+
+        //首次充值时间
+        if ($chargeStatus) resolve('charge')->chargeAfter($stmt['uid']);
+
+        //第二步，更新数据
+        $loginfo .= "订单号：" . $tradeno . " 数据处理成功！\n";
+        //成功才触发充值自动送礼
+        if ($chargeStatus && resolve(SiteService::class)->config('activity_open')) {
+            //活动的调用写到对应的方法内
+            resolve('active')->doHuodong($money, $stmt['uid'], $tradeno);
+        }
+
+        //封装下结果给充提
+        $rtn2back = $this->back2Charge($chargeResult, $tradeno, $paytradeno);
+        Log::channel('charge')->info($loginfo . "返回给充提中心的结果：$rtn2back");
+        return new JsonResponse(array('status' => 0, 'msg' => $rtn2back));
+
+    }
+
+    /**
+     * 返回给充提的结果
+     */
+    public function back2Charge($chargeResult, $tradeno, $paytradeno)
+    {
+        //数据统计好后，根据状态来返回结果
+        if ($chargeResult == 0) {
+            $chargeResult2 = ' 已接受！';
+        } elseif ($chargeResult == 1) {
+            $chargeResult2 = ' 处理中！';
+        } elseif ($chargeResult == 2 && !empty($paytradeno)) {
+            $chargeResult2 = ' 处理成功！';
+        } elseif ($chargeResult == 3) {
+            $chargeResult2 = ' 处理失败！';
+        }
+        //  return '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">订单号：' . $tradeno . $chargeResult2 . ' \n';
+        return $tradeno . $chargeResult2 . $paytradeno;
     }
 
     /**
