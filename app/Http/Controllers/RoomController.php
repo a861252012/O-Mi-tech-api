@@ -194,7 +194,7 @@ class RoomController extends Controller
 //            'room' => &$room,
             'rid' => $rid,
             'origin' => $origin,
-            'plat_url' => $plat_backurl, JSON_FORCE_OBJECT,
+            'plat_url' => $plat_backurl,
             'in_limit_points' => $redis->hget('hconf', 'in_limit_points') ?: 0,
             'in_limit_safemail' => $redis->hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
             'certificate' => $certificate,
