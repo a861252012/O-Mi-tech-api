@@ -263,11 +263,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     //获取余额接口
     Route::get('/balance', ['name' => 'balance', 'uses' => 'ApiController@Balance']);
 
-    //抽奖接口
-    Route::any('/lottery', 'ApiController@lottery')->name('lottery');
 
-    //抽奖信息接口
-    Route::get('/lotteryinfo', 'ApiController@lotteryinfo')->name('lotteryinfo');
 
     // 房间管理员
     Route::get('/member/roomadmin', ['name' => 'roomadmin', 'uses' => 'MemberController@roomadmin']);

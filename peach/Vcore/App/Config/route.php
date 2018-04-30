@@ -213,12 +213,6 @@ $app->routeDecorator(['decorator' => ['App\Controller\BaseController@notLogin']]
     //获取余额接口
     $app->get('/balance', ['as' => 'balance', 'uses' => 'App\Controller\ApiController@Balance']);
 
-    //抽奖接口
-    $app->get('/lottery', ['as' => 'lottery', 'uses' => 'App\Controller\ApiController@lottery']);
-
-    //抽奖信息接口
-    $app->get('/lotteryinfo', ['as' => 'lotteryinfo', 'uses' => 'App\Controller\ApiController@lotteryinfo']);
-
     // 房间管理员
     $app->addRoute(['POST', 'GET'], '/member/roomadmin', ['as' => 'roomadmin', 'uses' => 'App\Controller\MemberController@roomadmin']);
 

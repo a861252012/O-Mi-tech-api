@@ -11,13 +11,11 @@ use App\Models\Domain;
 use App\Models\GiftCategory;
 use App\Models\Goods;
 use App\Models\LevelRich;
-use App\Models\Lottery;
 use App\Models\Messages;
 use App\Models\Pack;
 use App\Models\UserGroup;
 use App\Models\Users;
 use App\Services\Auth\JWTGuard;
-use App\Services\Lottery\LotteryService;
 use App\Services\Message\MessageService;
 use App\Services\Safe\SafeService;
 use App\Services\Site\Config;
@@ -695,72 +693,6 @@ class ApiController extends Controller
         return resolve(SystemService::class)->getShortUrl();
     }
 
-
-    /**
-     * [lottery 用户抽奖方法]
-     *
-     * @author  dc <dc#wisdominfo.my>
-     * @version 2015-11-10
-     * @return  JsonResponse
-     */
-    public function lottery()
-    {
-        $uid = Auth::id();
-        $user = Auth::user();
-
-        //if(!$user['safemail']) return new JsonResponse(['data'=>0, 'msg'=>'您好，您还未进行邮箱验证，验证邮箱后才能获取3次抽奖机会。']);
-
-        $lotteryTimes = Redis::hget('hlottery_ary', $uid);
-        if (!$lotteryTimes) return new JsonResponse(['status' => 0, 'msg' => '抱歉，您无法抽奖。只有新注册用户才可参加该活动，或是您的抽奖次数已经用完']);
-
-        //进行抽奖活动
-        $lotterys = resolve(LotteryService::class)->getLotterys();
-        $possibility = $lotteryItem = [];
-        foreach ($lotterys as $v) {
-            $possibility[$v['id']] = $v['probability'];
-            $lotteryItem[$v['id']] = ['nums' => $v['nums'], 'fenshu' => $v['fenshu']];
-        }
-
-        //开始抽奖算法
-        $lotteryid = resolve(LotteryService::class)->LotteryOfProbability($possibility);
-        if ($lotteryItem[$lotteryid]['nums'] < 1) return new JsonResponse(['status' => 0, 'msg' => '该奖品已经抽完']);
-
-        //奖项id-1
-        Lottery::where('id', $lotteryid)->update(['nums' => $lotteryItem[$lotteryid]['nums'] - 1]);
-
-        //记录抽奖次数
-        Redis::hset('hlottery_ary', $uid, $lotteryTimes - 1);
-
-        //给中奖用户增加奖励
-        resolve(UserService::class)->updateUserOfPoints($uid, '+', $lotteryItem[$lotteryid]['fenshu'], 6);
-
-        //更新用户redis数据
-        resolve(UserService::class)->getUserReset($uid);
-
-        //发信给用户
-        resolve(MessageService::class)->sendSystemToUsersMessage(['send_uid' => 0, 'rec_uid' => $uid, 'content' => '通过抽奖奖励，恭喜您获得' . $lotteryItem[$lotteryid]['fenshu'] . '钻石，抽奖次数剩余' . $lotteryTimes . '次']);
-        return new JsonResponse(['data' => ['lotteryId' => $lotteryid, 'times' => $lotteryTimes], 'msg' => '恭喜中奖！']);
-    }
-
-
-    /**
-     * [lotteryInfo 抽奖活动数据输出接口]
-     *
-     * @author  dc <dc#wisdominfo.my>
-     * @version 2015-11-10
-     * @return  [type]     [description]
-     */
-    public function lotteryInfo()
-    {
-        if (!SiteSer::config('lottry_status'))
-            return new JsonResponse(['status' => 0, 'msg' => '活动已经关闭！']);
-        $lotterys = resolve(LotteryService::class)->getLotterys();
-        $lotterylist = [];
-        foreach ($lotterys as $lottery) {
-            $lotterylist[] = ['id' => $lottery['id'], 'prize' => $lottery['prize']];
-        }
-        return JsonResponse::create(['data' => ['list' => $lotterylist]]);
-    }
 
 
     /**
