@@ -495,11 +495,6 @@ class ChargeController extends Controller
 
         //第二步，更新数据
         $loginfo .= "订单号：" . $tradeno . " 数据处理成功！\n";
-        //成功才触发充值自动送礼
-        if ($chargeStatus && resolve(SiteService::class)->config('activity_open')) {
-            //活动的调用写到对应的方法内
-            resolve('active')->doHuodong($money, $stmt['uid'], $tradeno);
-        }
 
         //封装下结果给充提
         $rtn2back = $this->back2Charge($chargeResult, $tradeno, $paytradeno);

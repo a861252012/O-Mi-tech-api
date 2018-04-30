@@ -457,7 +457,9 @@ class RoomController extends Controller
                     if(!$roomService->whiteList())   $room_user['authority_in'] = 302;
                     break;
                 case 4:
-                    if(!$roomService->checkCanIn())   $room_user['authority_in'] = 303;
+                    if(!$roomService->checkCanIn()){
+                            $room_user['authority_in'] =  $roomExtend['user_num'] ? 304 : 303;
+                    }
                     break;
                 case 6:
                     if($user['points'] < $roomExtend['room_price'])   $room_user['authority_in'] = 305;
