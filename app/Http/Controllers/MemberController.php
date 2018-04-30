@@ -382,8 +382,6 @@ class MemberController extends Controller
         //管理员数据列表
         $v['roomadmin'] = RoomAdmin::where('rid', $rid)->where('dml_flag', '!=', 3)->with('user')->paginate(30);
         $res = $v['roomadmin']->toArray();
-        $res['list'] = $res['data'];
-        unset($res['data']);
         return new JsonResponse(['status' => 1, 'data' => ['list'=>$res], 'msg' => '获取成功!']);
 
     }
