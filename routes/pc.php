@@ -317,8 +317,6 @@ Route::group(['middleware' => ['login_auth']], function () {
 
     // 关键字屏蔽
     Route::get('/kw', ['name' => 'json_kw', 'uses' => 'ApiController@kw']);
-    // 获取主播房间内的礼物清单
-    Route::get('/rank_list_gift', ['name' => 'json_rank_list_gift', 'uses' => 'ApiController@rankListGift']);
 
     //对换
     Route::post('/api/plat_exchange', ['name' => 'plat_exchange', 'uses' => 'ApiController@platExchange']);
