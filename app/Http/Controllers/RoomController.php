@@ -13,6 +13,7 @@ use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 
 class RoomController extends Controller
 {
@@ -81,14 +82,14 @@ class RoomController extends Controller
                         $result['data'] = $one2one;
                         $result['data']['rid'] = $one2one['uid'];
                         $result['data']['start_time'] = $one2one['starttime'];
-                        $end_time =  strtotime($one2one['starttime'])+$one2one['duration'];
+                        $end_time = strtotime($one2one['starttime']) + $one2one['duration'];
                         $result['data']['end_time'] = date('Y-m-d H:i:s', $end_time);
                         $userdata = resolve(UserService::class)->getUserByUid($result['data']['uid']);
-                        $result['data']['nickname'] =$userdata['nickname'];
-                        $result['data']['username'] =$userdata['username'];
-                        unset( $result['data']['starttime']);
+                        $result['data']['nickname'] = $userdata['nickname'];
+                        $result['data']['username'] = $userdata['username'];
+                        unset($result['data']['starttime']);
                         // return JsonResponse::create(['status' => 0, 'data' => ['handle' => $handle]]);
-                        return JsonResponse::create(['status' => 0, 'data' => $result,'msg'=>'未购买该房间']);
+                        return JsonResponse::create(['status' => 0, 'data' => $result, 'msg' => '未购买该房间']);
                     }
                     break;
                 case 6:   //时长房间
@@ -125,7 +126,7 @@ class RoomController extends Controller
                         if ($h5 === 'h5hls') {
                             return JsonResponse::create(['status' => 0]);
                         }
-                        $roomService->extend_room  =  $roomService->extend_room[0];
+                        $roomService->extend_room = $roomService->extend_room[0];
 
                         $data = [
                             'id' => $roomService->extend_room['onetomore'],
@@ -135,7 +136,7 @@ class RoomController extends Controller
                             'end_time' => $roomService->extend_room['endtime'],
                             'duration' => strtotime($roomService->extend_room['endtime']) - strtotime($roomService->extend_room['starttime']),
                             'username' => resolve(UserService::class)->getUserByUid($rid)['nickname'],
-                            'tickets' =>$roomService->extend_room['tickets'],
+                            'tickets' => $roomService->extend_room['tickets'],
                         ];
 
                         $hplat = $redis->exists("hplatforms:$origin") ? "plat_whitename_room" : "not_whitename_room";
@@ -197,6 +198,7 @@ class RoomController extends Controller
             'in_limit_points' => $redis->hget('hconf', 'in_limit_points') ?: 0,
             'in_limit_safemail' => $redis->hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
             'certificate' => $certificate,
+            Session::getName() => Session::getId(),
         ];
         $data['chat_server_addr'] = $chat_server_addr;
         if (!$h5) {
