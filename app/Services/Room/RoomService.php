@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Session;
 
 /**
  * @desc 房间类
@@ -215,7 +216,7 @@ public $cur_login_uid = null;
      */
     public function checkPassword()
     {
-        $cookie_login_val = $_COOKIE['SESSID'];
+        $cookie_login_val = Session::getId();
 
         $redis = $this->make('redis');
         $room_pass_key = "keys_room_passwd:" . $this->rid . ":" . $cookie_login_val;
