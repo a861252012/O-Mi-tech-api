@@ -8,7 +8,6 @@ use App\Models\ActivityClick;
 use App\Models\AgentsRelationship;
 use App\Models\Conf;
 use App\Models\Domain;
-use App\Models\GiftActivity;
 use App\Models\GiftCategory;
 use App\Models\Goods;
 use App\Models\LevelRich;
@@ -645,109 +644,6 @@ class ApiController extends Controller
         $uid = $this->make('request')->get('u');
         if (!$uid) return new JsonResponse(['status' => 0]);
         return JsonResponse::create(['status' => 1])->cookie(Cookie::make('invitation_uid', $uid, time() + 3600));
-    }
-
-
-    /**
-     * [活动送礼接口]
-     *
-     * @author      dc
-     * @version     20151027
-     * @description 迁移自原 activityAction
-     * @return JsonResponse
-     */
-    public function Activity(Request $request)
-    {
-        $timestamp = time();
-        if (!SiteSer::config('first_recharge_status')) return JsonResponse::create(['status' => 0, 'msg' => '活动已经停止！']);
-
-        //活动有效期判断
-        $recharge_datetime = SiteSer::config('recharge_datetime');
-        if (!$recharge_datetime) abort(404, 'Get recharge date time was empty');
-        $recharge_datetime = json_decode($recharge_datetime, true);
-        if (!(strtotime($recharge_datetime['begintime']) < $timestamp && strtotime($recharge_datetime['endtime']) > $timestamp)) return new JsonResponse(['status' => 0, 'msg' => '活动已经停止！']);
-
-        //组装验证数据
-        $d['uid'] = $request->get('uid');//用户id
-        $d['ctype'] = $request->get('ctype');//活动类型
-        $d['money'] = $request->get('money');//充值的金额
-        $d['token'] = $request->get('token');//口令牌
-        $d['vsign'] = $request->get('vsign');//内部程序调用的签名
-        $d['order_num'] = $request->get('order_num');//订单号
-        if ($d['vsign'] != $config['config.VFPHP_SIGN']) return new JsonResponse(['status' => 0, 'msg' => '非法提交！']);
-
-        $activity = GiftActivity::where('moneymin', '<=', $d['money'])->where('moneymax', '>=', $d['money'])->where('type', 2)->where('flag', 1)->first();
-
-        if (!$activity) return new JsonResponse(['status' => 0, 'msg' => '送礼活动不存在！']);
-        $activity = $activity->toArray();
-
-        $redis = $this->make('redis');
-        $gift_activity_key = 'hcharege_send';
-        $gift_activity_val = $redis->hget($gift_activity_key, $d['uid']);
-        if (strpos($gift_activity_val, strval($activity['id'])) > 0) return new JsonResponse(['status' => 2, 'msg' => '已经领取过该奖励，可以选择其他档次的充值奖励！']);
-
-        //写入redis,标注已领取活动礼品
-        $redis->hset($gift_activity_key, $d['uid'], $gift_activity_val . '|' . $activity['id']);
-
-        //插入最新充值的20个用户
-        $user_recharge_20_key = 'llast_charge_user2';
-
-        //推送到链表
-        $redis->lpush($user_recharge_20_key, json_encode([
-            'adddate' => date('Y-m-d'),
-            'nickname' => $this->userInfo['nickname'],
-            'giftname' => $activity['giftname'],
-        ]));
-
-        //裁剪链表，保存20位
-        $redis->ltrim($user_recharge_20_key, 0, 19);
-
-
-        //获取财富等级
-        $user_lv_rich = $this->userInfo['lv_rich'];
-
-        //当前的财富等级小于赠送的，才执行
-        $LevelRich = 0;
-        if ($activity['richlv'] && $user_lv_rich < $activity['richlv'] && $user_lv_rich < 17) {
-            $LevelRich = LevelRich::where('level_id', 2)->first()->level_value ?: 0;
-        }
-        if ($activity['packid']) {
-            $condition = ['uid' => $d['uid'], 'gid' => $activity['packid']];
-
-            //更新礼物有效期
-            $expires = $activity['giftday'] * 86400;
-            $pack = Pack::where($condition)->first();
-
-            //更新礼物数据库
-            if ($pack) {
-                Pack::where($condition)->update(['expires' => $pack->expires + $expires]);
-            } else {
-                $condition = array_merge($condition, ['num' => 1, 'expires' => $expires]);
-                Pack::create($condition);
-            }
-        }
-
-
-        //更新钱
-        if ($activity['gitmoney'] > 0) {
-            /**
-             * @todo 原方法存在疑问 src\Video\ProjectBundle\Controller\ApiController.php  activityAction
-             * @var bool
-             */
-            $updatePoints = resolve(UserService::class)->updateUserOfPoints($d['uid'], '+', $activity['gitmoney'], 6);
-            $message = '充值奖励，恭喜您获得' . $activity['giftname'];
-        } else {
-            /**
-             * @todo 原方法存在疑问 src\Video\ProjectBundle\Controller\ApiController.php  activityAction
-             * @var bool
-             */
-            $updatePoints = resolve(UserService::class)->updateUserOfPoints($d['uid'], '+', $activity['gitmoney'], 6);
-            $message = '充值成功，恭喜您获得' . $d['money'] * 10 . ' 钻';
-
-        }
-        //给用户发私信
-        $this->make('messageServer')->sendSystemToUsersMessage(['send_uid' => 0, 'rec_uid' => $d['uid'], 'content' => $message]);
-        return new JsonResponse(['status' => 1, 'msg' => '充值奖励获取充值大礼包！']);
     }
 
 
