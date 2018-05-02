@@ -198,9 +198,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/convertstaticimg', 'ApiController@imageStatic')->name('imagestatic');
 //FIND
 
-//更新点击数
-    Route::get('/clickadd', ['name' => 'click', 'uses' => 'ApiController@click']);
-
 
     Route::match(['GET', 'POST'], '/majax/{action}', ['name' => 'majax', 'uses' => 'MemberController@ajax']);
 

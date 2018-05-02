@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
-use App\Models\ActivityClick;
 use App\Models\AgentsRelationship;
 use App\Models\Conf;
 use App\Models\Domain;
@@ -1019,36 +1018,6 @@ EOT;
     }
 
 
-    /**
-     * [click 点击数统计接口]
-     *
-     * @author  dc <dc#wisdominfo.my>
-     * @version 2015-11-10
-     */
-    public function click()
-    {
-        $ip = resolve(SystemService::class)->getIpAddress('long');
-        $redis = resolve('redis');
-
-        $ipkey = 'video_click_ip';
-
-        $getip = $redis->hget($ipkey, $ip);
-
-        if ($getip) return JsonResponse::create(['status' => 0, 'msg' => '失败']);
-
-        //更新redis统计
-        $redis->hset($ipkey, $ip, 1);
-
-        //更新数据库
-        $today = date('Y-m-d');
-        $click = ActivityClick::where(['date_day' => $today])->first(['clicks']);
-        if ($click) {
-            ActivityClick::where('date_day', $today)->update(['clicks' => $click->clicks + 1]);
-        } else {
-            ActivityClick::create(['date_day' => $today, 'clicks' => 1]);
-        }
-        return JsonResponse::create(['status' => 1, 'msg' => '成功']);
-    }
 
     /**
      * 获取礼物的数据 接口
