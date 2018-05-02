@@ -303,7 +303,7 @@ class LoginController extends Controller
         return md5($username . $_encrypt_key);
     }
 
-
+    //todo 增加scopes
     public function loginLog($uid, $login_ip, $date)
     {
         return UserLoginLog::create([

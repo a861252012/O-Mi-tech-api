@@ -19,14 +19,4 @@ class RoomDuration extends \Illuminate\Database\Eloquent\Model
     protected $guarded = ['id'];
 
     public $timestamps= false;
-
-    protected $appends = array('endtime');
-
-    public function setEndtimeAttribute(){
-    }
-
-    public function getEndtimeAttribute()
-    {
-        return date('Y-m-d H:i:s',strtotime($this->starttime)+$this->duration);
-    }
 }

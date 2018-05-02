@@ -472,6 +472,7 @@ public $cur_login_uid = null;
 
         if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return ['status' => 0, 'msg' => '不能设置过去的时间'];
 
+        $endtime = date('Y-m-d H:i:s', strtotime($start_time) + $data['duration'] * 60);
         $durationRoom = new RoomDuration();
         $durationRoom->created = date('Y-m-d H:i:s');
         $durationRoom->uid = Auth::id();
@@ -480,9 +481,9 @@ public $cur_login_uid = null;
         $durationRoom->duration = $data['duration'] * 60;
         $durationRoom->status = 0;
         $durationRoom->points = $data['points'];
+        $durationRoom->endtime = $endtime;
+        $durationRoom->origin = 21;
 
-
-        $endtime = date('Y-m-d H:i:s', strtotime($start_time) + $durationRoom->duration);
         if ($this->notSetRepeat($start_time, $endtime)) {
             $durationRoom->save();
             $this->set_durationredis($durationRoom);
