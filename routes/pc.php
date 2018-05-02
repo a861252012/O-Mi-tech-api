@@ -148,7 +148,7 @@ Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@c
 
 
 // 开放平台
-$app->get('api/downrtmp', 'ApiController@getDownRtmp')->name('downrtmp');
+Route::get('/api/downrtmp', 'ApiController@getDownRtmp')->name('downrtmp');
 
 Route::post('/reg', 'ApiController@reg')->name('api_reg');
 
