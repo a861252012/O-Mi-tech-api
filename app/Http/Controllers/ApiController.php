@@ -1154,7 +1154,7 @@ EOT;
          */
         $uid = $this->make('request')->get('uid');
         if (!$uid) {
-           return new JsonResponse(['data'=>'','status'=>0,'请输入会员id']);
+           return new JsonResponse(['data'=>'','status'=>0,'msg'=>'请输入会员id']);
         }
 
         /**
@@ -1181,7 +1181,7 @@ EOT;
             $arr['name'] = $user['nickname'];
             $data[] = $arr;
         }
-        return new JsonResponse(['data'=>$data,'msg'=>'获取成功']);
+        return new JsonResponse(['data'=>['list'=>$data],'msg'=>'获取成功']);
 
     }
 
