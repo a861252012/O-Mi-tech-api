@@ -416,6 +416,8 @@ class RoomController extends Controller
             'user_num'=> $room['total'],
             'room_price'=> 0,
             'time_length'=> 0,
+            'room_id'=> $rid,
+            'class_id'=> 0,
         ];
         switch ($tid){
             case 8 :
@@ -424,6 +426,7 @@ class RoomController extends Controller
                 $roomExtend['end_time'] = $one2more['endtime'];
                 $roomExtend['user_num'] = $one2more['nums'];
                 $roomExtend['room_price'] = $one2more['points'];
+                $roomExtend['class_id'] = $one2more['onetomore'];
                 break;
             case 4:
                 $one2one = resolve('one2one')->getRunningData();
@@ -431,6 +434,7 @@ class RoomController extends Controller
                 $roomExtend['end_time'] = date('Y-m-d H:i:s',strtotime($one2one['starttime']) + $one2one['duration']);
                 $roomExtend['user_num'] = $one2one['tickets']?:($one2one['reuid'] ?1:0);
                 $roomExtend['room_price'] = $one2one['points'];
+                $roomExtend['class_id'] = $one2one['id'];
                 break;
             case 6 :
                 $durRoom = $roomService->getDurationRoom();

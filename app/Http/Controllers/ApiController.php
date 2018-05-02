@@ -13,6 +13,7 @@ use App\Models\Goods;
 use App\Models\LevelRich;
 use App\Models\Messages;
 use App\Models\Pack;
+use App\Models\SiteConfig;
 use App\Models\UserGroup;
 use App\Models\Users;
 use App\Services\Auth\JWTGuard;
@@ -694,6 +695,123 @@ class ApiController extends Controller
     }
 
 
+    public function getDownRtmp_test()
+    {
+        $data=json_decode(file_get_contents(route('downrtmp')));
+        $jsonFormat=json_encode($data,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+        $method = 'AES-128-CBC';
+        $iv=base64_decode($data->iv);
+        $key=SiteSer::config('downrtmp_key');
+        $dataDecrypt=openssl_decrypt($data->data,$method,$key,0,$iv);
+        $dataDecryptFormat=json_encode(json_decode($dataDecrypt),JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+        echo <<<EOT
+<p>获取使用cdn主播中房间人数最少的</p>
+<pre>$jsonFormat</pre>
+<p>data解密后数据</p>
+<pre>$dataDecryptFormat</pre>
+EOT;
+
+    }
+
+    public function getDownRtmp()
+    {
+        /** @var \Redis $redis */
+        $redis = $this->make('redis');
+        $rids = $redis->hGetAll('hroom_ids');
+        $minUserNo = PHP_INT_MAX;
+        $minHost = [];
+        foreach ($rids as $rid) {
+            //过滤不在直播
+            $ktv = $redis->hgetall("hvediosKtv:$rid");
+            if (!$ktv['status']) continue;
+            //跳过人数多的
+            if ($minUserNo <= $ktv['total']) continue;
+            //获取下播
+            $port = $ktv['rtmp_port'] ?: '';
+            $host = $ktv['rtmp_host'];
+            $srtmp = $redis->sMembers('srtmp_server');
+            $rtmp_up = '';
+            //过滤无supVip线路直播
+            foreach ($srtmp as $up) {
+                if (preg_match(
+                    "/$host:?$port(.*)@@superVIP/"
+                    , $up
+                )) {
+                    $rtmp_up = explode('@@', $up)[0];
+                    break;
+                }
+            }
+//            $rtmp_up = empty($port) ? "rtmp://$host/proxypublish" : "rtmp://$host:$port/proxypublish";
+            $rtmp_down = $redis->smembers("srtmp_user:$rtmp_up");
+            //foreach ($rtmp_down as $k => $tmp_down) {
+            //    if (strpos($tmp_down, 'superVIP') === false)
+            //        unset($rtmp_down[$k]);
+            //}
+            if (empty($rtmp_down)) continue;
+            $minUserNo = $ktv['total'];
+            $sid = $redis->hget('hvedios_ktv_set:' . $rid, 'sid');
+            $minHost['rid'] = $rid;
+            $minHost['total'] = $ktv['total'];
+
+            $rtmp_down = explode('@@', $rtmp_down[0]);
+            switch($rtmp_down[1]){
+                case 'superVIP:1':
+                    $args = $this->getXingyunSign();
+                    $minHost['rtmp'] = $rtmp_down['0'] . '/' . $sid . '?' . http_build_query($args);
+                    break;
+                case 'superVIP:3':
+                    $args = $this->getBaiyunshanSign($rtmp_down['0'] . '/' . $sid);
+                    $minHost['rtmp'] = $rtmp_down['0'] . '/' . $sid . '?' . http_build_query($args);
+                    break;
+                default:
+                    $minHost['rtmp'] = $rtmp_down['0'] . '/' . $sid;
+            }
+        }
+
+        Log::info("棋牌接口：".json_encode($minHost));
+        //
+        $method = 'AES-128-CBC';
+        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($method));
+        $downRTMP['data'] = openssl_encrypt(json_encode($minHost, JSON_UNESCAPED_SLASHES), $method, (string)SiteSer::config('downrtmp_key'), 0, $iv);
+        $downRTMP['iv'] = base64_encode($iv);
+        return JsonResponse::create($downRTMP);
+    }
+
+
+    /**
+     * 白云山
+     * @param string $uri
+     * @return array
+     */
+    protected function getBaiyunshanSign($uri = "")
+    {
+        $redis = $this->make('redis');
+        $rtmp_cdn_key = $redis->hget('hrtmp_cdn:3', 'key');
+        $down_expire_sec = $redis->hget('hrtmp_cdn:3', 'down_expire_sec');
+        $time = dechex(time()+$down_expire_sec);
+        $tmp_uri = parse_url($uri, PHP_URL_PATH);
+        $uri = trim($tmp_uri);
+        $k = hash('md5', $rtmp_cdn_key .$uri. $time);
+        return [
+            'sign' => $k,
+            't' => $time
+        ];
+    }
+    /**
+     * 星云签名
+     * @return array
+     */
+    protected function getXingyunSign()
+    {
+        $redis = $this->make('redis');
+        $rtmp_cdn_key = $redis->hget('hrtmp_cdn:1', 'key');
+        $time = time();
+        $k = hash('md5', $rtmp_cdn_key . $time);
+        return [
+            'k' => $k,
+            'time' => $time
+        ];
+    }
 
     /**
      * [flashCount flash统计]

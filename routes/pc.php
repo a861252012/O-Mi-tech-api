@@ -147,6 +147,8 @@ Route::get('/extend/{url}', ['name' => 'business_extend', 'uses' => 'BusinessCon
 Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
 
 
+// 开放平台
+$app->get('api/downrtmp', 'ApiController@getDownRtmp')->name('downrtmp');
 
 Route::post('/reg', 'ApiController@reg')->name('api_reg');
 
