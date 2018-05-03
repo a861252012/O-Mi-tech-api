@@ -944,7 +944,7 @@ class MemberController extends Controller
      */
     public function roomSetPwd()
     {
-        $room_radio = $this->make('request')->get('room-radio');
+        $room_radio = $this->make('request')->get('room_radio');
         $password = '';
         if ($room_radio == 'true') $password = $this->make('request')->get('password');
         $password = $this->decode($password);
