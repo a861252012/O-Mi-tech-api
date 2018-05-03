@@ -57,6 +57,9 @@ class ChargeGroupService extends Service
 
         $user = resolve(UserService::class)->getUserByUid($uid);
         //循环匹配充值组
+        $RechargeTypes = [
+            'isopen'=>0,
+        ];
         foreach ($rechargeGroup as $rid => $val) {
             if ($rid < 3) continue; //黑名单、白名单不进入循环
 
@@ -74,7 +77,7 @@ class ChargeGroupService extends Service
             }
 
         }
-        return $RechargeTypes ?: [];
+        return $RechargeTypes;
     }
 
     public function group(): array
