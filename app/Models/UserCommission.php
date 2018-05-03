@@ -1,8 +1,10 @@
 <?php
 namespace App\Models;
 
+use App\Traits\SiteSpecific;
 class UserCommission extends \Illuminate\Database\Eloquent\Model
 {
+    use  SiteSpecific;
     protected $table='video_user_commission';
     protected $primaryKey = 'auto_id';
     protected $guarded = ['auto_id'];

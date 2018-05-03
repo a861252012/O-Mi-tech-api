@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use App\Traits\SiteSpecific;
 /**
  * 消息表对应的模型
  *
@@ -13,6 +14,7 @@ class Messages extends \Illuminate\Database\Eloquent\Model
      * 表名 消息表
      * @var string
      */
+    use  SiteSpecific;
     protected  $table='video_mail';
     protected $primaryKey = 'id';
 
