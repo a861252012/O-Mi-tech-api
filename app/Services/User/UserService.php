@@ -77,8 +77,8 @@ class UserService extends Service
             DB::commit();
             //更新redis关联
             $redis = $this->make('redis');
-            $redis->hset('husername_to_id', $user['username'], $uid);
-            $redis->hset('hnickname_to_id', $user['nickname'], $uid);
+            $redis->hset('husername_to_id:'.SiteSer::siteId(), $user['username'], $uid);
+            $redis->hset('hnickname_to_id:'.SiteSer::siteId(), $user['nickname'], $uid);
 
             //赠送钻石
             if ($points = Arr::get($gift, 'points')) {

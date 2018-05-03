@@ -216,7 +216,7 @@ class IndexController extends Controller
             $msg1 = '恭喜该邮箱可以使用。';
             $userArr = [];
             $userArr = explode("@", $username);
-            if (Redis::hExists('husername_to_id', (count($userArr) == 2) ? $userArr[0] . "@" . strtolower($userArr[1]) : $username)) {
+            if (Redis::hExists('husername_to_id:'.SiteSer::siteId(), (count($userArr) == 2) ? $userArr[0] . "@" . strtolower($userArr[1]) : $username)) {
                 return new Response(json_encode([
                     'msg' => $msg0,
                     'data' => 0,

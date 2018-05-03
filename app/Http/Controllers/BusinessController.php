@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Facades\SiteSer;
 use App\Models\Agents;
 use App\Models\Domain;
 use App\Models\HostAudit;
@@ -282,7 +282,7 @@ class BusinessController extends Controller
 
             $this->make('redis')->hMSet('huser_info:'.$uid,$criteria);
             if( $nickname ){
-                $this->make('redis')->hSet('hnickname_to_id',$nickname,$uid);
+                $this->make('redis')->hSet('hnickname_to_id:'.SiteSer::siteId(),$nickname,$uid);
             }
             if($updated){
                 return true;

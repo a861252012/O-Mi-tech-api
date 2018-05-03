@@ -124,13 +124,13 @@ class ApiController extends Controller
         }
 
         $redis = resolve('redis');
-        if ($redis->hExists('husername_to_id', $username)) {
+        if ($redis->hExists('husername_to_id:'.SiteSer::siteId(), $username)) {
             return JsonResponse::create([
                 "status" => 0,
                 "msg" => "对不起, 该帐号不可用!",
             ]);
         }
-        if ($redis->hExists('hnickname_to_id', $nickname)) {
+        if ($redis->hExists('hnickname_to_id:'.SiteSer::siteId(), $nickname)) {
             return JsonResponse::create([
                 "status" => 0,
                 "msg" => "对不起, 该昵称已被使用!",

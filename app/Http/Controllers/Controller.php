@@ -1036,7 +1036,7 @@ class Controller extends BaseController
 
         //维护redis中的hnickname_to_id 用于注册时验证是否重名
         if (isset($postData['nickname']) && ($postData['nickname'] != $user['nickname'])) {
-            Redis::hset('hnickname_to_id', $postData['nickname'], $user['uid']);
+            Redis::hset('hnickname_to_id:'.SiteSer::siteId(), $postData['nickname'], $user['uid']);
             // 修改昵称成功后 就记录日志
             $modNameLog = [
                 'uid' => $user['uid'],
