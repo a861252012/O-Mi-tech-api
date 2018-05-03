@@ -913,8 +913,10 @@ class MemberController extends Controller
     {
 
         $data = [];
-        $data = $request->only(['mintime', 'hour', 'minute', 'tid', 'duration']);
-
+        $data = $request->only(['mintime', 'hour', 'minute', 'tid', 'duration','origin']);
+        if(empty($data['origin'])){
+            $data['origin']=11;
+        }
         if (!in_array($data['duration'], [25, 55])) return new JsonResponse(['status' => 0, 'msg' => '请求错误']);
         // 判断是否为手动输入 如果手动输入需要大于2000钻石才行
 

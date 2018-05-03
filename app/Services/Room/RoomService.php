@@ -482,7 +482,7 @@ public $cur_login_uid = null;
         $durationRoom->status = 0;
         $durationRoom->points = $data['points'];
         $durationRoom->endtime = $endtime;
-
+        $durationRoom->origin =  $data['origin'];
 
         if ($this->notSetRepeat($start_time, $endtime)) {
             $durationRoom->save();
