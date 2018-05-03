@@ -916,17 +916,15 @@ class MemberController extends Controller
         $data = $request->only(['mintime', 'hour', 'minute', 'tid', 'duration']);
 
         if (!in_array($data['duration'], [25, 55])) return new JsonResponse(['status' => 0, 'msg' => '请求错误']);
-        // 判断是否为手动输入 如果手动输入需要大于1万才行
-        $select_points = $request->get('select-points');
-        $input_points = $request->get('input-points');
-        if (empty($select_points) && $input_points < 10000) {
-            return new JsonResponse(['status' => 0, 'msg' => '手动设置的钻石数必须大于1万']);
+        // 判断是否为手动输入 如果手动输入需要大于2000钻石才行
+
+        $input_points = $request->get('input_points');
+        if ($input_points < 2000) {
+            return new JsonResponse(['status' => 0, 'msg' => '手动设置的钻石数必须大于2000钻石']);
         } else {
             $points = $input_points;
         }
-        if (!empty($select_points)) {
-            $points = $select_points;
-        }
+
         $data['points'] = $points;
 
         $roomservice = resolve(RoomService::class);
