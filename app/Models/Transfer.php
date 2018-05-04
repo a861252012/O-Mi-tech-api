@@ -1,7 +1,7 @@
 <?php
 namespace App\Models;
 
-
+use App\Traits\SiteSpecific;
 /**
  * 转帐记录model
  * @author dc
@@ -9,6 +9,7 @@ namespace App\Models;
  */
 class Transfer extends \Illuminate\Database\Eloquent\Model
 {
+    use   SiteSpecific;
     protected $table = 'video_transfer';
     protected $primaryKey = 'auto_id';
 }

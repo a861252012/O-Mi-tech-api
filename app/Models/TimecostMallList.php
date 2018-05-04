@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use App\Traits\SiteSpecific;
 class TimecostMallList extends \Illuminate\Database\Eloquent\Model
 {
     protected  $table='video_timecost_mall_list';
@@ -11,6 +12,7 @@ class TimecostMallList extends \Illuminate\Database\Eloquent\Model
      * @param array $where
      * @return mixed
      */
+    use   SiteSpecific;
     public function getList($where=[],$live_date=[]){
 //        $live_date_ge = \Input::get("live_date_ge",date('Y-m-d',time()-86400*30))." 00:00:00";;
 //        $live_date_le = \Input::get("live_date_le",date('Y-m-d'))." 23:59:59";
