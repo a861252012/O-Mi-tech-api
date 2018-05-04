@@ -8,9 +8,11 @@
  
 namespace App\Models;
 
+use App\Traits\SiteSpecific;
 
 class UserMexp extends \Illuminate\Database\Eloquent\Model
 {
+    use   SiteSpecific;
     protected $table = 'video_user_mexp';
     protected $primaryKey='auto_id';
     protected $guarded = ['auto_id'];
