@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
+use App\Facades\SiteSer;
 
 /**
  * @desc 房间类
@@ -374,6 +375,7 @@ public $cur_login_uid = null;
                 $temp['points'] = $data['points'];
                 $temp['uid'] = $v;
                 $temp['origin'] = $data['origin'];
+                $temp['site_id']  = SiteSer::siteId();
                 array_push($insertArr, $temp);
             }
             DB::table('video_user_buy_one_to_more')->insert($insertArr);
