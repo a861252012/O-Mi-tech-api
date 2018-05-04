@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Console\Commands;
-
+use App\Facades\SiteSer;
 use App\Models\LevelRich;
 use App\Models\UserBuyGroup;
 use App\Models\Users;
@@ -128,8 +128,8 @@ class GuiZuReg extends Command
 
             Redis::hmset('huser_info:' . $newUser->uid, $newUser->toArray());
 
-            Redis::hset('husername_to_id', $username, $newUser->uid);
-            Redis::hset('hnickname_to_id', $nickname, $newUser->uid);
+            Redis::hset('husername_to_id:'.SiteSer::siteId(), $username, $newUser->uid);
+            Redis::hset('hnickname_to_id:'.SiteSer::siteId(), $nickname, $newUser->uid);
 
             logger()->info('贵族用户生成', $newUser->toArray());
         }
@@ -139,7 +139,7 @@ class GuiZuReg extends Command
 
     private function checkUsername($username)
     {
-        if (Redis::hExists('husername_to_id', $username) || Users::where('username', $username)->exists()) {
+        if (Redis::hExists('husername_to_id:'.SiteSer::siteId(), $username) || Users::where('username', $username)->exists()) {
             $username = $this->getUserNameRand(true);
             return $this->checkUsername($username);
         }

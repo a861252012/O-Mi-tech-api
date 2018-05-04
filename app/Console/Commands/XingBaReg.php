@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Console\Commands;
-
+use App\Facades\SiteSer;
 use App\Models\Pack;
 use App\Models\Recharge;
 use App\Models\UserMexp;
@@ -131,8 +131,8 @@ class XingBaReg extends Command
             }
             Redis::hmset('huser_info:' . $newUser->uid, $newUser->toArray());
 
-            Redis::hset('husername_to_id', $username, $newUser->uid);
-            Redis::hset('hnickname_to_id', $nickname, $newUser->uid);
+            Redis::hset('husername_to_id:'.SiteSer::siteId(), $username, $newUser->uid);
+            Redis::hset('hnickname_to_id:'.SiteSer::siteId(), $nickname, $newUser->uid);
 
             logger()->info('性吧用户生成', $newUser->toArray());
         }
@@ -142,7 +142,7 @@ class XingBaReg extends Command
 
     private function checkUsername($username)
     {
-        if (Redis::hExists('husername_to_id', $username) || Users::where('username', $username)->exists()) {
+        if (Redis::hExists('husername_to_id:'.SiteSer::siteId(), $username) || Users::where('username', $username)->exists()) {
             $username = $this->getUserNameRand(true);
             return $this->checkUsername($username);
         }

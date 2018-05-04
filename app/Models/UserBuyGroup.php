@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use App\Traits\SiteSpecific;
 /**
  * 用户购买用户组的记录
  *
@@ -13,6 +14,7 @@ class UserBuyGroup extends \Illuminate\Database\Eloquent\Model
      * 表名 消息表
      * @var string
      */
+    use  SiteSpecific;
     protected  $table='video_user_buy_group';
     protected $primaryKey = 'auto_id';
 

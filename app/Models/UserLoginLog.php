@@ -8,11 +8,13 @@
 
 namespace App\Models;
 
-
+use App\Traits\SiteSpecific;
 use Illuminate\Database\Eloquent\Model;
 
 class UserLoginLog extends Model
 {
+    use   SiteSpecific;
+
     protected $table='video_user_login_logs';
     protected $guarded=['id'];
     public $timestamps=false;

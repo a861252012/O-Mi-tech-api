@@ -5,6 +5,7 @@ namespace App\Services\Message;
 use App\Models\Messages;
 use App\Services\Service;
 use DB;
+use App\Facades\SiteSer;
 
 class MessageService extends Service
 {
@@ -42,6 +43,7 @@ class MessageService extends Service
         }
 
         $data['created'] = date('Y-m-d H:i:s');
+        $data['site_id'] =  SiteSer::siteId();
         return DB::table('video_mail')->insertGetId($data);
     }
 
@@ -66,6 +68,7 @@ class MessageService extends Service
             $data['category'] = self::SYSTEM_MESSAGE;
         }
         $data['created'] = date('Y-m-d H:i:s');
+        $data['site_id'] =  SiteSer::siteId();
         return DB::table('video_mail')->insertGetId($data);
     }
 

@@ -1866,7 +1866,7 @@ class MemberController extends Controller
             /**
              * 首开礼包 先判断是否已经开通过了此贵族的 TODO 为了解决mysqlnd_ms 的bug问题 强制读主库
              */
-            $isBuyThisGroup = DB::select('SELECT * FROM video_user_buy_group WHERE gid=? AND uid=? LIMIT 1', [$gid, Auth::id()]);
+            $isBuyThisGroup = DB::select('SELECT * FROM video_user_buy_group WHERE gid=?  AND uid=? AND  site_id=? LIMIT 1', [$gid, Auth::id(), SiteSer::siteId() ]);
 
             $userServer = resolve(UserService::class)->setUser(Users::find(Auth::id())); // 初始化用户服务
             $u['vip'] = $userGroup['level_id'];
@@ -1892,6 +1892,7 @@ class MemberController extends Controller
                     'pay_type' => 5,//服务器送的钱pay_type=5
                     'pay_id' => null,
                     'nickname' => $user->nickname,
+                    'site_id'  => SiteSer::siteId(),
                 ];
                 DB::table('video_recharge')->insert($arr);
                 // 赠送后 发送给用户通知消息
@@ -1916,6 +1917,7 @@ class MemberController extends Controller
                 'status' => 1,
                 'open_money' => $userGroup['system']['open_money'],
                 'keep_level' => $userGroup['system']['keep_level'],
+                'site_id'  => SiteSer::siteId(),
             ];
             DB::table('video_user_buy_group')->insertGetId($buyGroup);
 
@@ -1927,7 +1929,7 @@ class MemberController extends Controller
              */
             $userPack = Pack::whereUid(Auth::id())->whereGid($userGroup['mount'])->first();
             if (!$userPack) {
-                DB::insert('INSERT INTO `video_pack` (uid, gid, expires, num) VALUES (?, ?, ?, ?)', [Auth::id(), $userGroup['mount'], strtotime($exp), 1]);
+                DB::insert('INSERT INTO `video_pack` (uid, gid, expires, num, site_id) VALUES (?, ?, ?, ?, ?)', [Auth::id(), $userGroup['mount'], strtotime($exp), 1, SiteSer::siteId()]);
                 /*@todo 待检查为何这个方法插入失败*/
                 //Pack::create(array('uid'=>Auth::id(),'gid'=>$userGroup['mount'],'expires'=>strtotime($exp),'num'=>1));
             }
@@ -1964,6 +1966,7 @@ class MemberController extends Controller
                     'content' => $this->userInfo['nickname'] . '在您的房间' . date('Y-m-d H:i:s') . '开通了什么' . $userGroup['level_name'] . '，您得到' . $userGroup['system']['host_money'] . '佣金！',
                     'status' => 0,
                     'dml_flag' => 1,
+                    'site_id'  => SiteSer::siteId(),
                 ];
                 DB::table('video_user_commission')->insertGetId($commission);
                 $casheback = $userGroup['system']['host_money'];
