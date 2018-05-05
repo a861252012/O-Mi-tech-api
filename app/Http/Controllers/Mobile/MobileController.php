@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Mews\Captcha\Facades\Captcha;
+use App\Services\Auth\JWTGuard;
 
 class MobileController extends Controller
 {
@@ -134,6 +135,9 @@ class MobileController extends Controller
                 'data' => $remote_js_url,
             ]);
         }
+        $userfollow = $this->userFollowings();
+        $hashtable = 'zuser_byattens:' . $uid;
+        $by_atttennums = $this->make('redis')->zSize($hashtable);
         return JsonResponse::create([
             'status' => 1,
             'data'=>[
@@ -150,6 +154,9 @@ class MobileController extends Controller
                 'safemail' => $userinfo->safemail ?? '',
 //                'mails' => $this->make('messageServer')->getMessageNotReadCount($userinfo->uid, $userinfo->lv_rich),// 通过服务取到数量
                 'icon_id' => intval($userinfo->icon_id),
+                'gender' => $userinfo->sex,
+                'follows' => $userfollow,
+                'fansCount' => $by_atttennums,
             ],
         ]);
     }
@@ -322,7 +329,7 @@ class MobileController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => '用户名密码不能为空']);
         }
         $user = null;
-        $jwt = Auth::guard();
+        $jwt = Auth::guard('mobile');
 
         if (!$jwt->attempt(['username' => $username, 'password' => $password])) {
             return JsonResponse::create(['status' => 0, 'msg' => '用户名密码错误']);
@@ -335,6 +342,9 @@ class MobileController extends Controller
             'ip' => $request->getClientIp(),
             'statis_date' => $statis_date,
         ]);
+        $userfollow = $this->userFollowings();
+        $hashtable = 'zuser_byattens:' . $user->uid;
+        $by_atttennums = $this->make('redis')->zSize($hashtable);
         return JsonResponse::create([
             'status' => 1,
             'data' =>
@@ -354,10 +364,36 @@ class MobileController extends Controller
                         'lv_exp' => $user->lv_exp,
                         'safemail' => $user->safemail ?? '',
                         'icon_id' => intval($user->icon_id),
+                       'gender' => $user->sex,
+                        'follows' => $userfollow,
+                        'fansCount' => $by_atttennums,
                     ],
                 ]]);
     }
+    /**
+     * 用户关注人数
+     */
+    public function userFollowings()
+     {
 
+         $arr = include(storage_path() . '/app/cache/anchor-search-data.php');
+         $hasharr = [];
+         foreach ($arr as $value) {
+             $hasharr[$value['uid']] = $value;
+         }
+         unset($arr);
+         $myfavArr = $this->make('redis')->zrevrange('zuser_attens:' . $this->_online, 0, -1);
+         $myfav = [];
+         if (!!$myfavArr) {
+             //过滤出主播
+             foreach ($myfavArr as $item) {
+                 if (isset($hasharr[$item])) {
+                     $myfav[] = $hasharr[$item];
+                 }
+             }
+         }
+         return count($myfav);
+     }
     public function logintest()
     {
         return JsonResponse::create(['status' => Auth::check(), 'user' => Auth::user()]);
