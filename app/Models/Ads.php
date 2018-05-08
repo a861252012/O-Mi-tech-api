@@ -7,8 +7,10 @@
  */
 
 namespace App\Models;
+use App\Traits\SiteSpecific;
 
 class Ads extends  \Illuminate\Database\Eloquent\Model{
+    use SiteSpecific;
     const DEVICE_PC = 1;
     const DEVICE_ANDROID=2;
     const DEVICE_IOS = 4;

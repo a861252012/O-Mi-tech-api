@@ -11,6 +11,8 @@ use Illuminate\Http\File;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\SiteSpecific;
+use App\Facades\SiteSer;
 
 class One2ManyMsgSend extends Command
 {
@@ -19,6 +21,7 @@ class One2ManyMsgSend extends Command
      *
      * @var string
      */
+    use SiteSpecific;
     protected $signature = 'command:one2many_msg';
 
     /**
@@ -64,7 +67,8 @@ class One2ManyMsgSend extends Command
                             'content' => '您开设的' . $room['starttime'] . '一对多约会房间快要开始了,请做好准备哦',
                             'category' => 1,
                             'status' => 0,
-                            'created' => date('Y-m-d H:i:s')), 'video_mail'
+                            'created' => date('Y-m-d H:i:s'),
+                            'site_id' => SiteSer::siteId()),'video_mail'
                         );
                         VideoMail::create([
                                 'send_uid' => 0,

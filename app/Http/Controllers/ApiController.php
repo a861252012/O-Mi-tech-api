@@ -167,6 +167,7 @@ class ApiController extends Controller
             $guard->login($user);
             $return['data'] = [
                 'jwt' => (string)$guard->getToken(),
+                'user'=>$user,
             ];
         } else {
             $guard = Auth::guard('pc');
