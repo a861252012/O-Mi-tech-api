@@ -384,11 +384,11 @@ class UserService extends Service
 
     public function getUidByUsername($username)
     {
-        $uid = $this->redis->hget(static::KEY_USERNAME_TO_ID, $username);
+        $uid = $this->redis->hget(static::KEY_USERNAME_TO_ID.':'.SiteSer::siteId(), $username);
         if (!$uid) {
             $uid = Users::query()->where('username', $username)->get(['uid'])->get('uid');
             if (!$uid) return null;
-            $uid = $this->redis->hset(static::KEY_USERNAME_TO_ID, $username, $uid);
+            $uid = $this->redis->hset(static::KEY_USERNAME_TO_ID.':'.SiteSer::siteId(), $username, $uid);
         }
         return $uid;
     }
