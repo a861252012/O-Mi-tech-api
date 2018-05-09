@@ -101,7 +101,7 @@ class SiteConfig extends Command
         foreach ($a as $k => $v) {
             $union[] = [
                 'name' => $k,
-                'db' => '❌',
+                'db' => '🗙',
                 'cache' => '✓',
             ];
         }
@@ -109,7 +109,7 @@ class SiteConfig extends Command
             $union[] = [
                 'name' => $k,
                 'db' => '✓',
-                'cache' => '❌',
+                'cache' => '🗙',
             ];
         }
         $this->table(['字段', '数据库', '缓存'], $union);
