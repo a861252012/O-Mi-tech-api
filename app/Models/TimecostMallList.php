@@ -4,6 +4,7 @@ namespace App\Models;
 use App\Traits\SiteSpecific;
 class TimecostMallList extends \Illuminate\Database\Eloquent\Model
 {
+    use SiteSpecific;
     protected  $table='video_timecost_mall_list';
     protected $primaryKey = 'id';
 

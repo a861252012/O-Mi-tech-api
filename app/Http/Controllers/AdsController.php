@@ -20,7 +20,7 @@ class   AdsController extends Controller{
         $device = Input::get('device',1);
         $site_ids = Input::get('site_ids',1);
 
-        $data = Ads::where('device',$device)->whereRaw("FIND_IN_SET($site_ids, site_ids)")->published()->get()->toArray();
+        $data = Ads::where('device',$device)->published()->get()->toArray();
 
 
         //针对ios和安卓进行广告数据优化

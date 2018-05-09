@@ -1,8 +1,10 @@
 <?php
 namespace App\Models;
 
+use App\Traits\SiteSpecific;
 class Anchor extends \Illuminate\Database\Eloquent\Model
 {
+    use SiteSpecific;
     protected $table='video_anchor';
     protected $primaryKey = 'id';
     public $timestamps= false;
