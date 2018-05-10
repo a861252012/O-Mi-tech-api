@@ -144,8 +144,6 @@ class ApiController extends Controller
             'password' => md5($password),
             'pic_total_size' => 524288000,
             'pic_used_size' => 0,
-            'rich' => 64143000,//TODO
-            'lv_rich' => 28,//TODO
             'origin' => $request->get('origin', 12),
         ];
 
