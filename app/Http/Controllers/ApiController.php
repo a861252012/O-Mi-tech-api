@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Site\SiteService;
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
 use App\Models\AgentsRelationship;
@@ -71,8 +72,8 @@ class ApiController extends Controller
 
         $data = $this->getOutputUser($userInfo, 40, false);
         //加密输出结果
-        $desData = $userService->get3Des($data, $this->container->config['config.DES_ENCRYT_KEY']);
-        return new JsonResponse(['status' => 1, 'data' => $desData]);
+        $desData = $userService->get3Des($data, app(SiteService::class)->config('DES_ENCRYT_KEY'));
+        return new JsonResponse(['status' => 1, 'data' => $desData,'msg'=>'获取成功']);
     }
 
     /**
@@ -143,8 +144,6 @@ class ApiController extends Controller
             'password' => md5($password),
             'pic_total_size' => 524288000,
             'pic_used_size' => 0,
-            'rich' => 64143000,//TODO
-            'lv_rich' => 28,//TODO
             'origin' => $request->get('origin', 12),
         ];
 
