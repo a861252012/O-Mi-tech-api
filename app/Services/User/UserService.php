@@ -384,11 +384,11 @@ class UserService extends Service
 
     public function getUidByUsername($username)
     {
-        $uid = $this->redis->hget(static::KEY_USERNAME_TO_ID, $username);
+        $uid = $this->redis->hget(static::KEY_USERNAME_TO_ID.':'.SiteSer::siteId(), $username);
         if (!$uid) {
             $uid = Users::query()->where('username', $username)->get(['uid'])->get('uid');
             if (!$uid) return null;
-            $uid = $this->redis->hset(static::KEY_USERNAME_TO_ID, $username, $uid);
+            $uid = $this->redis->hset(static::KEY_USERNAME_TO_ID.':'.SiteSer::siteId(), $username, $uid);
         }
         return $uid;
     }
@@ -779,13 +779,13 @@ class UserService extends Service
     {
         $iv = 'onevideo';
         $encrypt = json_encode($userinfo, JSON_UNESCAPED_SLASHES); //明文
-        $tb = mcrypt_module_open(MCRYPT_3DES, '', 'cbc', ''); //创建加密环境 256位 128/8 = 16 字节 表示IV的长度
-        mcrypt_generic_init($tb, $des_key, $iv); //初始化加密算法
+        $tb = @mcrypt_module_open(MCRYPT_3DES, '', 'cbc', ''); //创建加密环境 256位 128/8 = 16 字节 表示IV的长度
+        @mcrypt_generic_init($tb, $des_key, $iv); //初始化加密算法
         $encrypt = $this->_PaddingPKCS7($encrypt);//这个函数非常关键,其作用是对明文进行补位填充
-        $cipher = mcrypt_generic($tb, $encrypt); //对数据执行加密
+        $cipher = @mcrypt_generic($tb, $encrypt); //对数据执行加密
         $cipher = base64_encode($cipher);//同意进行base64编码
-        mcrypt_generic_deinit($tb); //释放加密算法资源
-        mcrypt_module_close($tb); //关闭加密环境
+        @mcrypt_generic_deinit($tb); //释放加密算法资源
+        @mcrypt_module_close($tb); //关闭加密环境
         return $cipher;
     }
 
@@ -799,7 +799,7 @@ class UserService extends Service
     private function _PaddingPKCS7($data)
     {
         /* 获取加密算法的区块所需空间,MCRYPT_3DES表示加密算法,cbc表示加密模式,要和mcrypt_module_open(MCRYPT_3DES,'','cbc','')的一致*/
-        $block_size = mcrypt_get_block_size(MCRYPT_3DES, 'cbc');
+        $block_size = @mcrypt_get_block_size(MCRYPT_3DES, 'cbc');
         $padding_char = $block_size - (strlen($data) % $block_size); // 计算需要补位的空间
         $data .= str_repeat(chr($padding_char), $padding_char);        // 补位操作
         return $data;
