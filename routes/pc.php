@@ -193,20 +193,10 @@ Route::group(['middleware' => ['login_auth']], function () {
 //findroomcnt
     Route::get('/findroomcnt', ['name' => 'getflashcount', 'uses' => 'ApiController@getFlashCount']);
 
-
 //图片静态化
     Route::get('/convertstaticimg', 'ApiController@imageStatic')->name('imagestatic');
-//FIND
 
-
-    Route::match(['GET', 'POST'], '/majax/{action}', ['name' => 'majax', 'uses' => 'MemberController@ajax']);
-
-
-//验证码，新版本移除
-    //Route::get('/verfiycode', ['uses' => 'IndexController@captcha']);
-
-
-    // 用户中心 vip 贵族体系
+// 用户中心 vip 贵族体系
     Route::get('/member/vip', ['name' => 'member_vip', 'uses' => 'MemberController@vip']);
 
     // 用户中心 推广中心 V2移除
