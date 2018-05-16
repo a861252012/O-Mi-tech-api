@@ -2121,21 +2121,24 @@ class MemberController extends Controller
             'delmsg' => 'delmsg',
             'equipHandle' => '_getEquipHandle',
         ];
+
         if ($act == 'userinfo') {
             $info = $this->$actions[$act]($this->request()->reques->all(), Auth::id());
-            return new Response(json_encode($info));
+            return new JsonResponse(json_encode($info));
         } elseif ($act == 'attenionCancel') {
             $this->$actions[$act](Auth::id(), $this->request()->get('tid'));
         } else if ($act == 'getfidinfo') {
             $onlineId = $this->request()->getSession()->get(self::SEVER_SESS_ID);
             $uid = intval($this->request()->get('uid'));
+
             if ($uid == 0) {
-                return new Response(json_encode(['ret' => false]));
+                return new JsonResponse(json_encode(['status' => 0,'msg'=>'uid为空']));
             }
             $data = $this->{$actions[$act]}($this->request()->get('uid'));
             if (!$data) {
-                return new Response(json_encode(['ret' => false]));
+                return new JsonResponse(['status' => 0,'msg'=>'获取数据为空']);
             } else {
+
                 $data = $this->getOutputUser($data, 80);
                 unset($data['safemail']);
                 if ($onlineId) {
@@ -2147,7 +2150,7 @@ class MemberController extends Controller
                 if ($data['roled'] == 3) {
                     $data['live_status'] = $this->make('redis')->hget('hvediosKtv:' . $data['uid'], 'status');
                 }
-                return new Response(json_encode(['ret' => true, 'info' => $data]));
+                return new JsonResponse(json_encode(['status' => 1, 'data' => $data]));
             }
         } else if ($act == 'delmsg') {
             $data = $this->$actions[$act](Auth::id());
@@ -2155,7 +2158,7 @@ class MemberController extends Controller
         } else if ($act == 'equipHandle') {
             $this->$actions[$act]($this->request()->get('gid'));
         }
-        return new Response(json_encode(['ret' => true, 'info' => '更新成功']));
+        return new JsonResponse(json_encode(['status' => 1, 'msg' => '更新成功']));
     }
 
     /**
