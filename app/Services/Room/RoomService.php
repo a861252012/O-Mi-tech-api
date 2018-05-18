@@ -341,9 +341,9 @@ public $cur_login_uid = null;
                 }
             }
         }
-        /*  if (empty($uids)) {
+          if (empty($uids)) {
               return ['status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间'];
-          }*/
+          }
 
 
         //$points = $room_config['timecost'];
