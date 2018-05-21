@@ -819,9 +819,23 @@ class UserService extends Service
                 'score' => $score,
             ],
                 isset($userCache[$uid]) ? $userCache[$uid]
-                    : ($userCache[$uid] = array_only($this->getUserByUid($uid)->toArray(), ['lv_rich', 'lv_exp', 'username', 'nickname', 'headimg', 'icon_id', 'description', 'vip']))
+                    : ($userCache[$uid] = array_only($this->getUserByUid($uid)->toArray(), ['lv_rich', 'lv_exp', 'username', 'nickname', 'headimg', 'icon_id', 'description', 'vip','sex', 'site_id']))
             );
         }
+        if(!empty($ret)){
+                foreach ($ret as $key=>$value){
+                    $userInfo = $this->getUserByUid($uid)->toArray();
+                    $ret[$key]['age'] = isset($userInfo['age']) ? $userInfo['age'] . '岁' : '永远18岁';
+                    $ret[$key]['starname'] = isset($userInfo['starname']) ? $userInfo['starname'] : '神秘星座';
+                    $ret[$key]['description'] = $userInfo['description'] ?: '此人好懒，大家帮TA想想写些什么！';
+                    if (!$userInfo['province'] || !$userInfo['city']) {
+                        $ret[$key]['procity'] = '中国的某个角落';
+                    } else {
+                        $ret[$key]['procity'] = $this->getArea($userInfo['province'], $userInfo['city'], $userInfo['county']);//取地区code对应的地区名称
+                    }
+                }
+        }
+
         return $ret;
     }
 

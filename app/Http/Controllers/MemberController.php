@@ -828,9 +828,9 @@ class MemberController extends Controller
              * @author dc
              * @version 20160407
              * */
-            if (empty($roomdata)) {
+            /*if (empty($roomdata)) {
                 return null;
-            }
+            }*/
 
             if (is_array($data)) {
                 foreach ($data as $key => $value) {
@@ -2150,7 +2150,7 @@ class MemberController extends Controller
                 if ($data['roled'] == 3) {
                     $data['live_status'] = $this->make('redis')->hget('hvediosKtv:' . $data['uid'], 'status');
                 }
-                return new JsonResponse(json_encode(['status' => 1, 'data' => $data]));
+                return new JsonResponse(['status' => 1, 'data' => $data]);
             }
         } else if ($act == 'delmsg') {
             $data = $this->$actions[$act](Auth::id());
