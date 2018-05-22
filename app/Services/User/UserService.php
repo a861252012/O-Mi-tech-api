@@ -838,6 +838,42 @@ class UserService extends Service
 
         return $ret;
     }
+    /**
+     * 前3个参数是省市区的code值，第4个参数是分隔符
+     * @return string
+     */
+    public function getArea()
+    {
+        $redis_key = 'h_areas';
+        $limit = '';
+        $argsList = func_get_args();
+        if (count($argsList) == 4) {
+            $limit = $argsList[3];
+            array_pop($argsList);
+        }
+
+        if (Redis::Hexists($redis_key, $argsList[0])) {
+            $areas = Redis::hmget($redis_key, $argsList);
+            //ksort($areas,SORT_NUMERIC);//按键值从小到大排序
+            return implode($limit, $areas);
+        }
+        //从数据库中查找并缓存到Redis
+        $area = Area::all();
+        $areas = [];
+        foreach ($area as $a) {
+            $areas[$a->code] = $a->area;
+        }
+        $area = [];
+        $len = count($argsList);
+        for ($i = 0; $i < $len; $i++) {
+            if (isset($areas[$argsList[$i]])) {
+                $area[] = $areas[$argsList[$i]];
+            }
+        }
+        Redis::hmset($redis_key, $areas);
+        ksort($area, SORT_NUMERIC);//按键值从小到大排序
+        return implode($limit, $area);
+    }
 
     /**
      * 检测用户是否是一个对象

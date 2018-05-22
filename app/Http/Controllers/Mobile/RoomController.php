@@ -525,13 +525,14 @@ class RoomController extends Controller
         } catch (NoSocketChannelException $e) {
             return JsonResponse::create(['status' => 0, 'msg' => $e->getMessage()]);
         }
-        return JsonResponse::create([
+        $data = [
             'rid' => $rid,
             'chatServer' => $chatServer,
             'in_limit_points' => $redis->hget('hconf', 'in_limit_points') ?: 0,
             'in_limit_safemail' => $redis->hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
             'certificate' => resolve(SafeService::class)->getLcertificate(),
-        ]);
+        ];
+        return JsonResponse::create(['msg'=>'获取成功','status'=>1,'data'=>$data]);
     }
 
     protected function isHost($rid)
