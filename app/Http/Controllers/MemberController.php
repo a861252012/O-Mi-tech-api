@@ -408,7 +408,7 @@ class MemberController extends Controller
 
         return JsonResponse::create([
             'status' => 1,
-            'data' => ['list'=>$data],
+            'data' => ['list'=>$data,'type'=>'vip']
         ]);
 
 

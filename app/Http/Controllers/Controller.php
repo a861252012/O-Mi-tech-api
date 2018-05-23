@@ -1203,7 +1203,7 @@ class Controller extends BaseController
                 return false;
             }
             MallList::create([
-                'send_uid' => $this->_online,
+                'send_uid' => Auth::id(),
                 'rec_uid' => 0,
                 'gid' => $gid,
                 'gnum' => $months,
