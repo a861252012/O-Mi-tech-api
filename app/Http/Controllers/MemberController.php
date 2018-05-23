@@ -400,8 +400,19 @@ class MemberController extends Controller
         $this->make('redis')->srem('video:manage:' . $rid, $uid);
         return new JsonResponse(['status' => 1, 'msg' => '删除成功!']);
     }
+    public function vip_list(){
+
+        //获取购买vip的所有信息
+        $data = UserBuyGroup::with('group')->where('uid', Auth::id())->where('status', 1)
+          ->orderBy('end_time', 'desc')->paginate();
+
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => ['list'=>$data],
+        ]);
 
 
+    }
     /**
      * 用户中心 贵族体系
      */
@@ -686,8 +697,8 @@ class MemberController extends Controller
     {
         $uid = Auth::id();
         $data = MallList::with('goods')->where('send_uid', $uid)
-            ->where('gid', '>', 0)
-            ->orderBy('created', 'DESC')->paginate();
+        ->where('gid', '>', 0)
+        ->orderBy('created', 'DESC')->paginate();
         return JsonResponse::create([
             'status' => 1,
             'data' => ['list'=>$data],
@@ -1827,6 +1838,7 @@ class MemberController extends Controller
         $roomId = $this->request()->get('roomId') ? $this->request()->get('roomId') : 0;
 
         $user = DB::table('video_user')->where('uid', Auth::user()->uid)->first();
+
         // 用户组服务
         $userGroup = resolve(UserGroupService::class)->getGroupById($gid);
 

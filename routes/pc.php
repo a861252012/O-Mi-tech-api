@@ -197,7 +197,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/convertstaticimg', 'ApiController@imageStatic')->name('imagestatic');
 
 // 用户中心 vip 贵族体系
-    Route::get('/member/vip', ['name' => 'member_vip', 'uses' => 'MemberController@vip']);
+    Route::get('/member/vip', ['name' => 'member_vip', 'uses' => 'MemberController@vip_list']);
 
     // 用户中心 推广中心 V2移除
     //Route::get('/member/invite', ['name' => 'member_invite', 'uses' => 'MemberController@invite']);
