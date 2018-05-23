@@ -1490,7 +1490,7 @@ class MemberController extends Controller
         if (!$uid) {
             throw new NotFoundHttpException();
         }
-        $type = $this->make('request')->get('type') ?: 'send';
+        $type = $this->make('request')->get('type') ?: 'receive';
         $mint = $this->make('request')->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
         $maxt = $this->make('request')->get('maxtime') ?: date('Y-m-d');
 
@@ -1507,20 +1507,20 @@ class MemberController extends Controller
             }
         }
 
-        $all_data = MallList::where($selectTypeName, $uid)
+        $all_data = MallList::with('goods')->where($selectTypeName, $uid)
             ->where('created', '>', $mintime)
             ->where('created', '<', $maxtime)
             ->where('gid', '>', 10)
             ->where('gid', '!=', 410001)
             ->paginate();
 
-        $sum_gift_num = MallList::where($selectTypeName, $uid)
+        $sum_gift_num = MallList::with('goods')->where($selectTypeName, $uid)
             ->where('created', '>', $mintime)
             ->where('created', '<', $maxtime)
             ->where('gid', '>', 10)
             ->where('gid', '!=', 410001)
             ->sum('gnum');
-        $sum_points_num = MallList::where($selectTypeName, $uid)
+        $sum_points_num = MallList::with('goods')->where($selectTypeName, $uid)
             ->where('created', '>', $mintime)
             ->where('created', '<', $maxtime)
             ->where('gid', '!=', 410001)
@@ -1551,7 +1551,7 @@ class MemberController extends Controller
         //todo author raby
         if ($type == "counttime") {
             $where_uid = ['send_uid' => Auth::id()];
-            if ($this->userInfo['roled'] == 3) {
+            if (Auth::user()->roled == 3) {
                 $where_uid = ['rec_uid' => Auth::id()];
             }
 
