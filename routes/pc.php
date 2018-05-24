@@ -196,8 +196,11 @@ Route::group(['middleware' => ['login_auth']], function () {
 //图片静态化
     Route::get('/convertstaticimg', 'ApiController@imageStatic')->name('imagestatic');
 
-// 用户中心 vip 贵族体系
-    Route::get('/member/vip', ['name' => 'member_vip', 'uses' => 'MemberController@vip_list']);
+    // 用户中心 vip 贵族体系
+    Route::get('/member/vip', ['name' => 'member_vip', 'uses' => 'MemberController@vip']);
+    // 用户中心 viplist 贵族体系
+    Route::get('/member/viplist', ['name' => 'member_viplist', 'uses' => 'MemberController@vip_list']);
+
 
     // 用户中心 推广中心 V2移除
     //Route::get('/member/invite', ['name' => 'member_invite', 'uses' => 'MemberController@invite']);
