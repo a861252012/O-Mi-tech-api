@@ -18,6 +18,7 @@ use Exception;
 use Illuminate\Config\Repository;
 use Illuminate\Hashing\BcryptHasher as Hasher;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
 use Illuminate\Session\Store as Session;
@@ -192,6 +193,11 @@ class Captcha
         $this->hasher = $hasher;
         $this->str = $str;
         $this->characters = config('captcha.characters','2346789abcdefghjmnpqrtuxyzABCDEFGHJMNPQRTUXYZ');
+
+        $hconf = Redis::hGetAll('hconf');
+        if(isset($hconf['is_captchanum']) && $hconf['is_captchanum']==1 ){
+            $this->characters   = "0123456789";
+        }
     }
 
     /**
@@ -390,6 +396,11 @@ class Captcha
      */
     protected function lines()
     {
+        $hconf = Redis::hGetAll('hconf');
+        if(isset($hconf['is_captchanum']) && $hconf['is_captchanum']==1 ){
+            $this->lines =-1;
+        }
+
         for($i = 0; $i <= $this->lines; $i++)
         {
             $this->image->line(
