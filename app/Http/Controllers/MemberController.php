@@ -696,9 +696,22 @@ class MemberController extends Controller
     public function consume()
     {
         $uid = Auth::id();
-        $data = MallList::with('goods')->where('send_uid', $uid)
+  /*      $data = MallList::with('goods')->where('send_uid', $uid)
         ->where('gid', '>', 0)
-        ->orderBy('created', 'DESC')->paginate();
+        ->orderBy('created', 'DESC')->paginate();*/
+
+        $data = MallList::query()->leftJoin('video_goods', function($leftJoin)
+        {
+            $leftJoin->on('video_goods.gid', '=', 'video_mall_list.gid');
+        })
+            ->where('video_mall_list.send_uid', $uid)
+            ->where('video_mall_list.gid', '>', 0)
+
+            ->where('video_goods.category', '=', 1002)
+            ->orderBy('video_mall_list.created', 'DESC')->paginate();
+
+
+
         return JsonResponse::create([
             'status' => 1,
             'data' => ['list'=>$data],
@@ -1518,24 +1531,41 @@ class MemberController extends Controller
             }
         }
 
-        $all_data = MallList::with('goods')->where($selectTypeName, $uid)
-            ->where('created', '>', $mintime)
-            ->where('created', '<', $maxtime)
-            ->where('gid', '>', 10)
-            ->where('gid', '!=', 410001)
+        $all_data = MallList::query()->leftJoin('video_goods', function($leftJoin)
+        {
+            $leftJoin->on('video_goods.gid', '=', 'video_mall_list.gid');
+            })
+            ->where($selectTypeName, $uid)
+            ->where('video_mall_list.created', '>', $mintime)
+            ->where('video_mall_list.created', '<', $maxtime)
+            ->where('video_mall_list.gid', '>', 10)
+            ->where('video_mall_list.gid', '!=', 410001)
+            ->where('video_goods.category', '!=', 1002)
             ->paginate();
 
-        $sum_gift_num = MallList::with('goods')->where($selectTypeName, $uid)
-            ->where('created', '>', $mintime)
-            ->where('created', '<', $maxtime)
-            ->where('gid', '>', 10)
-            ->where('gid', '!=', 410001)
+
+        $sum_gift_num = MallList::query()->leftJoin('video_goods', function($leftJoin)
+            {
+                $leftJoin->on('video_goods.gid', '=', 'video_mall_list.gid');
+            })
+            ->where($selectTypeName, $uid)
+            ->where('video_mall_list.created', '>', $mintime)
+            ->where('video_mall_list.created', '<', $maxtime)
+            ->where('video_mall_list.gid', '>', 10)
+            ->where('video_mall_list.gid', '!=', 410001)
+            ->where('video_goods.category', '!=', 1002)
             ->sum('gnum');
-        $sum_points_num = MallList::with('goods')->where($selectTypeName, $uid)
-            ->where('created', '>', $mintime)
-            ->where('created', '<', $maxtime)
-            ->where('gid', '!=', 410001)
-            ->where('gid', '>', 10)
+
+        $sum_points_num =  MallList::query()->leftJoin('video_goods', function($leftJoin)
+            {
+                $leftJoin->on('video_goods.gid', '=', 'video_mall_list.gid');
+            })
+            ->where($selectTypeName, $uid)
+            ->where('video_mall_list.created', '>', $mintime)
+            ->where('video_mall_list.created', '<', $maxtime)
+            ->where('video_mall_list.gid', '>', 10)
+            ->where('video_mall_list.gid', '!=', 410001)
+            ->where('video_goods.category', '!=', 1002)
             ->sum('points');
         $sum_gift_num = $sum_gift_num ?: 0;
         $sum_points_num = $sum_points_num ?: 0;

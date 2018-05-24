@@ -155,7 +155,7 @@ class ApiController extends Controller
         }
         $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
         if (!$uid){
-            return JsonResponse::create(['status'=>0,'注册失败']);
+            return JsonResponse::create(['status'=>0,'msg'=>'昵称已被注册或注册失败']);
         }
         $user = Users::find($uid);
         // 此时调用的是单实例登录的session 验证
