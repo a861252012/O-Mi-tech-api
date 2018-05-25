@@ -18,7 +18,6 @@ use Illuminate\Http\JsonResponse;
 class   AdsController extends Controller{
     public function getAd(){
         $device = Input::get('device',1);
-        $site_ids = Input::get('site_ids',1);
 
         $data = Ads::where('device',$device)->published()->get()->toArray();
 
@@ -35,7 +34,7 @@ class   AdsController extends Controller{
         }
 
         //$cdn  = $this->make('config')['config.REMOTE_CDN_PIC_URL'];
-        $cdn = SiteSer::config('cdn_host')."/public/oort"; // 'http://s.tnmhl.com/public/oort';
+        $cdn = SiteSer::config('cdn_host')."/public/storage/uploads/s".SiteSer::siteId()."/anchor"; // 'http://s.tnmhl.com/public/oort';
         $img_path = Ads::IMG_PATH;
 
 

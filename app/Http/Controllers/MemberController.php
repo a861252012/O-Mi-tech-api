@@ -117,11 +117,11 @@ class MemberController extends Controller
             'action' => 'withdraw',
             'name' => '提现',
         ],
-        [
+     /*   [
             'role' => 2,
             'action' => 'anchor',
             'name' => '主播中心',
-        ],//主播才有
+        ],*///主播才有
         [
             'role' => 0,
             'action' => 'game',
@@ -2057,7 +2057,7 @@ class MemberController extends Controller
         $mid = $this->make('request')->get('mid');
         $msg = [
             'status' => 0,
-            'msg' => '',
+            'msg' => '开通失败',
         ];
 
         // 判断是否已经领过了

@@ -709,16 +709,21 @@ class RoomController extends Controller
     /*
     *  直播记录接口 by desmond
     */
-    public function showlist(Request $request)
+    public function showlist()
     {
 
-        $start_time = $request->get('starttime') ? strtotime($request->get('starttime') . ' 00:00:00') : strtotime('-1 month');
-        $end_time = $request->get('endtime') ? strtotime($request->get('endtime') . ' 23:59:59') : strtotime('tomorrow') - 1;
+        $start_time = $this->request()->input('starttime') ? strtotime($this->request()->input('starttime') . ' 00:00:00') : strtotime('-1 month');
+        $end_time = $this->request()->input('endtime') ? strtotime($this->request()->input('endtime') . ' 23:59:59') : strtotime('tomorrow') - 1;
         $uid = Auth::id();
-        //Carbon::now()->addHours(1);
+
+        $start_init  =   date("Y-m-d 00:00:00", strtotime($this->request()->input('starttime')));
+        $end_init  =   date("Y-m-d 23:59:59", strtotime($this->request()->input('endtime')));
+
+
         $result = LiveList::where('uid', '=', $uid)
-            ->where('start_time', '>=', date("Y-m-d H:i:s", $start_time))
+            ->where('start_time', '>=', date("Y-m-d H:i:s", $start_time-3600*24))
             ->where('start_time', '<=', date("Y-m-d H:i:s", $end_time))
+            ->where('duration', '<>', 0)
             ->select('id', 'created', 'start_time', 'rid', 'duration')
             ->get();
 
@@ -726,11 +731,30 @@ class RoomController extends Controller
         $liveinfo = [];
         $duration_total = 0;
         foreach ($result as $key => $value) {
-            $liveinfo[$key]['id'] = $value['id'];
-            $liveinfo[$key]['start_time'] = $value['start_time'];
-            $liveinfo[$key]['end_time'] = date("Y-m-d H:i:s", strtotime($value['start_time']) + $value['duration']);
-            $liveinfo[$key]['duration'] = $value['duration'];
-            $duration_total = $duration_total + $value['duration'];
+            //如果开始时间是在前一天的
+            $starttime = date("Y-m-d 23:59:59", strtotime($value['start_time']));
+            $endtime = date("Y-m-d H:i:s", strtotime($value['start_time']) + $value['duration']);
+            //var_dump($starttime.'==='.$endtime.'<br>');
+            if($endtime>$start_init) {
+                $temp = [];
+                $temp['id'] = $value['id'];
+                if ($endtime > $end_init && $value['start_time'] > $start_init ) {
+                    $temp['start_time'] = $value['start_time'];
+                    $temp['end_time'] = date("Y-m-d 00:00:00", strtotime($value['start_time']) + 3600 * 24);
+                    $temp['duration'] = $value['duration'] = strtotime($temp['end_time']) - strtotime($value['start_time']);
+                } elseif ($endtime > $start_init && $value['start_time'] < $start_init) {
+                    $temp['start_time'] = $start_init;
+                    $temp['end_time'] = $endtime;
+                    $temp['duration'] = strtotime($endtime) - $start_time;
+                } else {
+                    $temp['start_time'] = $value['start_time'];
+                    $temp['end_time'] = date("Y-m-d H:i:s", strtotime($value['start_time']) + $value['duration']);
+                    $temp['duration'] = $value['duration'];
+
+                }
+                $duration_total = $duration_total + $temp['duration'];
+                array_push($liveinfo,$temp);
+            }
         }
         $getinfo['list'] = $liveinfo;
         $getinfo['duration_total'] = $duration_total;
