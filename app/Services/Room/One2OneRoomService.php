@@ -98,4 +98,7 @@ class One2OneRoomService extends Service
         return [];
     }
 
+    public function doing($starttime,$endtime){
+        return time() >= $starttime && time() <= $endtime;
+    }
 }
