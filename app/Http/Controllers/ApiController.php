@@ -1058,7 +1058,10 @@ EOT;
             $good['time'] = $item['time'];
             $good['playType'] = $item['playType'];
             $good['type'] = $item['type'];
-
+            $good['scaleX'] = $item['xScale'];
+            $good['scaleY'] = $item['xScale'];
+            $good['x'] = $item['x'];
+            $good['y'] = $item['y'];
 
             /**
              * 与现在的时间进行对比，如果在7天之内的都算是新礼物 isNew
