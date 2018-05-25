@@ -1,0 +1,12 @@
+*
+!apk/
+!goods/
+!html/
+!images/
+!sync/
+!temp/
+!activity/
+!anchor/
+!oort/
+!.gitignore
+
