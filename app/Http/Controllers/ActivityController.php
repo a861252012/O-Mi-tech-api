@@ -220,7 +220,7 @@ class ActivityController extends Controller
 
         //无活动退出
         if (empty($active)) {
-            return new Response(json_encode($var));
+            return $var;
         }
 
         //获取排行榜
@@ -280,10 +280,6 @@ class ActivityController extends Controller
 
              $data['type'] = $data['activity']['type'];
 
-
-             if(isset($data['activity']['status']) && $data['activity']['status'] == 0){
-                 return new JsonResponse(['status'=>0,'msg'=>'找不到页面']);
-             }
              //单双页排行区分
              if($data['activity']['type'] == 1){
                  $data['charmstar'] = $this->charmstar();
