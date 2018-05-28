@@ -25,9 +25,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PaymentController extends MobileController
 {
-    public function __construct(Container $container)
+    public function __construct(Request $request)
     {
-        parent::__construct($container);
+        parent::__construct($request);
     }
 
     /**
