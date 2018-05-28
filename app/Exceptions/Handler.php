@@ -6,7 +6,10 @@ use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Monolog\Handler\MailHandler;
+use Monolog\Logger;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class Handler extends ExceptionHandler
@@ -52,7 +55,6 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
-
         if ($exception instanceof HttpException) {
             $status = 0;
             $msg = $exception->getMessage();
@@ -73,6 +75,15 @@ class Handler extends ExceptionHandler
         }
         if ($exception instanceof ValidationException) {
             return JsonResponse::create(['status' => 0, 'msg' => '参数错误', 'errors' => $exception->errors()]);
+        }
+
+        if(config('app.debug')){
+            $log = new Logger('telegram_channel');
+
+            $handler = new TelegramHandler();
+            $log->pushHandler($handler);
+
+            $log->debug($exception->getMessage());
         }
 //        $request->headers->set('Accept','Application/json');
         return parent::render($request, $exception);
