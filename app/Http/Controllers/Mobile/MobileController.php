@@ -382,7 +382,7 @@ class MobileController extends Controller
              $hasharr[$value['uid']] = $value;
          }
          unset($arr);
-         $myfavArr = $this->make('redis')->zrevrange('zuser_attens:' . $this->_online, 0, -1);
+         $myfavArr = $this->make('redis')->zrevrange('zuser_attens:'.Auth::id(), 0, -1);
          $myfav = [];
          if (!!$myfavArr) {
              //过滤出主播

@@ -1164,7 +1164,7 @@ EOT;
          * 从redis中获取主播的周排行榜
          * 返回格式： ['uid'=>'score']
          */
-        $zrange_key = 'zrange_gift_week:' . $uid;
+        $zrange_key = 'zrange_gift_week:'.SiteSer::siteId().':'. $uid;
         $score = $this->make('redis')->ZREVRANGEBYSCORE($zrange_key, '+inf', '-inf', ['limit' => ['offset'=>0,'count'=>30], 'withscores' => TRUE]);
         if (empty($score)) {
             return new JsonResponse(['data'=>'','status'=>0,'msg'=>'数据为空']);
