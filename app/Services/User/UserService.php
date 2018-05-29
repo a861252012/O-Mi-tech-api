@@ -811,6 +811,7 @@ class UserService extends Service
         $redis = $this->make('redis');
 
         $rank = $redis->zRevRange($key, $offset, $limit, true);
+        $member_rank = ['zrank_rich_day','zrank_rich_week','zrank_rich_month','zrank_rich_history'];
         $ret = [];
         static $userCache = [];//缓存用户信息
         foreach ($rank as $uid => $score) {
@@ -822,21 +823,37 @@ class UserService extends Service
                     : ($userCache[$uid] = array_only($this->getUserByUid($uid)->toArray(), ['lv_rich', 'lv_exp', 'username', 'nickname', 'headimg', 'icon_id', 'description', 'vip','sex', 'site_id']))
             );
         }
+        $result = [];
+        $site_id = SiteSer::siteId();
         if(!empty($ret)){
                 foreach ($ret as $key=>$value){
-                    $userInfo = $this->getUserByUid($uid)->toArray();
-                    $ret[$key]['age'] = isset($userInfo['age']) ? $userInfo['age'] . '岁' : '永远18岁';
-                    $ret[$key]['starname'] = isset($userInfo['starname']) ? $userInfo['starname'] : '神秘星座';
-                    $ret[$key]['description'] = $userInfo['description'] ?: '此人好懒，大家帮TA想想写些什么！';
-                    if (!$userInfo['province'] || !$userInfo['city']) {
-                        $ret[$key]['procity'] = '中国的某个角落';
-                    } else {
-                        $ret[$key]['procity'] = $this->getArea($userInfo['province'], $userInfo['city'], $userInfo['county']);//取地区code对应的地区名称
+
+                    if(isset($value['site_id']) && $site_id != $value['site_id'] && in_array($key,$member_rank) ){
+                         unset($ret[$key]);
+                    }else{
+                        $userInfo = $this->getUserByUid($value['uid'])->toArray();
+                        $ret[$key]['age'] = isset($userInfo['age']) ? $userInfo['age'] . '岁' : '永远18岁';
+                        $ret[$key]['starname'] = isset($userInfo['starname']) ? $userInfo['starname'] : '神秘星座';
+                        $ret[$key]['description'] = $userInfo['description'] ?: '此人好懒，大家帮TA想想写些什么！';
+                        if (!$userInfo['province'] || !$userInfo['city']) {
+                            $ret[$key]['procity'] = '中国的某个角落';
+                        } else {
+                            $ret[$key]['procity'] = $this->getArea($userInfo['province'], $userInfo['city'], $userInfo['county']);//取地区code对应的地区名称
+                        }
+                    }
+
+                }
+
+
+                if(!empty($ret)){
+                    foreach ($ret as  $key=>$value){
+                        $result[] =  $value;
                     }
                 }
+
         }
 
-        return $ret;
+        return $result;
     }
     /**
      * 前3个参数是省市区的code值，第4个参数是分隔符

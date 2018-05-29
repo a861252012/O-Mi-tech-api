@@ -981,15 +981,22 @@ class MemberController extends Controller
                 return new JsonResponse(['status' => 3, 'msg' => '密码格式不对']);
             }
 //        $this->getRedis();
-        $this->make('redis')->hset('hroom_status:' . Auth::id() . ':2', 'pwd', $password);
+
 //        $em = $this->getDoctrine()->getManager();
 //        $roomtype =  $em->getRepository('Video\ProjectBundle\Entity\VideoRoomStatus')->findOneBy(array('uid'=>$this->_uid,'tid'=>2));
 //        $roomtype->setPwd($password);
 //        $em->persist($roomtype);
 //        $em->flush();
 
+
+        if ($room_radio == 'false'){
+            $this->make('redis')->hset('hroom_status:' . Auth::id() . ':2', 'status', 0);
+            $roomtype = RoomStatus::where('uid', Auth::id())->where('tid', 2)->update(['status' => 0]);
+            return new JsonResponse(['status' => 1, 'msg' => '密码关闭成功']);
+
+        }
+        $this->make('redis')->hset('hroom_status:' . Auth::id() . ':2', 'pwd', $password);
         $roomtype = RoomStatus::where('uid', Auth::id())->where('tid', 2)->update(['pwd' => $password]);
-        if ($room_radio == 'false') return new JsonResponse(['status' => 1, 'msg' => '密码关闭成功']);
         return new JsonResponse(['status' => 1, 'msg' => '密码修改成功']);
     }
 

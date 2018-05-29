@@ -200,6 +200,7 @@ class RoomController extends Controller
             'in_limit_safemail' => $redis->hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
             'certificate' => $certificate,
             Session::getName() => Session::getId(),
+            'uid' => Auth::id(),
         ];
         $data['chat_server_addr'] = $chat_server_addr;
         if (!$h5) {
