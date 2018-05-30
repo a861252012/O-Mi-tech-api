@@ -202,8 +202,8 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/member/viplist', ['name' => 'member_viplist', 'uses' => 'MemberController@vip_list']);
 
 
-    // 用户中心 推广中心 V2移除
-    //Route::get('/member/invite', ['name' => 'member_invite', 'uses' => 'MemberController@invite']);
+    // 用户中心 邀请注册
+    Route::get('/member/invite', ['name' => 'member_invite', 'uses' => 'MemberController@invite']);
     // 用户中心 我的关注
     Route::get('/member/attention', ['name' => 'member_attention', 'uses' => 'MemberController@attention']);
 

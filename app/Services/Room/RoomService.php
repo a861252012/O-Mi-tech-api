@@ -114,6 +114,12 @@ public $cur_login_uid = null;
                 return $this->current_tid = 6;
             }
         }
+
+       if($timeRoom = $this->getCurrentTimeRoomStatus()) {
+            if($timeRoom==8 || $timeRoom==4) {
+                return $this->current_tid = $timeRoom;
+            }
+        }
         //密码房
         if ($this->getPasswordRoom()) return $this->current_tid = 2;
 
@@ -341,9 +347,9 @@ public $cur_login_uid = null;
                 }
             }
         }
-          if (empty($uids)) {
+       /*   if (empty($uids)) {
               return ['status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间'];
-          }
+          }*/
 
 
         //$points = $room_config['timecost'];

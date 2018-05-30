@@ -34,7 +34,7 @@ class   AdsController extends Controller{
         }
 
         //$cdn  = $this->make('config')['config.REMOTE_CDN_PIC_URL'];
-        $cdn = SiteSer::config('cdn_host')."/public/storage/uploads/s".SiteSer::siteId()."/anchor"; // 'http://s.tnmhl.com/public/oort';
+        $cdn = SiteSer::config('cdn_host')."/storage/uploads/s".SiteSer::siteId()."/oort"; // 'http://s.tnmhl.com/public/oort';
         $img_path = Ads::IMG_PATH;
 
 

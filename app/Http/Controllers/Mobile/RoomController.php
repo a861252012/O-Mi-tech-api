@@ -186,6 +186,7 @@ class RoomController extends Controller
                 'uid' => $uid,
                 'onetomore' => $onetomany,
                 'origin' => $origin,
+                'site_id'=>SiteSer::siteId(),
             ]));
         /** 检查购买状态 */
         $timeout = microtime(true) + 4;

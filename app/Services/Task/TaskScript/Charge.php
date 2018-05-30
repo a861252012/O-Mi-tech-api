@@ -3,7 +3,7 @@
 namespace App\Services\Task\TaskScript;
 use App\Models\TaskUser;
 use App\Models\Users;
-use App\Models\ChargeList;
+use App\Models\Recharge;
 
 class Charge extends ScriptBase implements ScriptInterface
 {
@@ -89,8 +89,8 @@ class Charge extends ScriptBase implements ScriptInterface
              * 充值的大小是限制的
              */
             $xianzhi = $task['points']['value'];
-            $charge = ChargeList::where('uid',$uid)->where('ttime','>','date(\'Y-m-d H:i:s\',$ut[\'apply_date\'])')
-                ->where('paymoney','>=',$xianzhi[0])->where('paymoney','<=',$xianzhi[1])->where('status',2)->get();
+            $charge = Recharge::where('uid',$uid)->where('ttime','>','date(\'Y-m-d H:i:s\',$ut[\'apply_date\'])')
+                ->where('paymoney','>=',$xianzhi[0])->where('paymoney','<=',$xianzhi[1])->where('pay_status',2)->get();
             if($charge){
                 $data = array();
                 $csc['csc'] = 100;

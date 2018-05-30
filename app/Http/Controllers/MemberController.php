@@ -318,7 +318,7 @@ class MemberController extends Controller
         }
         $transfers = $transfers->orderBy('datetime', 'desc')->paginate(10)
             ->appends(['mintime' => $mintime, 'maxtime' => $maxtime]);
-        return $this->render('Member/transfer', ['status' => 1, 'data' => $transfers]);
+        return  new JsonResponse(['status' => 1, 'data' => ['list'=>$transfers]]);
 
     }
 
@@ -527,7 +527,7 @@ class MemberController extends Controller
         $short_url = $this->_buildWeiboShortUrl($userUrl);
         $inviteUrl = $short_url ?: $userUrl;
 
-        return $this->render('Member/invite', ['inviteurl' => $inviteUrl]);
+        return JsonResponse::create(['status'=>1,'data' => $inviteUrl]);
     }
 
     /**
@@ -557,7 +557,7 @@ class MemberController extends Controller
                 $result = json_decode($result);
                 if (isset($result[0]->url_short)) {
                     $url_short = trim($result[0]->url_short);
-                    if (stristr($url_short, 't.cn')) {
+                    if ($url_short) {
                         $redis->hset('user_url_t', $uid, $url_short);
                         return $url_short;
                     } else {
@@ -1990,6 +1990,7 @@ class MemberController extends Controller
 
             // 开通成功后 发送给用户通知消息
             $message = [
+                'category'=>2,
                 'mail_type' => 3,
                 'rec_uid' => $user->uid,
                 'content' => '贵族开通成功提醒：您已成功开通 ' . $userGroup['level_name'] . ' 贵族，到期日：' . $exp,
@@ -2303,6 +2304,7 @@ class MemberController extends Controller
                 'uid' => $uid,
                 'onetomore' => $onetomany,
                 'origin' => $origin,
+                'site_id'=>SiteSer::siteId(),
             ]));
         /** 检查购买状态 */
         $timeout = microtime(true) + 4;

@@ -126,7 +126,8 @@ class RoomController extends Controller
                         if ($h5 === 'h5hls') {
                             return JsonResponse::create(['status' => 0]);
                         }
-                        $roomService->extend_room = $roomService->extend_room[0];
+                     ;
+                        $roomService->extend_room = $roomService->extend_room;
 
                         $data = [
                             'id' => $roomService->extend_room['onetomore'],
@@ -136,7 +137,7 @@ class RoomController extends Controller
                             'end_time' => $roomService->extend_room['endtime'],
                             'duration' => strtotime($roomService->extend_room['endtime']) - strtotime($roomService->extend_room['starttime']),
                             'username' => resolve(UserService::class)->getUserByUid($rid)['nickname'],
-                            'tickets' => $roomService->extend_room['tickets'],
+                            'tickets' => isset($roomService->extend_room['tickets'])?$roomService->extend_room['tickets']:'',
                         ];
 
                         $hplat = $redis->exists("hplatforms:$origin") ? "plat_whitename_room" : "not_whitename_room";
