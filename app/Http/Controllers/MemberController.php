@@ -56,11 +56,11 @@ class MemberController extends Controller
             'action' => 'index',
             'name' => '基本信息',
         ],
-        // array(
-        //     'action' => 'invite',
-        //     'name' => '推广链接',
-        //     'ico' => 7,
-        // ),
+        [
+             'role' => 0,
+             'action' => 'invite',
+             'name' => '邀请注册',
+        ],
         [
             'role' => 0,
             'action' => 'attention',
@@ -1856,7 +1856,7 @@ class MemberController extends Controller
     {
         $msg = [
             'status' => 1,
-            'msg' => '',
+            'msg' => '开通成功',
         ];
 
         if (!Auth::user()) {

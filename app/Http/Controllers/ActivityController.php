@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Facades\SiteSer;
 use App\Models\Active;
 use App\Models\ActivePage;
 use App\Models\ActivityPag;
@@ -25,7 +25,7 @@ class ActivityController extends Controller
     public function index()
     {
 
-        $data = Redis::get('huodong_cache');
+        $data = Redis::get('huodong_cache:'.SiteSer::siteId());
         $list = collect(json_decode($data))->where('pid', 0);
         $list = $this->format_jsoncode($list);
         return  new jsonresponse($list);
@@ -53,7 +53,7 @@ class ActivityController extends Controller
             $data['tmp'] = array_slice($temp, 1); // 抛出第一个原图的 后面的才是切割后的图
             $status = 1;
         }
-        $result['type'] = $data['type'];
+        $result['type'] = 3;
         unset($data['type']);
         $result['activity'] = $data;
 

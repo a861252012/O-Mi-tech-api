@@ -191,7 +191,7 @@ class RoomController extends Controller
 
         $plat_backurl = $roomService->getPlatUrl($origin);
         //$httphost = $roomService->getPlatHost();
-        $data = [
+        $data['room'] = [
 //            'room' => &$room,
             'rid' => $rid,
             'origin' => $origin,
@@ -203,7 +203,7 @@ class RoomController extends Controller
             Session::getName() => Session::getId(),
             'uid' => Auth::id(),
         ];
-        $data['chat_server_addr'] = $chat_server_addr;
+        $data['room']['chat_server_addr'] = $chat_server_addr;
         if (!$h5) {
             return JsonResponse::create(['data' => $data]);
         }
@@ -212,9 +212,9 @@ class RoomController extends Controller
         }
         if ($h5 === 'h5hls') {
             unset($data['getRoomKey']);
-            $data['status'] = 1;
-            $data['chat_ws'] = $redis->smembers('schatws');
-            $data['hls_addr'] = $this->getHLS($rid);
+            $data['room']['status'] = 1;
+            $data['room']['chat_ws'] = $redis->smembers('schatws');
+            $data['room']['hls_addr'] = $this->getHLS($rid);
             return JsonResponse::create(['data' => $data]);
         }
     }
