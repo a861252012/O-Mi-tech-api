@@ -241,24 +241,28 @@ class MemberController extends Controller
          * 转帐处理过程
          * @todo 待优化
          */
-        if (!Captcha::check($request->get('code'))) return new JsonResponse(['status' => 0, 'message' => '验证码错误!']);;
+        if (!Captcha::check($request->get('captcha'))) return new JsonResponse(['status' => 0, 'msg' => '验证码错误!']);;
         //收款人信息
         $username = $request->get('username');
         $points = $request->get('points');
         $content = $request->get('content');
+        //判断交易密码
+        if( ! resolve(UserService::class)->checkUserTradePassword($uid, $request->get('trade_password')) ){
+            return new JsonResponse(array('status'=>0, 'message'=>L('交易密码错误')));
+        }
 
-        if ($username == $user['username']) return new JsonResponse(['status' => 0, 'message' => '不能转给自己!']);
+        if ($username == $user['username']) return new JsonResponse(['status' => 0, 'msg' => '不能转给自己!']);
 
-        if (intval($points) < 1) return new JsonResponse(['status' => 0, 'message' => '转帐金额错误!']);
+        if (intval($points) < 1) return new JsonResponse(['status' => 0, 'msg' => '转帐金额错误!']);
 
         //获取转到用户信息
         $userTo = resolve(UserService::class)->getUserByUsername($username);
 
-        if (!$userTo) return new JsonResponse(['status' => 0, 'message' => '对不起！该用户不存在']);
+        if (!$userTo) return new JsonResponse(['status' => 0, 'msg' => '对不起！该用户不存在']);
 
-        if (!$user['transfer']) return new JsonResponse(['status' => 0, 'message' => '对不起！您没有该权限！']);
+        if (!$user['transfer']) return new JsonResponse(['status' => 0, 'msg' => '对不起！您没有该权限！']);
 
-        if ($user['points'] < $points) return new JsonResponse(['status' => 0, 'message' => '对不起！您的钻石余额不足!']);
+        if ($user['points'] < $points) return new JsonResponse(['status' => 0, 'msg' => '对不起！您的钻石余额不足!']);
 
         //开始转帐事务处理
         DB::beginTransaction();
@@ -295,11 +299,11 @@ class MemberController extends Controller
             resolve(UserService::class)->getUserReset($userTo['uid']);
 
 
-            return new JsonResponse(['status' => 1, 'message' => '您成功转出' . $points . '钻石']);
+            return new JsonResponse(['status' => 1, 'msg' => '您成功转出' . $points . '钻石']);
         } catch (\Exception $e) {
             DB::rollBack();//事务回滚
             logger()->debug($e);
-            return new JsonResponse(['status' => 0, 'message' => '对不起！转帐失败!']);
+            return new JsonResponse(['status' => 0, 'msg' => '对不起！转帐失败!']);
         }
     }
 
@@ -1123,9 +1127,12 @@ class MemberController extends Controller
 
         $redis = resolve('redis');
         $image_server = SiteSer::config('img_host') . '/';
+
         foreach ($recommend as $keys => &$value) {
-            $userinfo = $userServer->getUserByUid($value['uid']);
-            $value = array_merge($value, $userinfo->get(['nickname']));//todo 字段过滤
+
+            $userinfo = resolve(UserService::class)->getUserByUid($value['uid']);
+
+            $value = array_merge($value, ['nickname'=>$userinfo->nickname]);//todo 字段过滤
             $value['duration'] = ceil($value['duration'] / 60);
             $value['datenu'] = date('YmdHis', strtotime($value['starttime']));
             $value['roomid'] = $value['id'];
@@ -2455,5 +2462,94 @@ class MemberController extends Controller
                 ['points' => $points],
         ];
     }
+
+
+    /**
+     * 用户中心 密码管理
+     * @name password
+     * @author D.C
+     * @version 1.0
+     * @return Response
+     */
+    public function password()
+    {
+        $uid =Auth::id();
+        $user = Auth::user();
+        if ($this->make('request')->getMethod() === 'POST') {
+            $post = $this->make('request')->request->all();
+
+            /**
+             * 设置交易密码
+             */
+            if(isset($post['type']) && $post['type']=='trade_password'){
+
+                if(isset(Auth::user()->trade_password) && strlen(Auth::user()->trade_password)==32){
+                    return new JsonResponse(array('status'=>303, 'msg'=>'你已设置交易密码,需要修改请联系客服进行重置!'));
+                }
+
+                if(!resolve(UserService::class)->checkUserPassword($uid, $post['password'])){
+                    return new JsonResponse(array('status'=>302, 'msg'=>'登录密码不正确!'));
+                }
+
+                if($post['trade_password']){
+                    if(resolve(UserService::class)->updateUserTradePassword($uid, $post['trade_password'])){
+                        return new JsonResponse(array('status'=>0, 'msg'=>'交易密码设置成功'));
+                    }
+                    return new JsonResponse(array('status'=>301, 'msg'=>'交易密码设置失败'));
+                }else{
+                    return new JsonResponse(array('status'=>300, 'msg'=>'交易密码不能为空'));
+                }
+
+            }
+            /*
+            if (!$this->make('captcha')->Verify($post['captcha'])) {
+                return new JsonResponse(array('code' => 300, 'msg' => '验证码错误!'));
+            }
+            */
+
+            if (empty($post['password'])) {
+                return new JsonResponse(array('status' => 301, 'msg' => '原始密码不能为空'));
+            }
+
+
+            if (strlen($post['password1']) < 6 || strlen($post['password2']) < 6) {
+                return new JsonResponse(array('status' => 302, 'msg' => '原始密码不能为空'));
+            }
+
+            if ($post['password1'] != $post['password2']) {
+                return new JsonResponse(array('status' => 303, 'msg' => '新密码两次输入不一致!'));
+            }
+
+            $old_password = $this->make('redis')->hget('huser_info:' . $uid, 'password');
+            $new_password = md5($post['password2']);
+            if (md5($post['password']) != $old_password) {
+                return new JsonResponse(array('status' => status, 'msg' => '原始密码错误'));
+            }
+            if ($old_password == $new_password) {
+                return new JsonResponse(array('status' => status, 'msg' => '新密码和原密码相同!'));
+            }
+
+            $user = Users::find($uid);
+            $user->password = $new_password;
+            if (!$user->save()) {
+                return new JsonResponse(array('status' => 304, 'msg' => '修改失败'));
+            }
+          /*  $this->_clearCookie();
+            $this->_reqSession->invalidate();//销毁session,生成新的sesssID*/
+
+            if (Auth::check()) {
+                Auth::logout();
+            }
+            $request->session()->invalidate();
+            //更新用户redis
+            resolve(UserService::class)->getUserReset($uid);
+          //  $this->make('userServer')->getUserReset($uid);
+
+            return new JsonResponse(array('status' => 1, 'msg' =>'修改成功!请重新登录'));
+        }
+
+        return  new JsonResponse(['msg'=>0,'data'=> ['user'=>$user]]);
+    }
+
 }
 

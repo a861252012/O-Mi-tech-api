@@ -809,9 +809,17 @@ class UserService extends Service
     {
         /** @var \Redis $redis */
         $redis = $this->make('redis');
+        $mouth = date('Ym',time());
+        $member_rank = ['zrank_rich_day','zrank_rich_week','zrank_rich_month:'.$mouth,'zrank_rich_history'];
 
-        $rank = $redis->zRevRange($key, $offset, $limit, true);
-        $member_rank = ['zrank_rich_day','zrank_rich_week','zrank_rich_month','zrank_rich_history'];
+        if(in_array($key,$member_rank)){
+
+            $rank = $redis->zRevRange($key.':'.SiteSer::siteId(), $offset, $limit, true);
+        }else{
+            $rank = $redis->zRevRange($key, $offset, $limit, true);
+        }
+
+
         $ret = [];
         static $userCache = [];//缓存用户信息
         foreach ($rank as $uid => $score) {
@@ -828,9 +836,6 @@ class UserService extends Service
         if(!empty($ret)){
                 foreach ($ret as $key=>$value){
 
-                    if(isset($value['site_id']) && $site_id != $value['site_id'] && in_array($key,$member_rank) ){
-                         unset($ret[$key]);
-                    }else{
                         $userInfo = $this->getUserByUid($value['uid'])->toArray();
                         $ret[$key]['age'] = isset($userInfo['age']) ? $userInfo['age'] . '岁' : '永远18岁';
                         $ret[$key]['starname'] = isset($userInfo['starname']) ? $userInfo['starname'] : '神秘星座';
@@ -840,7 +845,7 @@ class UserService extends Service
                         } else {
                             $ret[$key]['procity'] = $this->getArea($userInfo['province'], $userInfo['city'], $userInfo['county']);//取地区code对应的地区名称
                         }
-                    }
+
 
                 }
 
@@ -908,4 +913,45 @@ class UserService extends Service
         Session::getHandler()->destroy($sid);
 
     }
+
+    /**
+     * 验证用户交易密码
+     * @param $uid
+     * @param $password
+     * @return bool
+     */
+    public function checkUserTradePassword($uid, $password)
+    {
+        $user =  $this->getUserByUid($uid);
+        return $user['trade_password'] == md5( md5( trim( $password ), $uid));
+    }
+
+    /**
+     * 检测用户密码
+     * @param $uid
+     * @param $password
+     * @return bool
+     */
+    public function checkUserPassword($uid, $password)
+    {
+        $user =  $this->getUserByUid($uid);
+        return $user['password'] == md5(trim($password));
+    }
+    /**
+     * [updateUserTradePassword 修改用户交易密码]
+     * @param $uid
+     * @param $password
+     * @return bool
+     */
+    public function updateUserTradePassword($uid, $password)
+    {
+        if(!$uid || !$password) return false;
+        $password = md5( md5( trim( $password ), $uid));
+        if(Users::whereUid($uid)->update(array('trade_password'=>$password))) {
+            resolve(UserService::class)->getUserReset($uid);
+            return $password;
+        }
+        return false;
+    }
+
 }

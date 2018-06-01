@@ -79,6 +79,7 @@ class RoomController extends Controller
                     if (!$roomService->checkCanIn()) {
                         $one2one = resolve('one2one')->getData();
                         $one2one = $one2one[0];
+                        if($one2one['tickets'] == 0);$one2one['tickets']='';
                         $result['data'] = $one2one;
                         $result['data']['rid'] = $one2one['uid'];
                         $result['data']['start_time'] = $one2one['starttime'];
@@ -87,6 +88,7 @@ class RoomController extends Controller
                         $userdata = resolve(UserService::class)->getUserByUid($result['data']['uid']);
                         $result['data']['nickname'] = $userdata['nickname'];
                         $result['data']['username'] = $userdata['username'];
+                        $result['data']['handle'] = $handle;
                         unset($result['data']['starttime']);
                         // return JsonResponse::create(['status' => 0, 'data' => ['handle' => $handle]]);
                         return JsonResponse::create(['status' => 0, 'data' => $result, 'msg' => '未购买该房间']);
