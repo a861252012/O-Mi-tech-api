@@ -767,7 +767,11 @@ class RoomController extends Controller
     public function roomSetDuration(Request $request)
     {
         $data = [];
-        $data = $request->only(['mintime', 'hour', 'minute', 'tid', 'duration', 'points']);
+        $data = $request->only(['mintime', 'hour', 'minute', 'tid', 'duration', 'points','origin']);
+
+        if(empty($data['origin'])){
+            $data['origin']=21;
+        }
 
         $roomservice = resolve(RoomService::class);
         $result = $roomservice->addOnetoOne($data);
