@@ -79,11 +79,9 @@ class Handler extends ExceptionHandler
 
         if(config('app.debug')){
             $log = new Logger('telegram_channel');
-
             $handler = new TelegramHandler();
             $log->pushHandler($handler);
-
-            $log->debug($exception->getMessage());
+            $log->debug($exception->getTraceAsString());
         }
 //        $request->headers->set('Accept','Application/json');
         return parent::render($request, $exception);
