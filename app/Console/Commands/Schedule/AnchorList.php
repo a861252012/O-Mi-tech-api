@@ -72,7 +72,7 @@ class AnchorList extends Command
         ];
 //$json = '{';
         foreach ($conf_arr as $key => $item) {
-            $data = Redis::get($key . $flashVer);//todo 区分站点
+            $data = Redis::get($key . $flashVer.':'. $this->siteService->siteId());//todo 区分站点
             if ($data == null) {
                 echo $item[0] . '可能出问题了，请联系java开发人员' . PHP_EOL;
                 Storage::disk('public')->put($this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json', '{"rooms":[]}');

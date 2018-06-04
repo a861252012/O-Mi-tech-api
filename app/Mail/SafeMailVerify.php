@@ -50,8 +50,8 @@ class SafeMailVerify extends Mailable implements ShouldQueue
         $name = $user['nickname'] ?: $user['username'];
         $url = $tokenUrl;
         $url_html = '<a href="' . $url . '" target="_blank"  style="word-wrap: break-word;cursor:pointer;text-decoration:none;color:#0082cb">' . $url . '</a>';
-        $emailtemplate = Conf::where('name', 'email')->first(['value']);
-        $content = $emailtemplate ? $emailtemplate->value ?? '' : '';
+        $emailtemplate =  $siteConfig->get('email');
+        $content = $emailtemplate ? $emailtemplate ?? '' : '';
         $this->content = preg_replace([
             '/{{\s*name\s*}}/i',
             '/{{\s*url\s*}}/i',
