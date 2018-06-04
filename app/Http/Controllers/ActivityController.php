@@ -71,7 +71,7 @@ class ActivityController extends Controller
      */
     public function activity($action)
     {
-        $active = Redis::hgetall('hactive_page');
+        $active = Redis::hgetall('hactive_page:'.SiteSer::siteId());
 
         //先从redis中获取，如果取不到，再去匹配数据库。
 
@@ -115,12 +115,14 @@ class ActivityController extends Controller
      */
     public function charmstar()
     {
-        if ($this->make('redis')->exists('hactive')) {
-            $charmstar = $this->make('redis')->hGetAll('hactive');
+        if ($this->make('redis')->exists('hactive:'.SiteSer::siteId())) {
+            $charmstar = $this->make('redis')->hGetAll('hactive:'.SiteSer::siteId());
             $var['etime'] = date('Y/m/d H:i:s', strtotime($charmstar['etime'] . ' 23:59:59'));
             $var['stime'] = date('Y/m/d H:i:s', strtotime($charmstar['stime'] . ' 00:00:00'));
-            $charm = $this->make('redis')->zRevRange('zvideo_charm', 0, 9, true);
-            $star = $this->make('redis')->zRevRange('zvideo_extreme', 0, 9, true);
+            $charm = $this->make('redis')->zRevRange('zvideo_charm:'.SiteSer::siteId(), 0, 9, true);
+            $star = $this->make('redis')->zRevRange('zvideo_extreme:'.SiteSer::siteId(), 0, 9, true);
+
+            //zvideo_charm_gnum:".SiteSer::siteId().':'.$gid
             $no_charm = 1;
             $userServer = resolve(UserService::class);
             foreach ($charm as $key => $value) {
@@ -205,8 +207,8 @@ class ActivityController extends Controller
         $active = [];
         $active_id = null;
 
-        if ($this->make('redis')->exists('hactive_common')) {
-            $active = $this->make('redis')->hGetAll('hactive_common');
+        if ($this->make('redis')->exists('hactive_common:'.SiteSer::siteId())) {
+            $active = $this->make('redis')->hGetAll('hactive_common:'.SiteSer::siteId());
             $dbType = "redis";
             $active_id = $active['active_id'];
         }else{
@@ -307,8 +309,9 @@ class ActivityController extends Controller
     private function single($active_id=null,$gid='',$type='1',$db='mysql'){
         $list = [];
         if($db=='redis'){
-            $zkey = $type==1 ? "zvideo_charm_gnum" : "zvideo_extreme_gnum";   //zvideo_charm_gnum
-            $zkey .= ':'.$gid;
+
+            $zkey = $type==1 ? "zvideo_charm_gnum:".SiteSer::siteId().':'.$gid : "zvideo_extreme_gnum:".SiteSer::siteId().':'.$gid ;   //zvideo_charm_gnum
+          //  $zkey .= ':'.$gid;
             $list = $charm = $this->make('redis')->zRevRange($zkey, 0, 9, true);
         }else{
             $charm = CommonRank::where([
@@ -331,7 +334,7 @@ class ActivityController extends Controller
         $charmlist = [];
         foreach ($list as $key => $value) {
             $temp = [];
-            $temp['points'] = $charm[0]['num'];
+            $temp['points'] = $value;
             $temp['no'] = $no_charm++;
             $temp['nickname'] = $userServer->getUserByUid($key)['nickname'];
             $temp['gnum'] = $value;

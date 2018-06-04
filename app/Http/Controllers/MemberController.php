@@ -248,7 +248,7 @@ class MemberController extends Controller
         $content = $request->get('content');
         //判断交易密码
         if( ! resolve(UserService::class)->checkUserTradePassword($uid, $request->get('trade_password')) ){
-            return new JsonResponse(array('status'=>0, 'message'=>L('交易密码错误')));
+            return new JsonResponse(['status'=>0, 'message'=>'交易密码错误']);
         }
 
         if ($username == $user['username']) return new JsonResponse(['status' => 0, 'msg' => '不能转给自己!']);
@@ -1496,7 +1496,7 @@ class MemberController extends Controller
                     $q->selectRaw('uid,username');
                 }]);
             }])->with(['gameRoomUser' => function ($q) {
-                $q->selectRaw('uid,username');
+                $q->selectRaw('uid,nickname');
             }])
                 ->where('uid', Auth::id())
                 ->where('dml_flag', '!=', 3)

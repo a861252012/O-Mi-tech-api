@@ -1,6 +1,6 @@
 <?php
 namespace App\Models;
-
+use App\Traits\SiteSpecific;
 /**
  * 游戏中历史赛车游戏投注信息的模型
  *
@@ -13,6 +13,7 @@ class CarGameBetBak extends \Illuminate\Database\Eloquent\Model
      * 表名 历史赛车游戏投注信息
      * @var string
      */
+    use SiteSpecific;
     protected  $table='video_cargame_bet_bak';
     protected $primaryKey = 'auto_id';
 

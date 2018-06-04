@@ -79,7 +79,7 @@ class RoomController extends Controller
                     if (!$roomService->checkCanIn()) {
                         $one2one = resolve('one2one')->getData();
                         $one2one = $one2one[0];
-                        if($one2one['tickets'] == 0);$one2one['tickets']='';
+                        $one2one['tickets']='';
                         $result['data'] = $one2one;
                         $result['data']['rid'] = $one2one['uid'];
                         $result['data']['start_time'] = $one2one['starttime'];
@@ -104,6 +104,7 @@ class RoomController extends Controller
                                 'timecost' => $room['room_status'][6]['timecost'],
                                 'discount' => $room['discount']['discount'],
                                 'discountValue' => $room['discount']['discountValue'],
+                                'room'=>['chat_server_addr'=>$chat_server_addr],
                             ],
                         ]);
                     }
