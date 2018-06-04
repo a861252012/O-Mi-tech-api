@@ -10,6 +10,7 @@ use App\Traits\SiteSpecific;
  */
 class UserModNickName extends \Illuminate\Database\Eloquent\Model
 {
+    use SiteSpecific;
     /**
      * 表名 修改用户名表
      * @var string

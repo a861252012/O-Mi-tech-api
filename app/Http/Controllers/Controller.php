@@ -972,6 +972,7 @@ class Controller extends BaseController
             'msg' => '',
         ];
         //昵称重复
+        $from_nickname = $user['nickname'];
         if (isset($postData['nickname']) && ($postData['nickname'] != $user['nickname'])) {
 
             // 判断长度 和 格式 是否正确
@@ -1035,12 +1036,12 @@ class Controller extends BaseController
         $user->update($postData);
 
         //维护redis中的hnickname_to_id 用于注册时验证是否重名
-        if (isset($postData['nickname']) && ($postData['nickname'] != $user['nickname'])) {
+        if (isset($postData['nickname']) && ($postData['nickname'] != $from_nickname)) {
             Redis::hset('hnickname_to_id:'.SiteSer::siteId(), $postData['nickname'], $user['uid']);
             // 修改昵称成功后 就记录日志
             $modNameLog = [
                 'uid' => $user['uid'],
-                'before' => $user['nickname'],
+                'before' => $from_nickname,
                 'after' => $postData['nickname'],
                 'update_at' => time(),
                 'init_time' => date('Y-m-d H:i:s', time()),
