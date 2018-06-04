@@ -37,8 +37,8 @@ class Top extends GiftBase implements GiftInterface
 
         // 更新用户的等级的redis
         if($result !== false){
-            $this->_redisInstance->hset('huser_info:' . $uid, 'lv_rich', $lv_rich);
-            $this->_redisInstance->hset('huser_info:' . $uid, 'rich', $rich);
+            $redis->hset('huser_info:' . $uid, 'lv_rich', $lv_rich);
+            $redis->hset('huser_info:' . $uid, 'rich', $rich);
             // 记录日志
             $exp_log = array(
                 'uid' => $uid,

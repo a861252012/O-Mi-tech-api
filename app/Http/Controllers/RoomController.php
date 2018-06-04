@@ -191,6 +191,7 @@ class RoomController extends Controller
         }
         $channel_id = $chatServer['id'];
         $logger->info('in:' . $rid . ":" . Auth::id() . ':' . $channel_id);
+        $userinfo= $redis->hgetall("huser_info:".$rid);
 
         $plat_backurl = $roomService->getPlatUrl($origin);
         //$httphost = $roomService->getPlatHost();
@@ -205,6 +206,7 @@ class RoomController extends Controller
             'certificate' => $certificate,
             Session::getName() => Session::getId(),
             'uid' => Auth::id(),
+            'nickname' =>$userinfo['nickname'],
         ];
         $data['room']['chat_server_addr'] = $chat_server_addr;
         if (!$h5) {
