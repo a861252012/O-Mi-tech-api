@@ -387,7 +387,7 @@ class IndexController extends Controller
                 foreach ($myReservation as $item) {
                     foreach ($rooms as $room) {
                         if (($item->starttime) > date('Y-m-d H:i:s', time() - ($item->duration))) {
-                            if ($item->uid == $room['uid'] && $item->id == $room['id']) {
+                            if ($item->uid == $room['rid'] && $item->id == $room['id']) {
                                 $room['listType'] = 'myres';
                                 $myres[] = $room;
                             }

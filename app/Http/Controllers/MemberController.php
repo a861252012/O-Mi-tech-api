@@ -1235,7 +1235,8 @@ class MemberController extends Controller
             return new JsonResponse(['status' => 0, 'msg' => '请求错误']);
         }
 
-        $duroom = RoomDuration::find($roomid);
+        $duroom = RoomDuration::query()->where('id','=',$roomid)->first();
+
         if (empty($duroom)) return new JsonResponse(['status' => 0, 'msg' => '请求错误']);
         if (empty($duroom)) return new JsonResponse(['status' => 0, 'msg' => '您预约的房间不存在']);
         if ($duroom['status'] == 1) return new JsonResponse(['status' => 0, 'msg' => '当前的房间已经下线了，请选择其他房间。']);
