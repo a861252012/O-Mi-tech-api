@@ -276,7 +276,9 @@ class RoomController extends Controller
         $sessionid = Session::getId();
         //房间进入密码，超过五次就要输入验证码，这个五次是通过phpsessionid来判断的
         $roomstatus = $this->getRoomStatus($rid, 2);
-        $keys_room = 'keys_room_passwd:' . $sessionid . ':' . $rid;
+        $keys_room = 'keys_room_passwd:' . $_COOKIE['SESSID'] . ':' . $rid;
+
+
         $times = $this->make('redis')->get($keys_room) ?: 0;
         if ($times >= 5) {
             $captcha = $this->request()->get('captcha');
@@ -316,11 +318,11 @@ class RoomController extends Controller
         $rid = $this->request()->get('roomid');
         if (empty($rid)) return new JsonResponse(['status' => 0, 'msg' => '房间号错误!']);
 //        $this->get('session')->start();
-        $session_name = $this->request()->getSession()->getName();
+        $session_name = Session::getName();
         if (isset($_POST[$session_name])) {
-            $this->request()->getSession()->setId($_POST[$session_name]);
+            Session::setId($_POST[$session_name]);
         }
-        $sessionid = $this->request()->getSession()->getId();
+        $sessionid = Session::getId();
         $keys_room = 'keys_room_errorpasswd:' . $sessionid . ':' . $rid;
         $times = $this->make('redis')->hget($keys_room, 'times');
         if (empty($times)) $times = 0;

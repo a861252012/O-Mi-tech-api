@@ -831,8 +831,11 @@ class MemberController extends Controller
     {
         $hasname = 'hroom_status:' . $uid . ':' . $tid;
         $status = $this->make('redis')->hget($hasname, 'status');
-        if (!empty($status)) {
-            if ($status == 1) {
+
+        if (!empty($status) ||  ($status ==0 && $tid==2)) {
+
+            if ($status == 1 ||  ($status ==0 && $tid==2)) {
+
                 $data = $this->make('redis')->hgetall($hasname);
             } else {
                 return null;
@@ -878,7 +881,8 @@ class MemberController extends Controller
     {
         $onetomore = $this->make('request')->get('onetomore');
         $userService = resolve(UserService::class);
-        $buyOneToMore = UserBuyOneToMore::where('onetomore', $onetomore)->where('type', 2)->get();
+
+        $buyOneToMore = UserBuyOneToMore::where('onetomore', $onetomore)->where('type', 2)->allSites()->get();
         $buyOneToMore->map(function (&$item) use ($userService) {
             $user = $userService->getUserByUid($item->uid);
             $item->nickname = isset($user['nickname']) ? $user['nickname'] : '';
@@ -995,12 +999,14 @@ class MemberController extends Controller
 
         if ($room_radio == 'false'){
             $this->make('redis')->hset('hroom_status:' . Auth::id() . ':2', 'status', 0);
-            $roomtype = RoomStatus::where('uid', Auth::id())->where('tid', 2)->update(['status' => 0]);
+            $this->make('redis')->hset('hroom_status:' . Auth::id() . ':2', 'pwd', $password);
+            $roomtype = RoomStatus::where('uid', Auth::id())->where('tid', 2)->update(['status' => 0,'pwd'=>$password]);
             return new JsonResponse(['status' => 1, 'msg' => '密码关闭成功']);
 
         }
+        $this->make('redis')->hset('hroom_status:' . Auth::id() . ':2', 'status', 1);
         $this->make('redis')->hset('hroom_status:' . Auth::id() . ':2', 'pwd', $password);
-        $roomtype = RoomStatus::where('uid', Auth::id())->where('tid', 2)->update(['pwd' => $password]);
+        $roomtype = RoomStatus::where('uid', Auth::id())->where('tid', 2)->update(['pwd' => $password,'status' => 1]);
         return new JsonResponse(['status' => 1, 'msg' => '密码修改成功']);
     }
 
@@ -1201,6 +1207,7 @@ class MemberController extends Controller
             foreach ($roomlist as $item) {
                 $room = json_decode($item, true);
                 if ($room['status'] == 0 && $room['reuid'] == 0 && $room['uid'] != $uid && strtotime($room['starttime']) > time()) {
+                    $room['rid'] = $room['uid'];
                     array_push($room_list, $room);
                 }
             }
@@ -1556,6 +1563,7 @@ class MemberController extends Controller
             ->where('video_mall_list.gid', '>', 10)
             ->where('video_mall_list.gid', '!=', 410001)
             ->where('video_goods.category', '!=', 1002)
+            ->allSites()
             ->paginate();
 
 
@@ -1569,6 +1577,7 @@ class MemberController extends Controller
             ->where('video_mall_list.gid', '>', 10)
             ->where('video_mall_list.gid', '!=', 410001)
             ->where('video_goods.category', '!=', 1002)
+            ->allSites()
             ->sum('gnum');
 
         $sum_points_num =  MallList::query()->leftJoin('video_goods', function($leftJoin)
@@ -1581,6 +1590,7 @@ class MemberController extends Controller
             ->where('video_mall_list.gid', '>', 10)
             ->where('video_mall_list.gid', '!=', 410001)
             ->where('video_goods.category', '!=', 1002)
+            ->allSites()
             ->sum('points');
         $sum_gift_num = $sum_gift_num ?: 0;
         $sum_points_num = $sum_points_num ?: 0;

@@ -425,7 +425,7 @@ class IndexController extends Controller
             'ret' => true,
             'status' => 1,
             'myfav' => $myfav,
-            'myres' => $myres,
+            'myres' => $myticket,
             'myticket' => $myticket,
             'downloadAppurl' => $downloadUrl,
             'downloadUrl' => $downloadpcurl,
