@@ -75,10 +75,19 @@ class AnchorList extends Command
             $data = Redis::get($key . $flashVer.':'. $this->siteService->siteId());//todo 区分站点
             if ($data == null) {
                 echo $item[0] . '可能出问题了，请联系java开发人员' . PHP_EOL;
-                Storage::disk('public')->put($this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json', '{"rooms":[]}');
+                //Storage::disk('public')->put($this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json', '{"rooms":[]}');
+
+                $data = '{"rooms":[]}';
+                $file = storage_path('app/public').$this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json';
+                file_put_contents($file,$data,LOCK_EX);
             } else {
                 $data = str_replace(['cb(', ');'], ['', ''], $data);
-                Storage::disk('public')->put($this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json', $data);
+
+
+                $file = storage_path('app/public').$this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json';
+                file_put_contents($file,$data,LOCK_EX);
+
+                //torage::disk('public')->put($this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json', $data);
             }
         }
     }
