@@ -421,18 +421,25 @@ class IndexController extends Controller
             }
         }
 
-        return JsonResponse::create([
-            'ret' => true,
-            'status' => 1,
-            'myfav' => $myfav,
-            'myres' => $myticket,
-            'myticket' => $myticket,
-            'downloadAppurl' => $downloadUrl,
-            'downloadUrl' => $downloadpcurl,
-            'qrcode_img' => $qrcode,
-            'notice' => $notice,
+        return JsonResponse::create(
+            [
+                'data'=>
+                    [
+                    'status' => 1,
+                    'myfav' => $myfav,
+                    'myres' => $myticket,
+                    'myticket' => $myticket,
+                    'downloadAppurl' => $downloadUrl,
+                    'downloadUrl' => $downloadpcurl,
+                    'qrcode_img' => $qrcode,
+                    'notice' => $notice,
 
-        ]);
+                ],
+                'msg'=>'获取成功',
+                'status'=>1,
+            ]
+        );
+
 
     }
 

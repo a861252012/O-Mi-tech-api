@@ -27,7 +27,14 @@ class ActivityController extends Controller
 
         $data = Redis::get('huodong_cache:'.SiteSer::siteId());
         $list = collect(json_decode($data))->where('pid', 0);
-        $list = $this->format_jsoncode($list);
+
+        $list = json_decode( json_encode( $list ), true );
+        $temp = [];$result = [];
+        foreach ($list as $key=>$value){
+            $temp[] = $value;
+            array_push($result,$value);
+        }
+        $list = $this->format_jsoncode($result);
         return  new jsonresponse($list);
 
     }
@@ -310,7 +317,7 @@ class ActivityController extends Controller
         $list = [];
         if($db=='redis'){
 
-            $zkey = $type==1 ? "zvideo_charm_gnum:".SiteSer::siteId().':'.$gid : "zvideo_extreme_gnum:".SiteSer::siteId().':'.$gid ;   //zvideo_charm_gnum
+            $zkey = $type==1 ? "zvideo_charm:".SiteSer::siteId().':'.$gid : "zvideo_extreme:".SiteSer::siteId().':'.$gid ;   //zvideo_charm_gnum
           //  $zkey .= ':'.$gid;
             $list = $charm = $this->make('redis')->zRevRange($zkey, 0, 9, true);
         }else{

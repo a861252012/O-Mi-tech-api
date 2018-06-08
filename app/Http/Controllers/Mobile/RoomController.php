@@ -406,7 +406,8 @@ class RoomController extends Controller
         $user = UserSer::getUserByUid(Auth::id());
         $roomInfo = [
             'room_name'=>$room['user']['nickname'],
-            'room_pic'=>$room['user']['heading'],
+            'header_pic'=>$room['user']['headimg'],
+            'room_pic'=>$room['user']['headimg'],
             'live_status'=>$room['status'],
             'live_device_type'=>$room['origin'],
             'tid'=>$tid ?: 1,
