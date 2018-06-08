@@ -454,25 +454,27 @@ class RoomController extends Controller
             'authority_in'=>1
         ];
 
-        if(Auth::guest()){
+        if(in_array($tid,[8,4,6]) && Auth::guest() ){   //游客进特殊房间
             $room_user['authority_in'] = 309;
-        }elseif($roomService->getPasswordRoom()){
-            $room_user['authority_in'] = 307;
         }else{
-            switch ($tid){
-                case 8:
-                    if(!$roomService->whiteList())   $room_user['authority_in'] = 302;
-                    break;
-                case 4:
-                    if(!$roomService->checkCanIn()){
-                            $room_user['authority_in'] =  $roomExtend['user_num'] ? 304 : 303;
-                    }
-                    break;
-                case 6:
-                    if($user['points'] < $roomExtend['room_price'])   $room_user['authority_in'] = 305;
-                    break;
-            }
-       }
+           if($roomService->getPasswordRoom()){
+                $room_user['authority_in'] = 306;
+            }else{
+                switch ($tid){
+                    case 8:
+                        if(!$roomService->whiteList())   $room_user['authority_in'] = 302;
+                        break;
+                    case 4:
+                        if(!$roomService->checkCanIn()){
+                                $room_user['authority_in'] =  $roomExtend['user_num'] ? 304 : 303;
+                        }
+                        break;
+                    case 6:
+                        if($user['points'] < $roomExtend['room_price'])   $room_user['authority_in'] = 305;
+                        break;
+                }
+           }
+        }
 
 
        $socket = [];
