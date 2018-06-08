@@ -78,17 +78,15 @@ class AnchorList extends Command
                 //Storage::disk('public')->put($this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json', '{"rooms":[]}');
 
                 $data = '{"rooms":[]}';
-                $file = storage_path('app/public').DIRECTORY_SEPARATOR.$this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json';
-                file_put_contents($file,$data,LOCK_EX);
             } else {
                 $data = str_replace(['cb(', ');'], ['', ''], $data);
-
-
-                $file = storage_path('app/public').DIRECTORY_SEPARATOR.$this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json';
-                file_put_contents($file,$data,LOCK_EX);
-
                 //torage::disk('public')->put($this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json', $data);
             }
+            $tmp = "/tmp".  '/videolist' . $item[1] . '.json';;
+            $file = storage_path('app/public').DIRECTORY_SEPARATOR.$this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json';
+            file_put_contents($tmp,$data,LOCK_EX);
+
+            rename($tmp,$file);
         }
     }
 }
