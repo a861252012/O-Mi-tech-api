@@ -783,18 +783,6 @@ class RoomController extends Controller
         return new JsonResponse($result);
     }
 
-    /*
-     * 删除一对一
-     */
-    public function delRoomOne2One()
-    {
-        $rid = $this->request()->input('rid');
-        if (!$rid) return JsonResponse::create(['status' => 0, 'msg' => '请求错误']);
-        $roomservice = resolve(RoomService::class);
-        $result = $roomservice->delOnetoOne($rid);
-        return JsonResponse::create($result);
-    }
-
 
     /*
        *  一对一房间记录接口

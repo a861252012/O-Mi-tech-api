@@ -79,7 +79,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
         Route::get('rtmp/{rid}', 'RoomController@getRTMP')->where('rid','[0-9]+')->name('m_room_rtmp');
 
         //移动端删除一对一
-        Route::post('delRoomOne2One', ['name' => 'member_roomDelOne2One', 'uses' => 'Mobile\RoomController@delRoomOne2One']);
+        Route::post('delRoomOne2One', ['name' => 'member_roomDelOne2One', 'uses' => 'MemberController@delRoomDuration']);
         //移动端预约一对一
         Route::post('buyOneToOne', ['name' => 'm_buyOneToOne', 'uses' => 'Mobile\RoomController@buyOneToOne']);
         //移动端创建一对一
