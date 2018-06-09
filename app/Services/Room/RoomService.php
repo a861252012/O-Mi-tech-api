@@ -305,11 +305,14 @@ public $cur_login_uid = null;
         if (empty($data['origin'])) $data['origin'] = 11;
         if (!in_array($data['duration'], [20, 25, 30, 35, 40, 45, 50, 55, 60])) return ['status' => 9, 'msg' => '请求错误'];
         if ($data['points'] > 99999 || $data['points'] <= 0) return ['status' => 3, 'msg' => '金额超出范围'];
-
-        if (empty($data['mintime']) || empty($data['duration'])) return ['status' => 4, 'msg' => '请求错误'];
+        if ($data['points'] < 399) return ['status' => 4, 'msg' => '钻石数不能少于399钻石'];
+        if (empty($data['mintime']) || empty($data['duration'])) return ['status' => 5, 'msg' => '请求错误'];
         $start_time = date("Y-m-d H:i:s", strtotime($data['mintime'] . ' ' . $data['hour'] . ':' . $data['minute'] . ':00'));
 
         if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return ['status' => 6, 'msg' => '不能设置过去的时间'];
+        $beforthree = date('Y-m-d H:i:s', strtotime('3 hour', time()));
+      //  dd($beforthree<date("Y-m-d H:i:s", strtotime($start_time)));
+        if($beforthree<date("Y-m-d H:i:s", strtotime($start_time))) return ['status' => 7, 'msg' => '只能设置基于当前时间 3小时内的一对多房间'];
         $endtime = date('Y-m-d H:i:s', strtotime($start_time) + $data['duration'] * 60);
 
         if (!$this->notSetRepeat($start_time, $endtime)) return ['status' => 2, 'msg' => '你这段时间和一对一或一对多有重复的房间'];

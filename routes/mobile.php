@@ -24,9 +24,9 @@ Route::get('room/conf',['name'=>'m_room_conf', 'uses'=>'Mobile\RoomController@ge
 // 首页房间数据json
 Route::get('/videoList', ['as' => 'index_videoList', 'uses' => 'IndexController@videoList']);
 //活动列表
-Route::get('activitylist', ['name' => 'm_activitylist', 'uses' => 'Mobile\MobileController@activityList']);
+Route::get('activitylist', ['name' => 'm_activitylist', 'uses' => 'ActivityController@index']);
 //活动详情
-Route::get('activitydetail/{id}', ['name' => 'm_activitydetail', 'uses' => 'Mobile\MobileController@activityDetail']);
+Route::get('activitydetail', ['name' => 'm_activitydetail', 'uses' => 'ActivityController@detailtype']);
 
 //移动端登录验证
 Route::group(['middleware' => ['login_auth:mobile']], function () {

@@ -54,6 +54,7 @@ Route::group(['prefix' => 'member'], function () {
         Route::get('consume', 'MemberController@consume')->name('member_consume');
         // 用户中心 密码修改
         Route::post('password/change', 'MemberController@passwordChange')->name('member_password');
+        Route::post('password', 'MemberController@password')->name('password');
         // 用户中心 我的预约
         Route::get('reservation', 'MemberController@reservation')->name('member_reservation');
         // 用户中心 转账
