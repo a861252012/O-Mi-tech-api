@@ -487,6 +487,12 @@ class ApiController extends Controller
                 'msg' => '参数错误',
             ]);
         };
+        if (!in_array($ret, [0, 1, 2]) || !$pid) {
+            return JsonResponse::create([
+                'status' => 0,
+                'msg' => '请求参数错误1',
+            ]);
+        };
         //不能关注自己
         if (($ret != 0) && ($uid == $pid)) {
             return JsonResponse::create([

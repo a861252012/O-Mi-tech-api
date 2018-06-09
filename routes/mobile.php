@@ -63,7 +63,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     });
 
     //关注
-    Route::any('follow', ['name' => 'm_follow', 'uses' => 'Mobile\MobileController@follow']);
+    Route::any('follow', ['name' => 'm_follow', 'uses' => 'ApiController@follow']);
 
 
 
@@ -144,7 +144,6 @@ Route::group(['prefix' => 'pay', 'middleware' => ['charge']], function () {
 });
 
 //统计接口
-Route::get('find', ['name' => 'm_find', 'uses' => 'Mobile\MobileController@searchAnchor']);
 Route::match(['POST', 'GET'], '/statistic', ['name' => 'm_statistic', 'uses' => 'Mobile\MobileController@statistic']);
 Route::post('/send_crash', ['name' => 'send_crash', 'uses' => 'Mobile\MobileController@saveCrash']);//app报错接口
 
