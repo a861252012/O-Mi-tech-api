@@ -702,8 +702,8 @@ class RoomController extends Controller
         $keys = 'hroom_status:' . $uid . ':4';
         $listonetomany = $this->make('redis')->hGetAll($key);
         $listonetoone = $this->make('redis')->hGetAll($keys);
-        $result[0] = $listonetomany;
-        $result[1] = $listonetoone;
+        $result[0] = (object)$listonetomany;
+        $result[1] = (object)$listonetoone;
         if ($listonetoone && $listonetoone) {
             return JsonResponse::create(['status' => 1, 'data' => $result]);
         } else {
