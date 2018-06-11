@@ -84,7 +84,7 @@ class AnchorList extends Command
             }
             $tmp = "/tmp".  '/videolist' . $item[1] . '.json';;
             $file = storage_path('app/public').DIRECTORY_SEPARATOR.$this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json';
-            file_put_contents($tmp,$data,LOCK_EX);
+            file_put_contents($tmp,$data);
 
             rename($tmp,$file);
         }
