@@ -397,7 +397,7 @@ class IndexController extends Controller
             }
         }
 
-        // 从redis 获取一对一预约数据
+        // 从redis 获取一对多预约数据
         $myticket = [];
         if ($uid) {
             $oneToMore = UserBuyOneToMore::where('uid', $uid)->orderBy('starttime', 'desc')->get();//@TODO 时间过滤
@@ -413,7 +413,7 @@ class IndexController extends Controller
                                 $room['listType'] = 'myticket';
                                 //$room['tid'] = 1;
                                 //$room['live_time'] = $room['start_time'];
-                                $myticket[] = $room;
+                                $myres[] = $room;
                             }
                         }
                     }
@@ -427,7 +427,7 @@ class IndexController extends Controller
                     [
                     'status' => 1,
                     'myfav' => $myfav,
-                    'myres' => $myticket,
+                    'myres' => $myres,
                     'myticket' => $myticket,
                     'downloadAppurl' => $downloadUrl,
                     'downloadUrl' => $downloadpcurl,

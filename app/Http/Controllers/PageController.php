@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use SimpleSoftwareIO\QrCode\BaconQrCodeGenerator;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use App\Facades\SiteSer;
 
 class PageController extends Controller
 {
@@ -97,11 +98,15 @@ class PageController extends Controller
     public function downloadQR()
     {
         $redis = $this->make('redis');
-        $download = $redis->hGet("hconf", "down_url");
+        $download = $redis->hGet("hsite_config:".SiteSer::siteId(), "down_url");
         $data = json_decode($download, true);
 
+        if(empty($download)){
+            $qrcode_url = $this->request()->getUri();
+        }
+
         //如果没有配置qrcode_url,生成的二维码取当前链接
-        if (!isset($data['QRCODE'])) {
+        if (!isset($data['QRCODE']) || $data['QRCODE']=='' ) {
             $qrcode_url = $this->request()->getUri();
         } else {
             $qrcode_url = $data['QRCODE'];

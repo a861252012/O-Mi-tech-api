@@ -386,6 +386,13 @@ class MemberController extends Controller
         //管理员数据列表
         $v['roomadmin'] = RoomAdmin::where('rid', $rid)->where('dml_flag', '!=', 3)->with('user')->paginate(30);
         $res = $v['roomadmin']->toArray();
+        foreach ($res['data'] as $key=>$value){
+            if(empty($value['user'])){
+                $reset = Users::where('uid', $value['uid'])->allSites()->first();
+                $res['data'][$key]['user'] = $reset->toArray();
+            }
+        }
+
         return new JsonResponse(['status' => 1, 'data' => ['list'=>$res], 'msg' => '获取成功!']);
 
     }
@@ -1269,7 +1276,7 @@ class MemberController extends Controller
         MallList::create([
             'send_uid' => Auth::id(),
             'rec_uid' => $duroom['uid'],
-            'gid' => 410001,
+            'gid' => 311028,
             //$duroom['roomtid'],irwin
             'gnum' => 1,
             'created' => date('Y-m-d H:i:s'),
@@ -1896,6 +1903,7 @@ class MemberController extends Controller
 
         // 用户组服务
         $userGroup = resolve(UserGroupService::class)->getGroupById($gid);
+
 
         if (!$userGroup || $userGroup['dml_flag'] == 3) {
             $msg['status'] = 1002;
