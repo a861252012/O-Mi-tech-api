@@ -1228,6 +1228,7 @@ EOT;
             $gift = $goodObj->find($arr[1]);
             $live['sendName'] = $send_user['nickname'];
             $live['sendUid'] = $arr[0];
+            $live['uid'] = $arr[0];
             $live['gid'] = $arr[1];
             $live['gnum'] = $arr[2];
             $live['richLv'] = $send_user['lv_rich'];
