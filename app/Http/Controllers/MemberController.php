@@ -257,6 +257,9 @@ class MemberController extends Controller
 
         //获取转到用户信息
         $userTo = resolve(UserService::class)->getUserByUsername($username);
+        if(!$userTo){
+            $userTo = resolve(UserService::class)->getUserByUid($username);
+        }
 
         if (!$userTo) return new JsonResponse(['status' => 0, 'msg' => '对不起！该用户不存在']);
 
@@ -1131,6 +1134,7 @@ class MemberController extends Controller
             $item['duration'] = ceil($item->duration / 60);
             $item['points'] = $item->points;
             $item['uid'] = $userinfo['uid'];
+            $item['headimg'] = $userinfo['headimg'];
             $item['now'] = date('Y-m-d H:i:s');
             $item['url'] = '/' . $userinfo['uid'];
         }

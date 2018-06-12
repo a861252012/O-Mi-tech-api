@@ -196,7 +196,10 @@ public $cur_login_uid = null;
 
         $starttime = strtotime($ord['starttime']);
         $endtime = strtotime($ord['starttime']) + $ord['duration'];
-        if ($this->cur_login_uid == $ord['reuid'] && time() >= $starttime && time() <= $endtime) return true;
+
+        if(time()< $starttime) return true;
+        if ($this->cur_login_uid == $ord['reuid'] ) return true;
+
         return false;
     }
 

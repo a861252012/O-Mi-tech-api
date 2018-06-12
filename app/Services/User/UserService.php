@@ -426,7 +426,7 @@ class UserService extends Service
         foreach ($uids as $uid) {
             $user = UserSer::getUserByUid($uid);
             $items->push([
-                'headimg' => $this->getHeadimg($user['headimg'], 80),
+                'headimg' => $user->headimg,
                 'rid' => $user->uid,
                 'nickname' => $user->nickname,
                 'roled' => $user->roled,
