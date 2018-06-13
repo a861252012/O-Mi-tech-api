@@ -97,19 +97,13 @@ class ChargeController extends Controller
 
         //判断下这条记录是不是这个用户的
         if (!$chargeObj) {
-            return new ErrorResponse(array(
-                'info' => '这条记录不是你的!',
-                'ret' => false
-            ));
+            return new ErrorResponse('这条记录不是你的');
         }
         //执行删除操作
         $chargeObj->del = 1;
         $chargeObj->save();
 
-        return new SuccessResponse(array(
-            'info' => '删除成功！',
-            'ret' => true
-        ));
+        return new SuccessResponse('删除成功');
     }
 
     /**
