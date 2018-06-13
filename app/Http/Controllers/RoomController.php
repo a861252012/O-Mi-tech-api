@@ -131,7 +131,11 @@ class RoomController extends Controller
                     $handle = $user ? 'room_one_to_many' : 'login';
                     if (!$roomService->whiteList()) {
                         if ($h5 === 'h5hls') {
-                            return JsonResponse::create(['status' => 0]);
+                            return JsonResponse::create([
+                                'status' => 0, 'data' => [
+                                    'handle' => $handle,
+                                ]
+                            ]);
                         }
                      ;
                         $roomService->extend_room = $roomService->extend_room;
@@ -202,8 +206,8 @@ class RoomController extends Controller
             'origin' => $origin,
             'roomOrigin' => (int)($room['origin'] ??11),
             'plat_url' => $plat_backurl,
-            'in_limit_points' => $redis->hget('hconf', 'in_limit_points') ?: 0,
-            'in_limit_safemail' => $redis->hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
+            'in_limit_points' => SiteSer::config('in_limit_points') ?: 0,
+            'in_limit_safemail' => SiteSer::config('in_limit_safemail') ?: 0,   //1开，0关
             'certificate' => $certificate,
             Session::getName() => Session::getId(),
             'uid' => Auth::id(),
@@ -215,7 +219,6 @@ class RoomController extends Controller
             $data['status'] = 1;
             $data['chat_ws'] = $redis->smembers('schatws');
             $data['hls_addr'] = $this->getHLS($rid);
-            return JsonResponse::create(['data' => $data]);
         }
         return JsonResponse::create(['data' => $data]);
     }
