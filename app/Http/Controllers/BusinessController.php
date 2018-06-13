@@ -28,17 +28,16 @@ class BusinessController extends Controller
     public function index($act)
     {
         if (!in_array($act, array('joining', 'agreement','signup','join'))) {      //TODO 考虑删除'join'
-            throw new NotFoundHttpException();
+            return new JsonResponse(['status' => 0, 'msg' => '请求方法错误']);
         }
-
         $var = array();
         if( $act == 'signup'){
             return $this->signup();
         }
-        if( $act == 'agreement' ){
+       /* if( $act == 'agreement' ){
             $var['login'] = Auth::id();
-        }
-        return $this->render('Business/'.$act,$var);
+        }*/
+        return new JsonResponse(['status' => 0, 'msg' => '申请失败']);
     }
 
     /**
@@ -49,13 +48,14 @@ class BusinessController extends Controller
      */
     public function signup(){
         if (Auth::guest())
-            return new  RedirectResponse('/index.html');
+            return  ['status'=>0, 'msg'=>'请登录'];
 
-        $user = $this->userInfo;
+        $user = Auth::user();
         if( $this->make('request')->IsMethod('POST') && $this->make('request')->get('handle') == 'signin' ){
+
             return $this->_ajaxSigninHandle($user);
         }
-        return $this->render('Business/signup', array('user'=>$user));
+        return new JsonResponse(['status' => 0, 'msg' => '申请失败']);
     }
 
     /**
@@ -178,17 +178,17 @@ class BusinessController extends Controller
 
         //TODO 重复判断考虑删除
         if(!$user || $user['uid']<1){
-            return new JsonResponse( array('code'=>100,'info'=>'对不起，你未登录，请登录后申请主播功能！') );
+            return new JsonResponse( array('status'=>0,'msg'=>'对不起，你未登录，请登录后申请主播功能！') );
         }
 
         if ($user['roled']==3){
-            return new JsonResponse( array('code'=>101,'info'=>'对不起，你已申请了主播功能！') );
+            return new JsonResponse( array('status'=>0,'msg'=>'对不起，你已申请了主播功能！') );
         }
 
 
         //判断资料填写是否完整
         if( sizeof(array_filter(array_values($data))) <= sizeof(array_keys($data)) - 2 ){
-            return new JsonResponse( array('code'=>102,'info'=>'请把资料填写完整!') );
+            return new JsonResponse( array('status'=>0,'msg'=>'请把资料填写完整!') );
         }
 
         //检查是否已申请过主播
@@ -199,7 +199,7 @@ class BusinessController extends Controller
 
             switch($VideoHostAudit->status){
                 case '0':
-                    return new JsonResponse( array('code'=>103,'info'=>'对不起，你已申请了主播功能,请等待审核！') );
+                    return new JsonResponse( array('status'=>0,'msg'=>'对不起，你已申请了主播功能,请等待审核！') );
                     break;
 
                 case '1':
@@ -242,9 +242,9 @@ class BusinessController extends Controller
 
         $VideoHostAudit->save();
         if( isset($Message) ){
-            return new JsonResponse( array('code'=>0,'info'=>$Message) );
+            return new JsonResponse( array('status'=>0,'msg'=>$Message) );
         }else{
-            return new JsonResponse( array('code'=>0,'info'=>'提交申请成功，请耐心等待审核。') );
+            return new JsonResponse( array('status'=>1,'msg'=>'提交申请成功，请耐心等待审核。') );
         }
     }
     /**
@@ -267,7 +267,7 @@ class BusinessController extends Controller
 //        }
         //昵称重复
         $nickname = isset($criteria['nickname']) ? $criteria['nickname'] : false;
-        $userServer = resolve(UserService::class)->setUser(Users::find($this->userInfo['uid']));
+        $userServer = resolve(UserService::class)->setUser(Users::find(Auth::id()));
         if(!$userServer->checkNickNameUnique($nickname)){
             return false;
         }

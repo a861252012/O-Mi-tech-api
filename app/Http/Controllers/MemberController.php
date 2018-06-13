@@ -720,7 +720,6 @@ class MemberController extends Controller
         })
             ->where('video_mall_list.send_uid', $uid)
             ->where('video_mall_list.gid', '>', 0)
-
             ->where('video_goods.category', '=', 1002)
             ->orderBy('video_mall_list.created', 'DESC')->paginate();
 
@@ -1218,7 +1217,12 @@ class MemberController extends Controller
             foreach ($roomlist as $item) {
                 $room = json_decode($item, true);
                 if ($room['status'] == 0 && $room['reuid'] == 0 && $room['uid'] != $uid && strtotime($room['starttime']) > time()) {
-                    $room['rid'] = $room['uid'];
+                   $room['rid'] = $room['uid'];
+                    $users = Redis::hGetAll('huser_info:'.$room['uid']);
+                    $room['headimg'] = $users['headimg'];
+                    $room['nickname'] = $users['nickname'];
+                    $room['lv_exp'] = $users['lv_exp'];
+
                     array_push($room_list, $room);
                 }
             }
@@ -1573,6 +1577,7 @@ class MemberController extends Controller
             ->where('video_mall_list.gid', '>', 10)
             ->where('video_mall_list.gid', '!=', 410001)
             ->where('video_goods.category', '!=', 1002)
+            ->orderBy('video_mall_list.created', 'desc')
             ->allSites()
             ->paginate();
 

@@ -51,7 +51,7 @@ class IndexController extends Controller
         switch ($type) {
 
             case 'rank':
-                $list = Redis::get('home_js_data_' . $flashVer);
+                $list = Redis::get('home_js_data_' . $flashVer.':'.SiteSer::siteId());
                 $list = str_replace(['cb(', ');'], ['', ''], $list);
                 break;
 
