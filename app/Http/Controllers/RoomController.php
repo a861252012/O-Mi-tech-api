@@ -79,19 +79,20 @@ class RoomController extends Controller
                     if (!$roomService->checkCanIn()) {
                         $one2one = resolve('one2one')->getData();
                         $one2one = $one2one[0];
-                        $result['data'] = $one2one;
-                        $result['data']['tickets'] = $one2one['reuid'];
-                        $result['data']['rid'] = $one2one['uid'];
-                        $result['data']['start_time'] = $one2one['starttime'];
+                        $result = $one2one;
+                        $result['tickets'] = $one2one['reuid'];
+                        $result['rid'] = $one2one['uid'];
+                        $result['start_time'] = $one2one['starttime'];
                         $end_time = strtotime($one2one['starttime']) + $one2one['duration'];
-                        $result['data']['end_time'] = date('Y-m-d H:i:s', $end_time);
-                        $userdata = resolve(UserService::class)->getUserByUid($result['data']['uid']);
-                        $result['data']['nickname'] = $userdata['nickname'];
-                        $result['data']['username'] = $userdata['username'];
-                        $result['data']['handle'] = $handle;
-                        unset($result['data']['starttime']);
+                        $result['end_time'] = date('Y-m-d H:i:s', $end_time);
+                        $userdata = resolve(UserService::class)->getUserByUid($result['uid']);
+                        $result['nickname'] = $userdata['nickname'];
+                        $result['username'] = $userdata['username'];
+                        $result['handle'] = $handle;
+                        unset($result['starttime']);
                         if($one2one['reuid'] != 0 ){
-                            return JsonResponse::create(['status' => 1, 'data' => $result, 'msg' => '已购买该房间']);
+
+                            return JsonResponse::create(['status' => 0, 'data' => $result, 'msg' => '已被其他用户购买']);
                         }
                         // return JsonResponse::create(['status' => 0, 'data' => ['handle' => $handle]]);
                         return JsonResponse::create(['status' => 0, 'data' => $result, 'msg' => '未购买该房间']);
@@ -135,18 +136,6 @@ class RoomController extends Controller
                      ;
                         $roomService->extend_room = $roomService->extend_room;
 
-                        $data = [
-                            'id' => $roomService->extend_room['onetomore'],
-                            'rid' => $rid,
-                            'points' => $roomService->extend_room['points'],
-                            'start_time' => $roomService->extend_room['starttime'],
-                            'end_time' => $roomService->extend_room['endtime'],
-                            'duration' => strtotime($roomService->extend_room['endtime']) - strtotime($roomService->extend_room['starttime']),
-                            'username' => resolve(UserService::class)->getUserByUid($rid)['nickname'],
-                            'tickets' => isset($roomService->extend_room['tickets'])?$roomService->extend_room['tickets']:'',
-                            'handle' => $handle,
-                        ];
-
                         $hplat = $redis->exists("hplatforms:$origin") ? "plat_whitename_room" : "not_whitename_room";
                         $hplat_user = [];
                         $plat_backurl = [];
@@ -166,27 +155,34 @@ class RoomController extends Controller
                             'room' => &$room,
                             'user' => $user,
                             //一对多房间数据
-                            'data' => $data,
+                            'id' => $roomService->extend_room['onetomore'],
+                            'rid' => $rid,
+                            'points' => $roomService->extend_room['points'],
+                            'start_time' => $roomService->extend_room['starttime'],
+                            'end_time' => $roomService->extend_room['endtime'],
+                            'duration' => strtotime($roomService->extend_room['endtime']) - strtotime($roomService->extend_room['starttime']),
+                            'username' => resolve(UserService::class)->getUserByUid($rid)['nickname'],
+                            'tickets' => isset($roomService->extend_room['tickets'])?$roomService->extend_room['tickets']:'',
+                            'handle' => $handle,
                             //平台跳转信息
                             'plat_url' => json_encode($plat_backurl, JSON_FORCE_OBJECT),
                             //平台信息
                             'hplat_info' => json_encode($hplat_info),
                             //平台用户信息
                             'hplat_user' => json_encode($hplat_user),
+
                         ]]);
                     }
 
                     break;
                 case 2:     //密码房间
                     $handle = $user ? 'roompwd' : 'login';
-                    $data['data']  =[
+                    $data  =[
                         'rid' => $rid,
                         'handle' => $handle,
                     ];
                     if (!$roomService->checkPassword()) {
-                        if ($h5 === 'h5hls')
-                            return JsonResponse::create(['status' => 0]);
-                        return $this->render('Room/no_passwd_room',['data'=>$data] );
+                        return JsonResponse::create(['status' => 0,'data'=>$data]);
                     }
                     break;
                 default:
@@ -199,7 +195,7 @@ class RoomController extends Controller
 
         $plat_backurl = $roomService->getPlatUrl($origin);
         //$httphost = $roomService->getPlatHost();
-        $data['room'] = [
+        $data = [
 //            'room' => &$room,
             'handle'=>'common',
             'rid' => $rid,
@@ -213,20 +209,15 @@ class RoomController extends Controller
             'uid' => Auth::id(),
             'nickname' =>$userinfo['nickname'],
         ];
-        $data['room']['chat_server_addr'] = $chat_server_addr;
-        if (!$h5) {
-            return JsonResponse::create(['data' => $data]);
-        }
-        if ($h5 === 'h5') {
-            return JsonResponse::create(['data' => $data]);
-        }
+        $data['chat_server_addr'] = $chat_server_addr;
         if ($h5 === 'h5hls') {
             unset($data['getRoomKey']);
-            $data['room']['status'] = 1;
-            $data['room']['chat_ws'] = $redis->smembers('schatws');
-            $data['room']['hls_addr'] = $this->getHLS($rid);
+            $data['status'] = 1;
+            $data['chat_ws'] = $redis->smembers('schatws');
+            $data['hls_addr'] = $this->getHLS($rid);
             return JsonResponse::create(['data' => $data]);
         }
+        return JsonResponse::create(['data' => $data]);
     }
 
     protected function isHost($rid)
