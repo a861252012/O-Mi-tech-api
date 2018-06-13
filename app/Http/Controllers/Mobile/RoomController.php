@@ -49,155 +49,6 @@ class RoomController extends Controller
         32,//IOS房间外
     ];
 
-    public function buyOneToOne()
-    {
-        $request = $this->request();
-        $origin = $request->input('origin');
-        if (!$origin || !in_array($origin, static::$ORIGINS)) {
-            return JsonResponse::create([
-                'status' => 0,
-                'msg' => '非法来源',
-            ]);
-        }
-
-        $rid = $request->input('rid');
-        $flag = $request->get('flag');
-        if (empty($rid) || empty($flag)) {
-            return new JsonResponse(['status' => 0, 'msg' => '请求错误']);
-        }
-        $duroom = RoomDuration::find($rid);
-
-        if (empty($duroom)) return new JsonResponse(['status' => 0, 'msg' => '您预约的房间不存在']);
-        if ($duroom['status'] == 1) return new JsonResponse(['status' => 0, 'msg' => '当前的房间已经下线了']);
-        if ($duroom['reuid'] != '0') return new JsonResponse(['status' => 0, 'msg' => '当前的房间已经被预定了，请选择其他房间']);
-        if ($duroom['uid'] == Auth::id()) return new JsonResponse(['status' => 0, 'msg' => '自己不能预约自己的房间']);
-        if (Auth::user()->points < $duroom['points']) return new JsonResponse(['status' => 0, 'msg' => '余额不足哦，请充值！']);
-        //关键点，这个时段内有没有其他的房间重复，标志位为flag 默认值为false 当用户确认后传入的值为true
-        if ($flag == 'false' && !$this->checkRoomUnique($duroom, Auth::id())) return new JsonResponse(array('status' => 101, 'msg' => '您这个时间段有房间预约了，您确定要预约么'));
-
-        $duroom['reuid'] = Auth::id();
-        try {
-            DB::beginTransaction();
-            if (!DB::table('video_room_duration')
-                ->where('id', $rid)->where('reuid', '0')
-                ->update(['reuid' => Auth::id(), 'invitetime' => time()])
-            ) {
-                DB::rollBack();
-                return JsonResponse::create(['status' => 0, 'msg' => '错误']);
-            }
-
-            $keys = 'hroom_duration:' . $duroom['uid'] . ':' . $duroom['roomtid'];
-            $duroom['invitetime'] = time();
-            $arr = $duroom;
-            $rs = $this->make('redis')->hSet($keys, $arr['id'], json_encode($arr));
-            Log::channel('room')->info('buyOneToOne', ["redis hset表：" . $keys . " key:" . $arr['id'] . " 结果:" . $rs . "\n"]);
-            if ($rs !== false) {
-                DB::commit();
-            } else {
-                DB::rollback();
-                return new JsonResponse(['status' => 0, 'msg' => '错误']);
-            }
-        } catch (\Exception $e) {
-            Log::channel('room')->info('buyOneToOne', "事务异常：id" . $rid . " 房间号" . $duroom['uid'] . " 预约者" . $duroom['reuid'] . " 事务结果：" . $e->getMessage() . "\n");
-            DB::rollback();
-            return new JsonResponse(['status' => 0, 'msg' => '错误']);
-        }
-
-        //记录一个标志位，在我的预约列表查询中需要优先显示查询已经预约过的主播，已经预约过的主播的ID会写到这个redis中类似关注一样的
-        if (!($this->checkUserAttensExists(Auth::id(), $duroom['uid'], true, true))) {
-            $this->make('redis')->zadd('zuser_reservation:' . Auth::id(), time(), $duroom['uid']);
-        }
-        Users::where('uid', Auth::id())->update(['points' => (Auth::user()->points - $duroom['points']), 'rich' => (Auth::user()->rich + $duroom['oints'])]);
-        resolve(UserService::class)->getUserReset(Auth::id());// 更新redis TODO 好屌
-
-        //增加消费记录查询
-        MallList::create([
-            'send_uid' => Auth::id(),
-            'rec_uid' => $duroom['uid'],
-            'gid' => $duroom['roomtid'],
-            'gnum' => 1,
-            'created' => date('Y-m-d H:i:s'),
-            'rid' => $duroom['uid'],
-            'points' => $duroom['points'],
-        ]);
-        // 用户增加预约排行榜的排名
-        $this->make('redis')->zIncrBy('zrank_appoint_month' . date('Ym'), 1, $duroom['uid']);
-        //修改用户日，周，月排行榜数据
-        //zrank_rich_history: 用户历史消费    zrank_rich_week ：用户周消费   zrank_rich_day ：用户日消费  zrank_rich_month ：用户月消费
-        $expire_day = strtotime(date('Y-m-d 00:00:00', strtotime('next day'))) - time();
-        $expire_week = strtotime(date('Y-m-d 00:00:00', strtotime('next week'))) - time();
-        $zrank_user = ['zrank_rich_history', 'zrank_rich_week', 'zrank_rich_day', 'zrank_rich_month:' . date('Ym')];
-        foreach ($zrank_user as $value) {
-            $this->make('redis')->zIncrBy($value, $duroom['points'], Auth::id());
-            if ('zrank_rich_day' == $value) {
-                $this->make('redis')->expire('zrank_rich_day', $expire_day);
-            }
-            if ('zrank_rich_week' == $value) {
-                $this->make('redis')->expire('zrank_rich_week', $expire_week);
-            }
-        }
-        //修改主播日，周，月排行榜数据
-        //zrank_pop_history ：主播历史消费   zrank_pop_month  ：主播周消费 zrank_pop_week ：主播日消费 zrank_pop_day ：主播月消费
-        $zrank_pop = ['zrank_pop_history', 'zrank_pop_month:' . date('Ym'), 'zrank_pop_week', 'zrank_pop_day'];
-        foreach ($zrank_pop as $value) {
-            $this->make('redis')->zIncrBy($value, $duroom['points'], $duroom['uid']);
-            if ('zrank_pop_day' == $value) {
-                $this->make('redis')->expire('zrank_pop_day', $expire_day);
-            }
-            if ('zrank_pop_week' == $value) {
-                $this->make('redis')->expire('zrank_pop_week', $expire_week);
-            }
-        }
-        $this->make('redis')->lPush('lanchor_is_sub:' . $duroom['uid'], date('YmdHis', strtotime($duroom['starttime'])));
-
-        return new JsonResponse(['status' => 1, 'msg' => '预约成功']);
-
-    }
-
-    /**
-     * 一对多补票接口
-     */
-    public function makeUpOneToMore()
-    {
-        $uid = Auth::id();
-        $request = $this->request();
-        $rid = intval($request->input('rid'));
-        $origin = intval($request->input('origin')) ?: 12;
-        if ($rid == $uid) return JsonResponse::create(['status' => 0, 'msg' => '不能购买自己房间亲']);
-        $onetomany = intval($request->input('onetomore'));
-        if (empty($onetomany) || empty($uid)) return JsonResponse::create(['status' => 0, 'msg' => '参数错误']);
-        /** @var \Redis $redis */
-        $redis = $this->make('redis');
-        $room = resolve('one2more')->getDataById($onetomany);
-        if (empty($room)) return JsonResponse::create(['status' => 0, 'msg' => '房间不存在']);
-
-        $points = $room['points'];
-        if (resolve('one2more')->checkBuyUser($uid, $onetomany)) return JsonResponse::create(['status' => 0, 'msg' => '您已有资格进入该房间，请从“我的预约”进入。']);
-        /** 检查余额 */
-        $user = resolve(UserService::class)->getUserByUid($uid);
-        if ($user['points'] < $points) return JsonResponse::create(['status' => 0, 'msg' => '余额不足', 'cmd' => 'topupTip']);
-        if ($redis->hGet("hvediosKtv:$rid", "status") == 0) return JsonResponse::create(['status' => 0, 'msg' => '主播不在播，不能购买！']);
-
-        Log::channel('room')->info('makeUpOneToMore ' . json_encode(['rid' => $rid, 'uid' => $uid, 'onetomore' => $onetomany,]));
-        /** 通知java送礼*/
-        $redis->publish('makeUpOneToMore',
-            json_encode([
-                'rid' => $rid,
-                'uid' => $uid,
-                'onetomore' => $onetomany,
-                'origin' => $origin,
-                'site_id'=>SiteSer::siteId(),
-            ]));
-        /** 检查购买状态 */
-        $timeout = microtime(true) + 4;
-        while (true) {
-            if (microtime(true) > $timeout) break;
-            $tickets = explode(',', $redis->hGet("hroom_whitelist:$rid:$onetomany", 'tickets'));
-            if (in_array($uid, $tickets)) return JsonResponse::create(['status' => 1, 'msg' => '购买成功']);
-            usleep(20000);
-        }
-        return JsonResponse::create(['status' => 0, 'msg' => '购买失败']);
-    }
 
     public function listReservation($type = 0b11)
     {
@@ -407,7 +258,7 @@ class RoomController extends Controller
         $roomInfo = [
             'room_name'=>$room['user']['nickname'],
             'header_pic'=>$room['user']['headimg'],
-            'room_pic'=>$room['user']['headimg'],
+            'room_pic'=>$room['user']['cover'],
             'live_status'=>$room['status'],
             'live_device_type'=>$room['origin'],
             'tid'=>$tid ?: 1,
@@ -458,9 +309,6 @@ class RoomController extends Controller
         if(in_array($tid,[8,4,6]) && Auth::guest() ){   //游客进特殊房间
             $room_user['authority_in'] = 309;
         }else{
-           if($roomService->getPasswordRoom()){
-                $room_user['authority_in'] = 306;
-            }else{
                 switch ($tid){
                     case 8:
                         if(!$roomService->whiteList())   $room_user['authority_in'] = 302;
@@ -474,7 +322,9 @@ class RoomController extends Controller
                         if($user['points'] < $roomExtend['room_price'])   $room_user['authority_in'] = 305;
                         break;
                 }
-           }
+               if($room_user['authority_in']==1 && $roomService->getPasswordRoom()){
+                   $room_user['authority_in'] = 306;
+               }
         }
 
 
@@ -633,46 +483,6 @@ class RoomController extends Controller
 //        return JsonResponse::create($return);
 //    }
 
-    /*
-     * app创建一对多房间接口 by desmond
-     */
-    public function createOne2More(Request $request)
-    {
-
-        $data = [];
-        $data = $request->only(['mintime', 'hour', 'minute', 'tid', 'duration', 'points', 'origin']);
-
-        $data['uid'] = Auth::guard()->id();
-        $roomservice = resolve(RoomService::class);
-        $result = $roomservice->addOnetomore($data);
-        return new JsonResponse($result);
-    }
-
-    /**
-     * 删除一对多房间 by desmond
-     * @return JsonResponse
-     */
-    public function delRoomOne2More()
-    {
-
-        $rid = $this->request()->input('rid');
-
-        if (!$rid) return JsonResponse::create(['status' => 0, 'msg' => '请求错误']);
-        $room = RoomOneToMore::find($rid);
-        if (!$room) return new JsonResponse(['status' => 0, 'msg' => '房间不存在']);
-
-        if ($room->uid != Auth::id()) return JsonResponse::create(['status' => 0, 'msg' => '非法操作']);//只能删除自己房间
-        if ($room->status == 1) return new JsonResponse(['status' => 0, 'msg' => '房间已经删除']);
-        if ($room->purchase()->exists()) {
-            return new JsonResponse(['status' => 0, 'msg' => '房间已经被预定，不能删除！']);
-        }
-
-        $redis = $this->make('redis');
-        $redis->sRem('hroom_whitelist_key:' . $room->uid, $room->id);
-        $redis->delete('hroom_whitelist:' . $room->uid . ':' . $room->id);
-        $room->update(['status' => 1]);
-        return JsonResponse::create(['status' => 1, 'msg' => '删除成功']);
-    }
 
     /*
     *  一对多房间记录接口by desmond

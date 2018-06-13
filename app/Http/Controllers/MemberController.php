@@ -1263,9 +1263,10 @@ class MemberController extends Controller
         if (Auth::user()->points < $duroom['points']) return new JsonResponse(['status' => 0, 'msg' => '余额不足哦，请充值！']);
         //关键点，这个时段内有没有其他的房间重复，标志位为flag 默认值为false 当用户确认后传入的值为true
         if (!$this->checkRoomUnique($duroom, Auth::id()) && $flag == 'false') {
-            return new JsonResponse(['status' => 0, 'msg' => '您这个时间段有房间预约了，您确定要预约么']);
+            return new JsonResponse(['status' => 101, 'msg' => '您这个时间段有房间预约了，您确定要预约么']);
         }
         $duroom['reuid'] = Auth::id();
+        $duroom['invitetime'] = time();
         $duroom->save();
         $this->set_durationredis($duroom);
         //记录一个标志位，在我的预约列表查询中需要优先显示查询已经预约过的主播，已经预约过的主播的ID会写到这个redis中类似关注一样的
@@ -1274,8 +1275,6 @@ class MemberController extends Controller
         }
         Users::where('uid', Auth::id())->update(['points' => (Auth::user()->points - $duroom['points']), 'rich' => (Auth::user()->rich + $duroom['points'])]);
         resolve(UserService::class)->getUserReset(Auth::id());// 更新redis TODO 好屌
-        RoomDuration::where('id', $duroom['id'])
-            ->update(['reuid' => Auth::id(), 'invitetime' => time()]);
         //增加消费记录查询
         MallList::create([
             'send_uid' => Auth::id(),
@@ -2322,11 +2321,11 @@ class MemberController extends Controller
         if (empty($room)) return JsonResponse::create(['status' => 0, 'msg' => '房间不存在']);
 
         $points = $room['points'];
-        if (isset($room['uids']) && in_array($uid, explode(',', $room['uids']))) return JsonResponse::create(['status' => 0, 'msg' => '您已有资格进入该房间，请从“我的预约”进入。']);
-        if (isset($room['tickets']) && in_array($uid, explode(',', $room['tickets']))) return JsonResponse::create(['status' => 0, 'msg' => '您已有资格进入该房间，请从“我的预约”进入。']);
+        if (resolve('one2more')->checkBuyUser($uid, $onetomany)) return JsonResponse::create(['status' => 0, 'msg' => '您已有资格进入该房间，请从“我的预约”进入。']);
         /** 检查余额 */
         $user = resolve(UserService::class)->getUserByUid($uid);
         if ($user['points'] < $points) return JsonResponse::create(['status' => 0, 'msg' => '余额不足', 'cmd' => 'topupTip']);
+        if ($this->isMobileUrl($request) && $redis->hGet("hvediosKtv:$rid", "status") == 0) return JsonResponse::create(['status' => 0, 'msg' => '主播不在播，不能购买！']);
         /** 通知java送礼*/
         $redis->publish('makeUpOneToMore',
             json_encode([

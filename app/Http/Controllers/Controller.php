@@ -64,7 +64,7 @@ class Controller extends BaseController
     public function __construct(Request $request)
     {
 
-        if($request->is('api/m/*')){
+        if($this->isMobileUrl($request)){
             config()->set('auth.defaults.guard', 'mobile');
         }else{
             config()->set('auth.defaults.guard', 'pc');
@@ -74,6 +74,9 @@ class Controller extends BaseController
         $this->container = app();
     }
 
+    public function isMobileUrl(Request $request){
+        return $request->is('api/m/*');
+    }
     /**
      * @param string $name
      * @return \Illuminate\Redis\Connections\Connection|null
