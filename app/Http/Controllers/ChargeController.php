@@ -42,10 +42,15 @@ class ChargeController extends Controller
      * @version 20160817
      * @return \Core\Response
      */
-    public function order()
+    public function order(Request $request)
     {
         $uid = Auth::id();
         $user = resolve(UserService::class)->getUserByUid($uid);
+
+        $origin = $request->get('origin', 12);
+        $client = $request->is('api/m/*') ? 2 : 1;
+
+        $token = $client==2 ? Auth::getToken() : "";
 
         $var['user'] = $user;
 
@@ -80,9 +85,10 @@ class ChargeController extends Controller
         $recharge_money = $this->make('redis')->get('recharge_money') ? json_decode($this->make('redis')->get('recharge_money')) : [];
         $temp = [];
         foreach ($recharge_money as $k=>$value){
-            if(isset($value->client) && $value->client==1) array_push($temp,$value);
+            if(isset($value->client) && $value->client==$client) array_push($temp,$value);
         }
         $var['recharge_money'] = json_encode($temp);
+        $var['token'] = $token;
         $var['pay'] = 1;
         return SuccessResponse::create($var);
     }
@@ -133,7 +139,6 @@ class ChargeController extends Controller
     public function pay()
     {
         $amount = isset($_POST['price']) ? number_format(intval($_POST['price']), 2, '.', '') : 0;
-        $origin = $this->request()->get('origin') ?: 12;
 
         if (!$amount || $amount < 1) {
             $msg = '请输入正确的金额!';
@@ -151,6 +156,7 @@ class ChargeController extends Controller
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
         }
 
+        $origin = $this->getClient();
         /** 古都 */
         if (intval($mode_type) === static::CHANNEL_GD_ALI || intval($mode_type) === static::CHANNEL_GD_BANK) {
             return $this->processGD([
@@ -191,6 +197,20 @@ class ChargeController extends Controller
             'remoteUrl' => resolve('charge')->remote(),
         );
         return new JsonResponse(array('status' => 0, 'data' => $rtn));
+    }
+    private function getClient(){
+        $client = $this->request()->headers->get('client',12);
+        switch ($client) {
+            case "1001":
+                $origin = 22;
+                break;
+            case "1002":
+                $origin = 32;
+                break;
+            default:
+                $origin = 12;
+        }
+        return $origin;
     }
 
     public function processGD($data)
@@ -259,6 +279,10 @@ class ChargeController extends Controller
             'postdata' => $postdata,
             'remoteUrl' => '',
         ];
+
+        if($this->getClient() !=12){
+            $rtn = $postdata;
+        }
         return JsonResponse::create(['status' => 0, 'data' => $rtn]);
 
     }

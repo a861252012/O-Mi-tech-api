@@ -121,26 +121,23 @@ Route::get('domains', ['name' => 'guanggao', 'uses' => 'Mobile\MobileController@
 // 充值类 TODO 登录验证
 // 验证是否登录
 Route::group(['prefix' => 'pay', 'middleware' => ['login_auth:mobile','charge']], function () {
-    Route::match(['POST', 'GET'], 'pay', ['name' => 'charge_pay', 'uses' => 'Mobile\PaymentController@pay']);
-    Route::match(['POST', 'GET'], '/order', ['name' => 'charge_order', 'uses' => 'Mobile\PaymentController@order']);
-    Route::match(['POST', 'GET'], '/order2', ['name' => 'charge_order2', 'uses' => 'Mobile\PaymentController@order2']);
-    Route::match(['POST', 'GET'], '/pay2', ['name' => 'charge_pay2', 'uses' => 'Mobile\PaymentController@pay2']);
-    Route::match(['POST', 'GET'], '/translate', ['name' => 'translate', 'uses' => 'Mobile\PaymentController@translate']);
+    Route::match(['POST', 'GET'], 'pay', ['name' => 'charge_pay', 'uses' => 'ChargeController@pay']);
+    Route::match(['POST', 'GET'], '/order', ['name' => 'charge_order', 'uses' => 'ChargeController@order']);
+    Route::match(['POST', 'GET'], '/translate', ['name' => 'translate', 'uses' => 'ChargeController@translate']);
 });
 
 Route::group(['prefix' => 'pay','namespace'=>'Mobile',],function () {
-    Route::any('/test', ['name' => 'charge_order', 'uses' => 'PaymentController@order']);
+    Route::any('/test', ['name' => 'charge_order', 'uses' => 'ChargeController@order']);
 });
 
 //通知
 Route::group(['prefix' => 'pay', 'middleware' => ['charge']], function () {
-    Route::match(['POST', 'GET'], 'notice2', ['name' => 'notice2', 'uses' => 'Mobile\PaymentController@notice2']);
-    Route::match(['POST', 'GET'], 'notice', ['name' => 'charge_notice', 'uses' => 'Mobile\PaymentController@notice'])->name('charge_notice');
-    Route::match(['POST', 'GET'], 'checkKeepVip', ['name' => 'checkKeepVip', 'uses' => 'Mobile\PaymentController@checkKeepVip']);
-    Route::match(['POST', 'GET'], 'callFailOrder', ['name' => 'callFailOrder', 'uses' => 'Mobile\PaymentController@callFailOrder']);
-//    Route::post( 'moniCharge', ['name' => 'charge', 'uses' => 'Mobile\PaymentController@moniCharge']);
-    Route::match(['POST', 'GET'], 'moniHandler', ['name' => 'moniHandler', 'uses' => 'Mobile\PaymentController@moniHandler']);
-    Route::post('del', ['name' => 'charge', 'uses' => 'Mobile\PaymentController@del']);
+    Route::match(['POST', 'GET'], 'notice', ['name' => 'charge_notice', 'uses' => 'ChargeController@notice'])->name('charge_notice');
+    Route::match(['POST', 'GET'], 'checkKeepVip', ['name' => 'checkKeepVip', 'uses' => 'ChargeController@checkKeepVip']);
+    Route::match(['POST', 'GET'], 'callFailOrder', ['name' => 'callFailOrder', 'uses' => 'ChargeController@callFailOrder']);
+    Route::post( 'moniCharge', ['name' => 'charge', 'uses' => 'ChargeController@moniCharge']);
+    Route::match(['POST', 'GET'], 'moniHandler', ['name' => 'moniHandler', 'uses' => 'ChargeController@moniHandler']);
+    Route::post('del', ['name' => 'charge', 'uses' => 'ChargeController@del']);
 });
 
 //统计接口
