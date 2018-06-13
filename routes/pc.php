@@ -14,6 +14,9 @@ Route::get('room/{rid}/{h5?}', 'RoomController@index')
     ->where('rid', '[0-9]+')
     ->where('h5', '(h5|h5hls)');
 
+// 招募页面
+Route::post('/business/{act}', ['name' => 'shop_getgroupall', 'uses' => 'BusinessController@index']);
+
 Route::group(['middleware' => ['login_auth']], function () {
     //上传相册
     Route::post('fupload', 'MemberController@flashUpload')->name('member_fupload');

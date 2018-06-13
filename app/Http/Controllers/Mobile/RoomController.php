@@ -226,9 +226,12 @@ class RoomController extends Controller
             ->get();
         if (!$myReservation->count()) return $list;
         // 从redis 获取一对一预约数据
-        $rooms = resolve('one2one')->getHomeBookList()['rooms'] ?? [];
+        if(isset(resolve('one2one')->getHomeBookList($flashVersion)['rooms'])){
+            $rooms = resolve('one2one')->getHomeBookList($flashVersion)['rooms'] ?? [];
+        }
+
         foreach ($rooms as $room) {
-            if ($myReservation->where('uid', $room['uid'])->where('onetomore', $room['id'])->first()) {
+            if ($myReservation->where('uid', $room['rid'])->where('id', $room['id'])->first()) {
                 $room['listType'] = 'myres';
                 $list[] = $room;
             }
@@ -731,6 +734,7 @@ class RoomController extends Controller
             ->where('start_time', '<=', date("Y-m-d H:i:s", $end_time))
             ->where('duration', '<>', 0)
             ->select('id', 'created', 'start_time', 'rid', 'duration')
+            ->orderBy('id', 'desc')
             ->get();
 
 
@@ -777,7 +781,9 @@ class RoomController extends Controller
         if(empty($data['origin'])){
             $data['origin']=21;
         }
-
+        if ($data['points'] < 2000) {
+            return new JsonResponse(['status' => 0, 'msg' => '手动设置的钻石数必须大于2000钻石']);
+        }
         $roomservice = resolve(RoomService::class);
         $result = $roomservice->addOnetoOne($data);
         return new JsonResponse($result);
