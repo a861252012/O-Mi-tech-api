@@ -196,10 +196,10 @@ class LoginController extends Controller
          */
         $uid = $auth->id();
         $login_ip = $this->request()->getClientIp();
-        $user = Users::find($uid);
-        $user->last_ip = $login_ip; // 最后登录ip TODO 大流量优化，目前没压力
-        $user->logined = date('Y-m-d H:i:s'); // 最后登录时间
-        $user->save();
+        $user = Users::query()->where('uid',$uid)->update([
+            'last_ip'=>$login_ip, // 最后登录ip TODO 大流量优化，目前没压力
+            'logined'=>date('Y-m-d H:i:s'),
+        ]);
         //记录登录日志
         $this->loginLog($uid, $login_ip, date('Y-m-d H:i:s'));
         return [
