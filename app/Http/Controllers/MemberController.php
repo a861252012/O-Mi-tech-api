@@ -1074,7 +1074,7 @@ class MemberController extends Controller
             ]);
         }
         $this->make('redis')->hset('keys_room_passwd:' . $rid . ':' . $sessionid, 'status', 1);
-        return new JsonResponse(['status' => 1, 'msg' => '登陆成功']);
+        return new JsonResponse(['status' => 1, 'msg' => '验证成功']);
     }
 
     /**
@@ -2504,6 +2504,8 @@ class MemberController extends Controller
         $user = Auth::user();
         if ($this->make('request')->getMethod() === 'POST') {
             $post = $this->make('request')->request->all();
+            $post['password'] = $post['password'] ??"";
+            $post['trade_password'] = $post['trade_password'] ??"";
 
             /**
              * 设置交易密码
