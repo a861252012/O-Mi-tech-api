@@ -22,7 +22,7 @@ class One2ManyMsgSend extends Command
      * @var string
      */
     use SiteSpecific;
-    protected $signature = 'command:one2many_msg';
+    protected $signature = 'one2many_msg';
 
     /**
      * The console command description.

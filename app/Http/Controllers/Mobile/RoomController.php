@@ -253,98 +253,106 @@ class RoomController extends Controller
      */
     public function getRoom($rid)
     {
-        $roomService = resolve('roomService');
-        $room = $roomService->getRoom($rid, Auth::id());
-        $tid = $roomService->getCurrentTimeRoomStatus();
 
-        $user = UserSer::getUserByUid(Auth::id());
-        $roomInfo = [
-            'room_name'=>$room['user']['nickname'],
-            'header_pic'=>$room['user']['headimg'],
-            'room_pic'=>$room['user']['cover'],
-            'live_status'=>$room['status'],
-            'live_device_type'=>$room['origin'],
-            'tid'=>$tid ?: 1,
-            'is_password'=>$roomService->getPasswordRoom()?1:0,
-        ];
-
-        $roomExtend = [
-            'start_time'=> null,
-            'end_time'=> null,
-            'user_num'=> $room['total'],
-            'room_price'=> 0,
-            'time_length'=> 0,
-            'room_id'=> $rid,
-            'class_id'=> 0,
-        ];
-        switch ($tid){
-            case 8 :
-                $one2more = resolve('one2more')->getRunningData();
-                $roomExtend['start_time'] = $one2more['starttime'];
-                $roomExtend['end_time'] = $one2more['endtime'];
-                $roomExtend['user_num'] = $one2more['nums'];
-                $roomExtend['room_price'] = $one2more['points'];
-                $roomExtend['class_id'] = $one2more['onetomore'];
-                break;
-            case 4:
-                $one2one = resolve('one2one')->getRunningData();
-                $roomExtend['start_time'] = $one2one['starttime'];
-                $roomExtend['end_time'] = date('Y-m-d H:i:s',strtotime($one2one['starttime']) + $one2one['duration']);
-                $roomExtend['user_num'] = $one2one['tickets']?:($one2one['reuid'] ?1:0);
-                $roomExtend['room_price'] = $one2one['points'];
-                $roomExtend['class_id'] = $one2one['id'];
-                break;
-            case 6 :
-                $durRoom = $roomService->getDurationRoom();
-                $roomExtend['start_time'] = null;
-                $roomExtend['end_time'] = null;
-                $roomExtend['user_num'] = $room['total'];
-                $roomExtend['room_price'] = $durRoom['timecost'];
-                break;
-            default:;
-        }
-        $roomExtend['time_length'] = strtotime($roomExtend['end_time'])-strtotime($roomExtend['start_time']);
-
-        $room_user = [
-            'authority_in'=>1
-        ];
-
-        if(in_array($tid,[8,4,6]) && Auth::guest() ){   //游客进特殊房间
-            $room_user['authority_in'] = 309;
-        }else{
-                switch ($tid){
-                    case 8:
-                        if(!$roomService->whiteList())   $room_user['authority_in'] = 302;
-                        break;
-                    case 4:
-                        if(!$roomService->checkCanIn()){
-                                $room_user['authority_in'] =  $roomExtend['user_num'] ? 304 : 303;
-                        }
-                        break;
-                    case 6:
-                        if($user['points'] < $roomExtend['room_price'])   $room_user['authority_in'] = 305;
-                        break;
-                }
-               if($room_user['authority_in']==1 && $roomService->getPasswordRoom()){
-                   $room_user['authority_in'] = 306;
-               }
-        }
-
-
-       $socket = [];
-        /** @var SocketService $socketService */
-        $socketService = resolve(SocketService::class);
-        $chatServer = [];
-        $msg = "";
         try {
+            $roomService = resolve('roomService');
+            $room = $roomService->getRoom($rid, Auth::id());
+            $tid = $roomService->getCurrentTimeRoomStatus();
+
+            $user = UserSer::getUserByUid(Auth::id());
+            $roomInfo = [
+                'room_name'=>$room['user']['nickname'],
+                'header_pic'=>$room['user']['headimg'],
+                'room_pic'=>$room['user']['cover'],
+                'live_status'=>$room['status'],
+                'live_device_type'=>$room['origin'],
+                'tid'=>$tid ?: 1,
+                'is_password'=>$roomService->getPasswordRoom()?1:0,
+            ];
+
+            $roomExtend = [
+                'start_time'=> null,
+                'end_time'=> null,
+                'user_num'=> $room['total'],
+                'room_price'=> 0,
+                'time_length'=> 0,
+                'room_id'=> $rid,
+                'class_id'=> 0,
+            ];
+            switch ($tid){
+                case 8 :
+                    $one2more = resolve('one2more')->getRunningData();
+                    $roomExtend['start_time'] = $one2more['starttime'];
+                    $roomExtend['end_time'] = $one2more['endtime'];
+                    $roomExtend['user_num'] = $one2more['nums'];
+                    $roomExtend['room_price'] = $one2more['points'];
+                    $roomExtend['class_id'] = $one2more['onetomore'];
+                    break;
+                case 4:
+                    $one2one = resolve('one2one')->getRunningData();
+                    $roomExtend['start_time'] = $one2one['starttime'];
+                    $roomExtend['end_time'] = date('Y-m-d H:i:s',strtotime($one2one['starttime']) + $one2one['duration']);
+                    $roomExtend['user_num'] = $one2one['tickets']?:($one2one['reuid'] ?1:0);
+                    $roomExtend['room_price'] = $one2one['points'];
+                    $roomExtend['class_id'] = $one2one['id'];
+                    break;
+                case 6 :
+                    $durRoom = $roomService->getDurationRoom();
+                    $roomExtend['start_time'] = null;
+                    $roomExtend['end_time'] = null;
+                    $roomExtend['user_num'] = $room['total'];
+                    $roomExtend['room_price'] = $durRoom['timecost'];
+                    break;
+                default:;
+            }
+            $roomExtend['time_length'] = strtotime($roomExtend['end_time'])-strtotime($roomExtend['start_time']);
+
+            $room_user = [
+                'authority_in'=>1
+            ];
+
+            if(in_array($tid,[8,4,6]) && Auth::guest() ){   //游客进特殊房间
+                $room_user['authority_in'] = 309;
+            }else{
+                    switch ($tid){
+                        case 8:
+                            if(!$roomService->whiteList())   $room_user['authority_in'] = 302;
+                            break;
+                        case 4:
+                            if(!$roomService->checkCanIn()){
+                                    $room_user['authority_in'] =  $roomExtend['user_num'] ? 304 : 303;
+                            }
+                            break;
+                        case 6:
+                            if($user['points'] < $roomExtend['room_price'])   $room_user['authority_in'] = 305;
+                            break;
+                    }
+                   if($room_user['authority_in']==1 && $roomService->getPasswordRoom()){
+                       $room_user['authority_in'] = 306;
+                   }
+            }
+
+
+           $socket = [];
+            /** @var SocketService $socketService */
+            $socketService = resolve(SocketService::class);
+            $chatServer = [];
+            $msg = "";
             $chatServer = $socketService->getNextServerAvailable();
+            $socket['host'] =  $chatServer['host'];
+            $socket['ip'] =  $chatServer['ip'];
+            $socket['port'] =  $chatServer['port'];
+
         } catch (NoSocketChannelException $e) {
             $msg = $e->getMessage();
+            $socket['host'] =  "";
+            $socket['ip'] =  "";
+            $socket['port'] =  "";
+            $roomInfo = [];
+            $roomExtend = [];
+            $room_user = [];
+            Log::info("手机直播间异常：".$msg);
         }
-        $socket['host'] =  $chatServer['host'];
-        $socket['ip'] =  $chatServer['ip'];
-        $socket['port'] =  $chatServer['port'];
-
         return JsonResponse::create(['data' => array_merge($roomInfo,$roomExtend,$room_user,$socket),'msg'=>$msg]);
     }
     /**
