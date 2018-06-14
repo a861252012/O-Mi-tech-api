@@ -126,16 +126,14 @@ class RoomController extends Controller
         if (empty($password)) {
             return $this->geterrorsAction();
         }
-        $heads = $this->request()->headers;
+//        $this->get('session')->start();
+        $sessionid = Session::getId();
         //房间进入密码，超过五次就要输入验证码，这个五次是通过phpsessionid来判断的
         $roomstatus = $this->getRoomStatus($rid, 2);
-        $authorization = explode(' ',$heads->get('Authorization'));
-        $jwt = explode('.',$authorization[1]);
-
-        $keys_room = 'keys_room_passwd:' . $jwt[0] . ':' . $rid;
+        $keys_room = 'keys_room_passwd:' . $sessionid . ':' . $rid;
         $times = $this->make('redis')->get($keys_room) ?: 0;
         if ($times >= 5) {
-            $captcha = $this->request()->get('captcha');
+            $captcha = $request->get('captcha');
             if (empty($captcha)) {
                 return new JsonResponse(['status' => 0, 'msg' => '请输入验证码!', 'data' => ['times' => $times, 'cmd' => 'showCaptcha']]);
             }
@@ -157,7 +155,7 @@ class RoomController extends Controller
                 'data' => ['times' => $times + 1],
             ]);
         }
-        $this->make('redis')->hset('keys_room_passwd:' . $rid . ':' . $jwt[0], 'status', 1);
+        $this->make('redis')->hset('keys_room_passwd:' . $rid . ':' . $sessionid, 'status', 1);
         return new JsonResponse(['status' => 1, 'msg' => '验证成功']);
     }
 
