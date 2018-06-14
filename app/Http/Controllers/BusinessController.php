@@ -69,14 +69,14 @@ class BusinessController extends Controller
 
         //不存在，返回首页
         if(empty($domain)||!$domain->exists){
-            return SuccessResponse::create(array('extendUrl'=>'/'),$status=0,$msg='');
+            return SuccessResponse::create(array('extendUrl'=>'/'));
 
         }
         //通过域名查询对应的代理列表（did为对应的domain id）
         $agent = Agents::where('did','=',$domain->id)->where('status','=',0)->first();
         //如果不存在，返回首页
         if(empty($agent)||!$agent->exists){
-            return SuccessResponse::create(array('extendUrl'=>'/'),$status=0,$msg='获取成功');
+            return SuccessResponse::create(array('extendUrl'=>'/'));
         }
 
         //获取url数组
@@ -88,7 +88,7 @@ class BusinessController extends Controller
          */
         if (empty($_GET['dir'])) {
             $var['extendUrl'] =$arrUrl . '?agent=' . $url;
-            return SuccessResponse::create($var,$status=1,$msg='获取成功');
+            return SuccessResponse::create($var);
         }
         //参数判断，dir跳转方向，用于跳转到直播间的功能
         if (!empty($_GET['dir']) && $_GET['dir'] === 'room') {
@@ -129,10 +129,10 @@ class BusinessController extends Controller
             }else {
                 $var['extendUrl'] = $arrUrl . '?agent=' . $url;
             }
-            return SuccessResponse::create($var,$status=1,$msg='获取成功');
+            return SuccessResponse::create($var);
         }
         //所有不符合条件的
-        return SuccessResponse::create(array('extendUrl'=>'/'),$status=1,$msg='获取成功');
+        return SuccessResponse::create(array('extendUrl'=>'/'));
 
     }
 
