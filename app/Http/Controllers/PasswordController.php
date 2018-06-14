@@ -67,7 +67,7 @@ class PasswordController extends Controller
         }
 
         //$getMailStatus =  $this->getDoctrine()->getManager()->getRepository('Video\ProjectBundle\Entity\VideoUser')->findOneBy(array('safemail' => $email));
-        $getMailStatus = Users::where('safemail', $token['email'])->toJson();
+        $getMailStatus = Users::query()->where('safemail', $token['email'])->exists();
         if ($getMailStatus) {
             $errors->add('mail', '对不起！该邮箱已绑定其他帐号！');
             return RedirectResponse::create('/member/mailverify/mailFail?' . http_build_query(['errors' => $errors->toJson()]));
