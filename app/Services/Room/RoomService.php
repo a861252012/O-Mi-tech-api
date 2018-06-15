@@ -4,6 +4,7 @@ namespace App\Services\Room;
 
 use App\Models\RoomDuration;
 use App\Models\RoomOneToMore;
+use App\Models\UserBuyOneToMore;
 use App\Models\Users;
 use App\Services\Service;
 use App\Services\User\UserService;
@@ -11,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use App\Facades\SiteSer;
@@ -393,7 +393,7 @@ public $cur_login_uid = null;
                // array_push($insertArr, $temp);
             }
            // DB::table('video_user_buy_one_to_more')->insert($insertArr);
-            $userbuy = UserBuyOneToMore;
+            $userbuy = new UserBuyOneToMore();
             $userbuy->save($temp);
         }
 
@@ -501,6 +501,7 @@ public $cur_login_uid = null;
         $durationRoom->points = $data['points'];
         $durationRoom->endtime = $endtime;
         $durationRoom->origin =  $data['origin'];
+        $durationRoom->site_id = SiteSer::siteId();
 
         if ($this->notSetRepeat($start_time, $endtime)) {
             $durationRoom->save();
