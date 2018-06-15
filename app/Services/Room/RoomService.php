@@ -4,6 +4,7 @@ namespace App\Services\Room;
 
 use App\Models\RoomDuration;
 use App\Models\RoomOneToMore;
+use App\Models\UserBuyOneToMore;
 use App\Models\Users;
 use App\Services\Service;
 use App\Services\User\UserService;
@@ -11,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use App\Facades\SiteSer;
@@ -309,7 +309,7 @@ public $cur_login_uid = null;
 
         if (empty($data['origin'])) $data['origin'] = 11;
         if (!in_array($data['duration'], [20, 25, 30, 35, 40, 45, 50, 55, 60])) return ['status' => 9, 'msg' => '请求错误'];
-        if ($data['points'] > 99999 || $data['points'] <= 0) return ['status' => 3, 'msg' => '金额超出范围'];
+        if ($data['points'] > 99999 || $data['points'] <= 0) return ['status' => 3, 'msg' => '金额超出范围,不能大于99999钻石'];
         if ($data['points'] < 399) return ['status' => 4, 'msg' => '钻石数不能少于399钻石'];
         if (empty($data['mintime']) || empty($data['duration'])) return ['status' => 5, 'msg' => '请求错误'];
         $start_time = date("Y-m-d H:i:s", strtotime($data['mintime'] . ' ' . $data['hour'] . ':' . $data['minute'] . ':00'));
@@ -380,19 +380,21 @@ public $cur_login_uid = null;
             $insertArr = [];
             foreach ($uidArr as $k => $v) {
                 $temp = [];
-                $temp['onetomore'] = $oneToMoreRoom->id;
-                $temp['rid'] = $data['uid'];
-                $temp['type'] = 2;
-                $temp['starttime'] = $start_time;
-                $temp['endtime'] = $endtime;
-                $temp['duration'] = $data['duration'] * 60;
-                $temp['points'] = $data['points'];
-                $temp['uid'] = $v;
-                $temp['origin'] = $data['origin'];
-                $temp['site_id']  = SiteSer::siteId();
-                array_push($insertArr, $temp);
+                $temp->onetomore = $oneToMoreRoom->id;
+                $temp->rid = $data['uid'];
+                $temp->type= 2;
+                $temp->starttime = $start_time;
+                $temp->endtime = $endtime;
+                $temp->duration = $data['duration'] * 60;
+                $temp->points = $data['points'];
+                $temp->uid = $v;
+                $temp->origin = $data['origin'];
+                $temp->site_id  = SiteSer::siteId();
+               // array_push($insertArr, $temp);
             }
-            DB::table('video_user_buy_one_to_more')->insert($insertArr);
+           // DB::table('video_user_buy_one_to_more')->insert($insertArr);
+            $userbuy = new UserBuyOneToMore();
+            $userbuy->save($temp);
         }
 
         $duroom = $oneToMoreRoom;
@@ -499,6 +501,7 @@ public $cur_login_uid = null;
         $durationRoom->points = $data['points'];
         $durationRoom->endtime = $endtime;
         $durationRoom->origin =  $data['origin'];
+        $durationRoom->site_id = SiteSer::siteId();
 
         if ($this->notSetRepeat($start_time, $endtime)) {
             $durationRoom->save();

@@ -79,14 +79,14 @@ class RoomController extends Controller
         // 从redis 获取一对一预约数据
         if(isset(resolve('one2one')->getHomeBookList($flashVersion)['rooms'])){
             $rooms = resolve('one2one')->getHomeBookList($flashVersion)['rooms'] ?? [];
-            if(empty($rooms)){
-                foreach ($rooms as $room) {
-                    if ($myReservation->where('uid', $room['rid'])->where('id', $room['id'])->first()) {
-                        $room['listType'] = 'myres';
-                        $list[] = $room;
-                    }
+            foreach ($rooms as $room) {
+                if ($myReservation->where('uid', $room['rid'])->where('id', $room['id'])->first()) {
+                    $room['listType'] = 'myres';
+                    $list[] = $room;
                 }
             }
+        }else{
+            $list = [];
         }
         return $list;
     }
