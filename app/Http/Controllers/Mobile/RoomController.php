@@ -310,7 +310,7 @@ class RoomController extends Controller
                 'authority_in'=>1
             ];
 
-            if(in_array($tid,[8,4,6]) && Auth::guest() ){   //游客进特殊房间
+            if((in_array($tid,[8,4,6])|| $roomService->getPasswordRoom()) && Auth::guest() ){   //游客进特殊房间
                 $room_user['authority_in'] = 309;
             }else{
                     switch ($tid){
@@ -327,7 +327,7 @@ class RoomController extends Controller
                             break;
                     }
                    if($room_user['authority_in']==1 && $roomService->getPasswordRoom()){
-                       $room_user['authority_in'] = 306;
+                            $room_user['authority_in'] = 306;
                    }
             }
 
