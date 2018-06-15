@@ -46,7 +46,7 @@ class Kernel extends ConsoleKernel
 
         #########每天更新广告统计到数据库##########
         //0 1 * * *  /usr/bin/php /var/www/video-front/crontab-list/update-total.php 1>/dev/null
-        $schedule->command('update_total')->dailyAt('1:00')->withoutOverlapping()->onOneServer();
+        //$schedule->command('update_total')->dailyAt('1:00')->withoutOverlapping()->onOneServer();
 
         #########用于主播工资核算##############
         //0 6 * * *  /usr/bin/php /var/www/video-front/crontab-list/user-salary-total.php>/dev/null
