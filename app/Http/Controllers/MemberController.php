@@ -963,6 +963,9 @@ class MemberController extends Controller
         // 判断是否为手动输入 如果手动输入需要大于2000钻石才行
 
         $input_points = $request->get('input_points');
+        if($input_points>99999){
+            return new JsonResponse(['status' => 0, 'msg' => '金额超出范围,不能大于99999钻石']);
+        }
         if ($input_points < 2000) {
             return new JsonResponse(['status' => 0, 'msg' => '手动设置的钻石数必须大于2000钻石']);
         } else {
@@ -1524,17 +1527,27 @@ class MemberController extends Controller
                 ->where('uid', Auth::id())
                 ->where('dml_flag', '!=', 3)
                 ->orderBy('created', 'desc')
+                ->allSites()
                 ->paginate();
         }
         // 我做庄的
         if ($type == 2) {
-            $data = CarGame::with(['gameRoomUser' => function ($q) {
-                $q->selectRaw('uid,username');
-            }])
-                ->where('uid', Auth::id())
+            $data = CarGame::where('uid', Auth::id())
                 ->where('dml_flag', '!=', 3)
                 ->orderBy('stime', 'DESC')
                 ->paginate();
+
+            foreach ($data as $key=>$value){
+                 $reset = Users::where('uid', $value['rid'])->allSites()->first();
+                 $userinfo = $reset->toArray();
+                 $game_room_user = array(
+                    'nickname'=>  $userinfo['nickname'],
+                    'uid'=>  $userinfo['uid'],
+                 );
+                 $data[$key]['game_room_user'] = $game_room_user;
+
+
+            }
         }
         return JsonResponse::create(['status' => 1, 'data' => ['list' => $data]]);
     }
