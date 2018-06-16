@@ -368,7 +368,7 @@ class IndexController extends Controller
                 $ordRooms = Redis::get('home_ord_' . $flashVersion);
                 $ordRooms = str_replace(['cb(', ');'], ['', ''], $ordRooms);
                 $ordRooms = json_decode($ordRooms, true);
-                $rooms = $ordRooms['rooms'];//考虑做个redis的配置
+                $rooms = empty($ordRooms['rooms']) ? [] : $ordRooms['rooms'];//考虑做个redis的配置
 
                 foreach ($myReservation as $item) {
                     foreach ($rooms as $room) {
