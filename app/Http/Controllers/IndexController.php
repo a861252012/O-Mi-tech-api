@@ -333,20 +333,6 @@ class IndexController extends Controller
             $return['jump_url'] = $jump_url;
         }
 
-        $downloadUrl = Redis::hget('hconf', 'down_url');
-        $qrcode = Redis::hget('img_cache', '4');
-        if (json_decode($downloadUrl)) {
-            $downloadpcurl = json_decode($downloadUrl)->PC;
-        } else {
-            $downloadpcurl = null;
-            $res = [
-                'PC' => '',
-                'ANDROID' => '',
-                'IOS' => '',
-            ];
-            $downloadUrl = json_encode($res);
-        }
-
         $flashVersion = SiteSer::config('flash_version');
         // 获取我的关注的数据主播的数据
         $myfav = [];
@@ -429,9 +415,6 @@ class IndexController extends Controller
                     'myfav' => $myfav,
                     'myres' => $myres,
                     'myticket' => $myticket,
-                    'downloadAppurl' => $downloadUrl,
-                    'downloadUrl' => $downloadpcurl,
-                    'qrcode_img' => $qrcode,
                     'notice' => $notice,
 
                 ],
