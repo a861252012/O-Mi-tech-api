@@ -124,9 +124,11 @@ class AnchorSearch extends Command
                 return 0; // tiebreakers exhausted, so $first == $second
             };
         }
-        usort($myfav_arr, make_comparer(['live_status', SORT_DESC], ['attens', SORT_DESC], ['lv_exp', SORT_DESC]));
+        
+        if(isset($myfav_arr) && is_array($myfav_arr)){
+            usort($myfav_arr, make_comparer(['live_status', SORT_DESC], ['attens', SORT_DESC], ['lv_exp', SORT_DESC]));
+            Storage::put('cache/anchor-search-data.php','<?php ' . PHP_EOL . 'return ' . preg_replace('/[\s' . PHP_EOL . ']+/m', '', var_export($myfav_arr, true)) . ';');
+        }
 
-        Storage::put('cache/anchor-search-data.php',
-            '<?php ' . PHP_EOL . 'return ' . preg_replace('/[\s' . PHP_EOL . ']+/m', '', var_export($myfav_arr, true)) . ';');
     }
 }
