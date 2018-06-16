@@ -287,7 +287,7 @@ class IndexController extends Controller
         $ads = json_decode($ads, true);
        //公告
         $notice = array();
-        $notice[0] = $this->make('redis')->hget('system_notices',2);
+        $notice = $this->make('redis')->hgetAll('system_notices:'.SiteSer::siteId());
 
         $slider = [];
         if ($ads) {
