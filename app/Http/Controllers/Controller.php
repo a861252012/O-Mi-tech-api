@@ -589,7 +589,7 @@ class Controller extends BaseController
         //         $arr['lv_percent'] = $nums / $dec * 10;
         //     }
         // }
-        //todo 临时处理 需要判断为何出现非数字变量
+        //todo 临时处理,需要判断为何出现非数字变量
         if ($userinfo['roled'] == 3) {
             $subtract = intval($userinfo['exp']) - $currentExp;
         } else {
