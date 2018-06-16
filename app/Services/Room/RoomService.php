@@ -380,21 +380,19 @@ public $cur_login_uid = null;
             $insertArr = [];
             foreach ($uidArr as $k => $v) {
                 $temp = [];
-                $temp->onetomore = $oneToMoreRoom->id;
-                $temp->rid = $data['uid'];
-                $temp->type= 2;
-                $temp->starttime = $start_time;
-                $temp->endtime = $endtime;
-                $temp->duration = $data['duration'] * 60;
-                $temp->points = $data['points'];
-                $temp->uid = $v;
-                $temp->origin = $data['origin'];
-                $temp->site_id  = SiteSer::siteId();
-               // array_push($insertArr, $temp);
+                $temp['onetomore'] = $oneToMoreRoom->id;
+                $temp['rid'] = $data['uid'];
+                $temp['type'] = 2;
+                $temp['starttime'] = $start_time;
+                $temp['endtime'] = $endtime;
+                $temp['duration'] = $data['duration'] * 60;
+                $temp['points'] = $data['points'];
+                $temp['uid'] = $v;
+                $temp['origin'] = $data['origin'];
+                $temp['site_id']  = SiteSer::siteId();
+                array_push($insertArr, $temp);
             }
-           // DB::table('video_user_buy_one_to_more')->insert($insertArr);
-            $userbuy = new UserBuyOneToMore();
-            $userbuy->save($temp);
+            DB::table('video_user_buy_one_to_more')->insert($insertArr);
         }
 
         $duroom = $oneToMoreRoom;

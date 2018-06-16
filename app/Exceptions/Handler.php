@@ -77,7 +77,7 @@ class Handler extends ExceptionHandler
             return JsonResponse::create(['status' => 0, 'msg' => '参数错误', 'errors' => $exception->errors()]);
         }
 
-        if(config('app.debug')){
+        if(0){
             $log = new Logger('telegram_channel');
             $handler = new TelegramHandler();
             $log->pushHandler($handler);

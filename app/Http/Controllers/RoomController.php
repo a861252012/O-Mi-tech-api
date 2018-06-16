@@ -71,11 +71,13 @@ class RoomController extends Controller
         $origin = $user['origin'];
 
         if (!$this->isHost($rid)) {   //不是主播自己进自己房间
-            $tid = $roomService->getCurrentRoomStatus();
+            $tid = $roomService->getCurrentTimeRoomStatus();
+
+            $pwd_cmd = $roomService->getPasswordRoom() ? "roompwd|":"";
             $logger->info('current_tid:' . $tid);
             switch ($tid) {
                 case 4:   //一对一房间
-                    $handle = $user ? 'room_one_to_one' : 'login';
+                    $handle = $user ? $pwd_cmd.'room_one_to_one' : 'login';
                     if (!$roomService->checkCanIn()) {
                         $one2one = resolve('one2one')->getData();
                         $one2one = $one2one[0];
@@ -99,7 +101,7 @@ class RoomController extends Controller
                     }
                     break;
                 case 6:   //时长房间
-                    $handle = $user ? 'timecost' : 'login';
+                    $handle = $user ? $pwd_cmd.'timecost' : 'login';
                     if (!$roomService->checkDuration()) {
                         return JsonResponse::create([
                             'status' => 0, 'data' => [
@@ -113,22 +115,22 @@ class RoomController extends Controller
                         ]);
                     }
                     break;
-                case 7:   //时长房间和密码房
-                    $handle = $user ? 'roompwd|timecost' : 'login';
-                    if (!($roomService->checkDuration() && $roomService->checkPassword())) {
-                        return JsonResponse::create([
-                            'status' => 0, 'data' => [
-                                'handle' => $handle,
-                                'rid' => $rid,
-                                'timecost' => $room['room_status'][6]['timecost'],
-                                'discount' => $room['discount']['discount'],
-                                'discountValue' => $room['discount']['discountValue'],
-                            ],
-                        ]);
-                    }
-                    break;
+//                case 7:   //时长房间和密码房
+//                    $handle = $user ? $pwd_cmd.'timecost' : 'login';
+//                    if (!($roomService->checkDuration() && $roomService->checkPassword())) {
+//                        return JsonResponse::create([
+//                            'status' => 0, 'data' => [
+//                                'handle' => $handle,
+//                                'rid' => $rid,
+//                                'timecost' => $room['room_status'][6]['timecost'],
+//                                'discount' => $room['discount']['discount'],
+//                                'discountValue' => $room['discount']['discountValue'],
+//                            ],
+//                        ]);
+//                    }
+//                    break;
                 case 8: //一对多
-                    $handle = $user ? 'room_one_to_many' : 'login';
+                    $handle = $user ? $pwd_cmd.'room_one_to_many' : 'login';
                     if (!$roomService->whiteList()) {
                         if ($h5 === 'h5hls') {
                             return JsonResponse::create([
@@ -179,18 +181,17 @@ class RoomController extends Controller
                     }
 
                     break;
-                case 2:     //密码房间
-                    $handle = $user ? 'roompwd' : 'login';
-                    $data  =[
-                        'rid' => $rid,
-                        'handle' => $handle,
-                    ];
-                    if (!$roomService->checkPassword()) {
-                        return JsonResponse::create(['status' => 0,'data'=>$data]);
-                    }
-                    break;
                 default:
                     ;
+            }
+
+            if ($pwd_cmd && !($roomService->checkPassword())) {
+                $handle = $user ? $pwd_cmd : 'login';
+                $data  =[
+                    'rid' => $rid,
+                    'handle' => $handle,
+                ];
+                return JsonResponse::create(['status' => 0,'data'=>$data]);
             }
         }
         $channel_id = $chatServer['id'];
@@ -212,6 +213,7 @@ class RoomController extends Controller
             Session::getName() => Session::getId(),
             'uid' => Auth::id(),
             'nickname' =>$userinfo['nickname'],
+            'channel_id' =>$channel_id,
         ];
         $data['chat_server_addr'] = $chat_server_addr;
         if ($h5 === 'h5hls') {

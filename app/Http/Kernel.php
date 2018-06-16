@@ -6,6 +6,7 @@ use App\Http\Middleware\Charge;
 use App\Http\Middleware\FormatResponse;
 use App\Http\Middleware\LoginAuth;
 use App\Http\Middleware\MobileSession;
+use App\Http\Middleware\Test;
 use App\Http\Middleware\ThrottleRoutes;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
@@ -27,6 +28,7 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         \App\Http\Middleware\TrustProxies::class,
         \App\Http\Middleware\IdentifySite::class,
+        Test::class,
     ];
 
     /**
@@ -79,6 +81,7 @@ class Kernel extends HttpKernel
         'throttle.route' => ThrottleRoutes::class,//自定义限制，基于redis，前缀throttle:，不同路由分开限制
         'login_auth' => LoginAuth::class,
         'charge' => Charge::class,
+        'test' => Test::class,
         'mobile.session' => MobileSession::class,
     ];
 }
