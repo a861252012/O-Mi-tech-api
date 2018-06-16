@@ -73,12 +73,8 @@ return [
         ],
 
         'mysql' => [
-            'read' => array_map(function ($write) {
-                return env_map($write);
-            }, env_array('DB_READ')),
-            'write' => array_map(function ($write) {
-                return env_map($write);
-            }, env_array('DB_WRITE')),
+            'read' => env_map(env('DB_READ')),
+            'write' => env_map(env('DB_WRITE')),
             'driver' => 'mysql',
 //            'host' => env('DB_HOST', '127.0.0.1'),
 //            'port' => env('DB_PORT', '3306'),
