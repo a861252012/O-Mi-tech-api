@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
 use Illuminate\Session\Store as Session;
-
+use App\Facades\SiteSer;
 /**
  * Class Captcha
  * @package Mews\Captcha
@@ -194,7 +194,7 @@ class Captcha
         $this->str = $str;
         $this->characters = config('captcha.characters','2346789abcdefghjmnpqrtuxyzABCDEFGHJMNPQRTUXYZ');
 
-        $hconf = Redis::hGetAll('hconf');
+        $hconf = Redis::hGetAll('hsite_config'.SiteSer::siteId());
         if(isset($hconf['is_captchanum']) && $hconf['is_captchanum']==1 ){
             $this->characters   = "0123456789";
         }
@@ -396,7 +396,7 @@ class Captcha
      */
     protected function lines()
     {
-        $hconf = Redis::hGetAll('hconf');
+        $hconf = Redis::hGetAll('hsite_config'.SiteSer::siteId());
         if(isset($hconf['is_captchanum']) && $hconf['is_captchanum']==1 ){
             $this->lines =-1;
         }

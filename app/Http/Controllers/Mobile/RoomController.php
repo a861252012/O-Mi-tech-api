@@ -240,8 +240,8 @@ class RoomController extends Controller
             'cdn_host' => SiteSer::config('cdn_host'),
             'flash_version' => SiteSer::config('flash_version'),
             'publish_version' => SiteSer::config('publish_version'), //young添加
-            'in_limit_points' => Redis::hget('hconf', 'in_limit_points') ?: 0,
-            'in_limit_safemail' => Redis::hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
+            'in_limit_points' => Redis::hget('hsite_config'.SiteSer::siteId(), 'in_limit_points') ?: 0,
+            'in_limit_safemail' => Redis::hget('hsite_config'.SiteSer::siteId(), 'in_limit_safemail') ?: 0,   //1开，0关
         ];
         return JsonResponse::create(['data' => $conf]);
     }
@@ -394,8 +394,8 @@ class RoomController extends Controller
         $data = [
             'rid' => $rid,
             'chatServer' => $chatServer,
-            'in_limit_points' => $redis->hget('hconf', 'in_limit_points') ?: 0,
-            'in_limit_safemail' => $redis->hget('hconf', 'in_limit_safemail') ?: 0,   //1开，0关
+            'in_limit_points' => $redis->hget('hsite_config'.SiteSer::siteId(), 'in_limit_points') ?: 0,
+            'in_limit_safemail' => $redis->hget('hsite_config'.SiteSer::siteId(), 'in_limit_safemail') ?: 0,   //1开，0关
             'certificate' => resolve(SafeService::class)->getLcertificate(),
         ];
         return JsonResponse::create(['msg'=>'获取成功','status'=>1,'data'=>$data]);
