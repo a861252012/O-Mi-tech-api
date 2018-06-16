@@ -64,7 +64,9 @@ class ActivityController extends Controller
             $status = 1;
         }
         $result['type'] = 3;
-        unset($data['type']);
+        if(isset($data['type'])){
+            unset($data['type']);
+        }
         $result['activity'] = $data;
 
         return $result;
