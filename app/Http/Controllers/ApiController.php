@@ -272,8 +272,8 @@ class ApiController extends Controller
     }
     public function platformGetUser(){
         return JsonResponse::create(['data'=>[
-            'uuid'=>0 ? '888'.mt_rand(10000,90000) : 88876597,
-            'nickename'=>0 ? 'test'.mt_rand(100,900) : "test767",
+            'uuid'=>1 ? '888'.mt_rand(10000,90000) : 88876597,
+            'nickename'=>1 ? 'test'.mt_rand(100,900) : "test767",
             'token'=>time(),
         ]]);
     }
@@ -421,13 +421,15 @@ class ApiController extends Controller
         Session::put('httphost',$httphost);
 
         $h5 = SiteSer::config('h5') ? "/h5" : "";
-        //return RedirectResponse::create("/$room$h5");
-        return JsonResponse::create([
-            'data'=>[
-                'httphost'=>$httphost,
-                'h5'=>$h5,
-            ],
-        ]);
+
+
+        return RedirectResponse::create("/$room$h5");
+//        return JsonResponse::create([
+//            'data'=>[
+//                'httphost'=>$httphost,
+//                'h5'=>$h5,
+//            ],
+//        ]);
     }
     public function checkSign($sign_data,$expect_sign){
         return md5(implode('',$sign_data))==$expect_sign;

@@ -6,6 +6,9 @@
 //});
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 Route::get('/captcha', 'LoginController@captcha');
+Route::get('/test_recharge', function(){
+    return view('test.recharge');
+});
 // 任务列表
 Route::get('/task', 'TaskController@index')->name('task_index');
 //贵族列表

@@ -196,6 +196,8 @@ class ChargeController extends Controller
             'orderId' => resolve('charge')->getMessageNo(),
             'remoteUrl' => resolve('charge')->remote(),
         );
+
+        Log::channel('charge')->info($rtn);
         return new JsonResponse(array('status' => 0, 'data' => $rtn));
     }
     private function getClient(){
@@ -311,7 +313,6 @@ class ChargeController extends Controller
         $key = SiteSer::config('pay_gd_key');
         $verifymd5 = MD5($data['amount'] . $data['comment'] . $key);
         $data = $this->sendCurlRequest(route('gd_notice'), ['data' => json_encode((object)$data), 'verifymd5' => $verifymd5]);
-        dd($data);
         return new JsonResponse(['data' => 'success']);
     }
 
