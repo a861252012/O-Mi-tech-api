@@ -1226,7 +1226,7 @@ class MemberController extends Controller
                     $room['headimg'] = $users['headimg'];
                     $room['nickname'] = $users['nickname'];
                     $room['lv_exp'] = $users['lv_exp'];
-
+                    $room['cover']  = $users['cover'];
                     array_push($room_list, $room);
                 }
             }

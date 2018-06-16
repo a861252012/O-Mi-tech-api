@@ -432,6 +432,7 @@ class UserService extends Service
                 'roled' => $user->roled,
                 'lv_exp' => $user->lv_exp,
                 'lv_rich' => $user->lv_rich,
+                'cover' => $user->cover,
                 'fid' => $uid,
             ]);
         }
@@ -828,7 +829,7 @@ class UserService extends Service
                 'score' => $score,
             ],
                 isset($userCache[$uid]) ? $userCache[$uid]
-                    : ($userCache[$uid] = array_only($this->getUserByUid($uid)->toArray(), ['lv_rich', 'lv_exp', 'username', 'nickname', 'headimg', 'icon_id', 'description', 'vip','sex', 'site_id']))
+                    : ($userCache[$uid] = array_only($this->getUserByUid($uid)->toArray(), ['lv_rich', 'lv_exp', 'username', 'nickname', 'headimg', 'icon_id', 'description', 'vip','sex', 'site_id','cover']))
             );
         }
         $result = [];
@@ -848,8 +849,6 @@ class UserService extends Service
 
 
                 }
-
-
                 if(!empty($ret)){
                     foreach ($ret as  $key=>$value){
                         $result[] =  $value;

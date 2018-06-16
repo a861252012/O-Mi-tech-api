@@ -5,7 +5,7 @@ namespace App\Console\Commands\Schedule;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
-
+use App\Services\Site\SiteService;
 class AnchorSearch extends Command
 {
     /**
@@ -22,16 +22,17 @@ class AnchorSearch extends Command
      */
     protected $description = 'Command description';
 
+    private $siteService;
     /**
      * Create a new command instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(SiteService $siteService)
     {
         parent::__construct();
+        $this->siteService = $siteService;
     }
-
     /**
      * Execute the console command.
      *
@@ -39,11 +40,28 @@ class AnchorSearch extends Command
      */
     public function handle()
     {
+        $this->siteService->getIDs()
+            ->each([$this, 'handleForSite']);
+    }
+    /**
+     * Execute the console command.
+     *
+     * @return mixed
+     */
+    public function handleForSite($id)
+    {
+        $this->siteService->fromID($id);
+        if (!$this->siteService->isValid()){
+            $this->info('invalid site config for id '.$id);
+            Log::error('invalid site config  ',['id'=>$id]);
+            return;
+        }
         //
         $_redisInstance = Redis::resolve();
 
-        $flashVer = $_redisInstance->get('flash_version');
+        $flashVer = $this->siteService->config('flash_version');
         !$flashVer && $flashVer = 'v201504092044';
+        $this->info('flash_version:' . $flashVer);
 //home_all_,home_rec_,home_ord_,home_gen_,home_vip_
         $conf_arr = array(
             'home_all_' => array('所有主播', 'all'),
@@ -54,7 +72,8 @@ class AnchorSearch extends Command
         );
 //$json = '{';
         foreach ($conf_arr as $key => $item) {
-            $data = $_redisInstance->get($key . $flashVer);
+            $data =  Redis::get($key . $flashVer.':'. $this->siteService->siteId());
+
             if ($key = 'home_all_') {
                 $data = str_replace(array('cb(', ');'), array('', ''), $data);
                 $myfav = json_decode($data, true);

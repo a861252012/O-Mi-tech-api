@@ -7,7 +7,7 @@ use DB;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
-
+use App\Facades\SiteSer;
 class SafeService extends Service
 {
     //
@@ -30,14 +30,14 @@ class SafeService extends Service
         $redis->hmset("ip:$ip", ['last_time' => $date]);
 
         $ip_info = $redis->hgetall("ip:$ip");
-        $min = $this->make('redis')->hget('hconf','back_hz_min');
+        $min = $this->make('redis')->hget('hsite_config'.SiteSer::siteId(),'back_hz_min');
         //current time is >= start time + 10minis
         if (strtotime($date) >= (strtotime($ip_info['start_time']) + 60 * $min)) $redis->hmset("ip:$ip", ['start_time' => $date, 'count' => 0]);
         $redis->hIncrBy("ip:$ip", "count", 1);
         $redis->hIncrBy("ip:$ip", "total_count", 1);
 
         //
-        $hz = $this->make('redis')->hget('hconf','back_hz_count');
+        $hz = $this->make('redis')->hget('hsite_config'.SiteSer::siteId(),'back_hz_count');
         if ( ++$ip_info['count'] >= $hz) {
             $redis->sAdd('back_ip:' . $ip, $uid);
             $redis->sAdd('back_uid:' . $uid, $ip);
@@ -72,7 +72,7 @@ class SafeService extends Service
         */
         $redis = $this->make('redis')->connection('ceri');
 
-        $hz = $redis->hExists('hconf','certificate_hz') ? $redis->hget('hconf','certificate_hz') :0;
+        $hz = $redis->hExists('hsite_config'.SiteSer::siteId(),'certificate_hz') ? $redis->hget('hsite_config'.SiteSer::siteId(),'certificate_hz') :0;
 
         if(empty($hz)){
             $lcertificate = $redis->rpop("lsocket_certi");
@@ -108,7 +108,7 @@ class SafeService extends Service
          * @var $redis \Redis
          */
         $redis = $this->make('redis')->connection('ceri');
-        $hz = $redis->hExists('hconf','certificate_hz') ? $redis->hget('hconf','certificate_hz') :0;
+        $hz = $redis->hExists('hsite_config'.SiteSer::siteId(),'certificate_hz') ? $redis->hget('hsite_config'.SiteSer::siteId(),'certificate_hz') :0;
 
         if(empty($hz)){
             $lcertificate = $redis->rpop("lcdn_certi");
