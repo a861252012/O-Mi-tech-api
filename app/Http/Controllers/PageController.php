@@ -80,7 +80,8 @@ class PageController extends Controller
      */
     public function download()
     {
-        $downloadUrl = $this->make('redis')->hget('hconf', 'down_url');
+
+        $downloadUrl = $this->make('redis')->hget('hsite_config:'.SiteSer::siteId(), 'down_url');
         if (!empty($downloadUrl)) {
             $downloadUrl = json_decode($downloadUrl);
         } else {
@@ -88,6 +89,7 @@ class PageController extends Controller
                 'PC' => '',
                 'ANDROID' => '',
                 'IOS' => '',
+                'QRCODE'=>'',
             ];
         }
 
