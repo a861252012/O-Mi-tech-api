@@ -296,7 +296,12 @@ class ActivityController extends Controller
         }
         if ($url_type[1] == 'activity') {
             $data['activity'] = $this->activity($url_type[2]);
-            $data['type'] = $data['activity']['type'];
+            if(isset($data['activity']['type'])){
+                $data['type'] = $data['activity']['type'];
+            }else{
+                return new JsonResponse(['status' => 0, 'msg' => '配置的链接错误或者type类型错误']);
+            }
+
             //单双页排行区分
             if ($data['activity']['type'] == 1) {
                 $data['charmstar'] = $this->charmstar();
