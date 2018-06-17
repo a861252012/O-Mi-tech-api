@@ -79,8 +79,7 @@ class RoomController extends Controller
                 case 4:   //一对一房间
                     $handle = $user ? $pwd_cmd.'room_one_to_one' : 'login';
                     if (!$roomService->checkCanIn()) {
-                        $one2one = resolve('one2one')->getData();
-                        $one2one = $one2one[0];
+                        $one2one = $roomService->extend_room;
                         $result = $one2one;
                         $result['tickets'] = $one2one['reuid'];
                         $result['rid'] = $one2one['uid'];

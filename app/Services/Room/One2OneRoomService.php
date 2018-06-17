@@ -48,8 +48,7 @@ class One2OneRoomService extends Service
         foreach ($data as $k=>$ord){
             $starttime = strtotime($ord['starttime']);
             $endtime = $starttime + $ord['duration'];
-           /* if ($this->doing($starttime,$endtime)) */
-           return $ord;
+            if ($this->doing($starttime,$endtime)) return $ord;
         }
         return [];
     }
