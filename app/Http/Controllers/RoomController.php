@@ -227,14 +227,10 @@ class RoomController extends Controller
     /*
      * 预约房间中间页逻辑
      */
-    protected function roommid($roomid = 0, $rid = 0, $id = 0)
+    public function roommid($roomid = 0, $rid = 0, $id = 0)
     {
         if (!$roomid || !$rid || !$id) {
             return JsonResponse::create(['status' => 0, 'mes' => '参数错误']);
-        }
-        $userId = Auth::id();
-        if (!$userId) {
-            return JsonResponse::create(['status' => 0, 'mes' => '请先登陆']);
         }
         switch ($rid) {
             //一对一
@@ -245,8 +241,9 @@ class RoomController extends Controller
 
                 if (empty($room)) {
                     return JsonResponse::create(['status' => 0, 'mes' => '此一对一房间没有可预约的场次']);
-                }else{
-                    $room=json_decode($room,true);
+                } else {
+                    $room = json_decode($room, true);
+                    $room['handle'] = 'room_one_to_one';
                 }
                 return JsonResponse::create(['status' => 1, 'data' => $room]);
             //一对多
@@ -259,6 +256,7 @@ class RoomController extends Controller
                 }
                 foreach ($rooms as $v) {
                     if ($v['id'] == $id) {
+                        $v['handle'] = 'room_one_to_many';
                         return JsonResponse::create(['status' => 1, 'data' => $v]);
                     }
                 }
