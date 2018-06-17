@@ -1986,7 +1986,7 @@ class MemberController extends Controller
                     'uid' => Auth::id(),
                     'created' => date('Y-m-d H:i:s'),
                     'points' => $userGroup['system']['gift_money'],
-                    'paymoney' => round($userGroup['system']['gift_money'], 1),
+                    'paymoney' => round($userGroup['system']['gift_money']/10, 1),
                     'order_id' => time(),
                     'pay_type' => 5,//服务器送的钱pay_type=5
                     'pay_id' => null,
