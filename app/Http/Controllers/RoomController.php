@@ -223,6 +223,92 @@ class RoomController extends Controller
         }
         return JsonResponse::create(['data' => $data]);
     }
+    /*
+     * 一对一table接口购买门票逻辑
+     */
+    protected function roomonetoone($rid){
+
+
+        if (SiteSer::config('open_safe')) {
+            if (!resolve(SafeService::class)->auth(Auth::id())) {
+                JsonResponse::create(['status' => 0]);
+            }
+        }
+
+        $user = resolve(UserService::class)->getUserByUid($rid);
+        if (!$user || !$user->isHost()) return JsonResponse::create(['status' => 0, 'msg' => '房间不存在']);
+        $logger = Log::channel('room');
+        //get certificate
+        $certificate = resolve(SafeService::class)->getLcertificate('socket');
+
+        $roomService = resolve(RoomService::class);
+        //$xo_httphost = $roomService->getXOHost();
+        //check kickout
+        $timeleft = $roomService->checkKickOut($rid, Auth::id());
+        if ($timeleft !== true) {
+            return JsonResponse::create(['status' => 0, 'msg' => '您被踢出房间，请等待' . ceil($timeleft / 60) . '分钟后重试']);
+        }
+        $room = $roomService->getRoom($rid, Auth::id());
+        $socketService = resolve(SocketService::class);
+        $user = Auth::user();
+        if (empty($room)) {
+            //创建房间
+            if ($this->isHost($rid)) {
+                $room = $roomService->addRoom($rid, $rid, Auth::id());
+            } else {
+                return JsonResponse::create(['status' => 0, 'msg' => '房间不存在']);
+            }
+        }
+        try {
+            $chatServer = $socketService->getNextServerAvailable();
+        } catch (NoSocketChannelException $e) {
+            return JsonResponse::create(['status' => 0, 'msg' => $e->getMessage()]);
+        }
+
+        $host = $this->getUserHost($chatServer, $this->isHost($rid));
+        $chat_server_addr = $host . ':' . $chatServer['port'];
+        $logger->info('enter_room:' . $rid . ":" . Auth::id() . ':' . $chatServer['id'] . ':' . $chat_server_addr);
+
+        $redis = resolve('redis');
+        if (!isset($user['origin'])) $user['origin'] = 12;
+        if (!isset($user['created'])) $user['created'] = "";
+        $origin = $user['origin'];
+        $data = ['status'=>0,'msg'=>'获取一对一房间信息失败'];
+        if (!$this->isHost($rid)) {   //不是主播自己进自己房间
+            $tid = $roomService->getOnetoOneRoomStatus();
+            $pwd_cmd = $roomService->getPasswordRoom() ? "roompwd|":"";
+            $logger->info('current_tid:' . $tid);
+            switch ($tid) {
+                case 4:   //一对一房间
+                    $handle = $user ? $pwd_cmd.'room_one_to_one' : 'login';
+                    if (!$roomService->checkCanIn()) {
+                        $one2one = $roomService->extend_room;
+                        $result = $one2one;
+                        $result['tickets'] = $one2one['reuid'];
+                        $result['rid'] = $one2one['uid'];
+                        $result['start_time'] = $one2one['starttime'];
+                        $end_time = strtotime($one2one['starttime']) + $one2one['duration'];
+                        $result['end_time'] = date('Y-m-d H:i:s', $end_time);
+                        $userdata = resolve(UserService::class)->getUserByUid($result['uid']);
+                        $result['nickname'] = $userdata['nickname'];
+                        $result['username'] = $userdata['username'];
+                        $result['handle'] = $handle;
+                        unset($result['starttime']);
+                        if($one2one['reuid'] != 0 ){
+
+                            return JsonResponse::create(['status' => 0, 'data' => $result, 'msg' => '已被其他用户购买']);
+                        }
+                        // return JsonResponse::create(['status' => 0, 'data' => ['handle' => $handle]]);
+                        return JsonResponse::create(['status' => 0, 'data' => $result, 'msg' => '未购买该房间']);
+                    }
+                    break;
+                    default:;
+            }
+
+            return JsonResponse::create(['status' => 0,'data'=>$data]);
+        }
+
+    }
 
     protected function isHost($rid)
     {

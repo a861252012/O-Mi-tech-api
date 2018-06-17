@@ -82,7 +82,7 @@ class OpenVip extends ScriptBase implements ScriptInterface
              * 要求在申请任务之后 开通贵族的才算
              */
             $invite = UserBuyGroup::where('create_at','>',date('Y-m-d H:i:s',$ut['apply_date']))->where('uid',$uid)->get();
-            if ($invite) {
+            if (!empty($invite->toArray())) {
                 $data = array();
                 $csc['csc'] = 100;
                 $csc['update_time'] = time();

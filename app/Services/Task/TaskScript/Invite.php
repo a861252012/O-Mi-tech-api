@@ -84,7 +84,7 @@ class Invite extends ScriptBase implements ScriptInterface
              * 要求在申请任务之后 预约的才算
              */
             $invite =  RoomDuration::where('invitetime','>',$ut['apply_date'])->where('reuid',$uid)->get();
-            if ($invite) {
+            if (!empty($invite->toArray())) {
                 $data = array();
                 $csc['csc'] = 100;
                 $csc['update_time'] = time();

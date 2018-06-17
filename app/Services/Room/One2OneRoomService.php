@@ -42,6 +42,16 @@ class One2OneRoomService extends Service
     public function checkRunning(){
         return !empty($this->getRunningData());
     }
+    public function getRunningDatas(){
+        $data = $this->getData();
+
+        foreach ($data as $k=>$ord){
+            $starttime = strtotime($ord['starttime']);
+            $endtime = $starttime + $ord['duration'];
+            return $ord;
+        }
+        return [];
+    }
     public function getRunningData(){
         $data = $this->getData();
 
