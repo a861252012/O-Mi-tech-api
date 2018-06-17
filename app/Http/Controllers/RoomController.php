@@ -79,7 +79,8 @@ class RoomController extends Controller
             $logger->info('current_tid:' . $tid);
             switch ($tid) {
                 case 4:   //一对一房间
-                    $handle = $user ? $pwd_cmd . 'room_one_to_one' : 'login';
+//                    $handle = $user ? $pwd_cmd . 'room_one_to_one' : 'login';
+                    $handle = $user ? 'room_one_to_one' : 'login';
                     if (!$roomService->checkCanIn()) {
                         $one2one = $roomService->extend_room;
                         $result = $one2one;
@@ -102,7 +103,8 @@ class RoomController extends Controller
                     }
                     break;
                 case 6:   //时长房间
-                    $handle = $user ? $pwd_cmd . 'timecost' : 'login';
+//                    $handle = $user ? $pwd_cmd . 'timecost' : 'login';
+                    $handle = $user ? 'timecost' : 'login';
                     if (!$roomService->checkDuration()) {
                         return JsonResponse::create([
                             'status' => 0, 'data' => [
@@ -131,7 +133,8 @@ class RoomController extends Controller
 //                    }
 //                    break;
                 case 8: //一对多
-                    $handle = $user ? $pwd_cmd . 'room_one_to_many' : 'login';
+//                    $handle = $user ? $pwd_cmd . 'room_one_to_many' : 'login';
+                    $handle = $user ? 'room_one_to_many' : 'login';
                     if (!$roomService->whiteList()) {
                         if ($h5 === 'h5hls') {
                             return JsonResponse::create([
