@@ -175,6 +175,7 @@ class ScriptBase
             'uid' => $uid,
             'created' => date('Y-m-d H:i:s'),
             'points' => $points,
+            'paymoney'=> $points/10,
             'order_id' => time(),
             'pay_type' => 5,//服务器送的钱pay_type=5
             'pay_id' => null,
