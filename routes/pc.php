@@ -17,7 +17,7 @@ Route::get('room/{rid}/{h5?}', 'RoomController@index')
     ->where('rid', '[0-9]+')
     ->where('h5', '(h5|h5hls)');
 //一对一进入table专用
-Route::get('/room/onetoone/{rid}', ['name' => 'shop_getgroupall', 'uses' => 'RoomController@roomonetoone']);
+Route::get('/room/roommid/{roomid?}/{rid?}/{id?}', ['name' => 'room_roommid', 'uses' => 'RoomController@roommid']);
 // 招募页面
 Route::post('/business/{act}', ['name' => 'shop_getgroupall', 'uses' => 'BusinessController@index']);
 
