@@ -88,10 +88,11 @@ class Charge extends ScriptBase implements ScriptInterface
              * 要求在申请任务之后 充值的才算
              * 充值的大小是限制的
              */
+            $pplay_date = date('Y-m-d H:i:s',$ut['apply_date']);
             $xianzhi = $task['points']['value'];
-            $charge = Recharge::where('uid',$uid)->where('ttime','>','date(\'Y-m-d H:i:s\',$ut[\'apply_date\'])')
-                ->where('paymoney','>=',$xianzhi[0])->where('paymoney','<=',$xianzhi[1])->where('pay_status',2)->get();
-            if($charge){
+            $charge = Recharge::where('uid',$uid)->where('ttime','>',$pplay_date)
+                ->where('points','>=',$xianzhi[0])->where('points','<=',$xianzhi[1])->where('pay_status',2)->get();
+            if(!empty($charge->toArray())){
                 $data = array();
                 $csc['csc'] = 100;
                 $csc['update_time'] =time();

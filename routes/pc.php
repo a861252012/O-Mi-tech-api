@@ -16,7 +16,8 @@ Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopControl
 Route::get('room/{rid}/{h5?}', 'RoomController@index')
     ->where('rid', '[0-9]+')
     ->where('h5', '(h5|h5hls)');
-
+//一对一进入table专用
+Route::get('/room/onetoone/{rid}', ['name' => 'shop_getgroupall', 'uses' => 'RoomController@roomonetoone']);
 // 招募页面
 Route::post('/business/{act}', ['name' => 'shop_getgroupall', 'uses' => 'BusinessController@index']);
 
