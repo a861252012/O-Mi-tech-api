@@ -91,7 +91,7 @@ class Charge extends ScriptBase implements ScriptInterface
             $pplay_date = date('Y-m-d H:i:s',$ut['apply_date']);
             $xianzhi = $task['points']['value'];
             $charge = Recharge::where('uid',$uid)->where('ttime','>',$pplay_date)
-                ->where('points','>=',$xianzhi[0])->where('points','<=',$xianzhi[1])->where('pay_status',2)->get();
+                ->where('paymoney','>=',$xianzhi[0])->where('paymoney','<=',$xianzhi[1])->where('pay_status',2)->get();
             if(!empty($charge->toArray())){
                 $data = array();
                 $csc['csc'] = 100;
