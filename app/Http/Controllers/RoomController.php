@@ -263,6 +263,7 @@ class RoomController extends Controller
                         return JsonResponse::create(['status' => 1, 'data' => $v]);
                     }
                 }
+                
             default:
                 return JsonResponse::create(['status' => 0, 'mes' => '房间类型错误']);
         }
