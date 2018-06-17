@@ -673,7 +673,7 @@ class ChargeController extends Controller
                         array(
                             'result' => 2,
                             'payOrderId' => 'test' . mt_rand(10000, 90000),
-                            'amount' => number_format($recharge->points / 10, 2),
+                            'amount' => round($recharge->points / 10, 2),
                             'orderId' => $data['orderId'],
                             'complateTime' => date('Y-m-d H:i:s'),
                         )
