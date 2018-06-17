@@ -65,6 +65,15 @@ class One2OneRoomService extends Service
     public function getData(){
         return $this->room;
     }
+    public function getDataBykey($key)
+    {
+        if (!$ordMap = Redis::hget("hroom_duration:" . $this->rid . ":4", $key)) {
+            return [];
+        } else {
+            return $ordMap;
+        }
+
+    }
     public function checkPermission(){
         return !empty($this->room);
     }
