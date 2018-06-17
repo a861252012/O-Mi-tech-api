@@ -191,17 +191,6 @@ class LoginController extends Controller
             ];
         };
 
-        /**
-         * 记录最后的登录ip地址
-         */
-        $uid = $auth->id();
-        $login_ip = $this->request()->getClientIp();
-        $user = Users::query()->where('uid',$uid)->update([
-            'last_ip'=>$login_ip, // 最后登录ip TODO 大流量优化，目前没压力
-            'logined'=>date('Y-m-d H:i:s'),
-        ]);
-        //记录登录日志
-        $this->loginLog($uid, $login_ip, date('Y-m-d H:i:s'));
         return [
             'status' => 1,
             'msg' => '登录成功',
@@ -301,16 +290,6 @@ class LoginController extends Controller
     {
         $_encrypt_key = $this->container->config['config.WEB_SECRET_KEY'];
         return md5($username . $_encrypt_key);
-    }
-
-    //todo 增加scopes
-    public function loginLog($uid, $login_ip, $date)
-    {
-        return UserLoginLog::create([
-            'uid' => $uid,
-            'ip' => $login_ip,
-            'created_at' => $date,
-        ]);
     }
 
 
