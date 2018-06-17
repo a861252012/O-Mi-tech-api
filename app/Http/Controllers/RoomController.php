@@ -79,7 +79,8 @@ class RoomController extends Controller
             $logger->info('current_tid:' . $tid);
             switch ($tid) {
                 case 4:   //一对一房间
-                    $handle = $user ? $pwd_cmd . 'room_one_to_one' : 'login';
+//                    $handle = $user ? $pwd_cmd . 'room_one_to_one' : 'login';
+                    $handle = $user ? 'room_one_to_one' : 'login';
                     if (!$roomService->checkCanIn()) {
                         $one2one = $roomService->extend_room;
                         $result = $one2one;
@@ -102,7 +103,8 @@ class RoomController extends Controller
                     }
                     break;
                 case 6:   //时长房间
-                    $handle = $user ? $pwd_cmd . 'timecost' : 'login';
+//                    $handle = $user ? $pwd_cmd . 'timecost' : 'login';
+                    $handle = $user ? 'timecost' : 'login';
                     if (!$roomService->checkDuration()) {
                         return JsonResponse::create([
                             'status' => 0, 'data' => [
@@ -131,7 +133,8 @@ class RoomController extends Controller
 //                    }
 //                    break;
                 case 8: //一对多
-                    $handle = $user ? $pwd_cmd . 'room_one_to_many' : 'login';
+//                    $handle = $user ? $pwd_cmd . 'room_one_to_many' : 'login';
+                    $handle = $user ? 'room_one_to_many' : 'login';
                     if (!$roomService->whiteList()) {
                         if ($h5 === 'h5hls') {
                             return JsonResponse::create([
@@ -227,14 +230,10 @@ class RoomController extends Controller
     /*
      * 预约房间中间页逻辑
      */
-    protected function roommid($roomid = 0, $rid = 0, $id = 0)
+    public function roommid($roomid = 0, $rid = 0, $id = 0)
     {
         if (!$roomid || !$rid || !$id) {
             return JsonResponse::create(['status' => 0, 'mes' => '参数错误']);
-        }
-        $userId = Auth::id();
-        if (!$userId) {
-            return JsonResponse::create(['status' => 0, 'mes' => '请先登陆']);
         }
         switch ($rid) {
             //一对一
@@ -245,8 +244,9 @@ class RoomController extends Controller
 
                 if (empty($room)) {
                     return JsonResponse::create(['status' => 0, 'mes' => '此一对一房间没有可预约的场次']);
-                }else{
-                    $room=json_decode($room,true);
+                } else {
+                    $room = json_decode($room, true);
+                    $room['handle'] = 'room_one_to_one';
                 }
                 return JsonResponse::create(['status' => 1, 'data' => $room]);
             //一对多
@@ -259,9 +259,11 @@ class RoomController extends Controller
                 }
                 foreach ($rooms as $v) {
                     if ($v['id'] == $id) {
+                        $v['handle'] = 'room_one_to_many';
                         return JsonResponse::create(['status' => 1, 'data' => $v]);
                     }
                 }
+                
             default:
                 return JsonResponse::create(['status' => 0, 'mes' => '房间类型错误']);
         }
