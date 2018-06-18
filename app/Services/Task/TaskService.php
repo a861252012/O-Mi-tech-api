@@ -4,7 +4,7 @@ namespace App\Services\Task;
 use App\Models\TaskConf;
 use App\Models\Task;
 use App\Models\Goods;
-
+use App\Facades\SiteSer;
 use App\Services\Service;
 
 class TaskService extends Service
@@ -83,12 +83,13 @@ class TaskService extends Service
      */
     protected function  getTaskFromRedis()
     {
-        $task = $this->container->make('redis')->get('alltask');
+
+        $task = $this->container->make('redis')->get('alltask:'.SiteSer::siteId());
         if ($task) {
             return json_decode($task, true);
         } else {
             $list = Task::where('status', '0')->where('dml_flag', '!=', 3)->get();
-            $this->container->make('redis')->set('alltask', json_encode($list));//irwin
+            $this->container->make('redis')->set('alltask:'.SiteSer::siteId(), json_encode($list));//irwin
             return $list;
         }
     }

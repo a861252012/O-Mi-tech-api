@@ -14,7 +14,7 @@ use App\Models\Users;
 use App\Models\Recharge;
 use App\Models\Task;
 use App\Models\Messages;
-
+use App\Facades\SiteSer;
 use Illuminate\Container\Container;
 
 class ScriptBase
@@ -188,7 +188,7 @@ class ScriptBase
     protected function delTaskRedis()
     {
         $redis = $this->container->make('redis');
-        $task = $redis->del('alltask');
+        $task = $redis->del('alltask:'.SiteSer::siteId());
     }
 
     /**

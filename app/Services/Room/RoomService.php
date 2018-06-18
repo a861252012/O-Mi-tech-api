@@ -441,6 +441,16 @@ class RoomService extends Service
         if (!$this->checkActiveTime($start_time, $endtime, $temp_data)) return false;
         return true;
     }
+    public function  checkonlyone($start_time,$endtime){
+        $onetomore = RoomDuration::where('status', 0)->where('uid', Auth::id())->where(function ($query){
+            $query->where('starttime','>', date('Y-m-d H:i:s', time()))
+                ->orwhere('endtime','>', date('Y-m-d H:i:s', time()));
+        })
+            ->get()->toArray();
+
+        if(!empty($onetomore)) return false;
+        return true;
+    }
 
     function array_column_multi(array $input, array $column_keys)
     {
@@ -507,6 +517,10 @@ class RoomService extends Service
         $durationRoom->endtime = $endtime;
         $durationRoom->origin = $data['origin'];
         $durationRoom->site_id = SiteSer::siteId();
+
+        $isonly = $this->checkonlyone($start_time,$endtime);
+
+        if($isonly == false ) return ['status' => 0, 'msg' => '当前时间还有未开播或者正在开播的一对一'];
 
         if ($this->notSetRepeat($start_time, $endtime)) {
             $durationRoom->save();
