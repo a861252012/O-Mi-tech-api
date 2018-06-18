@@ -250,6 +250,8 @@ class RoomController extends Controller
                 return JsonResponse::create(['status' => 1, 'data' => $data, 'mes' => '您已经买过该场次房间']);
             }
         }
+        $redis = resolve('redis');
+        $userinfo = $redis->hgetall("huser_info:" . $roomid);
         switch ($rid) {
             //密码房
             case 2:
@@ -265,7 +267,6 @@ class RoomController extends Controller
                     //common
                     return JsonResponse::create(['status' => 0, 'data' => $data]);
                 } else {
-
                 }
             //一对一
             case 4:
@@ -280,9 +281,9 @@ class RoomController extends Controller
                     $room['handle'] = 'room_one_to_one';
                     $end_time = strtotime($room['starttime']) + $room['duration'];
                     $room['endtime'] = date('Y-m-d H:i:s', $end_time);
-                    $nickname = Users::where('uid', $roomid)->allSites()->pluck('nickname');
-                    if (!empty($nickname)) {
-                        $room['nickname'] = $nickname[0];
+//                    $nickname = Users::where('uid', $roomid)->allSites()->pluck('nickname');
+                    if (isset($userinfo['nickname'])) {
+                        $room['nickname'] = $userinfo['nickname'];
                     } else {
                         $room['nickname'] = '';
                     }
@@ -301,9 +302,9 @@ class RoomController extends Controller
                         $v['handle'] = 'room_one_to_many';
                         $v['origin'] = RoomOneToMore::query()->where('id', $id)->pluck('origin')[0];
                         $v['duration'] = strtotime($v['endtime']) - strtotime($v['starttime']);
-                        $nickname = Users::where('uid', $roomid)->allSites()->pluck('nickname');
-                        if (!empty($nickname)) {
-                            $v['nickname'] = $nickname[0];
+//                        $nickname = Users::where('uid', $roomid)->allSites()->pluck('nickname');
+                        if (isset($userinfo['nickname'])) {
+                            $v['nickname'] = $userinfo['nickname'];
                         } else {
                             $v['nickname'] = '';
                         }
