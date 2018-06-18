@@ -26,8 +26,8 @@ class RoomService extends Service
     public $tid = null;
     public $rid = null;
     public $current_tid = null;
-        public $uid = null; //当前登陆用户
-public $cur_login_uid = null;
+    public $uid = null; //当前登陆用户
+    public $cur_login_uid = null;
     public $rtmp_host = null;
     public $rtmp_port = null;
     public $channel_id = null;
@@ -54,7 +54,7 @@ public $cur_login_uid = null;
 
         $hktvKey = "hvediosKtv:$rid";
 
-        $str = "===addRoom rid===" . $rid . "===uid===" . $uid ;
+        $str = "===addRoom rid===" . $rid . "===uid===" . $uid;
         Log::channel('room')->info($str);
         //todo 后台申请主播有用到
         //todo set rtmp待测试后确定是否需要添加
@@ -108,8 +108,8 @@ public $cur_login_uid = null;
         /** @var \Redis $redis */
         $redis = $this->make('redis');
 
-        if($timeRoom = $this->getCurrentTimeRoomStatus()){
-            if($timeRoom==6){
+        if ($timeRoom = $this->getCurrentTimeRoomStatus()) {
+            if ($timeRoom == 6) {
                 if ($redis->exists("hroom_status:" . $this->rid . ":2") && $redis->hget("hroom_status:" . $this->rid . ":2", "status") == '1' && trim($redis->hget("hroom_status:" . $this->rid . ":2", "pwd")) != '') {
                     return $this->current_tid = 7;
                 }
@@ -117,8 +117,8 @@ public $cur_login_uid = null;
             }
         }
 
-       if($timeRoom = $this->getCurrentTimeRoomStatus()) {
-            if($timeRoom==8 || $timeRoom==4) {
+        if ($timeRoom = $this->getCurrentTimeRoomStatus()) {
+            if ($timeRoom == 8 || $timeRoom == 4) {
                 return $this->current_tid = $timeRoom;
             }
         }
@@ -128,17 +128,21 @@ public $cur_login_uid = null;
         return $this->current_tid = 1;
     }
 
-    public function getPasswordRoom(){
+    public function getPasswordRoom($rid = 0)
+    {
         /** @var \Redis $redis */
+        $rid = 0 == $rid ? $this->rid : $rid;
         $redis = $this->make('redis');
         //密码房
-        if ($redis->exists("hroom_status:" . $this->rid . ":2")
-            && $redis->hget("hroom_status:" . $this->rid . ":2", "status") == '1'
-            && trim($pwd = $redis->hget("hroom_status:" . $this->rid . ":2", "pwd")) != '')
+        if ($redis->exists("hroom_status:" . $rid . ":2")
+            && $redis->hget("hroom_status:" . $rid . ":2", "status") == '1'
+            && trim($pwd = $redis->hget("hroom_status:" . $rid . ":2", "pwd")) != '')
             return $pwd;
         return null;
     }
-    public function getDurationRoom(){
+
+    public function getDurationRoom()
+    {
         /** @var \Redis $redis */
         $redis = $this->make('redis');
         $key_duration = "hroom_status:" . $this->rid . ":6";
@@ -147,12 +151,13 @@ public $cur_login_uid = null;
             $timecost = $redis->hGetAll("htimecost:" . $this->rid);
             $duration = $redis->hGetAll($key_duration);
             if ($timecost["timecost_status"]) {
-                return array_merge($timecost,$duration);
+                return array_merge($timecost, $duration);
             }
         }
     }
 
-    public function  getCurrentTimeRoomStatus(){
+    public function getCurrentTimeRoomStatus()
+    {
         /** @var \Redis $redis */
         $redis = $this->make('redis');
         //一对一
@@ -200,8 +205,8 @@ public $cur_login_uid = null;
         $starttime = strtotime($ord['starttime']);
         $endtime = strtotime($ord['starttime']) + $ord['duration'];
 
-        if(time()< $starttime) return true;
-        if ($this->cur_login_uid == $ord['reuid'] ) return true;
+        if (time() < $starttime) return true;
+        if ($this->cur_login_uid == $ord['reuid']) return true;
 
         return false;
     }
@@ -227,12 +232,13 @@ public $cur_login_uid = null;
      * @author raby
      * @return bool
      */
-    public function checkPassword()
+    public function checkPassword($rid = 0)
     {
+        $rid = 0 == $rid ? $this->rid : $rid;
         $cookie_login_val = Session::getId();
 
         $redis = $this->make('redis');
-        $room_pass_key = "keys_room_passwd:" . $this->rid . ":" . $cookie_login_val;
+        $room_pass_key = "keys_room_passwd:" . $rid . ":" . $cookie_login_val;
 
         if (!$redis->exists($room_pass_key)) return false;         //没有密码
         return true;
@@ -317,8 +323,8 @@ public $cur_login_uid = null;
 
         if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return ['status' => 6, 'msg' => '不能设置过去的时间'];
         $beforthree = date('Y-m-d H:i:s', strtotime('3 hour', time()));
-      //  dd($beforthree<date("Y-m-d H:i:s", strtotime($start_time)));
-        if($beforthree<date("Y-m-d H:i:s", strtotime($start_time))) return ['status' => 7, 'msg' => '只能设置基于当前时间 3小时内的一对多房间'];
+        //  dd($beforthree<date("Y-m-d H:i:s", strtotime($start_time)));
+        if ($beforthree < date("Y-m-d H:i:s", strtotime($start_time))) return ['status' => 7, 'msg' => '只能设置基于当前时间 3小时内的一对多房间'];
         $endtime = date('Y-m-d H:i:s', strtotime($start_time) + $data['duration'] * 60);
 
         if (!$this->notSetRepeat($start_time, $endtime)) return ['status' => 2, 'msg' => '你这段时间和一对一或一对多有重复的房间'];
@@ -356,9 +362,9 @@ public $cur_login_uid = null;
                 }
             }
         }
-       /*   if (empty($uids)) {
-              return ['status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间'];
-          }*/
+        /*   if (empty($uids)) {
+               return ['status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间'];
+           }*/
 
 
         //$points = $room_config['timecost'];
@@ -390,7 +396,7 @@ public $cur_login_uid = null;
                 $temp['points'] = $data['points'];
                 $temp['uid'] = $v;
                 $temp['origin'] = $data['origin'];
-                $temp['site_id']  = SiteSer::siteId();
+                $temp['site_id'] = SiteSer::siteId();
                 array_push($insertArr, $temp);
             }
             DB::table('video_user_buy_one_to_more')->insert($insertArr);
@@ -449,7 +455,7 @@ public $cur_login_uid = null;
     /**
      * @param string $stime
      * @param string $etime
-     * @param array  $data
+     * @param array $data
      * @return bool false重叠 true不重叠
      */
     public function checkActiveTime($stime = '', $etime = '', $data = [])
@@ -499,7 +505,7 @@ public $cur_login_uid = null;
         $durationRoom->status = 0;
         $durationRoom->points = $data['points'];
         $durationRoom->endtime = $endtime;
-        $durationRoom->origin =  $data['origin'];
+        $durationRoom->origin = $data['origin'];
         $durationRoom->site_id = SiteSer::siteId();
 
         if ($this->notSetRepeat($start_time, $endtime)) {

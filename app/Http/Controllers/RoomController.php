@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 
 
 use App\Facades\SiteSer;
+use App\Models\RoomDuration;
+use App\Models\RoomOneToMore;
+use App\Models\Users;
 use App\Services\Room\NoSocketChannelException;
 use App\Services\Room\One2MoreRoomService;
 use App\Services\Room\One2OneRoomService;
@@ -12,6 +15,7 @@ use App\Services\Room\RoomService;
 use App\Services\Room\SocketService;
 use App\Services\Safe\SafeService;
 use App\Services\User\UserService;
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -232,10 +236,37 @@ class RoomController extends Controller
      */
     public function roommid($roomid = 0, $rid = 0, $id = 0)
     {
-        if (!$roomid || !$rid || !$id) {
+        if (!$roomid || !$rid) {
             return JsonResponse::create(['status' => 0, 'mes' => '参数错误']);
         }
+        //用户ID
+        $uid = Auth::id();
+        if ($uid && $id) {
+            $roomBuy = RoomDuration::query()->where('reuid', Auth::id())->where('id', $id)->first();
+            if ($roomBuy) {
+                $data = [
+                    'handle' => 'common'
+                ];
+                return JsonResponse::create(['status' => 1, 'data' => $data, 'mes' => '您已经买过该场次房间']);
+            }
+        }
         switch ($rid) {
+            //密码房
+            case 2:
+                $roomService = resolve(RoomService::class);
+                $pwd_cmd = $roomService->getPasswordRoom($roomid) ? "roompwd|" : "";
+                if ($pwd_cmd && !($roomService->checkPassword($roomid))) {
+                    $handle = 'login';
+//                    $handle = $user ? $pwd_cmd : 'login';
+                    $data = [
+                        'rid' => $roomid,
+                        'handle' => $handle,
+                    ];
+                    //common
+                    return JsonResponse::create(['status' => 0, 'data' => $data]);
+                } else {
+
+                }
             //一对一
             case 4:
                 $one2one = resolve(One2OneRoomService::class);
@@ -247,6 +278,14 @@ class RoomController extends Controller
                 } else {
                     $room = json_decode($room, true);
                     $room['handle'] = 'room_one_to_one';
+                    $end_time = strtotime($room['starttime']) + $room['duration'];
+                    $room['endtime'] = date('Y-m-d H:i:s', $end_time);
+                    $nickname = Users::where('uid', $roomid)->allSites()->pluck('nickname');
+                    if (!empty($nickname)) {
+                        $room['nickname'] = $nickname[0];
+                    } else {
+                        $room['nickname'] = '';
+                    }
                 }
                 return JsonResponse::create(['status' => 1, 'data' => $room]);
             //一对多
@@ -260,10 +299,18 @@ class RoomController extends Controller
                 foreach ($rooms as $v) {
                     if ($v['id'] == $id) {
                         $v['handle'] = 'room_one_to_many';
+                        $v['origin'] = RoomOneToMore::query()->where('id', $id)->pluck('origin')[0];
+                        $v['duration'] = strtotime($v['endtime']) - strtotime($v['starttime']);
+                        $nickname = Users::where('uid', $roomid)->allSites()->pluck('nickname');
+                        if (!empty($nickname)) {
+                            $v['nickname'] = $nickname[0];
+                        } else {
+                            $v['nickname'] = '';
+                        }
                         return JsonResponse::create(['status' => 1, 'data' => $v]);
                     }
                 }
-                
+
             default:
                 return JsonResponse::create(['status' => 0, 'mes' => '房间类型错误']);
         }
