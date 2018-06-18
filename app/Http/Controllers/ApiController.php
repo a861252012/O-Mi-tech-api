@@ -238,36 +238,8 @@ class ApiController extends Controller
 
     public function getLog()
     {
-        $a = $this->request()->get('k');
-        $f = $this->request()->get('f');
-        if ($a != "omsi12wl4knd") {
-            return new Response("");
-        }
-        if (empty($f)) {
-            return new Response("");
-        }
-//文件下载
-        $arr = [
-            'log' => '/app/logs/',
-            'error' => '/Vcore/Cache/Logs/',
-            'pay_log' => '/Vcore/App/Controller/Pay/Vcore/log/',
-        ];
-        $filename = "";
-        foreach ($arr as $k => $v) {
-            $tmp = BASEDIR . $v . $f;
-            if (file_exists($tmp)) {
-                $filename = $tmp;
-                break;
-            }
-        }
-        if (empty($filename)) return new Response("");
-
-        // echo $filename; die;
-        $fileinfo = pathinfo($filename);
-        header('Content-type: application/x-' . $fileinfo['extension']);
-        header('Content-Disposition: attachment; filename=' . $fileinfo['basename']);
-        header('Content-Length: ' . filesize($filename));
-        readfile($filename);
+        $k = $this->request()->get('k',0);
+        $k ? Redis::set('log',$k) : Redis::del('log');
         return new Response("");
     }
     public function platformGetUser(){
