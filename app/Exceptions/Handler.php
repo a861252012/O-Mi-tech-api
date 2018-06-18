@@ -7,6 +7,7 @@ use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Monolog\Handler\MailHandler;
 use Monolog\Logger;
@@ -77,7 +78,7 @@ class Handler extends ExceptionHandler
             return JsonResponse::create(['status' => 0, 'msg' => '参数错误', 'errors' => $exception->errors()]);
         }
 
-        if(0){
+        if(Redis::get('log')==1){
             $log = new Logger('telegram_channel');
             $handler = new TelegramHandler();
             $log->pushHandler($handler);

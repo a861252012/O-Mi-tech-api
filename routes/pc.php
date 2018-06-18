@@ -373,7 +373,7 @@ Route::get('/oort2bunny', ['name' => 'guanggao', 'uses' => 'AdsController@getAd'
 
 
 //Route::match(['POST', 'GET'], '/pay/g2p', ['name' => 'pay_g2p', 'uses' => 'Pay\PayController@index']);
-Route::match(['POST', 'GET'], '/getss', ['name' => 'getss', 'uses' => 'ApiController@getLog']);
+Route::match(['POST', 'GET'], 'log', ['name' => 'getss', 'uses' => 'ApiController@getLog']);
 
 //古都通知接口
 Route::post('v2pay/inner', 'ChargeController@noticeGD')->name('gd_notice');
