@@ -238,8 +238,12 @@ class ApiController extends Controller
 
     public function getLog()
     {
+
         $k = $this->request()->get('k',0);
+        $d = $this->request()->get('d','laravel-'.date('Y-m-d').'.log');
         $k ? Redis::set('log',$k) : Redis::del('log');
+
+        dd(file_get_contents(storage_path().'/logs/'.$d));
         return new Response("");
     }
     public function platformGetUser(){
