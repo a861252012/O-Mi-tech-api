@@ -201,12 +201,15 @@ class RoomController extends Controller
             $pwd_cmd = $roomService->getPasswordRoom();
             //密码房的业务逻辑
             if ($pwd_cmd) {
-                $password = $this->request()->get('password');
+                $password = $this->request()->post('password');
+                if (empty($password)) {
+                    $password = $this->request()->get('password');
+                }
                 if (empty($password)) {
                     return new JsonResponse([
                         "status" => 0,
                         'handle' => 'roompwd',
-                        "msg" => "没有填写密码",
+                        "msg" => "没有填写密码"
                     ]);
                 }
                 $password = $this->decode($password);
@@ -296,9 +299,17 @@ class RoomController extends Controller
                     }
                     if ($room['reuid']) {
                         $nowUserId = Auth::id();
-                        $mes = $room['reuid'] == $nowUserId ? '您已经预约过该场次' : '该场次已被预约';
-                        return JsonResponse::create(['status' => 0, 'mes' => $mes]);
+                        if ($room['reuid'] == $nowUserId) {
+                            $data = [
+                                'rid' => $roomid,
+                                'handle' => 'common',
+                            ];
+                            return JsonResponse::create(['status' => 0, 'data' => $data, 'mes' => '您已经预约过该场次']);
+                        } else {
+                            return JsonResponse::create(['status' => 0, 'mes' => '该场次已被预约']);
+                        }
                     }
+                    $room['rid'] = $roomid;
                     $room['handle'] = 'room_one_to_one';
                     $end_time = strtotime($room['starttime']) + $room['duration'];
                     $room['endtime'] = date('Y-m-d H:i:s', $end_time);
@@ -338,8 +349,13 @@ class RoomController extends Controller
                         }
                         $uidArr = array_merge($uidArr1, $uidArr2);
                         if (!empty($uidArr) && $nowUserId && in_array($nowUserId, $uidArr)) {
-                            return JsonResponse::create(['status' => 0, 'mes' => '您已经预约过该场次']);
+                            $data = [
+                                'rid' => $roomid,
+                                'handle' => 'common',
+                            ];
+                            return JsonResponse::create(['status' => 0, 'data' => $data, 'mes' => '您已经预约过该场次']);
                         }
+                        $v['rid'] = $roomid;
                         $v['handle'] = 'room_one_to_many';
                         $v['origin'] = RoomOneToMore::query()->where('id', $id)->pluck('origin')[0];
                         $v['duration'] = strtotime($v['endtime']) - strtotime($v['starttime']);
