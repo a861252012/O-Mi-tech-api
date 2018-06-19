@@ -27,57 +27,69 @@ class One2OneRoomService extends Service
 
     public function __construct(Request $request)
     {
-        $this->rid = $request->get('rid',isset($request->rid)?$request->rid:0);
+        $this->rid = $request->get('rid', isset($request->rid) ? $request->rid : 0);
         $this->key_room_status = "hroom_status:" . $this->rid . ":4";
         $this->room = $this->_getData();
         parent::__construct();
 
     }
 
-    public function set($rid=0){
+    public function set($rid = 0)
+    {
         $this->rid = $rid;
         $this->key_room_status = "hroom_status:" . $this->rid . ":4";
         $this->room = $this->_getData();
     }
-    public function checkRunning(){
+
+    public function checkRunning()
+    {
         return !empty($this->getRunningData());
     }
-    public function getRunningDatas(){
+
+    public function getRunningDatas()
+    {
         $data = $this->getData();
 
-        foreach ($data as $k=>$ord){
+        foreach ($data as $k => $ord) {
             $starttime = strtotime($ord['starttime']);
             $endtime = $starttime + $ord['duration'];
             return $ord;
         }
         return [];
     }
-    public function getRunningData(){
+
+    public function getRunningData()
+    {
         $data = $this->getData();
 
-        foreach ($data as $k=>$ord){
+        foreach ($data as $k => $ord) {
             $starttime = strtotime($ord['starttime']);
             $endtime = $starttime + $ord['duration'];
-            if ($this->doing($starttime,$endtime)) return $ord;
+            if ($this->doing($starttime, $endtime)) return $ord;
         }
         return [];
     }
-    public function getData(){
+
+    public function getData()
+    {
         return $this->room;
     }
+
     public function getDataBykey($key)
     {
-        if (!$ordMap = Redis::hget("hroom_duration:" . $this->rid . ":4", $key)) {
-            return [];
-        } else {
-            return $ordMap;
+        $oneTooneRoomJson = Redis::hget("hroom_duration:" . $this->rid . ":4", $key);
+        if ($oneTooneRoomJson) {
+            return json_decode($oneTooneRoomJson, true);
         }
-
+        return [];
     }
-    public function checkPermission(){
+
+    public function checkPermission()
+    {
         return !empty($this->room);
     }
-    public function getHomeBookList($flashVersion) : array
+
+    public function getHomeBookList($flashVersion): array
     {
         $ordRooms = Redis::get('home_ord_' . $flashVersion);
         $ordRooms = str_replace(['cb(', ');'], ['', ''], $ordRooms);
@@ -85,29 +97,34 @@ class One2OneRoomService extends Service
     }
 
 
-    public function _checkPermission(){
-        return Redis::exists($this->key_room_status)&& Redis::hget($this->key_room_status, "status") == '1';
+    public function _checkPermission()
+    {
+        return Redis::exists($this->key_room_status) && Redis::hget($this->key_room_status, "status") == '1';
     }
-    private function _getData(){
-        if(!$this->_checkPermission()) return [];
 
-        if(!$ordMap = Redis::hgetall("hroom_duration:" . $this->rid . ":4")) return [];
+    private function _getData()
+    {
+        if (!$this->_checkPermission()) return [];
+
+        if (!$ordMap = Redis::hgetall("hroom_duration:" . $this->rid . ":4")) return [];
 
         $resault = [];
         foreach ($ordMap as $k => $v) {
             $ord = json_decode($v, true);
             if (!$ord || $ord['status'] != 0) continue;
-            array_push($resault,$ord);
+            array_push($resault, $ord);
         }
         $this->room = $resault;
         return $resault;
     }
 
-    public function checkUserBuyRunning($uid){
+    public function checkUserBuyRunning($uid)
+    {
         return !empty($this->getUserBuyRunningData($uid));
     }
 
-    public function getUserBuyRunningData($uid){
+    public function getUserBuyRunningData($uid)
+    {
         $ord = $this->getRunningData();
         if ($ord['reuid'] == 0) return [];
 
@@ -117,7 +134,8 @@ class One2OneRoomService extends Service
         return [];
     }
 
-    public function doing($starttime,$endtime){
+    public function doing($starttime, $endtime)
+    {
         return time() >= $starttime && time() <= $endtime;
     }
 }

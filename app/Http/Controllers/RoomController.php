@@ -78,8 +78,6 @@ class RoomController extends Controller
 
         if (!$this->isHost($rid)) {   //不是主播自己进自己房间
             $tid = $roomService->getCurrentTimeRoomStatus();
-
-            $pwd_cmd = $roomService->getPasswordRoom() ? "roompwd|" : "";
             $logger->info('current_tid:' . $tid);
             switch ($tid) {
                 case 4:   //一对一房间
@@ -191,13 +189,34 @@ class RoomController extends Controller
                     ;
             }
 
-            if ($pwd_cmd && !($roomService->checkPassword())) {
-                $handle = $user ? $pwd_cmd : 'login';
-                $data = [
-                    'rid' => $rid,
-                    'handle' => $handle,
-                ];
-                return JsonResponse::create(['status' => 0, 'data' => $data]);
+//            if ($pwd_cmd && !($roomService->checkPassword())) {
+//                $handle = $user ? $pwd_cmd : 'login';
+//                $data = [
+//                    'rid' => $rid,
+//                    'handle' => $handle,
+//                ];
+//                return JsonResponse::create(['status' => 0, 'data' => $data]);
+//            }
+            /*经clack确认密码房间密码验证不需要5次错误增加验证码逻辑，直接在房间接口处理*/
+            $pwd_cmd = $roomService->getPasswordRoom();
+            //密码房的业务逻辑
+            if ($pwd_cmd) {
+                $password = $this->request()->get('password');
+                if (empty($password)) {
+                    return new JsonResponse([
+                        "status" => 0,
+                        'handle' => 'roompwd',
+                        "msg" => "没有填写密码",
+                    ]);
+                }
+                $password = $this->decode($password);
+                if ($pwd_cmd != $password) {
+                    return new JsonResponse([
+                        "status" => 0,
+                        'handle' => 'roompwd',
+                        "msg" => "密码不正确",
+                    ]);
+                }
             }
         }
         $channel_id = $chatServer['id'];
@@ -239,51 +258,52 @@ class RoomController extends Controller
         if (!$roomid || !$rid) {
             return JsonResponse::create(['status' => 0, 'mes' => '参数错误']);
         }
-        //用户ID
-        $uid = Auth::id();
-        if ($uid && $id) {
-            $roomBuy = RoomDuration::query()->where('reuid', Auth::id())->where('id', $id)->first();
-            if ($roomBuy) {
-                $data = [
-                    'handle' => 'common'
-                ];
-                return JsonResponse::create(['status' => 1, 'data' => $data, 'mes' => '您已经买过该场次房间']);
-            }
-        }
-        $redis = resolve('redis');
-        $userinfo = $redis->hgetall("huser_info:" . $roomid);
         switch ($rid) {
             //密码房
             case 2:
                 $roomService = resolve(RoomService::class);
-                $pwd_cmd = $roomService->getPasswordRoom($roomid) ? "roompwd|" : "";
-                if ($pwd_cmd && !($roomService->checkPassword($roomid))) {
-                    $handle = 'login';
-//                    $handle = $user ? $pwd_cmd : 'login';
+                $pwd_cmd = $roomService->getPasswordRoom($roomid);
+                if (null == $pwd_cmd) {
                     $data = [
                         'rid' => $roomid,
-                        'handle' => $handle,
+                        'handle' => 'common',
                     ];
-                    //common
-                    return JsonResponse::create(['status' => 0, 'data' => $data]);
+                    return JsonResponse::create(['status' => 0, 'data' => $data, 'mes' => '密码房不存在']);
                 } else {
+                    $data = [
+                        'rid' => $roomid,
+                        'handle' => 'roompwd',
+                    ];
+                    return JsonResponse::create(['status' => 1, 'data' => $data]);
                 }
+//                $roomService->checkPassword($roomid);
             //一对一
             case 4:
+                if (!$id) {
+                    return JsonResponse::create(['status' => 0, 'mes' => '一对一缺少场次id信息']);
+                }
+                $redis = resolve('redis');
+                $hostinfo = $redis->hgetall("huser_info:" . $roomid);
                 $one2one = resolve(One2OneRoomService::class);
                 $one2one->set($roomid);
                 $room = $one2one->getDataBykey($id);
 
                 if (empty($room)) {
-                    return JsonResponse::create(['status' => 0, 'mes' => '此一对一房间没有可预约的场次']);
+                    return JsonResponse::create(['status' => 0, 'mes' => '此一对一房间' . $id . '号场次不存在']);
                 } else {
-                    $room = json_decode($room, true);
+                    if (strtotime($room['starttime']) + $room['duration'] < time()) {
+                        return JsonResponse::create(['status' => 0, 'mes' => '该场次已经结束']);
+                    }
+                    if ($room['reuid']) {
+                        $nowUserId = Auth::id();
+                        $mes = $room['reuid'] == $nowUserId ? '您已经预约过该场次' : '该场次已被预约';
+                        return JsonResponse::create(['status' => 0, 'mes' => $mes]);
+                    }
                     $room['handle'] = 'room_one_to_one';
                     $end_time = strtotime($room['starttime']) + $room['duration'];
                     $room['endtime'] = date('Y-m-d H:i:s', $end_time);
-//                    $nickname = Users::where('uid', $roomid)->allSites()->pluck('nickname');
-                    if (isset($userinfo['nickname'])) {
-                        $room['nickname'] = $userinfo['nickname'];
+                    if (isset($hostinfo['nickname'])) {
+                        $room['nickname'] = $hostinfo['nickname'];
                     } else {
                         $room['nickname'] = '';
                     }
@@ -291,20 +311,40 @@ class RoomController extends Controller
                 return JsonResponse::create(['status' => 1, 'data' => $room]);
             //一对多
             case 7:
+                if (!$id) {
+                    return JsonResponse::create(['status' => 0, 'mes' => '一对多缺少场次id信息']);
+                }
+                $redis = resolve('redis');
+                $hostinfo = $redis->hgetall("huser_info:" . $roomid);
                 $one2more = resolve(One2MoreRoomService::class);
                 $one2more->set($roomid);
                 $rooms = $one2more->getData();
                 if (empty($rooms)) {
-                    return JsonResponse::create(['status' => 0, 'mes' => '此一对多房间没有可预约的场次']);
+                    return JsonResponse::create(['status' => 0, 'mes' => '此一对多房间没有开任何场次']);
                 }
+                $nowUserId = Auth::id();
                 foreach ($rooms as $v) {
                     if ($v['id'] == $id) {
+                        if (strtotime($v['endtime']) < time()) {
+                            return JsonResponse::create(['status' => 0, 'mes' => '该场次已经结束']);
+                        }
+                        $uidArr1 = [];
+                        $uidArr2 = [];
+                        if (!empty($v['uids'])) {
+                            $uidArr1 = explode(',', $v['uids']);
+                        }
+                        if (!empty($v['tickets'])) {
+                            $uidArr2 = explode(',', $v['tickets']);
+                        }
+                        $uidArr = array_merge($uidArr1, $uidArr2);
+                        if (!empty($uidArr) && $nowUserId && in_array($nowUserId, $uidArr)) {
+                            return JsonResponse::create(['status' => 0, 'mes' => '您已经预约过该场次']);
+                        }
                         $v['handle'] = 'room_one_to_many';
                         $v['origin'] = RoomOneToMore::query()->where('id', $id)->pluck('origin')[0];
                         $v['duration'] = strtotime($v['endtime']) - strtotime($v['starttime']);
-//                        $nickname = Users::where('uid', $roomid)->allSites()->pluck('nickname');
-                        if (isset($userinfo['nickname'])) {
-                            $v['nickname'] = $userinfo['nickname'];
+                        if (isset($hostinfo['nickname'])) {
+                            $v['nickname'] = $hostinfo['nickname'];
                         } else {
                             $v['nickname'] = '';
                         }
