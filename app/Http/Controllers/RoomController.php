@@ -201,23 +201,15 @@ class RoomController extends Controller
             $pwd_cmd = $roomService->getPasswordRoom();
             //密码房的业务逻辑
             if ($pwd_cmd) {
-                $password = $this->request()->post('password');
-                if (empty($password)) {
-                    $password = $this->request()->get('password');
-                }
-                if (empty($password)) {
+                $password = $this->request()->input('password');
+                if (empty($password) || $pwd_cmd != $this->decode($password)) {
                     return new JsonResponse([
-                        "status" => 0,
-                        'handle' => 'roompwd',
-                        "msg" => "没有填写密码"
-                    ]);
-                }
-                $password = $this->decode($password);
-                if ($pwd_cmd != $password) {
-                    return new JsonResponse([
-                        "status" => 0,
-                        'handle' => 'roompwd',
-                        "msg" => "密码不正确",
+                        'status' => 0,
+                        'data' => [
+                            'rid' => $rid,
+                            'handle' => 'roompwd'
+                        ],
+                        'msg' => "密码不正确",
                     ]);
                 }
             }
@@ -253,13 +245,18 @@ class RoomController extends Controller
         return JsonResponse::create(['data' => $data]);
     }
 
-    /*
-     * 预约房间中间页逻辑
+
+    /**
+     * 直播间中间页
+     * @param int $roomid 房间ID
+     * @param int $rid 房间类型
+     * @param int $id 场次ID
+     * @return static JsonResponse
      */
     public function roommid($roomid = 0, $rid = 0, $id = 0)
     {
         if (!$roomid || !$rid) {
-            return JsonResponse::create(['status' => 0, 'mes' => '参数错误']);
+            return JsonResponse::create(['status' => 0, 'msg' => '参数错误']);
         }
         switch ($rid) {
             //密码房
@@ -271,7 +268,7 @@ class RoomController extends Controller
                         'rid' => $roomid,
                         'handle' => 'common',
                     ];
-                    return JsonResponse::create(['status' => 0, 'data' => $data, 'mes' => '密码房不存在']);
+                    return JsonResponse::create(['status' => 0, 'data' => $data, 'msg' => '密码房不存在']);
                 } else {
                     $data = [
                         'rid' => $roomid,
@@ -283,7 +280,7 @@ class RoomController extends Controller
             //一对一
             case 4:
                 if (!$id) {
-                    return JsonResponse::create(['status' => 0, 'mes' => '一对一缺少场次id信息']);
+                    return JsonResponse::create(['status' => 0, 'msg' => '一对一缺少场次id信息']);
                 }
                 $redis = resolve('redis');
                 $hostinfo = $redis->hgetall("huser_info:" . $roomid);
@@ -292,10 +289,10 @@ class RoomController extends Controller
                 $room = $one2one->getDataBykey($id);
 
                 if (empty($room)) {
-                    return JsonResponse::create(['status' => 0, 'mes' => '此一对一房间' . $id . '号场次不存在']);
+                    return JsonResponse::create(['status' => 0, 'msg' => '此一对一房间场次不存在']);
                 } else {
                     if (strtotime($room['starttime']) + $room['duration'] < time()) {
-                        return JsonResponse::create(['status' => 0, 'mes' => '该场次已经结束']);
+                        return JsonResponse::create(['status' => 0, 'msg' => '该场次已经结束']);
                     }
                     if ($room['reuid']) {
                         $nowUserId = Auth::id();
@@ -304,9 +301,9 @@ class RoomController extends Controller
                                 'rid' => $roomid,
                                 'handle' => 'common',
                             ];
-                            return JsonResponse::create(['status' => 0, 'data' => $data, 'mes' => '您已经预约过该场次']);
+                            return JsonResponse::create(['status' => 1, 'data' => $data, 'msg' => '您已经预约过该场次']);
                         } else {
-                            return JsonResponse::create(['status' => 0, 'mes' => '该场次已被预约']);
+                            return JsonResponse::create(['status' => 0, 'msg' => '该场次已被预约']);
                         }
                     }
                     $room['rid'] = $roomid;
@@ -323,7 +320,7 @@ class RoomController extends Controller
             //一对多
             case 7:
                 if (!$id) {
-                    return JsonResponse::create(['status' => 0, 'mes' => '一对多缺少场次id信息']);
+                    return JsonResponse::create(['status' => 0, 'msg' => '一对多缺少场次id信息']);
                 }
                 $redis = resolve('redis');
                 $hostinfo = $redis->hgetall("huser_info:" . $roomid);
@@ -331,13 +328,13 @@ class RoomController extends Controller
                 $one2more->set($roomid);
                 $rooms = $one2more->getData();
                 if (empty($rooms)) {
-                    return JsonResponse::create(['status' => 0, 'mes' => '此一对多房间没有开任何场次']);
+                    return JsonResponse::create(['status' => 0, 'msg' => '此一对多房间没有开任何场次']);
                 }
                 $nowUserId = Auth::id();
                 foreach ($rooms as $v) {
                     if ($v['id'] == $id) {
                         if (strtotime($v['endtime']) < time()) {
-                            return JsonResponse::create(['status' => 0, 'mes' => '该场次已经结束']);
+                            return JsonResponse::create(['status' => 0, 'msg' => '该场次已经结束']);
                         }
                         $uidArr1 = [];
                         $uidArr2 = [];
@@ -353,11 +350,16 @@ class RoomController extends Controller
                                 'rid' => $roomid,
                                 'handle' => 'common',
                             ];
-                            return JsonResponse::create(['status' => 0, 'data' => $data, 'mes' => '您已经预约过该场次']);
+                            return JsonResponse::create(['status' => 1, 'data' => $data, 'msg' => '您已经预约过该场次']);
                         }
                         $v['rid'] = $roomid;
                         $v['handle'] = 'room_one_to_many';
-                        $v['origin'] = RoomOneToMore::query()->where('id', $id)->pluck('origin')[0];
+                        $origin = RoomOneToMore::query()->where('id', $id)->pluck('origin');
+                        if (!empty($origin)) {
+                            $v['origin'] = $origin[0];
+                        } else {
+                            $v['origin'] = 12;
+                        }
                         $v['duration'] = strtotime($v['endtime']) - strtotime($v['starttime']);
                         if (isset($hostinfo['nickname'])) {
                             $v['nickname'] = $hostinfo['nickname'];
@@ -369,7 +371,7 @@ class RoomController extends Controller
                 }
 
             default:
-                return JsonResponse::create(['status' => 0, 'mes' => '房间类型错误']);
+                return JsonResponse::create(['status' => 0, 'msg' => '房间类型错误']);
         }
 
     }
