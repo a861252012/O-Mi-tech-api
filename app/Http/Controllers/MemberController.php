@@ -251,14 +251,14 @@ class MemberController extends Controller
             return new JsonResponse(['status' => 0, 'msg' => '交易密码错误']);
         }
 
-        if ($username == $user['username']) return new JsonResponse(['status' => 0, 'msg' => '不能转给自己!']);
+        if ($username == $user['username'] || $username == $user['uid'] ) return new JsonResponse(['status' => 0, 'msg' => '不能转给自己!']);
 
         if (intval($points) < 1) return new JsonResponse(['status' => 0, 'msg' => '转帐金额错误!']);
 
         //获取转到用户信息
-        $userTo = resolve(UserService::class)->getUserByUsername($username);
+        $userTo = (array)DB::table((new Users)->getTable())->where('username', $username)->first();
         if (!$userTo) {
-            $userTo = resolve(UserService::class)->getUserByUid($username);
+            $userTo = (array)DB::table((new Users)->getTable())->where('uid', $username)->first();
         }
 
         if (!$userTo) return new JsonResponse(['status' => 0, 'msg' => '对不起！该用户不存在']);
@@ -284,12 +284,12 @@ class MemberController extends Controller
 
 
             //发送成功消息给转帐人
-            $from_user_transfer_message = ['mail_type' => 3, 'rec_uid' => $uid, 'content' => '您成功转出' . $points . '钻石到 ' . $username . ' 帐户'];
-            resolve(MessageService::class)->sendSystemToUsersMessage($from_user_transfer_message);
+            $from_user_transfer_message = ['mail_type' => 3, 'rec_uid' => $uid, 'content' => '您成功转出' . $points . '钻石到 ' . $username . ' 帐户','site_id'=>$user['site_id']];
+            resolve(MessageService::class)->sendSystemtranslate($from_user_transfer_message);
 
             //发送成功消息给收帐人
-            $to_user_transfer_message = ['mail_type' => 3, 'rec_uid' => $userTo['uid'], 'content' => '您成功收到由 "' . $user['nickname'] . '" 转到您帐户' . $points . '钻石'];
-            resolve(MessageService::class)->sendSystemToUsersMessage($to_user_transfer_message);
+            $to_user_transfer_message = ['mail_type' => 3, 'rec_uid' => $userTo['uid'], 'content' => '您成功收到由 "' . $user['nickname'] . '" 转到您帐户' . $points . '钻石', 'site_id'=>$userTo['site_id']];
+            resolve(MessageService::class)->sendSystemtranslate($to_user_transfer_message);
 
             DB::commit();//事务提交
 

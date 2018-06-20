@@ -1345,7 +1345,7 @@ class Controller extends BaseController
         if ($log) {
             $startTime = strtotime($log->end_time) - 30 * 24 * 60 * 60;
         } else {
-            $startTime = date('Y-m-d H:i:s');
+            $startTime = time();
         }
 
 

@@ -72,6 +72,24 @@ class MessageService extends Service
         return DB::table('video_mail')->insertGetId($data);
     }
 
+    public function sendSystemtranslate($data = [])
+    {
+        if (!isset($data['rec_uid']) || !isset($data['content'])) {
+            throw new \Exception('Content and rec_uid can not empty for send system message!');
+        }
+        // 系统默认用户0
+        if (!isset($data['send_uid'])) {
+            $data['send_uid'] = 0;
+        }
+
+        // 系统消息 1
+        if (!isset($data['category'])) {
+            $data['category'] = self::USER_MESSAGE;
+        }
+        $data['created'] = date('Y-m-d H:i:s');
+        return DB::table('video_mail')->insertGetId($data);
+    }
+
     /**
      * 根据用户id获取所有的消息数据 分页
      *
