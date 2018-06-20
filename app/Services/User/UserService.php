@@ -241,7 +241,7 @@ class UserService extends Service
         if (!$uid || !is_numeric($uid)) {
             throw new Exception('Please make sure $uid is a numeric');
         }
-        $user = Users::find($uid);
+        $user = Users::query()->where('uid',$uid)->allSites()->first();
         if (!$user) {
             return false;
         }
