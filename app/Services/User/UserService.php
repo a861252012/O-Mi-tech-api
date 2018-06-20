@@ -190,10 +190,32 @@ class UserService extends Service
         $hashtable = static::KEY_USER_INFO . $uid;
 
         if ($this->redis->Hexists($hashtable, 'uid')) {
-            $user = (new Users())->setRawAttributes($this->redis->hgetall($hashtable),true);
+            $arr = $this->redis->hgetall($hashtable);
+            $userArr =  $arr['site_id'] == SiteSer::siteId() ? $arr : [];
+            $user = (new Users())->setRawAttributes($userArr,true);
             $user->exists=true;
         } else {
             $user = Users::find($uid);
+            if ($user&&$user->exists) {
+                $this->redis->hmset($hashtable, $user->toArray());
+            }
+        }
+        return $this->user = $user;
+    }
+
+    public function getUserByUidAllSite($uid)
+    {
+        if (!$uid || !is_numeric($uid)) {
+            return null;
+        }
+        $hashtable = static::KEY_USER_INFO . $uid;
+
+        if ($this->redis->Hexists($hashtable, 'uid')) {
+            $arr = $this->redis->hgetall($hashtable);
+            $user = (new Users())->setRawAttributes($arr,true);
+            $user->exists=true;
+        } else {
+            $user = Users::query()->where('uid',$uid)->allSites()->first();
             if ($user&&$user->exists) {
                 $this->redis->hmset($hashtable, $user->toArray());
             }
