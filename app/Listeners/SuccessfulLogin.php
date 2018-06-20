@@ -46,7 +46,7 @@ class SuccessfulLogin
         $this->loginLog($uid, $login_ip, date('Y-m-d H:i:s'));
 
        // Log::info("test event:".$user->toJson());
-        echo "1111";
+
     }
 
     //todo 增加scopes

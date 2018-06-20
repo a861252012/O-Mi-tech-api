@@ -388,7 +388,7 @@ class IndexController extends Controller
         if ($uid) {
             $oneToMore = UserBuyOneToMore::where('uid', $uid)->orderBy('starttime', 'desc')->get();//@TODO 时间过滤
             if (!empty($oneToMore)) {
-                $oneManyRooms = Redis::get('home_one_many_' . $flashVersion);
+                $oneManyRooms = Redis::get('home_one_many_' . $flashVersion.':'.SiteSer::siteId());
                 $oneManyRooms = str_replace(['cb(', ');'], ['', ''], $oneManyRooms);
                 $oneManyRooms = json_decode($oneManyRooms, true);
                 $rooms = $oneManyRooms['rooms'];//考虑做个redis的配置

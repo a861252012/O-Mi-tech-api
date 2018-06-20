@@ -203,11 +203,11 @@ class BusinessController extends Controller
                     break;
 
                 case '1':
-                    $Message = '你之前的主播身份已被取消，现重新提交申请成功，请等待审核';
+                    $Message = '你之前的主播身份已被取消，现在重新提交申请成功，请等待审核';
                     break;
 
                 case '2':
-                    $Message = '你之前的申请已被驳回，现重重新提交申请，请等待审核！';
+                    $Message = '你之前的申请已被驳回，现在重新提交申请，请等待审核！';
                     break;
             }
 

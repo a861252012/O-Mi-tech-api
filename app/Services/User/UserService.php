@@ -432,7 +432,7 @@ class UserService extends Service
                 'roled' => $user->roled,
                 'lv_exp' => $user->lv_exp,
                 'lv_rich' => $user->lv_rich,
-                'cover' => $user->cover,
+                'cover' => $user->cover?$user->cover:'',
                 'fid' => $uid,
             ]);
         }

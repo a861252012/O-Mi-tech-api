@@ -142,6 +142,7 @@ class MobileController extends Controller
             'status' => 1,
             'data'=>[
                 'uid' => $userinfo->uid,
+                'username'=>$userinfo->username,
                 'nickname' => $userinfo->nickname,
                 'headimg' => $this->getHeadimg($userinfo->headimg),
                 'points' => $userinfo->points,
