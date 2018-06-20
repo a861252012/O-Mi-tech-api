@@ -51,7 +51,7 @@ class IndexController extends Controller
         switch ($type) {
 
             case 'rank':
-                $list = Redis::get('home_js_data_' . $flashVer.':'.SiteSer::siteId());
+                $list = Redis::get('home_js_data_' . $flashVer . ':' . SiteSer::siteId());
                 $list = str_replace(['cb(', ');'], ['', ''], $list);
                 break;
 
@@ -87,7 +87,7 @@ class IndexController extends Controller
         }
 
 //        $list = json_decode($list, true);
-        return JsonResponse::create(['data'=>json_decode($list?:'{}')]);
+        return JsonResponse::create(['data' => json_decode($list ?: '{}')]);
     }
 
     public function registerAction()
@@ -216,7 +216,7 @@ class IndexController extends Controller
             $msg1 = '恭喜该邮箱可以使用。';
             $userArr = [];
             $userArr = explode("@", $username);
-            if (Redis::hExists('husername_to_id:'.SiteSer::siteId(), (count($userArr) == 2) ? $userArr[0] . "@" . strtolower($userArr[1]) : $username)) {
+            if (Redis::hExists('husername_to_id:' . SiteSer::siteId(), (count($userArr) == 2) ? $userArr[0] . "@" . strtolower($userArr[1]) : $username)) {
                 return new Response(json_encode([
                     'msg' => $msg0,
                     'data' => 0,
@@ -285,9 +285,9 @@ class IndexController extends Controller
         $uid = Auth::id();
         $ads = Redis::hget('img_cache', 1);
         $ads = json_decode($ads, true);
-       //公告
+        //公告
         $notice = array();
-        $notice = $this->make('redis')->hgetAll('system_notices:'.SiteSer::siteId());
+        $notice = $this->make('redis')->hgetAll('system_notices:' . SiteSer::siteId());
 
         $slider = [];
         if ($ads) {
@@ -355,31 +355,53 @@ class IndexController extends Controller
             }
         }
 
+
         // 获取我的预约的房间
         $myres = [];
         if ($uid) {
-            $myReservation = RoomDuration::where('reuid', $uid)
-                ->where('starttime', '>', date('Y-m-d H:i:s', time() - 3600))
+            $myReservation = RoomDuration::with('anchor')->where('reuid', $uid)
+                ->where('endtime', '>', date('Y-m-d H:i:s', time()))
                 ->orderBy('starttime', 'desc')
                 ->get();
-
+//            print_r($myReservation);
+//            if (!empty($myReservation)) {
+//                // 从redis 获取一对一预约数据
+//                $ordRooms = Redis::get('home_ord_' . $flashVersion);
+//                $ordRooms = str_replace(['cb(', ');'], ['', ''], $ordRooms);
+//                $ordRooms = json_decode($ordRooms, true);
+//                $rooms = empty($ordRooms['rooms']) ? [] : $ordRooms['rooms'];//考虑做个redis的配置
+//
+//                foreach ($myReservation as $item) {
+//                    foreach ($rooms as $room) {
+//                        if (($item->starttime) > date('Y-m-d H:i:s', time() - ($item->duration))) {
+//                            if ($item->uid == $room['rid'] && $item->id == $room['id']) {
+//                                $room['listType'] = 'myres';
+//                                $myres[] = $room;
+//                            }
+//                        }
+//                    }
+//                }
+//            }
             if (!empty($myReservation)) {
-                // 从redis 获取一对一预约数据
-                $ordRooms = Redis::get('home_ord_' . $flashVersion);
-                $ordRooms = str_replace(['cb(', ');'], ['', ''], $ordRooms);
-                $ordRooms = json_decode($ordRooms, true);
-                $rooms = empty($ordRooms['rooms']) ? [] : $ordRooms['rooms'];//考虑做个redis的配置
-
                 foreach ($myReservation as $item) {
-                    foreach ($rooms as $room) {
-                        if (($item->starttime) > date('Y-m-d H:i:s', time() - ($item->duration))) {
-                            if ($item->uid == $room['rid'] && $item->id == $room['id']) {
-                                $room['listType'] = 'myres';
-                                $myres[] = $room;
-                            }
-                        }
-                    }
+                    $roomInfo = Redis::hgetall('hvediosKtv:' . $item->uid);
+//                    $room['listType'] = 'myres';
+                    $room['id'] = $item->id;
+                    $room['rid'] = $item->uid;
+                    $room['tid'] = 4;
+                    $room['nickname'] = $item->anchor->nickname;
+                    $room['cover'] = $item->anchor->cover;
+                    $room['start_time'] = $item->starttime;
+                    $room['end_time'] = $item->endtime;
+                    $room['duration'] = $item->duration;
+                    $room['one_to_one_status'] = 1;
+                    $room['origin'] = $item->origin;
+                    $room['new_user'] = intval(Redis::hget('huser_icon:' . $item->uid, 'new_user'));
+                    $room['live_status'] = isset($roomInfo['status']) ? intval($roomInfo['status']) : 0;
+                    $room['top'] = isset($roomInfo['top']) ? intval($roomInfo['top']) : 0;
+                    $myres[] = $room;
                 }
+
             }
         }
 
@@ -388,17 +410,28 @@ class IndexController extends Controller
         if ($uid) {
             $oneToMore = UserBuyOneToMore::where('uid', $uid)->orderBy('starttime', 'desc')->get();//@TODO 时间过滤
             if (!empty($oneToMore)) {
-                $oneManyRooms = Redis::get('home_one_many_' . $flashVersion.':'.SiteSer::siteId());
+                $oneManyRooms = Redis::get('home_one_many_' . $flashVersion . ':' . SiteSer::siteId());
                 $oneManyRooms = str_replace(['cb(', ');'], ['', ''], $oneManyRooms);
                 $oneManyRooms = json_decode($oneManyRooms, true);
                 $rooms = $oneManyRooms['rooms'];//考虑做个redis的配置
                 if ($rooms) {
                     foreach ($oneToMore as $item) {
-                        foreach ($rooms as $room) {
-                            if ($item->rid == $room['uid'] && $item->onetomore == $room['id']) {
-                                $room['listType'] = 'myticket';
-                                //$room['tid'] = 1;
-                                //$room['live_time'] = $room['start_time'];
+                        foreach ($rooms as $roomp) {
+                            if ($item->rid == $roomp['uid'] && $item->onetomore == $roomp['id']) {
+//                                $room['listType'] = 'myticket';
+                                $room['id'] = $roomp['id'];
+                                $room['rid'] = $roomp['rid'];
+                                $room['tid'] = 7;
+                                $room['nickname'] = $roomp['username'];
+                                $room['cover'] = $roomp['cover'];
+                                $room['start_time'] = $roomp['start_time'];
+                                $room['end_time'] = $roomp['end_time'];
+                                $room['duration'] = $roomp['duration'];
+                                $room['one_to_many_status'] = 1;
+                                $room['origin'] = $roomp['origin'];
+                                $room['new_user'] = $roomp['new_user'];
+                                $room['live_status'] = $roomp['live_status'];
+                                $room['top'] = isset($roomp['top']) ? $roomp['top'] : 0;
                                 $myres[] = $room;
                             }
                         }
@@ -409,17 +442,17 @@ class IndexController extends Controller
 
         return JsonResponse::create(
             [
-                'data'=>
+                'data' =>
                     [
-                    'status' => 1,
-                    'myfav' => $myfav,
-                    'myres' => $myres,
-                    'myticket' => $myticket,
-                    'notice' => $notice,
+                        'status' => 1,
+                        'myfav' => $myfav,
+                        'myres' => $myres,
+                        'myticket' => $myticket,
+                        'notice' => $notice,
 
-                ],
-                'msg'=>'获取成功',
-                'status'=>1,
+                    ],
+                'msg' => '获取成功',
+                'status' => 1,
             ]
         );
 
