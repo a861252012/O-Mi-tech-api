@@ -72,7 +72,9 @@ class SiteService
     public static function getDBConfigArrayForSite(Site $site)
     {
         $config = $site->config;
-        $configArray = array_combine($config->pluck('k')->toArray(), $config->pluck('v')->toArray());
+        $k = $config->pluck('k');
+        $v = $config->pluck('v');
+        $configArray = array_combine($k ? $k->toArray() : [], $v ? $v->toArray() : []);
         return $configArray;
     }
 
@@ -199,7 +201,7 @@ class SiteService
 
     /**
      * 获取缓存，懒加载机制
-     * @param null $name    如果没有name会
+     * @param null $name 如果没有name会
      * @param bool $noCache 跳过本地缓存
      * @return Config
      */

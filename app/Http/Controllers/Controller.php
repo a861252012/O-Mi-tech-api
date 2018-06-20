@@ -64,9 +64,9 @@ class Controller extends BaseController
     public function __construct(Request $request)
     {
 
-        if($this->isMobileUrl($request)){
+        if ($this->isMobileUrl($request)) {
             config()->set('auth.defaults.guard', 'mobile');
-        }else{
+        } else {
             config()->set('auth.defaults.guard', 'pc');
         }
         $this->_online = Auth::id();
@@ -74,9 +74,11 @@ class Controller extends BaseController
         $this->container = app();
     }
 
-    public function isMobileUrl(Request $request){
+    public function isMobileUrl(Request $request)
+    {
         return $request->is('api/m/*');
     }
+
     /**
      * @param string $name
      * @return \Illuminate\Redis\Connections\Connection|null
@@ -134,7 +136,7 @@ class Controller extends BaseController
     /**
      * @param string $stime
      * @param string $etime
-     * @param array  $data
+     * @param array $data
      * @return bool false重叠 true不重叠
      */
     public function checkActiveTime($stime = '', $etime = '', $data = [])
@@ -262,7 +264,7 @@ class Controller extends BaseController
      * 给变量赋值
      *
      * @param string|array $var
-     * @param string       $value
+     * @param string $value
      */
     public function assign($var, $value = NULL)
     {
@@ -717,7 +719,11 @@ class Controller extends BaseController
     {
         if (empty($durationRoom)) return false;
         $keys = 'hroom_duration:' . $durationRoom->uid . ':' . $durationRoom->roomtid;
-        $arr = $durationRoom->find($durationRoom->id)->toArray();
+        $arrObj = $durationRoom->find($durationRoom->id);
+        if (!$arrObj) {
+            return false;
+        }
+        $arr = $arrObj->toArray();
         unset($arr['endtime']);
         Redis::hSet($keys, $arr['id'], json_encode($arr));
         return true;
@@ -786,7 +792,7 @@ class Controller extends BaseController
      * 设置二级域名的cookie
      * @param      $key
      * @param null $vaule
-     * @param int  $time
+     * @param int $time
      * @Author Orino
      */
     protected function setCookieByDomain($key, $vaule = null, $time = 0)
@@ -969,7 +975,7 @@ class Controller extends BaseController
 
         // 初始化一个用户服务器 并初始化用户
         $userServer = resolve(UserService::class);
-        $user=Auth::user();
+        $user = Auth::user();
         $msg = [
             'status' => 0,
             'msg' => '',
@@ -1023,7 +1029,7 @@ class Controller extends BaseController
                 return new JsonResponse($msg);
             }
             //查询购买记录
-            $redis =resolve('redis');
+            $redis = resolve('redis');
             $boughtModifyNickname = intval($redis->hget('modify.nickname', Auth::id()));
             if ($boughtModifyNickname >= 1) {//重置
                 $redis->del('modify.nickname', Auth::id());
@@ -1040,7 +1046,7 @@ class Controller extends BaseController
 
         //维护redis中的hnickname_to_id 用于注册时验证是否重名
         if (isset($postData['nickname']) && ($postData['nickname'] != $from_nickname)) {
-            Redis::hset('hnickname_to_id:'.SiteSer::siteId(), $postData['nickname'], $user['uid']);
+            Redis::hset('hnickname_to_id:' . SiteSer::siteId(), $postData['nickname'], $user['uid']);
             // 修改昵称成功后 就记录日志
             $modNameLog = [
                 'uid' => $user['uid'],
@@ -1141,7 +1147,7 @@ class Controller extends BaseController
         return (empty($data) || $data['uid'] == $uid) ? true : false;
     }
 
-    public function buyGoods($type,$gid,$nums)
+    public function buyGoods($type, $gid, $nums)
     {
         if ($nums < 1) {
             return false;
@@ -1401,15 +1407,16 @@ class Controller extends BaseController
         return $result;
     }
 
-    public function format_jsoncode($arr){
-         if($arr){
-             $res = array(
-                 'status'=>1,
-                 'data'=>$arr,
-                 'msg'=>'获取成功'
-             );
-         }
-         return  $res;
+    public function format_jsoncode($arr)
+    {
+        if ($arr) {
+            $res = array(
+                'status' => 1,
+                'data' => $arr,
+                'msg' => '获取成功'
+            );
+        }
+        return $res;
 
     }
 }
