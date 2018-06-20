@@ -937,13 +937,14 @@ class UserService extends Service
 
     /**
      * 验证用户交易密码
+     * todo 转帐不区分站点
      * @param $uid
      * @param $password
      * @return bool
      */
     public function checkUserTradePassword($uid, $password)
     {
-        $user =  $this->getUserByUid($uid);
+        $user =  $this->getUserByUidAllSite($uid);
         return $user['trade_password'] == md5( md5( trim( $password ), $uid));
     }
 
