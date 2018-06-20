@@ -392,7 +392,7 @@ class MemberController extends Controller
         foreach ($res['data'] as $key => $value) {
             if (empty($value['user'])) {
                 $reset = Users::where('uid', $value['uid'])->allSites()->first();
-                $res['data'][$key]['user'] = $reset->toArray();
+                $res['data'][$key]['user'] = $reset ? $reset->toArray() : [];
             }
         }
 
@@ -1226,7 +1226,7 @@ class MemberController extends Controller
                     $room['headimg'] = $users['headimg'];
                     $room['nickname'] = $users['nickname'];
                     $room['lv_exp'] = $users['lv_exp'];
-                    $room['cover']  = $users['cover'];
+                    $room['cover'] = $users['cover'];
                     array_push($room_list, $room);
                 }
             }
@@ -1489,12 +1489,14 @@ class MemberController extends Controller
             case 'del':
                 //将用户剩余图片空间同步更新数据库及redis
                 Users::find(Auth::id())->update(['pic_used_size' => $pic_used_size]);
-                $this->make('redis')->hMset('huser_info:' . Auth::id(), Users::find(Auth::id())->toArray());
+                $user = Users::find(Auth::id());
+                $this->make('redis')->hMset('huser_info:' . Auth::id(), $user ? $user->toArray() : []);
                 Anchor::find($id)->delete();
                 break;
 
             case 'get':
-                return Anchor::find($id)->toArray();
+                $anchor = Anchor::find($id);
+                return $anchor ? $anchor->toArray() : [];
                 break;
 
             case 'set':
@@ -1842,7 +1844,7 @@ class MemberController extends Controller
     public function avatarUpload()
     {
         $user = Auth::user();
-        $result = resolve(SystemService::class)->upload($user->toArray());
+        $result = resolve(SystemService::class)->upload($user?$user->toArray():[]);
 
         if (isset($result['status']) && $result['status'] != 1) {
             return JsonResponse::create($result);
@@ -1869,7 +1871,7 @@ class MemberController extends Controller
     public function flashUpload()
     {
         $user = Auth::user();
-        $result = resolve(SystemService::class)->upload($user->toArray());
+        $result = resolve(SystemService::class)->upload($user?$user->toArray():[]);
 
         if (isset($result['status']) && $result['status'] != 1) {
             return JsonResponse::create($result);
@@ -1986,7 +1988,7 @@ class MemberController extends Controller
                     'uid' => Auth::id(),
                     'created' => date('Y-m-d H:i:s'),
                     'points' => $userGroup['system']['gift_money'],
-                    'paymoney' => round($userGroup['system']['gift_money']/10, 1),
+                    'paymoney' => round($userGroup['system']['gift_money'] / 10, 1),
                     'order_id' => time(),
                     'pay_type' => 5,//服务器送的钱pay_type=5
                     'pay_id' => null,
