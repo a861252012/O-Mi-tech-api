@@ -937,7 +937,7 @@ class UserService extends Service
 
     /**
      * 验证用户交易密码
-     * todo 转帐不区分站点
+     * todo 经产品确认转帐不区分站点
      * @param $uid
      * @param $password
      * @return bool
