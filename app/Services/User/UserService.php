@@ -48,15 +48,15 @@ class UserService extends Service
     /**
      * @param array $user
      * @param array $gift
-     * @param int   $agent
-     * @param int   $invite_code
+     * @param int $agent
+     * @param int $invite_code
      * @return bool|int
      */
     public function register(array $user, $gift = [], $agent = 0, $invite_code = 0)
     {
-        $newUser = Arr::only($user, ['did', 'username', 'password', 'nickname', 'roled', 'exp', 'pop', 'created', 'status', 'province', 'city', 'county', 'video_status', 'rich', 'lv_exp', 'lv_rich', 'pic_total_size', 'pic_used_size', 'lv_type', 'icon_id', 'uuid', 'xtoken', 'origin', 'sex','site_id']);
+        $newUser = Arr::only($user, ['did', 'username', 'password', 'nickname', 'roled', 'exp', 'pop', 'created', 'status', 'province', 'city', 'county', 'video_status', 'rich', 'lv_exp', 'lv_rich', 'pic_total_size', 'pic_used_size', 'lv_type', 'icon_id', 'uuid', 'xtoken', 'origin', 'sex', 'site_id']);
         $newUser['created'] = date('Y-m-d H:i:s');
-        $newUser['site_id']  = SiteSer::siteId();
+        $newUser['site_id'] = SiteSer::siteId();
         if (strlen($newUser['password']) != 32) {
             $newUser['password'] = md5($newUser['password']);
         }
@@ -78,8 +78,8 @@ class UserService extends Service
             DB::commit();
             //更新redis关联
             $redis = $this->make('redis');
-            $redis->hset('husername_to_id:'.SiteSer::siteId(), $user['username'], $uid);
-            $redis->hset('hnickname_to_id:'.SiteSer::siteId(), $user['nickname'], $uid);
+            $redis->hset('husername_to_id:' . SiteSer::siteId(), $user['username'], $uid);
+            $redis->hset('hnickname_to_id:' . SiteSer::siteId(), $user['nickname'], $uid);
 
             //赠送钻石
             if ($points = Arr::get($gift, 'points')) {
@@ -108,7 +108,7 @@ class UserService extends Service
 
 
         } catch (\Exception $e) {
-            Log::info('注册 事务结果:'.$e->getMessage());
+            Log::info('注册 事务结果:' . $e->getMessage());
             DB::rollback();
             return false;
         }
@@ -122,10 +122,10 @@ class UserService extends Service
      * @see     src\Video\ProjectBundle\Controller\VideoBaseController.php addUserPoints function
      * @author  dc <dc@wisdominfo.my>
      * @version 2015-11-05
-     * @param   integer $uid       [用户id]
-     * @param   string  $operation [操作符，只能是+ -符号]
-     * @param   integer $points    [更新钻石数]
-     * @param   integer $pay_type  [充值方式：1 银行转账、2 抽奖  3 （未使用）   4后台充值 5充值赠送 6任务和签到奖励 7转帐记录]
+     * @param   integer $uid [用户id]
+     * @param   string $operation [操作符，只能是+ -符号]
+     * @param   integer $points [更新钻石数]
+     * @param   integer $pay_type [充值方式：1 银行转账、2 抽奖  3 （未使用）   4后台充值 5充值赠送 6任务和签到奖励 7转帐记录]
      * @return  bool                  [成功true 失败false]
      * @throws \ErrorException
      */
@@ -191,12 +191,12 @@ class UserService extends Service
 
         if ($this->redis->Hexists($hashtable, 'uid')) {
             $arr = $this->redis->hgetall($hashtable);
-            $userArr =  $arr['site_id'] == SiteSer::siteId() ? $arr : [];
-            $user = (new Users())->setRawAttributes($userArr,true);
-            $user->exists=true;
+            $userArr = $arr['site_id'] == SiteSer::siteId() ? $arr : [];
+            $user = (new Users())->setRawAttributes($userArr, true);
+            $user->exists = true;
         } else {
             $user = Users::find($uid);
-            if ($user&&$user->exists) {
+            if ($user && $user->exists) {
                 $this->redis->hmset($hashtable, $user->toArray());
             }
         }
@@ -212,11 +212,11 @@ class UserService extends Service
 
         if ($this->redis->Hexists($hashtable, 'uid')) {
             $arr = $this->redis->hgetall($hashtable);
-            $user = (new Users())->setRawAttributes($arr,true);
-            $user->exists=true;
+            $user = (new Users())->setRawAttributes($arr, true);
+            $user->exists = true;
         } else {
-            $user = Users::query()->where('uid',$uid)->allSites()->first();
-            if ($user&&$user->exists) {
+            $user = Users::query()->where('uid', $uid)->allSites()->first();
+            if ($user && $user->exists) {
                 $this->redis->hmset($hashtable, $user->toArray());
             }
         }
@@ -255,10 +255,10 @@ class UserService extends Service
 
     /**
      * [updateUserOfVip 开通贵族及延长贵族时间]
-     * @param      $uid          [用户ID]
-     * @param      $level_id     [贵族id]
-     * @param      $type         [开通类型]
-     * @param      $days         [天数]
+     * @param      $uid [用户ID]
+     * @param      $level_id [贵族id]
+     * @param      $type [开通类型]
+     * @param      $days [天数]
      * @param bool $fill_expires [已经是贵族,是否延长贵族时间]
      * @return bool[成功true 失败false]
      */
@@ -361,16 +361,17 @@ class UserService extends Service
         return $vip;
     }
 
-    public function cancelVip($uid=0){
+    public function cancelVip($uid = 0)
+    {
         $user['uid'] = $uid;
-        Users::query()->where('uid',$user['uid'])->update(array('vip'=>0,'vip_end'=>'','hidden'=>0));
-        Redis::hmset('huser_info:'.$user['uid'],[
-            'vip'=>'0',
-            'hidden'=>'0',
-            'vip_end'=>'',
+        Users::query()->where('uid', $user['uid'])->update(array('vip' => 0, 'vip_end' => '', 'hidden' => 0));
+        Redis::hmset('huser_info:' . $user['uid'], [
+            'vip' => '0',
+            'hidden' => '0',
+            'vip_end' => '',
         ]);
-        $pack = VideoPack::query()->where('uid',$user['uid'])->whereBetween('gid',[120101,120107])->delete();
-        Redis::del('user_car:'.$user['uid']);
+        $pack = VideoPack::query()->where('uid', $user['uid'])->whereBetween('gid', [120101, 120107])->delete();
+        Redis::del('user_car:' . $user['uid']);
         return true;
     }
 
@@ -406,11 +407,11 @@ class UserService extends Service
 
     public function getUidByUsername($username)
     {
-        $uid = $this->redis->hget(static::KEY_USERNAME_TO_ID.':'.SiteSer::siteId(), $username);
+        $uid = $this->redis->hget(static::KEY_USERNAME_TO_ID . ':' . SiteSer::siteId(), $username);
         if (!$uid) {
             $uid = Users::query()->where('username', $username)->get(['uid'])->get('uid');
             if (!$uid) return null;
-            $uid = $this->redis->hset(static::KEY_USERNAME_TO_ID.':'.SiteSer::siteId(), $username, $uid);
+            $uid = $this->redis->hset(static::KEY_USERNAME_TO_ID . ':' . SiteSer::siteId(), $username, $uid);
         }
         return $uid;
     }
@@ -426,10 +427,10 @@ class UserService extends Service
     /**
      * 获取当前用户被别人关注的用户信息/当前用户关注别人的用户信息
      * @Author  Nicholas 优化
-     * @param   int  $uid
-     * @param   int  $currentPage
+     * @param   int $uid
+     * @param   int $currentPage
      * @param   bool $fid
-     * @param   int  $perPage
+     * @param   int $perPage
      * @Author  nicholas
      * @return LengthAwarePaginator
      */
@@ -454,7 +455,7 @@ class UserService extends Service
                 'roled' => $user->roled,
                 'lv_exp' => $user->lv_exp,
                 'lv_rich' => $user->lv_rich,
-                'cover' => $user->cover?$user->cover:'',
+                'cover' => $user->cover ? $user->cover : '',
                 'fid' => $uid,
             ]);
         }
@@ -483,7 +484,7 @@ class UserService extends Service
      * 获取头像地址 默认头像 TODO 优化
      *
      * @param        $headimg
-     * @param int    $size
+     * @param int $size
      * @return string
      */
     public function getHeadimg($headimg, $size = 180)
@@ -669,9 +670,9 @@ class UserService extends Service
     }
 
     /**
-     * @param null       $uid 本身用户id
-     * @param null       $pid 被关注的用户id
-     * @param bool|true  $flag
+     * @param null $uid 本身用户id
+     * @param null $pid 被关注的用户id
+     * @param bool|true $flag
      * @param bool|false $reservation
      * @return bool
      * @author      dc
@@ -713,7 +714,7 @@ class UserService extends Service
 
 
     /**
-     * @param     $uid   [发信用户id]
+     * @param     $uid [发信用户id]
      * @param int $limit [发信数量限制 由调用方定]
      * @param     $table [信息类型]
      * @return bool [返回true表示未达到上限]
@@ -741,8 +742,8 @@ class UserService extends Service
 
 
     /**
-     * @param $uid   [用户id]
-     * @param $num   [数量]
+     * @param $uid [用户id]
+     * @param $num [数量]
      * @param $table [私信类型]
      * @return bool [更新结果]
      * @author      dc
@@ -793,7 +794,7 @@ class UserService extends Service
     /**
      * todo
      * @param $userinfo [用户信息,常为获取到的信息数组]
-     * @param $des_key  [加密密钥]
+     * @param $des_key [加密密钥]
      * @return string [返回加密代码]
      * @author       dc
      * @description  加密用户信息
@@ -832,13 +833,13 @@ class UserService extends Service
     {
         /** @var \Redis $redis */
         $redis = $this->make('redis');
-        $mouth = date('Ym',time());
-        $member_rank = ['zrank_rich_day','zrank_rich_week','zrank_rich_month:'.$mouth,'zrank_rich_history'];
+        $mouth = date('Ym', time());
+        $member_rank = ['zrank_rich_day', 'zrank_rich_week', 'zrank_rich_month:' . $mouth, 'zrank_rich_history'];
 
-        if(in_array($key,$member_rank)){
+        if (in_array($key, $member_rank)) {
 
-            $rank = $redis->zRevRange($key.':'.SiteSer::siteId(), $offset, $limit, true);
-        }else{
+            $rank = $redis->zRevRange($key . ':' . SiteSer::siteId(), $offset, $limit, true);
+        } else {
             $rank = $redis->zRevRange($key, $offset, $limit, true);
         }
 
@@ -846,41 +847,44 @@ class UserService extends Service
         $ret = [];
         static $userCache = [];//缓存用户信息
         foreach ($rank as $uid => $score) {
+            $userObj = $this->getUserByUid($uid);
+            $userInfo = $userObj ? $userObj->toArray() : [];
             $ret[] = array_merge([
                 'uid' => $uid,
                 'score' => $score,
             ],
                 isset($userCache[$uid]) ? $userCache[$uid]
-                    : ($userCache[$uid] = array_only($this->getUserByUid($uid)->toArray(), ['lv_rich', 'lv_exp', 'username', 'nickname', 'headimg', 'icon_id', 'description', 'vip','sex', 'site_id','cover']))
+                    : ($userCache[$uid] = array_only($userInfo, ['lv_rich', 'lv_exp', 'username', 'nickname', 'headimg', 'icon_id', 'description', 'vip', 'sex', 'site_id', 'cover']))
             );
         }
         $result = [];
         $site_id = SiteSer::siteId();
-        if(!empty($ret)){
-                foreach ($ret as $key=>$value){
-
-                        $userInfo = $this->getUserByUid($value['uid'])->toArray();
-                        $ret[$key]['age'] = isset($userInfo['age']) ? $userInfo['age'] . '岁' : '永远18岁';
-                        $ret[$key]['starname'] = isset($userInfo['starname']) ? $userInfo['starname'] : '神秘星座';
-                        $ret[$key]['description'] = $userInfo['description'] ?: '此人好懒，大家帮TA想想写些什么！';
-                        if (!$userInfo['province'] || !$userInfo['city']) {
-                            $ret[$key]['procity'] = '中国的某个角落';
-                        } else {
-                            $ret[$key]['procity'] = $this->getArea($userInfo['province'], $userInfo['city'], $userInfo['county']);//取地区code对应的地区名称
-                        }
-
-
-                }
-                if(!empty($ret)){
-                    foreach ($ret as  $key=>$value){
-                        $result[] =  $value;
+        if (!empty($ret)) {
+            foreach ($ret as $key => $value) {
+                $userObj = $this->getUserByUid($value['uid']);
+                if ($userObj) {
+                    $userInfo = $userObj->toArray();
+                    $ret[$key]['age'] = isset($userInfo['age']) ? $userInfo['age'] . '岁' : '永远18岁';
+                    $ret[$key]['starname'] = isset($userInfo['starname']) ? $userInfo['starname'] : '神秘星座';
+                    $ret[$key]['description'] = $userInfo['description'] ?: '此人好懒，大家帮TA想想写些什么！';
+                    if (!$userInfo['province'] || !$userInfo['city']) {
+                        $ret[$key]['procity'] = '中国的某个角落';
+                    } else {
+                        $ret[$key]['procity'] = $this->getArea($userInfo['province'], $userInfo['city'], $userInfo['county']);//取地区code对应的地区名称
                     }
                 }
+            }
+            if (!empty($ret)) {
+                foreach ($ret as $key => $value) {
+                    $result[] = $value;
+                }
+            }
 
         }
 
         return $result;
     }
+
     /**
      * 前3个参数是省市区的code值，第4个参数是分隔符
      * @return string
@@ -944,8 +948,8 @@ class UserService extends Service
      */
     public function checkUserTradePassword($uid, $password)
     {
-        $user =  $this->getUserByUidAllSite($uid);
-        return $user['trade_password'] == md5( md5( trim( $password ), $uid));
+        $user = $this->getUserByUidAllSite($uid);
+        return $user['trade_password'] == md5(md5(trim($password), $uid));
     }
 
     /**
@@ -956,9 +960,10 @@ class UserService extends Service
      */
     public function checkUserPassword($uid, $password)
     {
-        $user =  $this->getUserByUid($uid);
+        $user = $this->getUserByUid($uid);
         return $user['password'] == md5(trim($password));
     }
+
     /**
      * [updateUserTradePassword 修改用户交易密码]
      * @param $uid
@@ -967,9 +972,9 @@ class UserService extends Service
      */
     public function updateUserTradePassword($uid, $password)
     {
-        if(!$uid || !$password) return false;
-        $password = md5( md5( trim( $password ), $uid));
-        if(Users::whereUid($uid)->update(array('trade_password'=>$password))) {
+        if (!$uid || !$password) return false;
+        $password = md5(md5(trim($password), $uid));
+        if (Users::whereUid($uid)->update(array('trade_password' => $password))) {
             resolve(UserService::class)->getUserReset($uid);
             return $password;
         }
