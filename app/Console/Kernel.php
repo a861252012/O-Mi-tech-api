@@ -31,7 +31,8 @@ class Kernel extends ConsoleKernel
         $path = config('logging.channels.cron.path');
         ####定时生成更多列表的json文件####
         //*/1 * * * * /usr/local/bin/php /var/www/peach-front/crontab-list/anchor-all-list.php 1>/dev/null
-        $schedule->command("anchor_list")->everyMinute()->withoutOverlapping()->appendOutputTo(storage_path('logs').DIRECTORY_SEPARATOR.'crontab.log');;
+        $schedule->command("anchor_list")->everyMinute()->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs').DIRECTORY_SEPARATOR.'crontab-'.date('Y-m-d').'.log');
 
         #########定时缓存主播搜索结果##########
         //*/1 * * * * /usr/local/bin/php /var/www/peach-front/crontab-list/anchor-search-list.php 1>/dev/null
