@@ -280,7 +280,7 @@ class MemberController extends Controller
             DB::table((new Transfer)->getTable())->insert(['by_uid' => $uid, 'by_nickname' => $user['nickname'], 'to_uid' => $userTo['uid'], 'to_nickname' => $userTo['nickname'], 'points' => $points, 'content' => $content, 'datetime' => date('Y-m-d H:i:s'), 'status' => 1, 'site_id' => SiteSer::siteId()]);
 
             //写入recharge表方便保级运算
-            DB::table((new Recharge)->getTable())->insert(['uid' => $userTo['uid'], 'points' => $points, 'paymoney' => round($points / 10, 2), 'created' => date('Y-m-d H:i:s'), 'order_id' => 'transfer_' . $uid . '_to_' . $userTo['uid'] . '_' . uniqid(), 'pay_type' => 7, 'pay_status' => 2, 'nickname' => $userTo['nickname'], 'site_id' => SiteSer::siteId()]);
+            DB::table((new Recharge)->getTable())->insert(['uid' => $userTo['uid'], 'points' => $points, 'paymoney' => round($points / 10, 2), 'created' => date('Y-m-d H:i:s'), 'order_id' => 'transfer_' . $uid . '_to_' . $userTo['uid'] . '_' . uniqid(), 'pay_type' => 7, 'pay_status' => 2, 'nickname' => $userTo['nickname'], 'site_id' => $userTo['site_id']]);
 
 
             //发送成功消息给转帐人
