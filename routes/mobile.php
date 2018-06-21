@@ -19,7 +19,7 @@ Route::get('captcha', 'Mobile\MobileController@captcha')->middleware('mobile.ses
 Route::any('app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
 Route::any('app/versionIOS', ['name' => 'm_app_ver_ios', 'uses' => 'Mobile\MobileController@appVersionIOS']);
 
-Route::get('conf',['name'=>'m_conf', 'uses'=>'Mobile\RoomController@getConf']);
+Route::get('conf',['name'=>'m_conf', 'uses'=>'ApiController@getConf']);
 Route::get('room/conf',['name'=>'m_room_conf', 'uses'=>'Mobile\RoomController@getRoomConf']);
 // 首页房间数据json
 Route::get('/videoList', ['as' => 'index_videoList', 'uses' => 'IndexController@videoList']);

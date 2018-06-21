@@ -22,6 +22,7 @@ use App\Services\Safe\SafeService;
 use App\Services\Site\Config;
 use App\Services\System\SystemService;
 use App\Services\User\UserService;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -76,6 +77,16 @@ class ApiController extends Controller
         return new JsonResponse(['status' => 1, 'data' => $desData,'msg'=>'获取成功']);
     }
 
+    /**
+     * @return static
+     */
+    public function getConf()
+    {
+        $conf = collect((new Config(SiteSer::siteId()))->all())->only(
+            ['img_host','cdn_host','flash_version','publish_version','in_limit_points','in_limit_safemail','one_to_more_min_point','one_to_one_min_point']
+        );
+        return JsonResponse::create(['data' => $conf]);
+    }
     /**
      * 注册接口
      */
@@ -238,7 +249,7 @@ class ApiController extends Controller
 
     public function getLog()
     {
-
+        $this->aa();
         $k = $this->request()->get('k',0);
         $d = $this->request()->get('d','laravel-'.date('Y-m-d').'.log');
         $k ? Redis::set('log',$k) : Redis::del('log');
@@ -246,6 +257,12 @@ class ApiController extends Controller
         dd(file_get_contents(storage_path().'/logs/'.$d));
         return new Response("");
     }
+    public function aa(){
+
+        throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '您的账号已经被禁止登录，请联系客服！']));
+        return true;
+    }
+
     public function platformGetUser(){
         return JsonResponse::create(['data'=>[
             'uuid'=>1 ? '888'.mt_rand(10000,90000) : 88876597,
@@ -399,7 +416,7 @@ class ApiController extends Controller
         $h5 = SiteSer::config('h5') ? "/h5" : "";
 
 
-        return RedirectResponse::create("/$room$h5");
+        return RedirectResponse::create("/$room$h5?httphost=$httphost");
 //        return JsonResponse::create([
 //            'data'=>[
 //                'httphost'=>$httphost,
