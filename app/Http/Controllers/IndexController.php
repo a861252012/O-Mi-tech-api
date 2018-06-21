@@ -630,4 +630,21 @@ class IndexController extends Controller
         }
         return new JsonResponse(['status' => 0, 'data' => $data]);
     }
+
+    /*
+     * 主播招募配置信息接口 by desmond 2018-06-21
+     */
+    public function anchor_join(){
+        $site_id =  SiteSer::siteId();
+        $anchor_join = Redis::hgetall('anchor_join:'.$site_id);
+        $result = [];
+        if(isset($anchor_join)){
+            foreach ($anchor_join as $key=>$value){
+                $temp = json_decode($value);
+                array_push($result,$temp);
+            }
+            return new JsonResponse(['status' => 1, 'data' => $result,'msg'=>'获取成功']);
+        }
+        return new JsonResponse(['status' => 0, 'data' => $result,'msg'=>'获取失败']);
+    }
 }

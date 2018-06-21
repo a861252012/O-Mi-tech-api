@@ -131,6 +131,8 @@ Route::get('/shop', ['name' => 'shop_index', 'uses' => 'ShopController@index']);
 Route::get('/act', ['name' => 'act', 'uses' => 'ActivityController@index']);
 //活动详情页面
 Route::get('/activity/{action}', 'ActivityController@activity')->name('activity_detail');
+//主播招募设置接口
+Route::get('/anchor/join', ['name' => 'anchor_join', 'uses' => 'IndexController@anchor_join']);
 
 //活动路由页面    路由名称约定 /activitydetail/活动名
 Route::get('/activityurl/{action}', ['name' => 'act', 'uses' => 'ActivityController@activityUrl']);
