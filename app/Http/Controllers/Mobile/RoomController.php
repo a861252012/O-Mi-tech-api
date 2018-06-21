@@ -113,6 +113,53 @@ class RoomController extends Controller
         return $list;
     }
 
+    /*/**
+     * 检查密码房密码(原方法)
+     * @return JsonResponse
+     */
+    /*public function checkPwd()
+    {
+        $password = $this->request()->get('password');
+        $rid = $this->request()->get('rid');
+        $type = $this->getAnchorRoomType($rid);
+        if ($type != 2) return new JsonResponse(['status' => 0, 'msg' => '密码房异常,请联系运营重新开启一下密码房间的开关']);
+        if (empty($rid)) return new JsonResponse(['status' => 0, 'msg' => '房间号错误!']);
+        if (empty($password)) {
+            return $this->geterrorsAction();
+        }
+//        $this->get('session')->start();
+        $sessionid = Session::getId();
+        //房间进入密码，超过五次就要输入验证码，这个五次是通过phpsessionid来判断的
+        $roomstatus = $this->getRoomStatus($rid, 2);
+        $keys_room = 'keys_room_passwd:' . $sessionid . ':' . $rid;
+        $times = $this->make('redis')->get($keys_room) ?: 0;
+        if ($times >= 5) {
+            $captcha = $request->get('captcha');
+            if (empty($captcha)) {
+                return new JsonResponse(['status' => 0, 'msg' => '请输入验证码!', 'data' => ['times' => $times, 'cmd' => 'showCaptcha']]);
+            }
+            if (!Captcha::check($captcha)) return new JsonResponse(['status' => 0, 'msg' => '验证码错误!', 'data' => ['times' => $times]]);;
+        }
+        if (strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
+            $this->make('redis')->setex($keys_room, 3600, $times + 1);
+            return new JsonResponse([
+                'status' => 0,
+                'msg' => "密码格式错误!",
+                'data' => ['times' => $times + 1],
+            ]);
+        }
+        if ($password != $roomstatus['pwd']) {
+            $this->make('redis')->setex($keys_room, 3600, $times + 1);
+            return new JsonResponse([
+                'status' => 0,
+                'msg' => "密码错误!",
+                'data' => ['times' => $times + 1],
+            ]);
+        }
+        $this->make('redis')->hset('keys_room_passwd:' . $rid . ':' . $sessionid, 'status', 1);
+        return new JsonResponse(['status' => 1, 'msg' => '验证成功']);
+    }*/
+
     /**
      * 检查密码房密码
      * @return JsonResponse
