@@ -191,8 +191,9 @@ class UserService extends Service
 
         if ($this->redis->Hexists($hashtable, 'uid')) {
             $arr = $this->redis->hgetall($hashtable);
-            $userArr = $arr['site_id'] == SiteSer::siteId() ? $arr : [];
-            $user = (new Users())->setRawAttributes($userArr, true);
+            //这里因为用户uid唯一并且涉及主播信息获取不再区分站点
+//            $userArr = $arr['site_id'] == SiteSer::siteId() ? $arr : [];
+            $user = (new Users())->setRawAttributes($arr, true);
             $user->exists = true;
         } else {
             $user = Users::find($uid);
