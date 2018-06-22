@@ -300,10 +300,15 @@ class RoomController extends Controller
                             $data = [
                                 'rid' => $roomid,
                                 'handle' => 'common',
+                                'ticked' => 1
                             ];
                             return JsonResponse::create(['status' => 1, 'data' => $data, 'msg' => '您已经预约过该场次']);
                         } else {
-                            return JsonResponse::create(['status' => 0, 'msg' => '该场次已被预约']);
+                            $data = [
+                                'rid' => $roomid,
+                                'handle' => ''
+                            ];
+                            return JsonResponse::create(['status' => 0, 'data' => $data, 'msg' => '该场次已被预约']);
                         }
                     }
                     $room['rid'] = $roomid;
@@ -369,7 +374,6 @@ class RoomController extends Controller
                         return JsonResponse::create(['status' => 1, 'data' => $v]);
                     }
                 }
-
             default:
                 return JsonResponse::create(['status' => 0, 'msg' => '房间类型错误']);
         }
