@@ -573,7 +573,7 @@ class RoomController extends Controller
 
     private function useAnchorRTMP()
     {
-        return SiteSer::config('useanchorrtmp') ?: $this->make('config')->get('config.useanchorrtmp', 1);
+        return SiteSer::config('useanchorrtmp') ?: 1;
     }
 
     protected function getUserRTMP($uid = null)
