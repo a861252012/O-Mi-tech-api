@@ -82,9 +82,10 @@ class ApiController extends Controller
      */
     public function getConf()
     {
-        $conf = collect((new Config(SiteSer::siteId()))->all())->only(
-            ['img_host','cdn_host','flash_version','publish_version','in_limit_points','in_limit_safemail','one_to_more_min_point','one_to_one_min_point']
-        );
+        $conf = collect((new Config(SiteSer::siteId()))->all())->forget([
+            'redis_cli_ip_port','des_encryt_key','mailer_transport','mailer_host','mailer_user','mailer_password','secret','des_encryt_key','pay_call_url',
+            'pay_privatekey','pay_call_url_m','web_secret_key','pay_privatekey','email','reflux_mail','pay_find_code','pay_verify_message','database_driver','database_host','ad','recharge_channel'
+            ]);
         return JsonResponse::create(['data' => $conf]);
     }
     /**
