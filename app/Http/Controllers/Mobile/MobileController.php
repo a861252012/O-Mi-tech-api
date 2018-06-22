@@ -14,6 +14,7 @@ use App\Models\ImagesText;
 use App\Models\MobileUseLogs;
 use App\Models\Pack;
 use App\Models\Users;
+use App\Models\Messages;
 use App\Services\Site\SiteService;
 use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
@@ -140,9 +141,9 @@ class MobileController extends Controller
         $by_atttennums = $this->make('redis')->zSize($hashtable);
         return JsonResponse::create([
             'status' => 1,
-            'data'=>[
+            'data' => [
                 'uid' => $userinfo->uid,
-                'username'=>$userinfo->username,
+                'username' => $userinfo->username,
                 'nickname' => $userinfo->nickname,
                 'headimg' => $this->getHeadimg($userinfo->headimg),
                 'points' => $userinfo->points,
@@ -158,6 +159,7 @@ class MobileController extends Controller
                 'gender' => $userinfo->sex,
                 'follows' => $userfollow,
                 'fansCount' => $by_atttennums,
+                'system_tip_count' => Messages::where('rec_uid', $uid)->where('send_uid', $uid)->count()
             ],
         ]);
     }
@@ -304,7 +306,7 @@ class MobileController extends Controller
      */
     public function captcha()
     {
-        return Captcha::create()->header(session()->getName(),session()->getId(),true);
+        return Captcha::create()->header(session()->getName(), session()->getId(), true);
 //        $png = $captcha->getContent();
 //        return JsonResponse::create(['captcha' => base64_encode($png), Session::getName() => Session::getId()]);
     }
@@ -365,36 +367,38 @@ class MobileController extends Controller
                         'lv_exp' => $user->lv_exp,
                         'safemail' => $user->safemail ?? '',
                         'icon_id' => intval($user->icon_id),
-                       'gender' => $user->sex,
+                        'gender' => $user->sex,
                         'follows' => $userfollow,
                         'fansCount' => $by_atttennums,
                     ],
                 ]]);
     }
+
     /**
      * 用户关注人数
      */
     public function userFollowings()
-     {
+    {
 
-         $arr = include(storage_path() . '/app/cache/anchor-search-data.php');
-         $hasharr = [];
-         foreach ($arr as $value) {
-             $hasharr[$value['uid']] = $value;
-         }
-         unset($arr);
-         $myfavArr = $this->make('redis')->zrevrange('zuser_attens:'.Auth::id(), 0, -1);
-         $myfav = [];
-         if (!!$myfavArr) {
-             //过滤出主播
-             foreach ($myfavArr as $item) {
-                 if (isset($hasharr[$item])) {
-                     $myfav[] = $hasharr[$item];
-                 }
-             }
-         }
-         return count($myfav);
-     }
+        $arr = include(storage_path() . '/app/cache/anchor-search-data.php');
+        $hasharr = [];
+        foreach ($arr as $value) {
+            $hasharr[$value['uid']] = $value;
+        }
+        unset($arr);
+        $myfavArr = $this->make('redis')->zrevrange('zuser_attens:' . Auth::id(), 0, -1);
+        $myfav = [];
+        if (!!$myfavArr) {
+            //过滤出主播
+            foreach ($myfavArr as $item) {
+                if (isset($hasharr[$item])) {
+                    $myfav[] = $hasharr[$item];
+                }
+            }
+        }
+        return count($myfav);
+    }
+
     public function logintest()
     {
         return JsonResponse::create(['status' => Auth::check(), 'user' => Auth::user()]);
@@ -413,7 +417,7 @@ class MobileController extends Controller
                 'img_name' => $img->temp_name,
             ];
         });
-        return new JsonResponse(['data'=>$list]);
+        return new JsonResponse(['data' => $list]);
     }
 
     /**
@@ -429,7 +433,7 @@ class MobileController extends Controller
         $list = ImagesText::where('dml_flag', '<>', 3)->where('pid', 0)->selectRaw('img_text_id id,title,temp_name,url,init_time')
             ->orderBy('sort')->orderBy('img_text_id', 'desc')->simplePaginate(static::ACTIVITY_LIST_PAGE_SIZE);
         $redis->set('image.text:activity.list:page:' . $page, $list->toJson(), 180);
-        return new JsonResponse(['data'=>$list->toArray(),'msg'=>'获取成功']);
+        return new JsonResponse(['data' => $list->toArray(), 'msg' => '获取成功']);
     }
 
     /**
@@ -457,8 +461,8 @@ class MobileController extends Controller
         $activity->setHidden(['temp_name']);
         $redis->set('image.text:activity.detail:id:' . $id, $activity->toJson(), 180);
 
-     //   return JsonResponse::create($activity);
-        return new JsonResponse(['data'=>$activity,'msg'=>'获取成功']);
+        //   return JsonResponse::create($activity);
+        return new JsonResponse(['data' => $activity, 'msg' => '获取成功']);
     }
 
     /**
@@ -468,8 +472,8 @@ class MobileController extends Controller
      */
     public function videoList($type)
     {
-         header('Content-type: application:json;charset=utf-8');
-         header('Location: ' . "/api/storage/s1/videolist$type.json");
+        header('Content-type: application:json;charset=utf-8');
+        header('Location: ' . "/api/storage/s1/videolist$type.json");
 //        $list = @file_get_contents($_SERVER['DOCUMENT_ROOT'] . "/videolist$type.json") ?: '[]';
 //        return JsonResponse::create()->setContent($list);
     }
@@ -498,7 +502,7 @@ class MobileController extends Controller
                 }
             }
         }
-        return JsonResponse::create(['data'=>['data'=>($myfav)]]);
+        return JsonResponse::create(['data' => ['data' => ($myfav)]]);
     }
 
     /**
@@ -562,7 +566,7 @@ class MobileController extends Controller
     {
         //$uname = isset($_GET['nickname'])?$_GET['nickname']:'';//解码？
         $uname = $this->make('request')->get('nickname', '');
-        $arr = include storage_path('app').'/cache/anchor-search-data.php';//BASEDIR . '/app/cache/cli-files/anchor-search-data.php';
+        $arr = include storage_path('app') . '/cache/anchor-search-data.php';//BASEDIR . '/app/cache/cli-files/anchor-search-data.php';
         $pageStart = isset($_REQUEST['pageStart']) ? ($_REQUEST['pageStart'] < 1 ? 1 : intval($_REQUEST['pageStart'])) : 1;
         $pageLimit = isset($_REQUEST['pageLimit']) ? (($_REQUEST['pageLimit'] > 40 || $_REQUEST['pageLimit'] < 1) ? 40 : intval($_REQUEST['pageLimit'])) : 40;
 
@@ -584,7 +588,7 @@ class MobileController extends Controller
                 }
             }
         }
-        return new JsonResponse(['data' => ['rooms'=>$data], 'status' => 1]);
+        return new JsonResponse(['data' => ['rooms' => $data], 'status' => 1]);
     }
 
     /*
@@ -612,7 +616,7 @@ class MobileController extends Controller
         $insertArr = [];
         foreach ($zuserinfo as $key => $value) {
             $user = UserSer::getUserByUid($value);
-            $info = $user ? $user->only(['uid','nickname','rich','headimg','lv_exp','lv_rich','vip','roled']) : [];
+            $info = $user ? $user->only(['uid', 'nickname', 'rich', 'headimg', 'lv_exp', 'lv_rich', 'vip', 'roled']) : [];
 
             array_push($insertArr, $info);
         }
@@ -631,4 +635,64 @@ class MobileController extends Controller
          */
         return JsonResponse::create(['status' => 1, 'msg' => 'success']);
     }
+
+    /**
+     * 密码修改
+     */
+    public function passwordChange()
+    {
+        $uid = Auth::id();
+        $post = $this->request()->all();
+//        if (empty($post['captcha']) || !Captcha::check($post['captcha'])) {
+//            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '对不起，验证码错误!']);
+//        }
+
+        if (empty($post['original_password'])) {
+            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '原始密码不能为空！']);
+        }
+
+        if (strlen($post['new_password']) < 6 || strlen($post['re_new_password']) < 6) {
+            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '请输入大于或等于6位字符串长度']);
+        }
+
+        if ($post['new_password'] != $post['re_new_password']) {
+            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '新密码两次输入不一致!']);
+        }
+
+        $old_password = Redis::hget('huser_info:' . $uid, 'password');
+        $new_password = md5($post['re_new_password']);
+        if (md5($post['original_password']) != $old_password) {
+            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '原始密码错误!']);
+        }
+        if ($old_password == $new_password) {
+            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '新密码和原密码相同']);
+        }
+
+        $user = Users::find($uid);
+        $user->password = $new_password;
+        if (!$user->save()) {
+            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '修改失败!']);
+        }
+        resolve(UserService::class)->getUserReset($uid);
+//        Auth::logout();
+        return new JsonResponse(['status' => 1, 'data' => new \StdClass(), 'msg' => '修改成功']);
+    }
+
+    /**
+     * 系统消息列表页面
+     * @return JsonResponse
+     */
+    public function msglist()
+    {
+        $page_size = intval($this->request()->get('page_size'));
+        $page_size = $page_size ? $page_size : 15;
+        $uid = Auth::id();
+        $list = Messages::where('rec_uid', $uid)->where('send_uid', 0)->orderBy('created', 'desc')->paginate($page_size);
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => $list,
+            'meg' => '成功'
+        ]);
+    }
+
 }

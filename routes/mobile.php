@@ -30,9 +30,12 @@ Route::get('activitydetail', ['name' => 'm_activitydetail', 'uses' => 'ActivityC
 
 //移动端登录验证
 Route::group(['middleware' => ['login_auth:mobile']], function () {
-//app获取粉丝详情
+    //app获取粉丝详情
     Route::get('OneToMore/getfans', ['as' => 'm_onetomorecreate','uses' => 'Mobile\MobileController@getFans']);
-
+    //修改密码
+    Route::post('update/password', ['as' => 'm_changepassword','uses' => 'Mobile\MobileController@passwordChange']);
+    // 用户中心消息
+    Route::get('system/information', 'Mobile\MobileController@msglist')->where('type', '[0-9]+')->name('m_information');
     //首页
     Route::get('index', ['name' => 'm_index', 'uses' => 'Mobile\MobileController@index']);
     //排行
