@@ -768,11 +768,11 @@ class MemberController extends Controller
         $user = Users::find($uid);
         $user->password = $new_password;
         if (!$user->save()) {
-            return JsonResponse::create(['status' => 304, 'msg' => '修改失败!']);
+            return JsonResponse::create(['status' => 0, 'msg' => '修改失败!']);
         }
         resolve(UserService::class)->getUserReset($uid);
         Auth::logout();
-        return new JsonResponse(['status' => 0, 'msg' => '修改成功!请重新登录']);
+        return new JsonResponse(['status' => 1, 'msg' => '修改成功!请重新登录']);
     }
 
     /**
@@ -1521,10 +1521,10 @@ class MemberController extends Controller
         if ($type == 1) {
             $data = CarGameBetBak::with(['game' => function ($query) {
                 $query->with(['gameMasterUser' => function ($q) {
-                    $q->selectRaw('uid,username');
+                    $q->selectRaw('uid,nickname')->allSites();
                 }]);
             }])->with(['gameRoomUser' => function ($q) {
-                $q->selectRaw('uid,nickname');
+                $q->selectRaw('uid,nickname')->allSites();
             }])
                 ->where('uid', Auth::id())
                 ->where('dml_flag', '!=', 3)
