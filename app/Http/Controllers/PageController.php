@@ -40,30 +40,43 @@ class PageController extends Controller
         if ($act == 'help') {
             $redis = $this->make('redis');
             $data = json_decode($redis->get('video:faq:list'), true);
-            if (!$data) {
-                $list = Faq::all();
-                $list_keyed = $list->keyBy('id');
-                $list_grouped = $list->groupBy('class');
-                $sort[1] = json_decode($redis->get('video:faq:sort:class:1'));
-                $sort[2] = json_decode($redis->get('video:faq:sort:class:2'));
-                $data = [1 => [], 2 => []];
-                foreach ($data as $class => &$value) {
-                    if (!empty($sort[$class])) {
-                        $value = array_map(function ($id) use ($class, $list_keyed) {
-                            return $list_keyed[$id];
-                        }, $sort[$class]);
-                    } else {
-                        $value = $list_grouped[$class];
-                    }
+
+
+            $list = Faq::all();
+            $list_keyed = $list->keyBy('id');
+            $list_grouped = $list->groupBy('class');
+            $sort1 = json_decode($redis->get('video:faq:sort:class:1'));
+            $sort2 = json_decode($redis->get('video:faq:sort:class:2'));
+            $sort[1]  = $this->formatesort($sort1);
+            $sort[2]  = $this->formatesort($sort2);
+
+            $data = [1 => [], 2 => []];
+            foreach ($data as $class => &$value) {
+                if (!empty($sort[$class])) {
+                    $value = array_map(function ($id) use ($class, $list_keyed) {
+                        return $list_keyed[$id];
+                    }, $sort[$class]);
+                } else {
+                    $value = $list_grouped[$class];
                 }
-                $redis->set('video:faq:list', json_encode($data));
             }
+
         }
+
         return SuccessResponse::create($data, $msg = "获取成功", $status = 1);
-        //    return  new JsonResponse($data);
-        // return $this->render('Page/' . $act, compact('data'));
+
     }
 
+    public function  formatesort($sort){
+        foreach ($sort as $key=>$value){
+            $faq = Faq::where('site_id',SiteSer::siteId())->where('id',$value)->first();
+            if(is_null($faq)){
+                unset($sort[$key]);
+            }
+        }
+        return $sort;
+
+    }
     /**
      * 贵族详情介绍页面
      * @author Yvan

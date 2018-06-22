@@ -333,6 +333,10 @@ class IndexController extends Controller
             $return['jump_url'] = $jump_url;
         }
 
+        $qq_url = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_url');
+        $email_url = Redis::hget('hsite_config:'.SiteSer::siteId(), 'email_url');
+
+
         $flashVersion = SiteSer::config('flash_version');
         // 获取我的关注的数据主播的数据
         $myfav = [];
@@ -449,6 +453,8 @@ class IndexController extends Controller
                         'myres' => $myres,
                         'myticket' => $myticket,
                         'notice' => $notice,
+                        'qqurl'=>is_null($qq_url)?$qq_url:'',
+                        'emailurl'=>is_null($email_url)?$email_url:'',
 
                     ],
                 'msg' => '获取成功',
