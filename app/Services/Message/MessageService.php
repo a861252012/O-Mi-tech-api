@@ -84,7 +84,7 @@ class MessageService extends Service
 
         // 系统消息 1
         if (!isset($data['category'])) {
-            $data['category'] = self::USER_MESSAGE;
+            $data['category'] = self::SYSTEM_MESSAGE;
         }
         $data['created'] = date('Y-m-d H:i:s');
         return DB::table('video_mail')->insertGetId($data);
