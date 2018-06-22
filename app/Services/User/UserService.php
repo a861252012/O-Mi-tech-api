@@ -502,7 +502,7 @@ class UserService extends Service
     public function checkUserLoginAsset($uid)
     {
         $user = $this->getUserByUid($uid);
-        if ($user['points'] >= $this->container->config['config.user_points_min']) {
+        if ($user['points'] >= SiteSer::config('user_points_min')) {
             return true;
         }
         if ($user['roled'] == 3 || $this->checkUserVipStatus($uid)) {

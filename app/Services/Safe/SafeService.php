@@ -79,7 +79,7 @@ class SafeService extends Service
             Log::channel('room')->info('lcertificate:' . $lcertificate);
             return $lcertificate;
         }
-        $expire = $this->make('config')['config.hcertificate_start_expire'];
+        $expire = SiteSer::config('hcertificate_start_expire');
 
         $ip = $this->make("request")->getClientIp();
 
@@ -115,7 +115,7 @@ class SafeService extends Service
             Log::channel('room')->info('lcertificate:' . $lcertificate);
             return $lcertificate;
         }
-        $expire = $this->make('config')['config.hcertificate_start_expire'];
+        $expire = SiteSer::config('hcertificate_start_expire');
 
         $ip = $this->make("request")->getClientIp();
 

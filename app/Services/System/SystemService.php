@@ -61,7 +61,7 @@ class SystemService extends Service
         if ($recodeurl) {
             $recordLog = $recodeurl;
         } else {
-            $recordLog = $this->container->config['config.PAY_LOG_FILE'];
+            $recordLog = SiteSer::config('pay_log_file');
         }
         $fp = fopen($recordLog, "a");
         flock($fp, LOCK_EX);

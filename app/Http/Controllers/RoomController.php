@@ -535,7 +535,7 @@ class RoomController extends Controller
 
         $method = 'AES-128-CBC';
         $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($method));
-        $key = $this->make('config')->get('config.RTMP_SECRET_KEY');
+        $key = SiteSer::config('rtmp_secret_key');
         $ts = time();
         $digest = hash('sha256', session_id() . $key . $ts);
         $data = [
@@ -573,7 +573,7 @@ class RoomController extends Controller
 
     private function useAnchorRTMP()
     {
-        return $this->make('config')->get('config.useAnchorRTMP', 1);
+        return SiteSer::config('useanchorrtmp') ?: 1;
     }
 
     protected function getUserRTMP($uid = null)
@@ -634,7 +634,7 @@ class RoomController extends Controller
         $dataArr = explode('.', $data);
         $iv = base64_decode($dataArr[0]);
         $method = 'AES-128-CBC';
-        $key = $this->make('config')->get('config.RTMP_SECRET_KEY');
+        $key = SiteSer::config('rtmp_secret_key');
         $t_data = openssl_decrypt($dataArr[1], $method, $key, 0, $iv);
         var_dump($t_data);
     }
