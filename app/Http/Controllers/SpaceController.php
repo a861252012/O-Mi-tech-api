@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Services\User\UserService;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\Anchor;
+use App\Facades\SiteSer;
 
 /**
  *
@@ -114,7 +115,7 @@ class SpaceController extends Controller{
      * @example $this->_getAjaxAnchor( uid, result )
      */
     private function _getAjaxAnchor($uid,$result){
-        $imghost = trim( $this->container->config['config.REMOTE_PIC_URL'],'/').'/';
+        $imghost = trim( SiteSer::config('remote_pic_url'),'/').'/';
         $container = null;
         foreach($result as $a){
         $name = $a['name'] ?: '无';

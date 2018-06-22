@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Session;
 use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use App\Facades\SiteSer;
 
 
 class LoginController extends Controller
@@ -56,8 +57,8 @@ class LoginController extends Controller
 //        /**
 //         * 失败，就跳转到登录页面
 //         */
-//        $domain = $this->container->config['config.login_domain'];
-//        $login_domain = array_rand($this->container->config['config.login_domain'], 1);
+//        $domain = SiteSer::config('login_domain');
+//        $login_domain = array_rand(SiteSer::config('login_domain'), 1);
 //        return new RedirectResponse('http://' . $domain[$login_domain] . '/passport');
 //
 //    }
@@ -91,7 +92,7 @@ class LoginController extends Controller
          * 通知时的数据加密后的字符串，通过解密进行试验
          */
         $code = $this->make('request')->get('code');
-        parse_str($this->authcode($code, 'DECODE', $this->container->config['config.syn_login_encode_key']), $get);
+        parse_str($this->authcode($code, 'DECODE', SiteSer::config('syn_login_encode_key')), $get);
 
         if (empty($get)) {
             return false;
@@ -231,7 +232,7 @@ class LoginController extends Controller
 
         $ckey_length = 4;
 
-        $key = md5($key ? $key : $this->container->config['config.syn_login_encode_key']);
+        $key = md5($key ? $key : SiteSer::config('syn_login_encode_key'));
         $keya = md5(substr($key, 0, 16));
         $keyb = md5(substr($key, 16, 16));
         $keyc = $ckey_length ? ($operation == 'DECODE' ? substr($string, 0, $ckey_length) : substr(md5(microtime()), -$ckey_length)) : '';
@@ -288,7 +289,7 @@ class LoginController extends Controller
      */
     private function remypwdMd5($username)
     {
-        $_encrypt_key = $this->container->config['config.WEB_SECRET_KEY'];
+        $_encrypt_key = SiteSer::config('web_secret_key');
         return md5($username . $_encrypt_key);
     }
 
