@@ -100,7 +100,7 @@ class IndexController extends Controller
                 ]));
         }
         $sCode = $this->request()->get('sCode');
-        if (!$this->container->config['config.SKIP_CAPTCHA_REG'] && (!$sCode || strtolower($sCode) != strtolower($this->_reqSession->get('CAPTCHA_KEY')))) {
+        if (!SiteSer::config('skip_captcha_reg') && (!$sCode || strtolower($sCode) != strtolower($this->_reqSession->get('CAPTCHA_KEY')))) {
             return new Response(
                 json_encode([
                     "data" => 0,
@@ -163,7 +163,7 @@ class IndexController extends Controller
         ]);
         $this->writeRedis($userInfo);
         // $this->_setIndexCookie($userInfo,true);
-        $this->_sendGift($uid, false, $this->container->config['config.REGISTER_SEND_POINT']);
+        $this->_sendGift($uid, false, SiteSer::config('register_send_point'));
         //用户邀请注册处理接口,Author By D.C 2014.12.10
         $this->_userRegisterByInvitation($uid);
 
@@ -493,7 +493,7 @@ class IndexController extends Controller
     {
 
         //用户推广链接活动开关
-        if (!$this->container->config['config.INVITATION_STATUS']) return false;
+        if (!SiteSer::config('invitation_status')) return false;
 
         //注册失败
         if (!$register_uid) return false;
@@ -611,7 +611,7 @@ class IndexController extends Controller
     public function cliGetRes()
     {
         $action = $this->request()->get('act');
-        if ($action == null || !isset($_REQUEST['vsign']) || $this->container->config['config.VFPHP_SIGN'] != $_REQUEST['vsign'] ||
+        if ($action == null || !isset($_REQUEST['vsign']) || SiteSer::config('vfphp_sign') != $_REQUEST['vsign'] ||
             !method_exists($this, $action)
         ) {
             return new JsonResponse(['status' => 1, 'data' => 'data is not available!']);
