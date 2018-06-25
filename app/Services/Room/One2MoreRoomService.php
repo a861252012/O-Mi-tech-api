@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
+use App\Facades\SiteSer;
 
 /**
  * @desc 房间类
@@ -51,7 +52,7 @@ class One2MoreRoomService extends Service
     }
     public function getHomeBookList($flashVersion) : array
     {
-        $ordRooms = Redis::get('home_one_many_' . $flashVersion);
+        $ordRooms = Redis::get('home_one_many_' . $flashVersion.':'.SiteSer::siteId());
         $ordRooms = str_replace(['cb(', ');'], ['', ''], $ordRooms);
         return (array)json_decode($ordRooms, true);
     }
