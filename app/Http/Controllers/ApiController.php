@@ -920,7 +920,6 @@ EOT;
 //        $this->make('redis')->set('shower:cover:version:' . $uid, $result['info']['md5']);
 //
 //        return JsonResponse::create(['msg' => '封面上传成功。']);
-
         $uid = Auth::id();
         $imageContent = file_get_contents('php://input');
         if (empty($imageContent)) {
