@@ -8,10 +8,12 @@ use App\Mail\PwdReset;
 use App\Mail\SafeMailVerify;
 use App\Models\Users;
 use App\Services\User\UserService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\MessageBag;
@@ -40,8 +42,13 @@ class PasswordController extends Controller
             ThrottleRoutes::clear($request);
             return JsonResponse::create(['status' => 0, 'msg' => '安全邮件已被使用',]);
         }
-        $mail = (new SafeMailVerify($user, $email));
-        Mail::send($mail);
+        try{
+            $mail = (new SafeMailVerify($user, $email));
+            Mail::send($mail);
+        } catch (Exception $e) {
+            Log::error($e->getTraceAsString());
+            return JsonResponse::create(['status' => 0, 'msg' => '发送失败！'.$e->getMessage()]);
+        }
 
         return JsonResponse::create(['status' => 1, 'msg' => '发送成功！']);
     }
@@ -67,7 +74,7 @@ class PasswordController extends Controller
         }
 
         //$getMailStatus =  $this->getDoctrine()->getManager()->getRepository('Video\ProjectBundle\Entity\VideoUser')->findOneBy(array('safemail' => $email));
-        $getMailStatus = Users::query()->where('safemail', $token['email'])->exists();
+        $getMailStatus = Users::query()->where('safemail', $token['email'])->toJson();
         if ($getMailStatus) {
             $errors->add('mail', '对不起！该邮箱已绑定其他帐号！');
             return RedirectResponse::create('/member/mailverify/mailFail?' . http_build_query(['errors' => $errors->toJson()]));
@@ -115,8 +122,13 @@ class PasswordController extends Controller
             ThrottleRoutes::clear($request);
             return JsonResponse::create(['status' => 0, 'msg' => '该邮箱没有通过安全邮箱验证, 验证安全邮箱才能使用此功能。']);
         }
-        $mail = new PwdReset($user);
-        Mail::send($mail);
+        try {
+            $mail = new PwdReset($user);
+            Mail::send($mail);
+        }catch (Exception $e){
+            Log::error($e->getTraceAsString());
+            return JsonResponse::create(['status' => 0, 'msg' => '发送失败！'.$e->getMessage()]);
+        }
         return JsonResponse::create(['status' => 1]);
     }
 
