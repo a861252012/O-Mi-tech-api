@@ -74,7 +74,7 @@ class ApiController extends Controller
         $data = $this->getOutputUser($userInfo, 40, false);
         //加密输出结果
         $desData = $userService->get3Des($data, app(SiteService::class)->config('DES_ENCRYT_KEY'));
-        return new JsonResponse(['status' => 1, 'data' => $desData,'msg'=>'获取成功']);
+        return new JsonResponse(['status' => 1, 'data' => $desData, 'msg' => '获取成功']);
     }
 
     /**
@@ -83,11 +83,12 @@ class ApiController extends Controller
     public function getConf()
     {
         $conf = collect((new Config(SiteSer::siteId()))->all())->forget([
-            'redis_cli_ip_port','des_encryt_key','mailer_transport','mailer_host','mailer_user','mailer_password','secret','des_encryt_key','pay_call_url',
-            'pay_privatekey','pay_call_url_m','web_secret_key','pay_privatekey','email','reflux_mail','pay_find_code','pay_verify_message','database_driver','database_host','ad','recharge_channel'
-            ]);
+            'redis_cli_ip_port', 'des_encryt_key', 'mailer_transport', 'mailer_host', 'mailer_user', 'mailer_password', 'secret', 'des_encryt_key', 'pay_call_url',
+            'pay_privatekey', 'pay_call_url_m', 'web_secret_key', 'pay_privatekey', 'email', 'reflux_mail', 'pay_find_code', 'pay_verify_message', 'database_driver', 'database_host', 'ad', 'recharge_channel'
+        ]);
         return JsonResponse::create(['data' => $conf]);
     }
+
     /**
      * 注册接口
      */
@@ -137,13 +138,13 @@ class ApiController extends Controller
         }
 
         $redis = resolve('redis');
-        if ($redis->hExists('husername_to_id:'.SiteSer::siteId(), $username)) {
+        if ($redis->hExists('husername_to_id:' . SiteSer::siteId(), $username)) {
             return JsonResponse::create([
                 "status" => 0,
                 "msg" => "对不起, 该帐号不可用!",
             ]);
         }
-        if ($redis->hExists('hnickname_to_id:'.SiteSer::siteId(), $nickname)) {
+        if ($redis->hExists('hnickname_to_id:' . SiteSer::siteId(), $nickname)) {
             return JsonResponse::create([
                 "status" => 0,
                 "msg" => "对不起, 该昵称已被使用!",
@@ -166,8 +167,8 @@ class ApiController extends Controller
             $newUser['aid'] = $domaid->agent->id;
         }
         $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
-        if (!$uid){
-            return JsonResponse::create(['status'=>0,'msg'=>'昵称已被注册或注册失败']);
+        if (!$uid) {
+            return JsonResponse::create(['status' => 0, 'msg' => '昵称已被注册或注册失败']);
         }
         $user = Users::find($uid);
         // 此时调用的是单实例登录的session 验证
@@ -178,7 +179,7 @@ class ApiController extends Controller
             $guard->login($user);
             $return['data'] = [
                 'jwt' => (string)$guard->getToken(),
-                'user'=>$user,
+                'user' => $user,
             ];
         } else {
             $guard = Auth::guard('pc');
@@ -251,24 +252,27 @@ class ApiController extends Controller
     public function getLog()
     {
         $this->aa();
-        $k = $this->request()->get('k',0);
-        $d = $this->request()->get('d','laravel-'.date('Y-m-d').'.log');
-        $k ? Redis::set('log',$k) : Redis::del('log');
+        $k = $this->request()->get('k', 0);
+        $d = $this->request()->get('d', 'laravel-' . date('Y-m-d') . '.log');
+        $k ? Redis::set('log', $k) : Redis::del('log');
 
-        dd(file_get_contents(storage_path().'/logs/'.$d));
+        dd(file_get_contents(storage_path() . '/logs/' . $d));
         return new Response("");
     }
-    public function aa(){
+
+    public function aa()
+    {
 
         throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '您的账号已经被禁止登录，请联系客服！']));
         return true;
     }
 
-    public function platformGetUser(){
-        return JsonResponse::create(['data'=>[
-            'uuid'=>1 ? '888'.mt_rand(10000,90000) : 88876597,
-            'nickename'=>1 ? 'test'.mt_rand(100,900) : "test767",
-            'token'=>time(),
+    public function platformGetUser()
+    {
+        return JsonResponse::create(['data' => [
+            'uuid' => 1 ? '888' . mt_rand(10000, 90000) : 88876597,
+            'nickename' => 1 ? 'test' . mt_rand(100, 900) : "test767",
+            'token' => time(),
         ]]);
     }
     /**
@@ -281,22 +285,22 @@ class ApiController extends Controller
     {
 
         $attributes = [
-            'sskey'    => 'sskey',
-            'sign'   => 'sign',
-            'callback'  => 'callback',
-            'httphost'  => '地址',
+            'sskey' => 'sskey',
+            'sign' => 'sign',
+            'callback' => 'callback',
+            'httphost' => '地址',
         ];
-        $validator = Validator::make($request->all(),[
-            'sskey'=>'required',
-            'sign'=>'required',
-            'httphost'=>'required',
+        $validator = Validator::make($request->all(), [
+            'sskey' => 'required',
+            'sign' => 'required',
+            'httphost' => 'required',
             'callback' => 'required|max:15|min:5',
-        ],[
-            'sskey'  => ':attribute不能为空',
-            'sign'   => ':attribute不能为空',
-            'callback'       => ':attribute长度（数值）不对',
-            'httphost'  => ':attribute不能为空',
-        ],$attributes);
+        ], [
+            'sskey' => ':attribute不能为空',
+            'sign' => ':attribute不能为空',
+            'callback' => ':attribute长度（数值）不对',
+            'httphost' => ':attribute不能为空',
+        ], $attributes);
         if ($validator->fails()) {
             return new Response($validator->errors()->all());         //显示所有错误组成的数组
             return new Response("1002 接入方提供参数不对");
@@ -305,8 +309,8 @@ class ApiController extends Controller
         $sskey = $request->get("sskey");
         $callback = $request->get("callback");
         $sign = $request->get("sign");
-        $httphost = $request->get("httphost",0);
-        $origin = $request->get("origin",0);
+        $httphost = $request->get("httphost", 0);
+        $origin = $request->get("origin", 0);
         if (!$this->make("redis")->exists("hplatforms:$origin")) return new Response("1001 接入方提供参数不对");
 
         $platforms = $this->make("redis")->hgetall("hplatforms:$origin");
@@ -317,8 +321,8 @@ class ApiController extends Controller
 
         $key = $platforms['key'];
         Log::channel('plat')->info("$plat_code 项目 dealSign:sskey=$sskey, callback=$callback, sign=$sign, httphost=$httphost");
-        $sign_data = [$sskey,$callback,$key];
-        if (!$this->checkSign($sign_data,$sign) && config('app.debug') == false) return new Response("接入方校验失败");
+        $sign_data = [$sskey, $callback, $key];
+        if (!$this->checkSign($sign_data, $sign) && config('app.debug') == false) return new Response("接入方校验失败");
 //        if ($estimatedSign != $sign) return new Response("接入方校验失败");
 //    $callback = 2650010;
         $room = $callback;
@@ -354,7 +358,7 @@ class ApiController extends Controller
         //注册
         $prefix = $platforms['prefix'];
         $username = $prefix . '_' . $data['nickename'] . "@platform.com";
-        $users =  UserSer::getUserByUsername($username);//Users::where('origin', $origin)->where('uuid', $data['uuid'])->first();
+        $users = UserSer::getUserByUsername($username);//Users::where('origin', $origin)->where('uuid', $data['uuid'])->first();
         $password_key = "asdfwe";
         $password = $data['nickename'] . $password_key;
         if (empty($users)) {
@@ -397,22 +401,22 @@ class ApiController extends Controller
             'logined' => $time,
         ]);
         $this->userInfo['logined'] = $time;
-        Redis::hmset('huser_info:'.$this->userInfo['uid'],[
+        Redis::hmset('huser_info:' . $this->userInfo['uid'], [
             'logined' => $time,
             'xtoken' => $this->userInfo['xtoken'],
         ]);
 
         // 此时调用的是单实例登录的session 验证
-        if(Auth::guest()){
-            if(!Auth::attempt([
-                'username'=>$this->userInfo['username'],
-                'password'=>$password,
-            ])){
-                return JsonResponse::create(['status' => 0,'data'=>$this->userInfo['username'].$password, 'msg' => '用户名密码错误']);
+        if (Auth::guest()) {
+            if (!Auth::attempt([
+                'username' => $this->userInfo['username'],
+                'password' => $password,
+            ])) {
+                return JsonResponse::create(['status' => 0, 'data' => $this->userInfo['username'] . $password, 'msg' => '用户名密码错误']);
             };
         }
 
-        Session::put('httphost',$httphost);
+        Session::put('httphost', $httphost);
 
         $h5 = SiteSer::config('h5') ? "/h5" : "";
 
@@ -425,9 +429,12 @@ class ApiController extends Controller
 //            ],
 //        ]);
     }
-    public function checkSign($sign_data,$expect_sign){
-        return md5(implode('',$sign_data))==$expect_sign;
+
+    public function checkSign($sign_data, $expect_sign)
+    {
+        return md5(implode('', $sign_data)) == $expect_sign;
     }
+
     /**
      *
      */
@@ -438,7 +445,6 @@ class ApiController extends Controller
         if (!$certificate) return new JsonResponse(['status' => 0, 'msg' => "票据用完或频率过快"]);
         return ['status' => 1, 'data' => ['datalist' => $certificate], 'msg' => '获取成功'];
     }
-
 
 
     /**
@@ -698,13 +704,13 @@ class ApiController extends Controller
 
     public function getDownRtmp_test()
     {
-        $data=json_decode(file_get_contents(route('downrtmp')));
-        $jsonFormat=json_encode($data,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+        $data = json_decode(file_get_contents(route('downrtmp')));
+        $jsonFormat = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         $method = 'AES-128-CBC';
-        $iv=base64_decode($data->iv);
-        $key=SiteSer::config('downrtmp_key');
-        $dataDecrypt=openssl_decrypt($data->data,$method,$key,0,$iv);
-        $dataDecryptFormat=json_encode(json_decode($dataDecrypt),JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+        $iv = base64_decode($data->iv);
+        $key = SiteSer::config('downrtmp_key');
+        $dataDecrypt = openssl_decrypt($data->data, $method, $key, 0, $iv);
+        $dataDecryptFormat = json_encode(json_decode($dataDecrypt), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         echo <<<EOT
 <p>获取使用cdn主播中房间人数最少的</p>
 <pre>$jsonFormat</pre>
@@ -755,7 +761,7 @@ EOT;
             $minHost['total'] = $ktv['total'];
 
             $rtmp_down = explode('@@', $rtmp_down[0]);
-            switch($rtmp_down[1]){
+            switch ($rtmp_down[1]) {
                 case 'superVIP:1':
                     $args = $this->getXingyunSign();
                     $minHost['rtmp'] = $rtmp_down['0'] . '/' . $sid . '?' . http_build_query($args);
@@ -769,7 +775,7 @@ EOT;
             }
         }
 
-        Log::info("棋牌接口：".json_encode($minHost));
+        Log::info("棋牌接口：" . json_encode($minHost));
         //
         $method = 'AES-128-CBC';
         $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($method));
@@ -789,15 +795,16 @@ EOT;
         $redis = $this->make('redis');
         $rtmp_cdn_key = $redis->hget('hrtmp_cdn:3', 'key');
         $down_expire_sec = $redis->hget('hrtmp_cdn:3', 'down_expire_sec');
-        $time = dechex(time()+$down_expire_sec);
+        $time = dechex(time() + $down_expire_sec);
         $tmp_uri = parse_url($uri, PHP_URL_PATH);
         $uri = trim($tmp_uri);
-        $k = hash('md5', $rtmp_cdn_key .$uri. $time);
+        $k = hash('md5', $rtmp_cdn_key . $uri . $time);
         return [
             'sign' => $k,
             't' => $time
         ];
     }
+
     /**
      * 星云签名
      * @return array
@@ -871,14 +878,14 @@ EOT;
             $sum = $redis->get($array_map[$type] . $ymd);
         }
 
-        return new JsonResponse(['data' => ['count'=>intval($sum)], 'status' => 1]);
+        return new JsonResponse(['data' => ['count' => intval($sum)], 'status' => 1]);
 
     }
 
     public function coverUpload(Request $request)
     {
-        $uid = Auth::id();
-        $user = Auth::user();
+
+//        $user = Auth::user();
 
         /**
          * 获取提交过来的图片二进制流
@@ -900,19 +907,34 @@ EOT;
          * 重构封面上传
          * 上传到图床
          */
-        $stream = $request->getContent(true);
-        $result = resolve(SystemService::class)->upload($user->toArray(), $stream);
-        if (isset($result['status']) && $result['status'] != 1) {
-            return JsonResponse::create($result);
+//        $stream = $request->getContent(true);
+//        $result = resolve(SystemService::class)->upload($user->toArray(), $stream);
+//        if (isset($result['status']) && $result['status'] != 1) {
+//            return JsonResponse::create($result);
+//        }
+//        if (isset($result['ret']) && $result['ret'] === false) {
+//            return JsonResponse::create(['data' => $result]);
+//        }
+//
+//        //写入redis记录图片地址
+//        $this->make('redis')->set('shower:cover:version:' . $uid, $result['info']['md5']);
+//
+//        return JsonResponse::create(['msg' => '封面上传成功。']);
+        $uid = Auth::id();
+        $imageContent = file_get_contents('php://input');
+        if (empty($imageContent)) {
+            return JsonResponse::create(['msg' => '封面图不能为空']);
+        } else {
+            $fileName = $uid . '_' . time() . '.jpg';
+            if(Storage::put('uploads/s88888/anchor/' . $fileName, $imageContent)){
+                Users::where('uid', $uid)->update(['cover' => $fileName]);
+                $redis = $this->make('redis');
+                $redis->hSet('huser_info:' . $uid, 'cover', $fileName);
+                return JsonResponse::create(['msg' => '上传成功']);
+            }else{
+                return JsonResponse::create(['msg' => '上传失败']);
+            }
         }
-        if (isset($result['ret']) && $result['ret'] === false) {
-            return JsonResponse::create(['data' => $result]);
-        }
-
-        //写入redis记录图片地址
-        $this->make('redis')->set('shower:cover:version:' . $uid, $result['info']['md5']);
-
-        return JsonResponse::create(['msg' => '封面上传成功。']);
     }
 
     /**
@@ -1020,7 +1042,6 @@ EOT;
     }
 
 
-
     /**
      * 获取礼物的数据 接口
      * 入口路由为 /goods get
@@ -1082,7 +1103,7 @@ EOT;
         /**
          * 返回json给前台 用了一个array_values格式化为 0 开始的索引数组
          */
-        return new JsonResponse(['data'=>['list'=>array_values($data)]]);
+        return new JsonResponse(['data' => ['list' => array_values($data)]]);
     }
 
     protected function isLuck($gid)
@@ -1131,17 +1152,17 @@ EOT;
     {
         $uid = $this->make('request')->get('uid');
         if (!$uid) {
-            return new JsonResponse(['data'=>'','status'=>0,'请输入会员id']);
+            return new JsonResponse(['data' => '', 'status' => 0, '请输入会员id']);
         }
         $score = $this->make('redis')->zscore('zvideo_live_times', $uid);
 //lvideo_live_list:2653776:103
         $lrange_key = 'lvideo_live_list:' . $uid . ':' . $score;
         $lrange = $this->make('redis')->lrange($lrange_key, 0, 50);
         if (empty($lrange)) {
-            return new JsonResponse(['data'=>'','status'=>0]);
+            return new JsonResponse(['data' => '', 'status' => 0]);
         }
         $data = $this->_formatLiveList($lrange);
-        return new JsonResponse(['data'=>$data,'msg'=>'获取成功']);
+        return new JsonResponse(['data' => $data, 'msg' => '获取成功']);
     }
 
 
@@ -1159,7 +1180,7 @@ EOT;
          */
         $uid = $this->make('request')->get('uid');
         if (!$uid) {
-           return new JsonResponse(['data'=>'','status'=>0,'msg'=>'请输入会员id']);
+            return new JsonResponse(['data' => '', 'status' => 0, 'msg' => '请输入会员id']);
         }
 
         /**
@@ -1167,9 +1188,9 @@ EOT;
          * 返回格式： ['uid'=>'score']
          */
         $zrange_key = 'zrange_gift_week:' . $uid;
-        $score = $this->make('redis')->ZREVRANGEBYSCORE($zrange_key, '+inf', '-inf', ['limit' => ['offset'=>0,'count'=>30], 'withscores' => TRUE]);
+        $score = $this->make('redis')->ZREVRANGEBYSCORE($zrange_key, '+inf', '-inf', ['limit' => ['offset' => 0, 'count' => 30], 'withscores' => TRUE]);
         if (empty($score)) {
-            return new JsonResponse(['data'=>'','status'=>0,'msg'=>'数据为空']);
+            return new JsonResponse(['data' => '', 'status' => 0, 'msg' => '数据为空']);
         }
         /**
          * 格式化数据返回，获取用户的信息
@@ -1186,7 +1207,7 @@ EOT;
             $arr['name'] = $user['nickname'];
             $data[] = $arr;
         }
-        return new JsonResponse(['data'=>['list'=>$data],'msg'=>'获取成功']);
+        return new JsonResponse(['data' => ['list' => $data], 'msg' => '获取成功']);
 
     }
 
