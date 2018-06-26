@@ -155,6 +155,16 @@ class RoomService extends Service
             }
         }
     }
+    public function  getCurrentMobileOnetoone(){
+        $redis = $this->make('redis');
+        //一对一
+        if (!empty($one2one = resolve('one2one')->getRunningOnetooneDatas())) {
+
+            $this->extend_room = $one2one;
+            return $this->current_tid = 4;
+        }
+        return null;
+    }
 
     public function getCurrentTimeRoomStatus()
     {

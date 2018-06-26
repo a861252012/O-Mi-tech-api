@@ -115,6 +115,8 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
 });
 /** 进房间 */
 Route::post('get_room/{rid}', 'Mobile\RoomController@getRoom')->where('rid','[0-9]{5,15}')->name('m_get_room');
+/** 一对一table进房间 */
+Route::post('get_onetoone_room/{rid}', 'Mobile\RoomController@getRoomonetoone')->where('rid','[0-9]{5,15}')->name('m_get_roomonetoone');
 
 Route::get('find', ['name' => 'm_find', 'uses' => 'Mobile\MobileController@searchAnchor']);
 Route::get('oort2bunny', ['name' => 'guanggao', 'uses' => 'AdsController@getAd']);//广告接口

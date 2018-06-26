@@ -138,4 +138,16 @@ class One2OneRoomService extends Service
     {
         return time() >= $starttime && time() <= $endtime;
     }
+
+    public function getRunningOnetooneDatas()
+    {
+        $data = $this->getData();
+
+        foreach ($data as $k => $ord) {
+            $starttime = strtotime($ord['starttime']);
+            $endtime = $starttime + $ord['duration'];
+            return $ord;
+        }
+        return [];
+    }
 }
