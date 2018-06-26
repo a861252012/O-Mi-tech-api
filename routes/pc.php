@@ -255,9 +255,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     //隐身功能接口
     Route::get('/member/hidden/{status}', ['name' => 'hidden', 'uses' => 'MemberController@hidden']);
 
-    //获取用户信息
-    Route::get('/getuser/{id}', ['name' => 'getuser', 'uses' => 'ApiController@getUserByDes']);
-
 
     //私信接口  v2版本中去掉了
 //    Route::match(['POST', 'GET'], '/letter', ['name' => 'letter', 'uses' => 'ApiController@Letter']);
