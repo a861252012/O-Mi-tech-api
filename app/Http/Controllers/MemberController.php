@@ -1918,12 +1918,12 @@ class MemberController extends Controller
             return new JsonResponse($msg);
         }
         // 取到开通的贵族的数据 判断价格
-        $gid = $this->request()->get('gid');
+        $gid = $this->request()->post('gid');
         // 默认的天数
 //        $day = $this->request()->get('day') ? $this->request()->get('day') : 30;
         $day = 30;
         // 如果在房间内 就会有roomid即为主播uid，默认为0不在房间开通， 用于佣金方面的问题
-        $roomId = $this->request()->get('roomId') ? $this->request()->get('roomId') : 0;
+        $roomId = $this->request()->post('roomId') ? $this->request()->post('roomId') : 0;
 
         $user = DB::table('video_user')->where('uid', Auth::user()->uid)->first();
 

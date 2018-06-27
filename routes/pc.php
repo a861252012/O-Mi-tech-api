@@ -270,7 +270,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 
 
     // 开通贵族
-    Route::get('/openvip', ['name' => 'shop_openvip', 'uses' => 'MemberController@buyVip']);
+    Route::post('/openvip', ['name' => 'shop_openvip', 'uses' => 'MemberController@buyVip']);
 
     // 贵族根据id获取贵族信息
     Route::get('/getgroup', ['name' => 'shop_getgroup', 'uses' => 'ShopController@getgroup']);
