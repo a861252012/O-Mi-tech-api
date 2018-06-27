@@ -242,7 +242,7 @@ class UserService extends Service
         if (!$uid || !is_numeric($uid)) {
             throw new Exception('Please make sure $uid is a numeric');
         }
-        $user = Users::query()->where('uid',$uid)->allSites()->first();
+        $user = Users::query()->where('uid', $uid)->allSites()->first();
         if (!$user) {
             return false;
         }
@@ -409,10 +409,13 @@ class UserService extends Service
     public function getUidByUsername($username)
     {
         $uid = $this->redis->hget(static::KEY_USERNAME_TO_ID . ':' . SiteSer::siteId(), $username);
+
         if (!$uid) {
-            $uid = Users::query()->where('username', $username)->get(['uid'])->get('uid');
+            $uid = Users::query()->where('username', $username)->first();
+            $uid = $uid ? $uid['uid'] : null;
             if (!$uid) return null;
             $uid = $this->redis->hset(static::KEY_USERNAME_TO_ID . ':' . SiteSer::siteId(), $username, $uid);
+
         }
         return $uid;
     }
