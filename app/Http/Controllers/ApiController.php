@@ -60,7 +60,7 @@ class ApiController extends Controller
      * [获取用户加密信息]
      *
      * @author      dc
-     * @description 获取用户加密信息
+     * @description 获取用户信息
      * @version     20151021
      */
     public function getUserByDes($uid)
@@ -72,9 +72,13 @@ class ApiController extends Controller
         if (!$userInfo) return new JsonResponse(['status' => 0, 'msg' => '无效用户']);
 
         $data = $this->getOutputUser($userInfo, 40, false);
+        $keepKey = ['headimg', 'nickname', 'vip', 'lv_rich', 'sex', 'age', 'starname', 'procity'];
+        foreach ($data as $k => $v) {
+            if (!in_array($k, $keepKey)) unset($data[$k]);
+        }
         //加密输出结果
-        $desData = $userService->get3Des($data, app(SiteService::class)->config('DES_ENCRYT_KEY'));
-        return new JsonResponse(['status' => 1, 'data' => $desData, 'msg' => '获取成功']);
+//        $desData = $userService->get3Des($data, app(SiteService::class)->config('DES_ENCRYT_KEY'));
+        return new JsonResponse(['status' => 1, 'data' => $data, 'msg' => '获取成功']);
     }
 
     /**
@@ -926,12 +930,12 @@ EOT;
             return JsonResponse::create(['msg' => '封面图不能为空']);
         } else {
             $fileName = $uid . '_' . time() . '.jpg';
-            if(Storage::put('uploads/s88888/anchor/' . $fileName, $imageContent)){
+            if (Storage::put('uploads/s88888/anchor/' . $fileName, $imageContent)) {
                 Users::where('uid', $uid)->update(['cover' => $fileName]);
                 $redis = $this->make('redis');
                 $redis->hSet('huser_info:' . $uid, 'cover', $fileName);
                 return JsonResponse::create(['msg' => '上传成功']);
-            }else{
+            } else {
                 return JsonResponse::create(['msg' => '上传失败']);
             }
         }

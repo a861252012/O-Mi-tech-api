@@ -305,7 +305,8 @@ Route::group(['middleware' => ['login_auth']], function () {
     //关注用户接口
     Route::any('/focus', ['name' => 'focus', 'uses' => 'ApiController@Follow']);
     //获取用户信息
-    Route::get('/getuser/{id:\d+}', ['name' => 'getuser', 'uses' => 'ApiController@getUserByDes']);
+//    Route::get('/getuser/{id:\d+}', ['name' => 'getuser', 'uses' => 'ApiController@getUserByDes']);
+    Route::get('/getuser/{uid}', ['name' => 'getuser', 'uses' => 'ApiController@getUserByDes'])->where('uid', '[0-9]+');
 
     //邮箱验证
     Route::match(['GET', 'POST'], 'sendVerifyMail', ['name' => 'sendVerifyMail', 'uses' => 'PasswordController@sendVerifyMail']);
