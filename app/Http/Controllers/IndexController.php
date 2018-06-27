@@ -453,8 +453,8 @@ class IndexController extends Controller
                         'myres' => $myres,
                         'myticket' => $myticket,
                         'notice' => $notice,
-                        'qqurl'=>is_null($qq_url)?$qq_url:'',
-                        'emailurl'=>is_null($email_url)?$email_url:'',
+                        'qqurl'=>is_null($qq_url)?'':$qq_url,
+                        'emailurl'=>is_null($email_url)?'':$email_url,
 
                     ],
                 'msg' => '获取成功',
@@ -636,6 +636,7 @@ class IndexController extends Controller
         }
         return new JsonResponse(['status' => 0, 'data' => $data]);
     }
+
 
     /*
      * 主播招募配置信息接口 by desmond 2018-06-21
