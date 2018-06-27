@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
+use App\Models\Faq;
 
 class IndexController extends Controller
 {
@@ -333,8 +334,8 @@ class IndexController extends Controller
             $return['jump_url'] = $jump_url;
         }
 
-        $qq_url = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_url');
-        $email_url = Redis::hget('hsite_config:'.SiteSer::siteId(), 'email_url');
+        $qq_url = Redis::hget('hsite_config:' . SiteSer::siteId(), 'qq_url');
+        $email_url = Redis::hget('hsite_config:' . SiteSer::siteId(), 'email_url');
 
 
         $flashVersion = SiteSer::config('flash_version');
@@ -453,8 +454,8 @@ class IndexController extends Controller
                         'myres' => $myres,
                         'myticket' => $myticket,
                         'notice' => $notice,
-                        'qqurl'=>is_null($qq_url)?'':$qq_url,
-                        'emailurl'=>is_null($email_url)?'':$email_url,
+                        'qqurl' => is_null($qq_url) ? '' : $qq_url,
+                        'emailurl' => is_null($email_url) ? '' : $email_url,
 
                     ],
                 'msg' => '获取成功',
@@ -463,6 +464,26 @@ class IndexController extends Controller
         );
 
 
+    }
+
+    /**
+     * 首页获取帮助信息
+     * @Author bart
+     */
+    public function getHelp($sort, $num)
+    {
+        $redis = $this->make('redis');
+        $ids = $redis->get('video:faq:sort:class:' . $sort);
+        if (!empty($ids)) {
+            $ids = json_decode($ids);
+            $data = Faq::whereIn('id', $ids)->limit($num)->get();
+        } else {
+            $data = [];
+        }
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => $data,
+        ]);
     }
 
     /**
@@ -641,17 +662,18 @@ class IndexController extends Controller
     /*
      * 主播招募配置信息接口 by desmond 2018-06-21
      */
-    public function anchor_join(){
-        $site_id =  SiteSer::siteId();
-        $anchor_join = Redis::hgetall('anchor_join:'.$site_id);
+    public function anchor_join()
+    {
+        $site_id = SiteSer::siteId();
+        $anchor_join = Redis::hgetall('anchor_join:' . $site_id);
         $result = [];
-        if(isset($anchor_join)){
-            foreach ($anchor_join as $key=>$value){
+        if (isset($anchor_join)) {
+            foreach ($anchor_join as $key => $value) {
                 $temp = json_decode($value);
-                array_push($result,$temp);
+                array_push($result, $temp);
             }
-            return new JsonResponse(['status' => 1, 'data' => $result,'msg'=>'获取成功']);
+            return new JsonResponse(['status' => 1, 'data' => $result, 'msg' => '获取成功']);
         }
-        return new JsonResponse(['status' => 0, 'data' => $result,'msg'=>'获取失败']);
+        return new JsonResponse(['status' => 0, 'data' => $result, 'msg' => '获取失败']);
     }
 }

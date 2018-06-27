@@ -147,6 +147,8 @@ Route::get('/cooperation', ['name' => 'join', 'uses' => 'PageController@cooperat
 Route::get('/rank_data', ['name' => 'rank_data', 'uses' => 'RankController@rankData']);
 // 关于 帮助 投诉
 Route::get('/about/{act}', ['uses' => 'PageController@index']);
+//首页帮助sort分类 num获取条数
+Route::get('/help/{sort}/{num}', ['uses' => 'IndexController@getHelp'])->where('sort', '[0-9]+')->where('sort', '[0-9]+');
 // 活动详情页面
 Route::get('/nac/{id}', ['name' => 'ac_info', 'uses' => 'ActivityController@info']);
 Route::match(['GET', 'POST'], '/majax/{action}', ['name' => 'majax', 'uses' => 'MemberController@ajax']);
