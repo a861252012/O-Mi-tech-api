@@ -188,7 +188,7 @@ class LoginController extends Controller
         ], request('remember'))) {
             return [
                 'status' => 0,
-                'msg' => '用户名密码错误或账户被禁闭！',
+                'msg' => '用户名密码错误！',
             ];
         };
 
