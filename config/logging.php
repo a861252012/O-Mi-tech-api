@@ -37,12 +37,12 @@ return [
 
         'single' => [
             'driver' => 'single',
-            'path' => storage_path('logs/laravel.log'),
+            'path' => storage_path().'/logs/laravel-'.php_sapi_name().'.log',
             'level' => 'debug',
         ],
         'daily' => [
             'driver' => 'daily',
-            'path' => storage_path('logs/laravel.log'),
+            'path' => storage_path().'/logs/laravel-'.php_sapi_name().'.log',
             'level' => 'debug',
             'days' => 7,
         ],
