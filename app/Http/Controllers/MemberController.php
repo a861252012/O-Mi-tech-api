@@ -2102,7 +2102,7 @@ class MemberController extends Controller
             'roomid' => $roomId,
             'vip' => $userGroup['level_id'],
             'cashback' => $casheback,
-            'name' => $user->username,
+            'name' => $user->nickname,
         ];
 
         return new JsonResponse($msg);
