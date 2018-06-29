@@ -16,7 +16,9 @@ class RoomAdmin extends \Illuminate\Database\Eloquent\Model
      * 表名 房间管理员表
      * @var string
      */
-    use   SiteSpecific;
+/*
+ * 18-06-29 经经理确认，主播下面管理员不分站点
+ * use   SiteSpecific;*/
     protected $table = 'video_manage';
     protected $primaryKey = 'auto_id';
     public $timestamps= false;
