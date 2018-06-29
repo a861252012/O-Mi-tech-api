@@ -146,8 +146,9 @@ class PasswordController extends Controller
         if ($pwd !== $pwd_confirm) {
             return JsonResponse::create(['status' => 0, 'msg' => '两次输入的密码不一致']);
         }
+        $pwd = $this->decode($pwd);
         $hash = md5($pwd);
-        $reset = Users::where('uid', $uid)->update(['password' => $hash]);
+        Users::where('uid', $uid)->update(['password' => $hash]);
         Redis::hset('huser_info:' . $uid, 'password', $hash);
         Redis::del('pwdreset.token:' . $token);
         return JsonResponse::create(['status' => 1, 'msg' => '密码修改成功']);
