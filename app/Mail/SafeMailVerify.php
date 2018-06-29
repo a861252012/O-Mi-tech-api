@@ -26,10 +26,10 @@ class SafeMailVerify extends Mailable implements ShouldQueue
     /**
      * Create a new message instance.
      *
-     * @param Users      $user
+     * @param Users $user
      * @param            $email
      */
-    public function __construct(Users $user, $email)
+    public function __construct(Users $user, $email, $basUrl = '')
     {
         $this->queue = 'mail:safeMailVerify';
 
@@ -46,11 +46,11 @@ class SafeMailVerify extends Mailable implements ShouldQueue
             'uid' => $user->uid,
             'time' => time(),
         ]);
-        $tokenUrl = route('mail_verify_confirm', ['token' => $token]);
+//        $tokenUrl = route('mail_verify_confirm', ['token' => $token]);
+        $url = $basUrl . '/mailverify/confirm/' . $token;
         $name = $user['nickname'] ?: $user['username'];
-        $url = $tokenUrl;
         $url_html = '<a href="' . $url . '" target="_blank"  style="word-wrap: break-word;cursor:pointer;text-decoration:none;color:#0082cb">' . $url . '</a>';
-        $emailtemplate =  $siteConfig->get('email');
+        $emailtemplate = $siteConfig->get('email');
         $content = $emailtemplate ? $emailtemplate ?? '' : '';
         $this->content = preg_replace([
             '/{{\s*name\s*}}/i',

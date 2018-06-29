@@ -155,6 +155,16 @@ class RoomService extends Service
             }
         }
     }
+    public function  getCurrentMobileOnetoone(){
+        $redis = $this->make('redis');
+        //一对一
+        if (!empty($one2one = resolve('one2one')->getRunningOnetooneDatas())) {
+
+            $this->extend_room = $one2one;
+            return $this->current_tid = 4;
+        }
+        return null;
+    }
 
     public function getCurrentTimeRoomStatus()
     {
@@ -428,7 +438,10 @@ class RoomService extends Service
     {
         $now = date('Y-m-d H:i:s');
         //时间，是否和一对一有重叠
-        $data = RoomDuration::where('status', 0)->where('uid', Auth::id())
+//        $data = RoomDuration::where('status', 0)->where('uid', Auth::id())
+//            ->orderBy('starttime', 'DESC')
+//            ->get()->toArray();
+        $data = RoomDuration::onWriteConnection()->where('status', 0)->where('uid', Auth::id())
             ->orderBy('starttime', 'DESC')
             ->get()->toArray();
 
@@ -436,7 +449,10 @@ class RoomService extends Service
         if (!$this->checkActiveTime($start_time, $endtime, $temp_data)) return false;
 
         //时间，是否和一对多有重叠
-        $data = RoomOneToMore::where('status', 0)->where('uid', Auth::id())->get()->toArray();
+//        $data = RoomOneToMore::where('status', 0)->where('uid', Auth::id())->get()->toArray();
+        $data = RoomOneToMore::onWriteConnection()->where('status', 0)->where('uid', Auth::id())->get()->toArray();
+
+
         $temp_data = $this->array_column_multi($data, ['starttime', 'endtime']);
         if (!$this->checkActiveTime($start_time, $endtime, $temp_data)) return false;
         return true;

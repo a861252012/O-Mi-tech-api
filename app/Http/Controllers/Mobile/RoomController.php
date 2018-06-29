@@ -70,25 +70,35 @@ class RoomController extends Controller
      */
     public function getReserveOneToOneByUid($uid, $flashVersion)
     {
-        $list = collect();
-        $myReservation = RoomDuration::where('reuid', $uid)
-            ->whereRaw('starttime>(now()-duration)')
-            ->orderBy('starttime', 'desc')
-            ->get();
-        if (!$myReservation->count()) return $list;
-        // 从redis 获取一对一预约数据
-        if(isset(resolve('one2one')->getHomeBookList($flashVersion)['rooms'])){
-            $rooms = resolve('one2one')->getHomeBookList($flashVersion)['rooms'] ?? [];
-            foreach ($rooms as $room) {
-                if ($myReservation->where('uid', $room['rid'])->where('id', $room['id'])->first()) {
-                    $room['listType'] = 'myres';
-                    $list[] = $room;
+        // 获取我的预约的房间
+        $myres = [];
+        if ($uid) {
+            $myReservation = RoomDuration::with('anchor')->where('reuid', $uid)
+                ->where('endtime', '>', date('Y-m-d H:i:s', time()))
+                ->orderBy('starttime', 'desc')
+                ->get();
+            if (!empty($myReservation)) {
+                foreach ($myReservation as $item) {
+                    $roomInfo = Redis::hgetall('hvediosKtv:' . $item->uid);
+                    $room['id'] = $item->id;
+                    $room['rid'] = $item->uid;
+                    $room['tid'] = 4;
+                    $room['nickname'] = $item->anchor->nickname;
+                    $room['cover'] = $item->anchor->cover;
+                    $room['start_time'] = $item->starttime;
+                    $room['end_time'] = $item->endtime;
+                    $room['duration'] = $item->duration;
+                    $room['one_to_one_status'] = 1;
+                    $room['origin'] = $item->origin;
+                    $room['new_user'] = intval(Redis::hget('huser_icon:' . $item->uid, 'new_user'));
+                    $room['live_status'] = isset($roomInfo['status']) ? intval($roomInfo['status']) : 0;
+                    $room['top'] = isset($roomInfo['top']) ? intval($roomInfo['top']) : 0;
+                    $myres[] = $room;
                 }
+
             }
-        }else{
-            $list = [];
         }
-        return $list;
+        return $myres;
     }
 
     /**
@@ -388,6 +398,95 @@ class RoomController extends Controller
         }
         return JsonResponse::create(['data' => array_merge($roomInfo,$roomExtend,$room_user,$socket),'msg'=>$msg]);
     }
+    /*
+     * 手机端一对一接口
+     */
+    public function getRoomonetoone($rid)
+    {
+
+        try {
+            $roomService = resolve('roomService');
+            $room = $roomService->getRoom($rid, Auth::id());
+            $tid = $roomService->getCurrentMobileOnetoone();
+            $user = UserSer::getUserByUid(Auth::id());
+            $roomInfo = [
+                'room_name'=>$room['user']['nickname'],
+                'header_pic'=>$room['user']['headimg'],
+                'room_pic'=>$room['user']['cover'],
+                'live_status'=>0,     // 改为未开播
+                'live_device_type'=>$room['origin'],
+                'tid'=>$tid ?: 1,
+                'is_password'=>$roomService->getPasswordRoom()?1:0,
+            ];
+            $roomExtend = [
+                'start_time'=> null,
+                'end_time'=> null,
+                'user_num'=> $room['total'],
+                'room_price'=> 0,
+                'time_length'=> 0,
+                'room_id'=> $rid,
+                'class_id'=> 0,
+            ];
+            switch ($tid){
+                case 4:
+                    $one2one = resolve('one2one')->getRunningOnetooneDatas();
+
+                    $roomExtend['start_time'] = $one2one['starttime'];
+                    $roomExtend['end_time'] = date('Y-m-d H:i:s',strtotime($one2one['starttime']) + $one2one['duration']);
+                    $roomExtend['user_num'] = $one2one['tickets']?:($one2one['reuid'] ?1:0);
+                    $roomExtend['room_price'] = $one2one['points'];
+                    $roomExtend['class_id'] = $one2one['id'];
+                    break;
+
+                default:;
+            }
+            $roomExtend['time_length'] = strtotime($roomExtend['end_time'])-strtotime($roomExtend['start_time']);
+
+            $room_user = [
+                'authority_in'=>1
+            ];
+
+            if(in_array($tid,[4,]) && Auth::guest() ){   //游客进特殊房间
+                $room_user['authority_in'] = 309;
+            }else{
+                switch ($tid){
+
+                    case 4:
+                        if(!$roomService->checkCanIn()){
+
+                            $room_user['authority_in'] =  $roomExtend['user_num'] ? 304 : 303;
+                        }
+                        break;
+
+                }
+
+            }
+            $socket = [];
+            /** @var SocketService $socketService */
+            $socketService = resolve(SocketService::class);
+            $chatServer = [];
+            $msg = "";
+            $chatServer = $socketService->getNextServerAvailable();
+            $socket['host'] =  $chatServer['host'];
+            $socket['ip'] =  $chatServer['ip'];
+            $socket['port'] =  $chatServer['port'];
+
+        } catch (NoSocketChannelException $e) {
+            $msg = $e->getMessage();
+            $socket['host'] =  "";
+            $socket['ip'] =  "";
+            $socket['port'] =  "";
+            $roomInfo = [];
+            $roomExtend = [];
+            $room_user = [];
+            Log::info("手机直播间异常：".$msg);
+        }
+        return JsonResponse::create(['data' => array_merge($roomInfo,$roomExtend,$room_user,$socket),'msg'=>$msg]);
+    }
+
+
+
+
     /**
      * @param $rid
      * @return static

@@ -147,6 +147,8 @@ Route::get('/cooperation', ['name' => 'join', 'uses' => 'PageController@cooperat
 Route::get('/rank_data', ['name' => 'rank_data', 'uses' => 'RankController@rankData']);
 // 关于 帮助 投诉
 Route::get('/about/{act}', ['uses' => 'PageController@index']);
+//首页帮助sort分类 num获取条数
+Route::get('/help/{sort}/{num}', ['uses' => 'IndexController@getHelp'])->where('sort', '[0-9]+')->where('sort', '[0-9]+');
 // 活动详情页面
 Route::get('/nac/{id}', ['name' => 'ac_info', 'uses' => 'ActivityController@info']);
 Route::match(['GET', 'POST'], '/majax/{action}', ['name' => 'majax', 'uses' => 'MemberController@ajax']);
@@ -255,9 +257,6 @@ Route::group(['middleware' => ['login_auth']], function () {
     //隐身功能接口
     Route::get('/member/hidden/{status}', ['name' => 'hidden', 'uses' => 'MemberController@hidden']);
 
-    //获取用户信息
-    Route::get('/getuser/{id}', ['name' => 'getuser', 'uses' => 'ApiController@getUserByDes']);
-
 
     //私信接口  v2版本中去掉了
 //    Route::match(['POST', 'GET'], '/letter', ['name' => 'letter', 'uses' => 'ApiController@Letter']);
@@ -273,7 +272,7 @@ Route::group(['middleware' => ['login_auth']], function () {
 
 
     // 开通贵族
-    Route::get('/openvip', ['name' => 'shop_openvip', 'uses' => 'MemberController@buyVip']);
+    Route::post('/openvip', ['name' => 'shop_openvip', 'uses' => 'MemberController@buyVip']);
 
     // 贵族根据id获取贵族信息
     Route::get('/getgroup', ['name' => 'shop_getgroup', 'uses' => 'ShopController@getgroup']);
@@ -308,7 +307,8 @@ Route::group(['middleware' => ['login_auth']], function () {
     //关注用户接口
     Route::any('/focus', ['name' => 'focus', 'uses' => 'ApiController@Follow']);
     //获取用户信息
-    Route::get('/getuser/{id:\d+}', ['name' => 'getuser', 'uses' => 'ApiController@getUserByDes']);
+//    Route::get('/getuser/{id:\d+}', ['name' => 'getuser', 'uses' => 'ApiController@getUserByDes']);
+    Route::get('/getuser/{uid}', ['name' => 'getuser', 'uses' => 'ApiController@getUserByDes'])->where('uid', '[0-9]+');
 
     //邮箱验证
     Route::match(['GET', 'POST'], 'sendVerifyMail', ['name' => 'sendVerifyMail', 'uses' => 'PasswordController@sendVerifyMail']);
