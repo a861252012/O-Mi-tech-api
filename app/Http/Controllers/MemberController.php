@@ -1992,6 +1992,7 @@ class MemberController extends Controller
                     'order_id' => time(),
                     'pay_type' => 5,//服务器送的钱pay_type=5
                     'pay_id' => null,
+                    'pay_status'=>Recharge::SUCCESS,
                     'nickname' => $user->nickname,
                     'site_id' => SiteSer::siteId(),
                 ];
