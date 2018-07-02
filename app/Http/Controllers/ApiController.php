@@ -72,7 +72,7 @@ class ApiController extends Controller
         if (!$userInfo) return new JsonResponse(['status' => 0, 'msg' => '无效用户']);
 
         $data = $this->getOutputUser($userInfo, 40, false);
-        $keepKey = ['headimg', 'nickname', 'vip', 'lv_rich', 'sex', 'age', 'starname', 'procity', 'uid', 'space_url'];
+        $keepKey = ['headimg', 'nickname', 'vip', 'lv_rich', 'sex', 'age', 'starname', 'procity', 'uid', 'space_url','roled','attens'];
         foreach ($data as $k => $v) {
             if (!in_array($k, $keepKey)) unset($data[$k]);
         }
@@ -255,12 +255,12 @@ class ApiController extends Controller
 
     public function getLog()
     {
-        $this->aa();
+
         $k = $this->request()->get('k', 0);
         $d = $this->request()->get('d', 'laravel-' . date('Y-m-d') . '.log');
         $k ? Redis::set('log', $k) : Redis::del('log');
 
-        dd(file_get_contents(storage_path() . '/logs/' . $d));
+        //dd(file_get_contents(storage_path() . '/logs/' . $d));
         return new Response("");
     }
 

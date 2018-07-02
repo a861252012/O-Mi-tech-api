@@ -38,7 +38,7 @@ class IndexController extends Controller
         //为什么总在$flashVer??
         //updata by Young
         //获取flash版本
-        $flashVer = Redis::get('flash_version');
+        $flashVer = Redis::get('publish_version');
         !$flashVer && $flashVer = 'v201504092044';
 
         //初始化$list数据
@@ -338,7 +338,7 @@ class IndexController extends Controller
         $email_url = Redis::hget('hsite_config:' . SiteSer::siteId(), 'email_url');
 
 
-        $flashVersion = SiteSer::config('flash_version');
+        $flashVersion = SiteSer::config('publish_version');
         // 获取我的关注的数据主播的数据
         $myfav = [];
         if ($uid) {

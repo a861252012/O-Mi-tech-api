@@ -56,7 +56,7 @@ class Controller extends BaseController
     protected $_reqSession;
     protected $_sess_id;
     protected $flash_url = '';
-    protected $flash_version = '';
+    protected $publish_version = '';
     public $_isGetCache = false;
     public $container = null;
 

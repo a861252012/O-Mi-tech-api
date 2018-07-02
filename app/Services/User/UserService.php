@@ -6,6 +6,7 @@ use App\Facades\SiteSer;
 use App\Facades\UserSer;
 use App\Models\Agents;
 use App\Models\AgentsRelationship;
+use App\Models\Area;
 use App\Models\UserBuyGroup;
 use App\Models\UserGroup;
 use App\Models\UserGroupPermission;

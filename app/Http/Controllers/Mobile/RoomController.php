@@ -53,7 +53,7 @@ class RoomController extends Controller
     public function listReservation($type = 0b11)
     {
         $lists = [];
-        $flashVersion = SiteSer::config('flash_version') ?: 'v201504092044';
+        $flashVersion = SiteSer::config('publish_version') ?: 'v201504092044';
         if ($type & static::FLAG_ONE_TO_ONE) {//一对一
             $lists['oneToOne'] = $this->getReserveOneToOneByUid(Auth::id(), $flashVersion);
         }
