@@ -238,8 +238,6 @@ class SiteService
         View::share('img_host', $this->config()->get('img_host'));
         View::share('open_web', $this->config()->get('open_web'));
         View::share('publish_version', $this->config()->get('publish_version'));
-        View::share('flash_version', $this->config()->get('flash_version'));
-        View::share('flash_version_h5', $this->config()->get('flash_version_h5'));
         View::share('public_path', $this->getPublicPath());
     }
 

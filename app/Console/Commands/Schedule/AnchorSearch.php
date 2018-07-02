@@ -59,9 +59,9 @@ class AnchorSearch extends Command
         //
         $_redisInstance = Redis::resolve();
 
-        $flashVer = $this->siteService->config('flash_version');
+        $flashVer = $this->siteService->config('publish_version');
         !$flashVer && $flashVer = 'v201504092044';
-        $this->info('flash_version:' . $flashVer);
+        $this->info('publish_version:' . $flashVer);
 //home_all_,home_rec_,home_ord_,home_gen_,home_vip_
         $conf_arr = array(
             'home_all_' => array('所有主播', 'all'),

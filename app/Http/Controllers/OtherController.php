@@ -29,7 +29,7 @@ class OtherController extends Controller
     public function createHomeOneToManyList(Request $request)
     {
         $uid = $request->get('rid', "10000");
-        $flashVersion = SiteSer::config('flash_version') ?: 'v201504092044';
+        $flashVersion = SiteSer::config('publish_version') ?: 'v201504092044';
         $onetomanyArr = RoomOneToMore::query()->where('uid', $uid)->get();
         $rooms = [];
         foreach ($onetomanyArr as $onetomany) {

@@ -58,8 +58,8 @@ class AnchorList extends Command
             Log::error('invalid site config  ',['id'=>$id]);
             return;
         }
-        $flashVer = $this->siteService->config('flash_version');
-        $this->info('flash_version:' . $flashVer);
+        $flashVer = $this->siteService->config('publish_version');
+        $this->info('publish_version:' . $flashVer);
 //home_all_,home_rec_,home_ord_,home_gen_,home_vip_
         $conf_arr = [
             'home_all_' => ['所有主播', 'all'],
