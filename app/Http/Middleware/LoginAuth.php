@@ -17,7 +17,7 @@ class LoginAuth
      * @param  \Closure                 $next
      * @return mixed
      */
-    public function handle($request, Closure $next,$guard=null)
+    public function handle ($request, Closure $next,$guard=null)
     {
 //        $client = SessionGuard::guard;;
 //        if (Str::startsWith($request->getPathInfo(), '/m/')) {
@@ -25,11 +25,11 @@ class LoginAuth
 //        }
 //        $request->offsetSet('guard', $client);
 //        dd($request->all());
-        if ($guard){
+        if ($guard) {
             config()->set('auth.defaults.guard', $guard);
         }
         if (Auth::guest()) {
-            return JsonResponse::create(['status' => 0, 'msg' => '未登录']);
+            return JsonResponse::create(['status' => 10000, 'msg' => '未登录']);
         }
         if (Auth::user()->banned()) {
             Auth::logout();
