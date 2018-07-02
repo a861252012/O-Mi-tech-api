@@ -72,7 +72,7 @@ class ApiController extends Controller
         if (!$userInfo) return new JsonResponse(['status' => 0, 'msg' => '无效用户']);
 
         $data = $this->getOutputUser($userInfo, 40, false);
-        $keepKey = ['headimg', 'nickname', 'vip', 'lv_rich', 'sex', 'age', 'starname', 'procity', 'uid', 'space_url','roled'];
+        $keepKey = ['headimg', 'nickname', 'vip', 'lv_rich', 'sex', 'age', 'starname', 'procity', 'uid', 'space_url','roled','attens'];
         foreach ($data as $k => $v) {
             if (!in_array($k, $keepKey)) unset($data[$k]);
         }
