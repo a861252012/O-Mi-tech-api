@@ -51,6 +51,7 @@ class One2ManyMsgSend extends Command
         echo "1213";die;
         $_redisInstance = Redis::resolve();
 
+        //todo use redis keys
         $keys = $_redisInstance->getKeys('hbuy_one_to_more:*');
 //一个主播只发一次消息
         $zb_msg_sent = [];

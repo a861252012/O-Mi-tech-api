@@ -56,6 +56,9 @@ class Kernel extends ConsoleKernel
         #########每五分钟定时推送一对多房间开始信息##########
         //*/5 * * * * /usr/bin/php /var/www/video-front/crontab-list/one2many-room-msg-send.php 1>/dev/null
         $schedule->command('one2many_msg')->everyFiveMinutes()->withoutOverlapping()->onOneServer();
+
+        //修改密码  每天6:30执行一次
+        $schedule->command('modify_password')->everyMinute()->withoutOverlapping()->onOneServer();
     }
 
     /**

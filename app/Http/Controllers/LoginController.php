@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Facades\UserSer;
 use App\Models\UserLoginLog;
 use App\Models\Users;
 use App\Services\Site\SiteService;
@@ -179,7 +180,16 @@ class LoginController extends Controller
                 "msg" => "验证码错误，请重新输入！",
             ];
         }
-        
+
+        $open_pwd_change = SiteSer::config('PWD_CHANGE') ?: false;
+        $uid = UserSer::getUidByUsername($username);
+        if($open_pwd_change && (!$this->checkPwdChanged($uid))){
+            return array(
+                'status'=>101,
+                'msg'=>L('WEB_API.LOGIN.PWDCHANGE'),
+            );
+        }
+
         //取uid
         $auth = Auth::guard();
         if (!$auth->attempt([
@@ -192,6 +202,7 @@ class LoginController extends Controller
             ];
         };
 
+
         return [
             'status' => 1,
             'msg' => '登录成功',
@@ -201,6 +212,15 @@ class LoginController extends Controller
         ];
     }
 
+    private function checkPwdChanged($uid){
+        if($this->_redisInstance->hExists('huser_info:'.$uid,'pwd_change' )){
+            $pwd_change = $this->_redisInstance->hGet('huser_info:'.$uid,'pwd_change' );
+        }else{
+            $pwd_change = $this->findOneBy(['column'=>'uid','value'=>$uid],'pwd_change')['pwd_change'];
+            $this->_redisInstance->hSet('huser_info:'.$uid,'pwd_change',$pwd_change );
+        }
+        return $pwd_change;
+    }
     /**
      * 会员注销操作
      *

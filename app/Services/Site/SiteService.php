@@ -21,6 +21,8 @@ use RuntimeException;
 class SiteService
 {
     const KEY_SITE_DOMAIN = 'hsite_domains:';
+    const KEY_SSITE_DOMAINS_NAME = 'ssite_domains_name';
+    const KEY_SSITE_ID = 'ssite_id';
     const SITE_TOKEN_NAME = 'Site-Token';
     const SITE_TOKEN_LIFETIME_MINUTES = 5;
     /**
@@ -96,20 +98,18 @@ class SiteService
     public static function flushDomainCacheForSite(Site $site)
     {
         $redis = resolve('redis');
-        $keys = $redis->keys(static::KEY_SITE_DOMAIN . '*');
+        $keys = $redis->smembers(static::KEY_SSITE_DOMAINS_NAME);
         return collect($keys)->each(function ($key) use ($redis, $site) {
-            if ($redis->hget($key, 'site_id') == $site->id) {
-                $redis->del($key);
+            if ($redis->hget(static::KEY_SITE_DOMAIN.$key, 'site_id') == $site->id) {
+                $redis->del(static::KEY_SITE_DOMAIN.$key);
             }
         });
     }
 
     public static function getIDs(): Collection
     {
-        $keys = Redis::keys(Config::KEY_SITE_CONFIG . '*');
-        return collect($keys)->map(function ($key) {
-            return str_replace_first(Config::KEY_SITE_CONFIG, '', $key);
-        });
+        $keys = Redis::smembers(static::KEY_SSITE_ID);
+        return collect($keys);
 
     }
 

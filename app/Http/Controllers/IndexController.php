@@ -147,7 +147,7 @@ class IndexController extends Controller
                 "msg" => "两次输入的密码不相同！",
             ]));
         }
-        if (strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
+        if (strlen($password) < 6 || strlen($password) > 22) {
             return new Response(json_encode([
                 "data" => 0,
                 "msg" => "注册密码不符合格式！",

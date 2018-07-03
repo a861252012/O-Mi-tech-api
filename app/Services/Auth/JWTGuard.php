@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Traits\GuardExtend;
 use Illuminate\Auth\Events\Attempting;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -10,7 +11,9 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Lcobucci\JWT\Builder as JWTBuilder;
 use Lcobucci\JWT\Parser as JWTParser;
 use Lcobucci\JWT\Token;
@@ -24,10 +27,10 @@ use Lcobucci\JWT\ValidationData;
  */
 class JWTGuard implements StatefulGuard
 {
-    use GuardHelpers;
+    use GuardHelpers,GuardExtend;
     /** @var  $token Token */
     private $token;
-    const guard='mobile';
+    const guard = 'mobile';
     protected $_config;
     protected $request;
     protected $events;
@@ -59,7 +62,8 @@ class JWTGuard implements StatefulGuard
                 'ES384' => \Lcobucci\JWT\Signer\Ecdsa\Sha384::class,
                 'ES512' => \Lcobucci\JWT\Signer\Ecdsa\Sha512::class,
             ],
-            'expire' => 3650 * 24 * 60 * 60,//过期时间（秒）
+            //'expire' => 3650 * 24 * 60 * 60,//过期时间（秒）
+            'expire' => 30,//过期时间（秒）
         ];
     }
 
@@ -75,13 +79,16 @@ class JWTGuard implements StatefulGuard
             'uid' => $user->getAuthIdentifier(),
             'username' => $user->username,
         ]);
+        //huser_sid uid sid
+        $this->updateSid($user->getAuthIdentifier(),$this->token);
+
         $this->fireLoginEvent($user, $remember);
         $this->setUser($user);
     }
 
     protected function fireLoginEvent($user, $remember = false)
     {
-        if (isset($this->events)) {
+        if (isset($this->events)){
             $this->events->dispatch(new Login($user, $remember));
         }
     }
@@ -93,7 +100,7 @@ class JWTGuard implements StatefulGuard
 
     protected function fireAttemptEvent(array $credentials, $remember = false)
     {
-        if (isset($this->events)) {
+        if (isset($this->events)){
             $this->events->dispatch(new Attempting(
                 $credentials, $remember
             ));
@@ -102,14 +109,14 @@ class JWTGuard implements StatefulGuard
 
     public function attempting($callback)
     {
-        if (isset($this->events)) {
+        if (isset($this->events)){
             $this->events->listen(Attempting::class, $callback);
         }
     }
 
     protected function fireFailedEvent($user, array $credentials)
     {
-        if (isset($this->events)) {
+        if (isset($this->events)){
             $this->events->dispatch(new Failed($user, $credentials));
         }
     }
@@ -144,7 +151,7 @@ class JWTGuard implements StatefulGuard
     {
         $this->fireAttemptEvent($credentials, $remember);
         $this->lastAttempted = $user = $this->provider->retrieveByCredentials($credentials);
-        if ($this->hasValidCredentials($user, $credentials)) {
+        if ($this->hasValidCredentials($user, $credentials)){
             $this->login($user, $remember);
             return true;
         }
@@ -185,7 +192,7 @@ class JWTGuard implements StatefulGuard
 
     public function config($name, $value = null)
     {
-        if (isset($value)) {
+        if (isset($value)){
             $this->_config[$name] = $value;
             return $this;
         }
@@ -242,18 +249,18 @@ class JWTGuard implements StatefulGuard
     {
         $token = $this->request->query($this->inputKey);
 
-        if (empty($token)) {
+        if (empty($token)){
             $token = $this->request->input($this->inputKey);
         }
 
-        if (empty($token)) {
+        if (empty($token)){
             $token = $this->request->bearerToken();
         }
 
-        if (empty($token)) {
+        if (empty($token)){
             $token = $this->request->getPassword();
         }
-        if (empty($token)) {
+        if (empty($token)){
             $token = $this->request->headers->get('jwt');
         }
 
@@ -268,18 +275,20 @@ class JWTGuard implements StatefulGuard
      */
     public function user()
     {
-        if (!is_null($this->user)) {
+        if (!is_null($this->user)){
             return $this->user;
         }
         $user = null;
         $token = $this->getTokenForRequest();
-        if (!empty($token)) {
+        if (!empty($token)){
             $user = $this->getUserFromToken($token);
+            $user && $this->checkRepeatLogin($user->getAuthIdentifier(),$token);
         }
-
         return $this->user = $user;
     }
-    public function getUser(){
+
+    public function getUser()
+    {
         return $this->user();
     }
 
@@ -306,7 +315,7 @@ class JWTGuard implements StatefulGuard
     {
         $this->fireAttemptEvent($credentials);
 
-        if ($this->validate($credentials)) {
+        if ($this->validate($credentials)){
             $this->setUser($this->lastAttempted);
 
             return true;
@@ -324,7 +333,7 @@ class JWTGuard implements StatefulGuard
      */
     public function loginUsingId($id, $remember = false)
     {
-        if (!is_null($user = $this->provider->retrieveById($id))) {
+        if (!is_null($user = $this->provider->retrieveById($id))){
             $this->login($user, $remember);
 
             return $user;

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\MessageBag;
+use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -53,6 +54,19 @@ class PasswordController extends Controller
         return JsonResponse::create(['status' => 1, 'msg' => '发送成功！']);
     }
 
+    /**
+     * 密码悠
+     * @return bool|JsonResponse
+     */
+    public function changePwd(){
+        $request = $this->make('request');
+        $sCode = $this->make('request')->get('captcha');
+
+        if (!Captcha::check($sCode)){
+            return new JsonResponse(array('status' => 0, 'msg' => '验证码错误'));;
+        }
+        return $this->doChangePwd($request);
+    }
 
     /**
      * 验证安全邮箱连接

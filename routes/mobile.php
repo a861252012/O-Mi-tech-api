@@ -15,6 +15,7 @@ Route::post('/login', 'Mobile\MobileController@login')->name('m_login')->middlew
 Route::get('captcha', 'Mobile\MobileController@captcha')->middleware('mobile.session');
 
 
+Route::any('change_pwd', 'Mobile\MobileController@changePwd')->name('change_pwd')->middleware('mobile.session');
 //app版本ｈ
 Route::any('app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
 Route::any('app/versionIOS', ['name' => 'm_app_ver_ios', 'uses' => 'Mobile\MobileController@appVersionIOS']);
