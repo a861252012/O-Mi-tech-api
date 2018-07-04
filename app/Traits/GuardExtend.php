@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Facades\SiteSer;
 use App\Scopes\SiteScope;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -20,9 +21,11 @@ trait GuardExtend
 {
     public function updateSid($id, $sid)
     {
-        $huser_sid = Redis::hget('huser_sid', $id);
+        $id = (string)$id;
+        $sid = (string)$sid;
+        $huser_sid = (int)resolve('redis')->hget('huser_sid', $id);
         if (empty($huser_sid)){ //说明以前没登陆过，没必要检查重复登录
-            Redis::hset('huser_sid', $id, $sid);
+            resolve('redis')->hset('huser_sid', $id, $sid);
         } elseif ($huser_sid != $sid) {//有可能重复登录了
             //更新用户对应的sessid
             Redis::hset('huser_sid', $id, $sid);
