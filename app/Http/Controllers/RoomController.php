@@ -15,6 +15,7 @@ use App\Services\Room\RoomService;
 use App\Services\Room\SocketService;
 use App\Services\Safe\SafeService;
 use App\Services\User\UserService;
+use Exception;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -67,7 +68,11 @@ class RoomController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => $e->getMessage()]);
         }
 
-        $host = $this->getUserHost($chatServer, $this->isHost($rid));
+        try {
+            $host = $this->getUserHost($chatServer, $this->isHost($rid));
+        } catch (Exception $e) {
+            return JsonResponse::create(['status' => 0, 'msg' => 'channel 配置有误']);
+        }
         $chat_server_addr = $host . ':' . $chatServer['port'];
         $logger->info('enter_room:' . $rid . ":" . Auth::id() . ':' . $chatServer['id'] . ':' . $chat_server_addr);
 
