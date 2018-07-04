@@ -38,7 +38,7 @@ class IndexController extends Controller
         //为什么总在$flashVer??
         //updata by Young
         //获取flash版本
-        $flashVer = Redis::get('publish_version');
+        $flashVer = SiteSer::config('publish_version');
         !$flashVer && $flashVer = 'v201504092044';
 
         //初始化$list数据
