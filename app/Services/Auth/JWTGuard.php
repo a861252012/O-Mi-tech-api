@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Facades\SiteSer;
 use App\Traits\GuardExtend;
 use Illuminate\Auth\Events\Attempting;
 use Illuminate\Auth\Events\Failed;
@@ -11,8 +12,11 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Contracts\Session\Session;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Lcobucci\JWT\Builder as JWTBuilder;
 use Lcobucci\JWT\Parser as JWTParser;
@@ -63,7 +67,7 @@ class JWTGuard implements StatefulGuard
                 'ES512' => \Lcobucci\JWT\Signer\Ecdsa\Sha512::class,
             ],
             //'expire' => 3650 * 24 * 60 * 60,//过期时间（秒）
-            'expire' => 30,//过期时间（秒）
+            'expire' => SiteSer::config('jwt_expire') ?: 3*365*86400,//过期时间（秒）
         ];
     }
 
@@ -80,7 +84,7 @@ class JWTGuard implements StatefulGuard
             'username' => $user->username,
         ]);
         //huser_sid uid sid
-        $this->updateSid($user->getAuthIdentifier(),$this->token);
+        $this->updateSid($user->getAuthIdentifier(),$this->getToken());
 
         $this->fireLoginEvent($user, $remember);
         $this->setUser($user);
