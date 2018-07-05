@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Facades\UserSer;
 use App\Models\UserLoginLog;
 use App\Models\Users;
 use App\Services\Site\SiteService;
@@ -179,7 +180,16 @@ class LoginController extends Controller
                 "msg" => "验证码错误，请重新输入！",
             ];
         }
-        
+
+        $open_pwd_change = SiteSer::config('pwd_change') ?: false;
+        $uid = UserSer::getUidByUsername($username);
+        if($open_pwd_change && (!$this->checkPwdChanged($uid))){
+            return array(
+                'status'=>101,
+                'msg'=>'密码修改',
+            );
+        }
+
         //取uid
         $auth = Auth::guard();
         if (!$auth->attempt([
@@ -192,6 +202,7 @@ class LoginController extends Controller
             ];
         };
 
+
         return [
             'status' => 1,
             'msg' => '登录成功',
@@ -201,6 +212,13 @@ class LoginController extends Controller
         ];
     }
 
+    private function checkPwdChanged($uid){
+        $user  = UserSer::getUserByUid($uid);
+        if($user && ($user->pwd_change==null || $user->cpwd_time==null)){
+            $user = UserSer::getUserReset($uid);
+        }
+        return $user ? $user['pwd_change'] :1;
+    }
     /**
      * 会员注销操作
      *

@@ -4,8 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 class FormatResponse
@@ -24,6 +24,7 @@ class FormatResponse
 
         if ($response instanceof Response) {
             if ($response instanceof JsonResponse) {
+
                 $json = $response->getData();
                 if (!is_object($json)) {
                     throw new \Error('返回格式错误');

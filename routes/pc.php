@@ -36,6 +36,9 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::post('shop/buy', 'MemberController@pay')->name('shop_buy');
 });
 
+//修改密码
+Route::any('change_pwd', 'PasswordController@changePwd')->name('change_pwd');
+
 /** 用户中心路由组 */
 Route::group(['prefix' => 'member'], function () {
     Route::any('mail/verify/confirm/{token}', 'PasswordController@VerifySafeMail')->name('mail_verify_confirm');
@@ -281,7 +284,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('space', 'SpaceController@index')->name('space');
 
 
-    Route::match(['POST', 'GET'], '/verfiyName', ['uses' => 'IndexController@checkUniqueName']);
+    //Route::match(['POST', 'GET'], '/verfiyName', ['uses' => 'IndexController@checkUniqueName']);
     Route::match(['POST', 'GET'], '/setinroomstat', ['name' => 'setinroomstat', 'uses' => 'IndexController@setInRoomStat']);
 
 

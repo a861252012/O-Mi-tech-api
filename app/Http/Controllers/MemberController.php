@@ -2102,7 +2102,7 @@ class MemberController extends Controller
             'uid' => Auth::id(),
             'roomid' => $roomId,
             'vip' => $userGroup['level_id'],
-            'cashback' => $casheback,
+            'cashback' => intval($casheback),
             'name' => $user->nickname,
         ];
 

@@ -134,7 +134,7 @@ class ApiController extends Controller
 
         $password = $this->decode($request->get('password1'));
 //        $password = $request->get('password1');
-        if (strlen($password) < 6 || strlen($password) > 22 || preg_match('/^\d{6,22}$/', $password) || !preg_match('/^\w{6,22}$/', $password)) {
+        if (strlen($password) < 6 || strlen($password) > 22 || preg_match('/^\d{6,22}$/', $password)) {
             return JsonResponse::create([
                 "status" => 0,
                 "msg" => "注册密码不符合格式!",

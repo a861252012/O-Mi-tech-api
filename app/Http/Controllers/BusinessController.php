@@ -95,7 +95,7 @@ class BusinessController extends Controller
             /**
              * 跳转到一个正在直播的主播房间中去
              */
-            $flashVer = $this->make('redis')->get('publish_version');
+            $flashVer = SiteSer::config('publish_version');
             !$flashVer && $flashVer = 'v201504092044';
             $rooms = $this->make('redis')->get('home_js_data_'.$flashVer);
             $aRandRooms = [];

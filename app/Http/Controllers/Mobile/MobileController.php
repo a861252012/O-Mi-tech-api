@@ -318,7 +318,7 @@ class MobileController extends Controller
     public function login(Request $request)
     {
         $username = $request->get('username');
-        $password = $request->get('password');
+        $password = $this->decode($request->get('password'));
         $captcha = $request->get('captcha');
         if (!app(SiteService::class)->config('skip_captcha_login')) {
             if (empty($captcha)) {
@@ -348,6 +348,9 @@ class MobileController extends Controller
         $userfollow = $this->userFollowings();
         $hashtable = 'zuser_byattens:' . $user->uid;
         $by_atttennums = $this->make('redis')->zSize($hashtable);
+        if ($user->pwd_change === null || $user->cpwd_time === null) {
+            $user = (object)UserSer::getUserReset($user->uid);
+        }
         return JsonResponse::create([
             'status' => 1,
             'data' =>
@@ -370,8 +373,26 @@ class MobileController extends Controller
                         'gender' => $user->sex,
                         'follows' => $userfollow,
                         'fansCount' => $by_atttennums,
+                        'pwd_change' => SiteSer::config('pwd_change') ? $user->pwd_change : 1,
+                        'cpwd_time' => $user->cpwd_time,
                     ],
                 ]]);
+    }
+
+    public function changePwd()
+    {
+        $request = $this->request();
+        $captcha = $request->input('captcha');
+
+        if (!app(SiteService::class)->config('skip_captcha_login')) {
+            if (empty($captcha)) {
+                return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
+            }
+            if (!Captcha::check($captcha)) {
+                return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
+            }
+        }
+        return $this->doChangePwd($request);
     }
 
     /**
@@ -646,6 +667,9 @@ class MobileController extends Controller
 //        if (empty($post['captcha']) || !Captcha::check($post['captcha'])) {
 //            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '对不起，验证码错误!']);
 //        }
+        $post['original_password'] = $this->decode($post['original_password']);
+        $post['new_password'] = $this->decode($post['new_password']);
+        $post['re_new_password'] = $this->decode($post['re_new_password']);
 
         if (empty($post['original_password'])) {
             return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '原始密码不能为空！']);

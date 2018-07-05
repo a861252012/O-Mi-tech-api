@@ -38,7 +38,7 @@ class IndexController extends Controller
         //为什么总在$flashVer??
         //updata by Young
         //获取flash版本
-        $flashVer = Redis::get('publish_version');
+        $flashVer = SiteSer::config('publish_version');
         !$flashVer && $flashVer = 'v201504092044';
 
         //初始化$list数据
@@ -147,7 +147,7 @@ class IndexController extends Controller
                 "msg" => "两次输入的密码不相同！",
             ]));
         }
-        if (strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
+        if (strlen($password) < 6 || strlen($password) > 22) {
             return new Response(json_encode([
                 "data" => 0,
                 "msg" => "注册密码不符合格式！",
@@ -339,24 +339,29 @@ class IndexController extends Controller
 
 
         $flashVersion = SiteSer::config('publish_version');
-        // 获取我的关注的数据主播的数据
+        // 经clark确认，获取我的关注的数据主播的数据。这个目前保留放在本接口（indexinfo）里
         $myfav = [];
         if ($uid) {
             //主播列表
             $arr = include Storage::path('cache/anchor-search-data.php');
-            $hasharr = [];
-            foreach ($arr as $value) {
-                $hasharr[$value['uid']] = $value;
-            }
-            unset($arr);
+//            $hasharr = [];
+//            foreach ($arr as $value) {
+//                $hasharr[$value['uid']] = $value;
+//            }
+//            unset($arr);
+//            $myfavArr = $this->getUserAttensBycuruid($uid);
+//            if (!!$myfavArr) {
+//                //过滤出主播
+//                foreach ($myfavArr as $item) {
+//                    if (isset($hasharr[$item])) {
+//                        $myfav[] = $hasharr[$item];
+//                    }
+//                }
+//            }
+
             $myfavArr = $this->getUserAttensBycuruid($uid);
             if (!!$myfavArr) {
-                //过滤出主播
-                foreach ($myfavArr as $item) {
-                    if (isset($hasharr[$item])) {
-                        $myfav[] = $hasharr[$item];
-                    }
-                }
+                $myfav = collect($arr)->whereIn('uid',$myfavArr)->toArray();
             }
         }
 

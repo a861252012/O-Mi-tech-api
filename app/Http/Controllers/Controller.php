@@ -102,12 +102,13 @@ class Controller extends BaseController
      * @author D.C
      * @update 2015-02-04
      */
-    public function decode($s)
+    public function decode($o="")
     {
-        $a = str_split($s, 2);
+        $a = str_split($o, 2);
         $s = '%' . implode('%', $a);
         $s = urldecode($s);
-        return trim($s);
+
+        return !isset($_REQUEST['_m']) ? trim($s) : $o;
     }
 
 
@@ -248,6 +249,76 @@ class Controller extends BaseController
         return end($data);
     }
 
+    /**
+     * 经领导确认验证规则这边保持和以前一致
+     * @param $request
+     * @return string
+     */
+    public function doChangePwd($request){
+        $username = $request->get('username');
+        $password = $this->decode(trim($request->get('password')));
+        $password1 = $this->decode(trim($request->get('password1')));
+        $password2 = $this->decode(trim($request->get('password2')));
+        if(empty($username)  ||  empty($password1) || empty($password2)){
+            return json_encode(array(
+                "status"=> 0,
+                "msg" => '用户名或密码不能为空',
+            ));
+        }
+        //用户名规则限制
+        if(  !preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/',$username) || strlen($username) < 5 || strlen($username) > 30  ){
+            return  json_encode(array(
+                "status"=> 0,
+                "msg" => "用户名不合法",
+            ));
+        }
+
+        //新密码规则限制
+        if( $this->checkPasswordVaild($password1) || $this->checkPasswordVaild($password2) ){
+            return json_encode(array(
+                "status"=> 0,
+                "msg" => "密码不合法！"
+            ));
+        }
+
+        if($password1 != $password2){
+            return json_encode(array(
+                "status"=> 0,
+                "msg" => "新密码两次输入不一致"
+            ));
+        }
+        //用户名是否存在
+        $uid = UserSer::getUidByUsername($username);
+        if(empty($uid)) return json_encode(array(
+            "status"=> 0,
+            "msg" => "用户名不存在"
+        ));
+
+        //是否已修改过
+        $user = UserSer::getUserByUid($uid);
+
+        //旧密码是否正确
+        $old_password = md5($password);
+        if($user['password']!=$old_password) return json_encode(array(
+            "status"=> 0,
+            "msg" => "旧密码验证失败"
+        ));
+
+        //修改新密码，更新状态及时间
+        Users::query()->where('uid',$uid)->update([
+            'password'=>md5($password1),
+            'pwd_change'=>1,
+            'cpwd_time'=>date('Y-m-d H:i:s'),
+        ]);
+        UserSer::getUserReset($uid);
+        return json_encode(array(
+            "status"=> 1,
+            "msg" => "修改成功"
+        ));
+    }
+    public function checkPasswordVaild($password1=""){
+        return strlen($password1) < 6 ||  strlen($password1) > 22;
+    }
     /**
      * 渲染模板
      *
@@ -1409,13 +1480,11 @@ class Controller extends BaseController
 
     public function format_jsoncode($arr)
     {
-        if ($arr) {
-            $res = array(
-                'status' => 1,
-                'data' => $arr,
-                'msg' => '获取成功'
-            );
-        }
+        $res = array(
+            'status' => 1,
+            'data' => $arr ?:[],
+            'msg' => '获取成功'
+        );
         return $res;
 
     }
