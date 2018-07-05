@@ -669,6 +669,8 @@ class MobileController extends Controller
 //        }
         $post['original_password'] = $this->decode($post['original_password']);
         $post['new_password'] = $this->decode($post['new_password']);
+        $post['re_new_password'] = $this->decode($post['re_new_password']);
+
         if (empty($post['original_password'])) {
             return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '原始密码不能为空！']);
         }
