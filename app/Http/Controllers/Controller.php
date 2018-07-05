@@ -102,12 +102,13 @@ class Controller extends BaseController
      * @author D.C
      * @update 2015-02-04
      */
-    public function decode($s)
+    public function decode($o="")
     {
-        $a = str_split($s, 2);
+        $a = str_split($o, 2);
         $s = '%' . implode('%', $a);
         $s = urldecode($s);
-        return trim($s);
+
+        return !isset($_REQUEST['_m']) ? trim($s) : $o;
     }
 
 
@@ -255,9 +256,9 @@ class Controller extends BaseController
      */
     public function doChangePwd($request){
         $username = $request->get('username');
-        $password = trim($request->get('password'));
-        $password1 = trim($request->get('password1'));
-        $password2 = trim($request->get('password2'));
+        $password = $this->decode(trim($request->get('password')));
+        $password1 = $this->decode(trim($request->get('password1')));
+        $password2 = $this->decode(trim($request->get('password2')));
         if(empty($username)  ||  empty($password1) || empty($password2)){
             return json_encode(array(
                 "status"=> 0,
@@ -300,7 +301,7 @@ class Controller extends BaseController
         $old_password = md5($password);
         if($user['password']!=$old_password) return json_encode(array(
             "status"=> 0,
-            "msg" => "老密码验证失败"
+            "msg" => "旧密码验证失败"
         ));
 
         //修改新密码，更新状态及时间

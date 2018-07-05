@@ -5,6 +5,7 @@ namespace App\Console\Commands\Schedule;
 use App\Models\Users;
 use App\Services\Site\SiteService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
 class ModifyPassword extends Command
@@ -65,9 +66,22 @@ class ModifyPassword extends Command
         if (empty($mod_pwd_duration)) return null;
 
         $mod_date = date('Y-m-d H:i:s', time() - $mod_pwd_duration);
+
+        $start = 0;
+        $limit = 100;
         //修改时间+30 < 现在
-        $user = Users::query()->where('status', 0)->where('pwd_change', '1')->where('pwd_change', '<', $mod_date)->take(100);
-        $num = $user->update(['pwd_change' => 0]);
-        echo $num;
+        $update_data = ['pwd_change' => 0];
+        $where_user = Users::query()->where('status', 0)->where('pwd_change', '1')->where('pwd_change', '<', $mod_date);
+        while (!empty($userObj = $where_user->offset($start)->take($limit)->get())) {
+            $uidArray = $userObj->pluck('uid')->toArray();
+            $num = $where_user->whereIn('uid', $uidArray)->update($update_data);
+
+            foreach ($uidArray as $uid) {
+                Redis::exists("huser_info:" . $uid) && Redis::hmset("huser_info:" . $uid, $update_data);
+            }
+            //Log::channel('crontab')->info("");
+            echo '更新数据：' . $num . '用户ID' . implode(',', $uidArray) . PHP_EOL;
+            usleep(500);
+        }
     }
 }

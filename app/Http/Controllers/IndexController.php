@@ -339,24 +339,29 @@ class IndexController extends Controller
 
 
         $flashVersion = SiteSer::config('publish_version');
-        // 获取我的关注的数据主播的数据
+        // 经clark确认，获取我的关注的数据主播的数据。这个目前保留放在本接口（indexinfo）里
         $myfav = [];
         if ($uid) {
             //主播列表
             $arr = include Storage::path('cache/anchor-search-data.php');
-            $hasharr = [];
-            foreach ($arr as $value) {
-                $hasharr[$value['uid']] = $value;
-            }
-            unset($arr);
+//            $hasharr = [];
+//            foreach ($arr as $value) {
+//                $hasharr[$value['uid']] = $value;
+//            }
+//            unset($arr);
+//            $myfavArr = $this->getUserAttensBycuruid($uid);
+//            if (!!$myfavArr) {
+//                //过滤出主播
+//                foreach ($myfavArr as $item) {
+//                    if (isset($hasharr[$item])) {
+//                        $myfav[] = $hasharr[$item];
+//                    }
+//                }
+//            }
+
             $myfavArr = $this->getUserAttensBycuruid($uid);
             if (!!$myfavArr) {
-                //过滤出主播
-                foreach ($myfavArr as $item) {
-                    if (isset($hasharr[$item])) {
-                        $myfav[] = $hasharr[$item];
-                    }
-                }
+                $myfav = collect($arr)->whereIn('uid',$myfavArr)->toArray();
             }
         }
 
