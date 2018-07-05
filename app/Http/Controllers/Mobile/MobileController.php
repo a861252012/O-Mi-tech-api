@@ -348,7 +348,7 @@ class MobileController extends Controller
         $userfollow = $this->userFollowings();
         $hashtable = 'zuser_byattens:' . $user->uid;
         $by_atttennums = $this->make('redis')->zSize($hashtable);
-        if($user->pwd_change===null ||  $user->cpwd_time===null){
+        if ($user->pwd_change === null || $user->cpwd_time === null) {
             $user = (object)UserSer::getUserReset($user->uid);
         }
         return JsonResponse::create([
@@ -379,7 +379,8 @@ class MobileController extends Controller
                 ]]);
     }
 
-    public function changePwd(){
+    public function changePwd()
+    {
         $request = $this->request();
         $captcha = $request->input('captcha');
 
@@ -393,6 +394,7 @@ class MobileController extends Controller
         }
         return $this->doChangePwd($request);
     }
+
     /**
      * 用户关注人数
      */
@@ -665,7 +667,8 @@ class MobileController extends Controller
 //        if (empty($post['captcha']) || !Captcha::check($post['captcha'])) {
 //            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '对不起，验证码错误!']);
 //        }
-
+        $post['original_password'] = $this->decode($post['original_password']);
+        $post['new_password'] = $this->decode($post['new_password']);
         if (empty($post['original_password'])) {
             return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '原始密码不能为空！']);
         }
