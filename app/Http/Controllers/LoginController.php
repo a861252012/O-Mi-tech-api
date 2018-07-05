@@ -181,12 +181,12 @@ class LoginController extends Controller
             ];
         }
 
-        $open_pwd_change = SiteSer::config('PWD_CHANGE') ?: false;
+        $open_pwd_change = SiteSer::config('pwd_change') ?: false;
         $uid = UserSer::getUidByUsername($username);
         if($open_pwd_change && (!$this->checkPwdChanged($uid))){
             return array(
                 'status'=>101,
-                'msg'=>L('WEB_API.LOGIN.PWDCHANGE'),
+                'msg'=>'密码修改',
             );
         }
 
@@ -213,13 +213,11 @@ class LoginController extends Controller
     }
 
     private function checkPwdChanged($uid){
-        if($this->_redisInstance->hExists('huser_info:'.$uid,'pwd_change' )){
-            $pwd_change = $this->_redisInstance->hGet('huser_info:'.$uid,'pwd_change' );
-        }else{
-            $pwd_change = $this->findOneBy(['column'=>'uid','value'=>$uid],'pwd_change')['pwd_change'];
-            $this->_redisInstance->hSet('huser_info:'.$uid,'pwd_change',$pwd_change );
+        $user  = UserSer::getUserByUid($uid);
+        if($user && ($user->pwd_change==null || $user->cpwd_time==null)){
+            $user = UserSer::getUserReset($uid);
         }
-        return $pwd_change;
+        return $user ? $user['pwd_change'] :1;
     }
     /**
      * 会员注销操作

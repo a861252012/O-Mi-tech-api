@@ -318,7 +318,7 @@ class MobileController extends Controller
     public function login(Request $request)
     {
         $username = $request->get('username');
-        $password = $request->get('password');
+        $password = $this->decode($request->get('password'));
         $captcha = $request->get('captcha');
         if (!app(SiteService::class)->config('skip_captcha_login')) {
             if (empty($captcha)) {
@@ -373,7 +373,7 @@ class MobileController extends Controller
                         'gender' => $user->sex,
                         'follows' => $userfollow,
                         'fansCount' => $by_atttennums,
-                        'pwd_change' => $user->pwd_change,
+                        'pwd_change' => SiteSer::config('pwd_change') ? $user->pwd_change : 1,
                         'cpwd_time' => $user->cpwd_time,
                     ],
                 ]]);
