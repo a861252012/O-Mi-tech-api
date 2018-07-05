@@ -155,7 +155,9 @@ class RoomService extends Service
             }
         }
     }
-    public function  getCurrentMobileOnetoone(){
+
+    public function getCurrentMobileOnetoone()
+    {
         $redis = $this->make('redis');
         //一对一
         if (!empty($one2one = resolve('one2one')->getRunningOnetooneDatas())) {
@@ -287,36 +289,50 @@ class RoomService extends Service
 
     public function getPlatUrl($origin = 0)
     {
-        $urlList = $this->getPlatBackUrl($origin);
-        $host = $this->getPlatHost();
-        $data = [];
-        foreach ($urlList as $key => $url) {
-            $data[$key] = $host . $url;
-        }
-        return $data;
-    }
-
-    public function getPlatBackUrl($origin = 0)
-    {
         $redis = $this->make('redis');
-        $plat_backurl = "{}";
         if ($redis->exists("hplatforms:$origin")) {
             $hplatforms = $redis->hgetall("hplatforms:$origin");
             $plat_backurl = $hplatforms['backurl'];
+            $platBackurl = json_decode($plat_backurl, true);
+            if (!empty($platBackurl) && is_array($platBackurl)) {
+                foreach ($platBackurl as &$vo) {
+                    $vo = $hplatforms['access_host'] . $vo;
+                }
+            }
+        } else {
+            $platBackurl = [];
         }
-        return json_decode($plat_backurl, true);
+        return $platBackurl;
+//        $urlList = $this->getPlatBackUrl($origin);
+//        $host = $this->getPlatHost();
+//        $data = [];
+//        foreach ($urlList as $key => $url) {
+//            $data[$key] = $host . $url;
+//        }
+//        return $data;
     }
 
-    public function getPlatHost()
-    {
-        $httphost = isset($_SESSION['httphost']) ? $_SESSION['httphost'] : null;
-        if ($httphost) {
-            if (!preg_match('/^https?:\/\//', $httphost)) {
-                $httphost = 'http://' . $httphost;
-            }
-        }
-        return $httphost;
-    }
+//    public function getPlatBackUrl($origin = 0)
+//    {
+//        $redis = $this->make('redis');
+//        $plat_backurl = "{}";
+//        if ($redis->exists("hplatforms:$origin")) {
+//            $hplatforms = $redis->hgetall("hplatforms:$origin");
+//            $plat_backurl = $hplatforms['backurl'];
+//        }
+//        return json_decode($plat_backurl, true);
+//    }
+
+//    public function getPlatHost()
+//    {
+//        $httphost = isset($_SESSION['httphost']) ? $_SESSION['httphost'] : null;
+//        if ($httphost) {
+//            if (!preg_match('/^https?:\/\//', $httphost)) {
+//                $httphost = 'http://' . $httphost;
+//            }
+//        }
+//        return $httphost;
+//    }
 
     /*
      * app和pc  添加一对多房间。
@@ -457,14 +473,16 @@ class RoomService extends Service
         if (!$this->checkActiveTime($start_time, $endtime, $temp_data)) return false;
         return true;
     }
-    public function  checkonlyone($start_time,$endtime){
-        $onetomore = RoomDuration::where('status', 0)->where('uid', Auth::id())->where(function ($query){
-            $query->where('starttime','>', date('Y-m-d H:i:s', time()))
-                ->orwhere('endtime','>', date('Y-m-d H:i:s', time()));
+
+    public function checkonlyone($start_time, $endtime)
+    {
+        $onetomore = RoomDuration::where('status', 0)->where('uid', Auth::id())->where(function ($query) {
+            $query->where('starttime', '>', date('Y-m-d H:i:s', time()))
+                ->orwhere('endtime', '>', date('Y-m-d H:i:s', time()));
         })
             ->get()->toArray();
 
-        if(!empty($onetomore)) return false;
+        if (!empty($onetomore)) return false;
         return true;
     }
 
@@ -534,9 +552,9 @@ class RoomService extends Service
         $durationRoom->origin = $data['origin'];
         $durationRoom->site_id = SiteSer::siteId();
 
-        $isonly = $this->checkonlyone($start_time,$endtime);
+        $isonly = $this->checkonlyone($start_time, $endtime);
 
-        if($isonly == false ) return ['status' => 0, 'msg' => '当前时间还有未开播或者正在开播的一对一'];
+        if ($isonly == false) return ['status' => 0, 'msg' => '当前时间还有未开播或者正在开播的一对一'];
 
         if ($this->notSetRepeat($start_time, $endtime)) {
             $durationRoom->save();

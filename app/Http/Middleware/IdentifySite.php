@@ -35,11 +35,12 @@ class IdentifySite
         $this->siteService->shareConfigWithViews();
         /** @var Response $response */
         $response = $next($request);
-        if ($this->siteService->siteTokenNeedsRefresh()) {
-            $siteToken = $this->siteService->genSiteToken();
-            $response->withCookie(cookie($this->siteService::SITE_TOKEN_NAME, $siteToken, $this->siteService::SITE_TOKEN_LIFETIME_MINUTES, '/', null, false, true));
-            $response->header('Set-' . $this->siteService::SITE_TOKEN_NAME, $siteToken, true);
-        }
+        //todo withCookie报错观察
+//        if ($this->siteService->siteTokenNeedsRefresh()) {
+//            $siteToken = $this->siteService->genSiteToken();
+//            $response->withCookie(cookie($this->siteService::SITE_TOKEN_NAME, $siteToken, $this->siteService::SITE_TOKEN_LIFETIME_MINUTES, '/', null, false, true));
+//            $response->header('Set-' . $this->siteService::SITE_TOKEN_NAME, $siteToken, true);
+//        }
         return $response;
     }
 }
