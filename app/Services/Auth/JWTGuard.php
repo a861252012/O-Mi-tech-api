@@ -286,7 +286,9 @@ class JWTGuard implements StatefulGuard
         $token = $this->getTokenForRequest();
         if (!empty($token)){
             $user = $this->getUserFromToken($token);
-            $user && $this->checkRepeatLogin($user->getAuthIdentifier(),$token);
+           if( $user && $this->checkRepeatLogin($user->getAuthIdentifier(),$token)){
+               $user = null;
+           };
         }
         return $this->user = $user;
     }

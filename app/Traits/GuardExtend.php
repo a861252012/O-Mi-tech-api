@@ -37,9 +37,6 @@ trait GuardExtend
     //$token 是否已在其它机器登录 1是  0否
     public function checkRepeatLogin($id, $token)
     {
-        if ($token && Redis::Hexists('huser_sid', $id) && Redis::hget('huser_sid', $id) != $token){
-            throw new HttpResponseException(JsonResponse::create(['status' => 10000, 'msg' => '您的账号已经在其他机器登录！']));
-        }
-        return false;
+        return $token && Redis::Hexists('huser_sid', $id) && Redis::hget('huser_sid', $id) != $token;
     }
 }
