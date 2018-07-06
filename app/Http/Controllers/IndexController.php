@@ -361,7 +361,7 @@ class IndexController extends Controller
 
             $myfavArr = $this->getUserAttensBycuruid($uid);
             if (!!$myfavArr) {
-                $myfav = collect($arr)->whereIn('uid',$myfavArr)->toArray();
+                $myfav = collect($arr)->whereIn('uid', $myfavArr)->toArray();
             }
         }
 
@@ -481,7 +481,7 @@ class IndexController extends Controller
         $ids = $redis->get('video:faq:sort:class:' . $sort);
         if (!empty($ids)) {
             $ids = json_decode($ids);
-            $data = Faq::whereIn('id', $ids)->limit($num)->get();
+            $data = Faq::where('site_id', SiteSer::siteId())->whereIn('id', $ids)->limit($num)->get();
         } else {
             $data = [];
         }
