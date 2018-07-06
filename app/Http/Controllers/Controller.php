@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Mews\Captcha\Facades\Captcha;
+use App\Services\Site\SiteService;
 
 
 //use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
@@ -461,12 +462,15 @@ class Controller extends BaseController
         if ($avail < 0) $avail = 0;
 //        $ticheng_company_percent =$this->getDoctrine()->getManager()->getRepository('Video\ProjectBundle\Entity\VideoConf')
 //            ->findOneBy(array('name'=>'ticheng_company_percent'));
-        $ticheng_company_percent = Conf::where('name', 'ticheng_company_percent')->first();
+
+        $siteConfig = app(SiteService::class)->config();
+        $ticheng_company_percent = $siteConfig->get('ticheng_company_percent');
         if (empty($ticheng_company_percent)) {
-            $ticheng_company_percent = new Conf();
-            $ticheng_company_percent->value = 30;
+            Redis::hSet('hsite_config:'.SiteSer::siteId(),'ticheng_company_percent',30);
+            $ticheng_company_percent = $siteConfig->get('ticheng_company_percent');
         }
-        $avi = ($avail / 10) * $otype['rpercentage'] * (100 - $ticheng_company_percent->value) / 100;
+
+        $avi = ($avail / 10) * $otype['rpercentage'] * (100 - $ticheng_company_percent) / 100;
         $result['availmoney'] = (int)floor($avi);
         $result['availpoints'] = $avail;
         return $result;
