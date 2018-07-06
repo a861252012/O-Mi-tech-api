@@ -839,7 +839,7 @@ class UserService extends Service
         /** @var \Redis $redis */
         $redis = $this->make('redis');
         $mouth = date('Ym', time());
-        $member_rank = ['zrank_rich_day', 'zrank_rich_week', 'zrank_rich_month:' . $mouth, 'zrank_rich_history'];
+        $member_rank = ['zrank_rich_day', 'zrank_rich_week', 'zrank_rich_month:' . $mouth, 'zrank_rich_history','rank_game_day','rank_game_week','rank_game_month:' .$mouth,'rank_game_his'];
 
         if (in_array($key, $member_rank)) {
 
