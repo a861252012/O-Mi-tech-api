@@ -8,7 +8,6 @@ use App\Models\AnchorGroup;
 use App\Models\Area;
 use App\Models\Attention;
 use App\Models\BirthStar;
-use App\Models\Conf;
 use App\Models\Goods;
 use App\Models\Keywords;
 use App\Models\LevelRich;
@@ -504,13 +503,13 @@ class Controller extends BaseController
             return 0;
         }
 //        $ticheng_company_percent =$this->getDoctrine()->getManager()->getRepository('Video\ProjectBundle\Entity\VideoConf')->findOneBy(array('name'=>'ticheng_company_percent'));
-        $ticheng_company_percent = Conf::where('name', 'ticheng_company_percent')->first();
-        // TODO 看不懂为啥这么写
+        $siteConfig = app(SiteService::class)->config();
+        $ticheng_company_percent = $siteConfig->get('ticheng_company_percent');
         if (empty($ticheng_company_percent)) {
-            $ticheng_company_percent = new Conf();
-            $ticheng_company_percent->value = 30;
+            Redis::hSet('hsite_config:'.SiteSer::siteId(),'ticheng_company_percent',30);
+            $ticheng_company_percent = $siteConfig->get('ticheng_company_percent');
         }
-        $avi = ($money * 10) / ($otype['rpercentage'] * ((100 - $ticheng_company_percent->value) / 100));
+        $avi = ($money * 10) / ($otype['rpercentage'] * ((100 - $ticheng_company_percent) / 100));
         return $avi;
 
     }
