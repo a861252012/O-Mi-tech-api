@@ -61,9 +61,11 @@ class One2ManyMsgSend extends Command
 //一个主播只发一次消息
         $zb_msg_sent = [];
         foreach ($keys as $room) {
-            if (!Redis::exists("hbuy_one_to_more:" . $room['id'])) continue;
+            if (!Redis::exists("hbuy_one_to_more:" . $room['id'])) {
+                continue;
+            }
 
-            if (!in_array($room['rid'], $zb_msg_sent)){//一个主播只发一次消息
+            if (!in_array($room['rid'], $zb_msg_sent)) {//一个主播只发一次消息
                 VideoMail::create([
                     'send_uid' => 0,
                     'rec_uid' => $room['rid'],
