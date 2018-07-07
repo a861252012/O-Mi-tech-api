@@ -1165,7 +1165,8 @@ class MemberController extends Controller
 
     /**
      * 获取我的预约推荐列表TODO
-     *
+     * hroom_duration socket定时任务删除: 1.时间到没人预约 2.有人预约的场次结束
+     * todo 尼玛
      * @param $uid
      * @return array
      * @Author TX
@@ -1176,9 +1177,9 @@ class MemberController extends Controller
         $rooms = [];
         $user_key = [];
         array_push($user_key, 'hroom_duration:' . $uid . ':4');
-        $key = 'hroom_duration:*';
-//        $keys = array();
-        $keys = Redis::keys($key);
+        $keys = RoomDuration::query()->whereRaw('starttime<DATE_SUB(now(),INTERVAL duration  SECOND)')->get()->pluck('uid')->map(function ($id){
+            return 'hroom_duration:'.$id;
+        });
         if ($keys == false) {
             $keys = [];
         }

@@ -320,7 +320,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/kw', ['name' => 'json_kw', 'uses' => 'ApiController@kw']);
 
     //对换
-    Route::post('/api/plat_exchange', ['name' => 'plat_exchange', 'uses' => 'ApiController@platExchange']);
+    Route::post('plat_exchange', ['name' => 'plat_exchange', 'uses' => 'ApiController@platExchange']);
 
 
     //平台一对多跳转测试

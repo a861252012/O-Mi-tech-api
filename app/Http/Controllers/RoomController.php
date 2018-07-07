@@ -251,6 +251,7 @@ class RoomController extends Controller
     }
 
 
+
     /**
      * 直播间中间页
      * @param int $roomid 房间ID
@@ -398,7 +399,7 @@ class RoomController extends Controller
         return explode('|', $chatServer['host'], 2)[$isHost ? 0 : 1];
     }
 
-    private function getMoney($uid, $rid, $origin)
+    public function getMoney($uid, $rid, $origin)
     {
         $redis = $this->make('redis');
         /** 通知java获取*/
