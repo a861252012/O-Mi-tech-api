@@ -825,67 +825,6 @@ EOT;
         ];
     }
 
-    /**
-     * [flashCount flash统计]
-     *
-     * @author  dc <dc#wisdominfo.my>
-     * @version 2015-11-10
-     */
-    public function flashCount(Request $request)
-    {
-        $array_map = ['apply' => 'kaircli:apply', 'version' => 'kaircli:version', 'kaircli:install'];
-        $type = $request->get('type');
-        $v = $request->get('v');
-
-        if (!isset($array_map[$type]) || ($type == 'version' && (!$v || $v <= 0))) {
-            return new JsonResponse(['msg' => '传入参数有问题', 'status' => 0]);
-        }
-
-
-        if ($type == 'version') $array_map[$type] .= $v;
-        $mapkey = $array_map[$type] . date('Ymd');
-        Redis::incr($mapkey); //不存在，默认从1开始不用检查key是否存在
-
-        return new JsonResponse(['data' => ['count' => 1], 'status' => 1]);
-    }
-
-
-    /**
-     * [getFlashCount 获取房间统计]
-     *
-     * @author  dc <dc#wisdominfo.my>
-     * @version 2015-11-10
-     * @return  JsonResponse
-     */
-    public function getFlashCount(Request $request)
-    {
-        $array_map = ['apply' => 'kaircli:apply', 'version' => 'kaircli:version', 'kaircli:install'];
-        $type = $request->get('type');
-        $v = $request->get('v');
-
-        if (!isset($array_map[$type]) || ($type == 'version' && (!$v || $v <= 0))) {
-            return new JsonResponse(['data' => '传入参数有问题', 'status' => 0]);
-        }
-
-
-        if ($type == 'version' && $v > 0) $array_map .= $v;
-        $redis = resolve('redis');
-        $ymd = (int)$request->get('ymd');
-
-        if ($ymd === 0) {
-            $keys = $redis->keys($array_map[$type] . '*');
-            $sum = 0;
-            foreach ($keys as $v) {
-                $sum += $redis->get($v);
-            }
-        } else {
-            $sum = $redis->get($array_map[$type] . $ymd);
-        }
-
-        return new JsonResponse(['data' => ['count' => intval($sum)], 'status' => 1]);
-
-    }
-
     public function coverUpload(Request $request)
     {
 

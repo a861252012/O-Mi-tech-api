@@ -202,12 +202,6 @@ Route::group(['middleware' => ['login_auth']], function () {
 //获取桌面图标
     Route::get('/shorturl', 'ApiController@shortUrl')->name('shorturl');
 
-//roomcnt
-    Route::get('/roomcnt', 'ApiController@flashCount')->name('flashcount');
-
-//findroomcnt
-    Route::get('/findroomcnt', ['name' => 'getflashcount', 'uses' => 'ApiController@getFlashCount']);
-
 //图片静态化
     Route::get('/convertstaticimg', 'ApiController@imageStatic')->name('imagestatic');
 
