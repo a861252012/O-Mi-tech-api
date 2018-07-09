@@ -1261,7 +1261,7 @@ class MemberController extends Controller
             $id
         ) {
             return 'hroom_duration:' . $id;
-        });
+        })->toArray();
         if ($keys == false) {
             $keys = [];
         }
@@ -2195,7 +2195,7 @@ class MemberController extends Controller
             // 如果设置了房间属性 就给主播返现
             $casheback = 0;
             if ($roomId && DB::table('video_user')->where('uid', $roomId)->first()) {
-                $commission = [
+                $commission = array(
                     'uid' => $roomId,
                     'r_uid' => Auth::id(),
                     'r_id' => $gid,
@@ -2203,15 +2203,15 @@ class MemberController extends Controller
                     'title' => '房间内开通贵族返佣',
                     'points' => $userGroup['system']['host_money'],
                     'create_at' => date('Y-m-d H:i:s'),
-                    'data' => serialize([
+                    'data' => serialize(array(
                         'gid' => $gid,
                         'vip_end' => $exp,
-                    ]),
+                    )),
                     'content' => $this->userInfo['nickname'] . '在您的房间' . date('Y-m-d H:i:s') . '开通了什么' . $userGroup['level_name'] . '，您得到' . $userGroup['system']['host_money'] . '佣金！',
                     'status' => 0,
                     'dml_flag' => 1,
                     'site_id' => SiteSer::siteId(),
-                ];
+                );
                 DB::table('video_user_commission')->insertGetId($commission);
                 $casheback = $userGroup['system']['host_money'];
             }
