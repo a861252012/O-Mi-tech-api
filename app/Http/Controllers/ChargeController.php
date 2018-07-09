@@ -59,7 +59,7 @@ class ChargeController extends Controller
             return ErrorResponse::create(array('title' => '尊敬的用户，您好，恭喜您成为今日幸运之星，请点击在线客服领取钻石，感谢您的支持与理解！', 'msg' => ''));
 
         if (resolve('chargeGroup')->customer($uid)) {
-            return ErrorResponse::create(array('title' => '<a id="live800iconlink" href="javascript:void(0)" onclick="return openChat(this) " lim_company="410769">需要充值请<u style="color:blue;">联系客服</u>！！！</a>', 'msg' => ''));
+            return ErrorResponse::create(array('title' => '需要充值请联系客服！！！', 'msg' => ''));
         }
 
         $var['active'] = GiftActivity::where('type', 2)->get();
