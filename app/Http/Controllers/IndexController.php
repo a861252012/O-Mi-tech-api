@@ -30,7 +30,7 @@ class IndexController extends Controller
      * 首页数据获取的地址
      * type 是获取的种类
      *
-     * @return Response|void
+     * @return Response
      */
     public function videoList()
     {
@@ -52,7 +52,6 @@ class IndexController extends Controller
          * 首页中排行榜数据 TODO 修改调取接口
          */
         switch ($type) {
-
             case 'rank':
                 $list = Redis::get('home_js_data_' . $flashVer . ':' . SiteSer::siteId());
                 $list = str_replace(['cb(', ');'], ['', ''], $list);
@@ -91,90 +90,6 @@ class IndexController extends Controller
 
 //        $list = json_decode($list, true);
         return JsonResponse::create(['data' => json_decode($list ?: '{}')]);
-    }
-
-    public function registerAction()
-    {
-        if (Auth::check()) {
-            return new Response(
-                json_encode([
-                    "data" => 0,
-                    "msg" => "已经在登录状态中！",
-                ]));
-        }
-        $sCode = $this->request()->get('sCode');
-        if (!SiteSer::config('skip_captcha_reg') && (!$sCode || strtolower($sCode) != strtolower($this->_reqSession->get('CAPTCHA_KEY')))) {
-            return new Response(
-                json_encode([
-                    "data" => 0,
-                    "msg" => "验证码错误！请重新刷新",
-                ]));
-        }
-        //表单验证
-        $username = $this->request()->get('username');
-        if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $username) || strlen($username) < 5 || strlen($username) > 30) {
-            return new Response(json_encode([
-                "data" => 0,
-                "msg" => "注册邮箱不符合格式！(5-30位的邮箱)",
-            ]));
-        }
-        if (!!$this->_findByUserName(['username' => $username])) {
-            return new Response(json_encode([
-                "data" => 0,
-                "msg" => "注册邮箱重复，请换一个试试！",
-            ]));
-        }
-        $nickname = $this->request()->get('nickname');
-        //if( strlen($nickname) < 2 || strlen($nickname) > 16 || !preg_match("/^[A-Za-z0-9_".chr(0xa1)."-".chr(0xff)."]+[^_]$/",$nickname)|| !!$this->_findByUserName(array('nickname'=>$nickname)) ){
-        $len = $this->count_chinese_utf8($nickname);
-        //昵称不能使用/:;\空格,换行等符号。
-        if ($len < 2 || $len > 8 || !preg_match("/^[^\s\/\:;]+$/", $nickname)) {
-            return new Response(json_encode([
-                "data" => 0,
-                "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)",
-            ]));
-        }
-
-        if (!!$this->_findByUserName(['nickname' => $nickname])) {
-            return new Response(json_encode([
-                "data" => 0,
-                "msg" => "注册昵称重复，请换一个试试！",
-            ]));
-        }
-        $password = $this->request()->get('password');
-        $repassword = $this->request()->get('repassword');
-        if ($password != $repassword) {
-            return new Response(json_encode([
-                "data" => 0,
-                "msg" => "两次输入的密码不相同！",
-            ]));
-        }
-        if (strlen($password) < 6 || strlen($password) > 22) {
-            return new Response(json_encode([
-                "data" => 0,
-                "msg" => "注册密码不符合格式！",
-            ]));
-        }
-        $uid = $this->_addUserInfo([
-            'username' => $username,
-            'nickname' => $nickname,
-            'password' => md5($password),
-            'created' => date('Y-m-d H:i:s'),
-        ]);
-        $userInfo = $this->_findByUserName([
-            'uid' => $uid,
-        ]);
-        $this->writeRedis($userInfo);
-        // $this->_setIndexCookie($userInfo,true);
-        $this->_sendGift($uid, false, SiteSer::config('register_send_point'));
-        //用户邀请注册处理接口,Author By D.C 2014.12.10
-        $this->_userRegisterByInvitation($uid);
-
-
-        return new Response(json_encode([
-            "data" => 1,
-            "msg" => "恭喜您注册成功！",
-        ]));
     }
 
     /**
@@ -255,29 +170,8 @@ class IndexController extends Controller
         }
     }
 
-
     /**
-     * @param $criteria
-     * @return object
-     */
-    private function _findByUserName($criteria)
-    {
-        $data = Users::where($criteria)->first();
-        return $data ? $data->toArray() : [];
-    }
-
-
-    /**
-     * @param $criteria
-     * @return mixed
-     */
-    private function _addUserInfo($criteria)
-    {
-        $user = Users::create($criteria);
-        return $user->id;
-    }
-
-    /**
+     * 7月3号 由clark确认，关注部分代码和indexinfo不分离
      * todo 可删除关注部分的代码
      * @return Response
      * @throws \Exception
