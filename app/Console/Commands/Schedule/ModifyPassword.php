@@ -5,7 +5,6 @@ namespace App\Console\Commands\Schedule;
 use App\Models\Users;
 use App\Services\Site\SiteService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
 class ModifyPassword extends Command
@@ -32,7 +31,7 @@ class ModifyPassword extends Command
     /**
      * Create a new command instance.
      *
-     * @return void
+     * @param SiteService $siteService
      */
     public function __construct(SiteService $siteService)
     {
@@ -42,15 +41,11 @@ class ModifyPassword extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return mixed
      */
     public function handle()
     {
-
         $this->siteService->getIDs()
             ->each([$this, 'handleForSite']);
-
     }
 
     /**
@@ -63,7 +58,9 @@ class ModifyPassword extends Command
         $this->siteService->fromID($id);
 
         $mod_pwd_duration = $this->siteService->config('mod_pwd_duration');
-        if (empty($mod_pwd_duration)) return null;
+        if (empty($mod_pwd_duration)) {
+            return null;
+        }
 
         $mod_date = date('Y-m-d H:i:s', time() - $mod_pwd_duration);
 
@@ -83,5 +80,6 @@ class ModifyPassword extends Command
             echo '更新数据：' . $num . '用户ID' . implode(',', $uidArray) . PHP_EOL;
             usleep(500);
         }
+        return null;
     }
 }

@@ -4,16 +4,10 @@ namespace App\Console\Commands\Schedule;
 
 use App\Models\UserBuyOneToMore;
 use App\Models\VideoMail;
-use App\Services\Site\SiteService;
-use Illuminate\Cache\FileStore;
 use Illuminate\Console\Command;
-use Illuminate\Filesystem\Filesystem;
-use Illuminate\Http\File;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Storage;
 use App\Traits\SiteSpecific;
-use App\Facades\SiteSer;
 
 class One2ManyMsgSend extends Command
 {
@@ -44,15 +38,13 @@ class One2ManyMsgSend extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return mixed
      */
     public function handle()
     {
         echo "1213";
         die;
 
-        //todo use redis keys
+        /** @noinspection PhpUnreachableStatementInspection */
         $start = Carbon::now()->addMinutes(2)->addSeconds(30);// date('Y-m-d H:i:s', time() + 150);
         $end = Carbon::now()->addMinutes(7)->addSeconds(30); //date('Y-m-d H:i:s', time() + 450);
         $keys = UserBuyOneToMore::query()
