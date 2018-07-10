@@ -57,6 +57,7 @@ class UserService extends Service
     {
         $newUser = Arr::only($user, ['did', 'username', 'password', 'nickname', 'roled', 'exp', 'pop', 'created', 'status', 'province', 'city', 'county', 'video_status', 'rich', 'lv_exp', 'lv_rich', 'pic_total_size', 'pic_used_size', 'lv_type', 'icon_id', 'uuid', 'xtoken', 'origin', 'sex', 'site_id']);
         $newUser['created'] = date('Y-m-d H:i:s');
+        $newUser['logined'] = date('Y-m-d H:i:s');
         $newUser['site_id'] = SiteSer::siteId();
         if (strlen($newUser['password']) != 32) {
             $newUser['password'] = md5($newUser['password']);

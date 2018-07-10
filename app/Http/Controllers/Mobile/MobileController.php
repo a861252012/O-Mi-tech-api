@@ -351,6 +351,8 @@ class MobileController extends Controller
         if ($user->pwd_change === null || $user->cpwd_time === null) {
             $user = (object)UserSer::getUserReset($user->uid);
         }
+        //更新最后的登录时间
+        Users::where('uid', $user->uid)->update(['logined' => date('Y-m-d H:i:s')]);
         return JsonResponse::create([
             'status' => 1,
             'data' =>
