@@ -281,6 +281,12 @@ class Controller extends BaseController
             ));
         }
 
+        if($password == $password1){
+            return json_encode(array(
+                "status"=> 0,
+                "msg" => "新旧密码不能相同"
+            ));
+        }
         if($password1 != $password2){
             return json_encode(array(
                 "status"=> 0,
