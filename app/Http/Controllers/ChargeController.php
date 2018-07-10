@@ -726,7 +726,8 @@ class ChargeController extends Controller
         $POST_Array = resolve('charge')->getFindRequest($orderId);
 
         $pay_call_url = SiteSer::config('pay_call_url');
-        if (config('app.debug')) {
+        $local_recharge = SiteSer::config('local_recharge') ?: false;
+        if (config('app.debug') && $local_recharge) {
             $pay_call_url = route('chongti');
         }
         $send_result = $this->sendCurlRequest($pay_call_url, ($POST_Array));
