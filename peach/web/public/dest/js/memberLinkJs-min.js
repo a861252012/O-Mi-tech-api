@@ -1,1 +1,0 @@
-/*! cross - v0.1.2 - 2018-02-05 */$(function(){var a=new ZeroClipboard(document.getElementById("copyBtn"));a.on("ready",function(b){a.on("aftercopy",function(a){$.tips("复制成功")})})});

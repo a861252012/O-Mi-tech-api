@@ -1,1 +1,0 @@
-/*! cross - v0.1.2 - 2018-02-05 */$(function(){$(".watch-btn").on("click",function(){var a=$(this);$.ajax({url:"/focus",data:{pid:a.parents(".l-list").data("rel"),ret:2},type:"GET",dataType:"json",success:function(b){b.status?a.parents(".l-list").remove():alert(b.msg)},error:function(){}})})});

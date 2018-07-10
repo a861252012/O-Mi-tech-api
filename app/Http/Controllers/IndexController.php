@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Facades\SiteSer;
+use App\Facades\UserSer;
 use App\Models\Complaints;
 use App\Models\RoomDuration;
 use App\Models\RoomStatus;
@@ -10,6 +11,7 @@ use App\Models\UserBuyOneToMore;
 use App\Models\Users;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
@@ -239,7 +241,7 @@ class IndexController extends Controller
             $msg0 = '该昵称已被使用，请换一个试试！';
             $msg1 = '恭喜该昵称可以使用。';
         }
-        $row = $this->_findByUserName([$type => $username]);
+        $row = UserSer::getUserByUsername($username);
         if (!!$row) {
             return new Response(json_encode([
                 'msg' => $msg0,
@@ -282,57 +284,9 @@ class IndexController extends Controller
      */
     public function getIndexInfo()
     {
-        $return = [];
         $uid = Auth::id();
-        $ads = Redis::hget('img_cache', 1);
-        $ads = json_decode($ads, true);
         //公告
-        $notice = array();
         $notice = $this->make('redis')->hgetAll('system_notices:' . SiteSer::siteId());
-
-        $slider = [];
-        if ($ads) {
-            foreach ($ads as $ad) {
-                if (filter_var($ad['url'], FILTER_VALIDATE_INT)) {
-                    $ad['url'] = '/' . $ad['url'];
-                } else {
-                    $ad['url'] = '/' . ltrim($ad['url'], '/');
-                }
-                $slider[] = $ad;
-            }
-        }
-        $return['ad_1'] = $slider;
-        $ad_2 = Redis::hget('img_cache', 2);
-        $ad_2 = json_decode($ad_2, true);
-        $return['ad_2'] = $ad_2;
-        //视频路径
-        $video_info = Redis::hget('img_cache', '5');
-        if ($video_info) {
-            if (json_decode($video_info)) {
-                $video_info = json_decode($video_info, true);
-            } else {
-                $downloadpcurl = null;
-                $res = [
-                    'name' => '',
-                    'temp_name' => '',
-                    'url' => '',
-                ];
-                $video_info = json_encode($res);
-            }
-            //从一到十随机取数，
-            $nums_video = rand(0, count($video_info));
-            if (isset($video_info[$nums_video])) {
-                $video_url = request()->getSchemeAndHttpHost() . '/public/file/' . $video_info[$nums_video]['temp_name'];
-                $jump_url = $video_info[$nums_video]['url'];
-            } else {
-                $video_url = request()->getSchemeAndHttpHost() . '/public/file/' . $video_info[0]['temp_name'];
-                $jump_url = $video_info[0]['url'];
-            }
-
-            //返回视频地址和视频超链接
-            $return['video_url'] = $video_url;
-            $return['jump_url'] = $jump_url;
-        }
 
         $qq_url = Redis::hget('hsite_config:' . SiteSer::siteId(), 'qq_url');
         $email_url = Redis::hget('hsite_config:' . SiteSer::siteId(), 'email_url');
@@ -362,6 +316,8 @@ class IndexController extends Controller
             $myfavArr = $this->getUserAttensBycuruid($uid);
             if (!!$myfavArr) {
                 $myfav = collect($arr)->whereIn('uid', $myfavArr)->toArray();
+                unset($myfavArr);
+                unset($arr);
             }
         }
 
@@ -373,25 +329,6 @@ class IndexController extends Controller
                 ->where('endtime', '>', date('Y-m-d H:i:s', time()))
                 ->orderBy('starttime', 'desc')
                 ->get();
-//            print_r($myReservation);
-//            if (!empty($myReservation)) {
-//                // 从redis 获取一对一预约数据
-//                $ordRooms = Redis::get('home_ord_' . $flashVersion);
-//                $ordRooms = str_replace(['cb(', ');'], ['', ''], $ordRooms);
-//                $ordRooms = json_decode($ordRooms, true);
-//                $rooms = empty($ordRooms['rooms']) ? [] : $ordRooms['rooms'];//考虑做个redis的配置
-//
-//                foreach ($myReservation as $item) {
-//                    foreach ($rooms as $room) {
-//                        if (($item->starttime) > date('Y-m-d H:i:s', time() - ($item->duration))) {
-//                            if ($item->uid == $room['rid'] && $item->id == $room['id']) {
-//                                $room['listType'] = 'myres';
-//                                $myres[] = $room;
-//                            }
-//                        }
-//                    }
-//                }
-//            }
             if (!empty($myReservation)) {
                 foreach ($myReservation as $item) {
                     $roomInfo = Redis::hgetall('hvediosKtv:' . $item->uid);
@@ -411,8 +348,8 @@ class IndexController extends Controller
                     $room['top'] = isset($roomInfo['top']) ? intval($roomInfo['top']) : 0;
                     $myres[] = $room;
                 }
-
             }
+            unset($myReservation);
         }
 
         // 从redis 获取一对多预约数据
@@ -429,18 +366,9 @@ class IndexController extends Controller
                         foreach ($rooms as $roomp) {
                             if ($item->rid == $roomp['uid'] && $item->onetomore == $roomp['id']) {
 //                                $room['listType'] = 'myticket';
-                                $room['id'] = $roomp['id'];
-                                $room['rid'] = $roomp['rid'];
+                                $room = Arr::only($roomp,['id','rid','username','cover','start_time','end_time','duration','origin','new_user','live_status']);
                                 $room['tid'] = 7;
-                                $room['nickname'] = $roomp['username'];
-                                $room['cover'] = $roomp['cover'];
-                                $room['start_time'] = $roomp['start_time'];
-                                $room['end_time'] = $roomp['end_time'];
-                                $room['duration'] = $roomp['duration'];
                                 $room['one_to_many_status'] = 1;
-                                $room['origin'] = $roomp['origin'];
-                                $room['new_user'] = $roomp['new_user'];
-                                $room['live_status'] = $roomp['live_status'];
                                 $room['top'] = isset($roomp['top']) ? $roomp['top'] : 0;
                                 $myres[] = $room;
                             }
@@ -448,6 +376,7 @@ class IndexController extends Controller
                     }
                 }
             }
+            unset($oneToMore);
         }
 
         return JsonResponse::create(
@@ -467,8 +396,6 @@ class IndexController extends Controller
                 'status' => 1,
             ]
         );
-
-
     }
 
     /**

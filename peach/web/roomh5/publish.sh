@@ -1,1 +1,0 @@
-rm /www/peach-front/Vcore/App/View/Room/roomh5.html.twig -rf

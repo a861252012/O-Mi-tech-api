@@ -1,9 +1,0 @@
-@import "../../../../www/style/common.css";
-$path :../../../../www/;
-
-.container{      
-      position: relative;
-      overflow: auto;
-      margin-right: 3px;
-      @mixin scrollbar $(path);
-}

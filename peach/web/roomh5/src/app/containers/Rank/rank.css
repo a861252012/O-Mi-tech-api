@@ -1,9 +1,0 @@
-$path :../../../www/;
-.container {
-    height: 50%;
-    width: 253px;
-    font-size: 18px;
-    position: relative;
-    /*text-align: center;*/
-    background-image: url($(path)images/black-bg.png);
-}
