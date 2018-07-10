@@ -166,7 +166,6 @@ Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@c
 Route::get('/api/downrtmp', 'ApiController@getDownRtmp')->name('downrtmp');
 
 Route::post('/reg', 'ApiController@reg')->name('api_reg');
-Route::post('/regs', 'ApiController@regs')->name('api_reg');
 // PageController
 Route::get('/search', ['name' => 'search', 'uses' => 'PageController@search']);
 
