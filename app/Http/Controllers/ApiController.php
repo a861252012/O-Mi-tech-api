@@ -1055,25 +1055,19 @@ EOT;
     public function goods()
     {
         $gift_category = GiftCategory::all();
-
         $data = [];
         $cate_id = [];// 用于下方查询时的条件使用
-        $gif = [];//irwin
-        $giftTemp = [];//irwin
         foreach ($gift_category as $cate) {
             $cate_id[] = $cate['category_id'];
             $data[$cate['category_id']]['name'] = $cate['category_name'];
             $data[$cate['category_id']]['category'] = $cate['category_id'];
             $data[$cate['category_id']]['items'] = [];
-            $giftTemp = Goods::where('category', '!=', 1006)->where('category', '=', $cate['category_id'])->where('is_show', '>', 0)->orderBy('sort_order', 'asc')->get();//irwin
-            $giftTemp = $giftTemp ? $giftTemp->toArray() : [];//irwin
-            $gif = array_merge($gif, $giftTemp);//irwin
         }
         /**
          * 根据上面取出的分类的id获取对应的礼物
          * 然后格式化之后塞入到具体数据中
          */
-        //$gif = Goods::where('category', '!=', 1006)->whereIn('category', $cate_id)->where('is_show', '>', 0)->get();
+        $gif = Goods::where('category', '!=', 1006)->where('is_show', '>', 0)->wherein('category',$cate_id)->orderBy('sort_order', 'asc')->get()->toarray();
         foreach ($gif as $item) {
             $good = [];
             $good['gid'] = $item['gid'];
