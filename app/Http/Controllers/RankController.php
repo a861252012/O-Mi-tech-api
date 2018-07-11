@@ -42,33 +42,9 @@ class RankController extends Controller
 
     function rankData()
     {
-        $cb = $this->request()->get('callback', null);
-
         /** @var UserService $userService */
         $userService = resolve(UserService::class);
-        $month = date('Ym');
-//        $month = '201701';
-        $data = [
-            'rank_appoint_month' => $userService->getRank(static::ZRANK_APPOINT_MONTH . $month, 0, static::RANK_PAGE_SIZE),
-            'rank_exp_day' => $userService->getRank(static::ZRANK_POP_DAY, 0, static::RANK_PAGE_SIZE),
-            'rank_exp_his' => $userService->getRank(static::ZRANK_POP_HISTORY, 0, static::RANK_PAGE_SIZE),
-            'rank_exp_month' => $userService->getRank(static::ZRANK_POP_MONTH . $month, 0, static::RANK_PAGE_SIZE),
-            'rank_exp_week' => $userService->getRank(static::ZRANK_POP_WEEK, 0, static::RANK_PAGE_SIZE),
-            'rank_game_day' => $userService->getRank(static::ZRANK_GAME_DAY, 0, static::RANK_PAGE_SIZE),
-            'rank_game_his' => $userService->getRank(static::ZRANK_GAME_HISTORY, 0, static::RANK_PAGE_SIZE),
-            'rank_game_month' => $userService->getRank(static::ZRANK_GAME_MONTH . $month, 0, static::RANK_PAGE_SIZE),
-            'rank_game_week' => $userService->getRank(static::ZRANK_GAME_WEEK, 0, static::RANK_PAGE_SIZE),
-            'rank_rich_day' => $userService->getRank(static::ZRANK_RICH_DAY, 0, static::RANK_PAGE_SIZE),
-            'rank_rich_week' => $userService->getRank(static::ZRANK_RICH_WEEK, 0, static::RANK_PAGE_SIZE),
-            'rank_rich_month' => $userService->getRank(static::ZRANK_RICH_MONTH . $month, 0, static::RANK_PAGE_SIZE),
-            'rank_rich_his' => $userService->getRank(static::ZRANK_RICH_HISTORY, 0, static::RANK_PAGE_SIZE),
-        ];
-
-        /** jsonp or json */
-       // $jsonData = json_encode($data);
-       // $jsonData = $cb ? $cb . '(' . $jsonData . ')' : $jsonData;
-        $jsonData =  $this->format_jsoncode($data);
-        return new JsonResponse($jsonData);
+        return response($userService->getAllRank())->header('Content-Type','application/json');
 
     }
 }

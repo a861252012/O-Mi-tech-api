@@ -10,18 +10,18 @@
 namespace App\Http\Controllers;
 use App\Facades\SiteSer;
 use App\Libraries\SuccessResponse;
+use App\Models\Site;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Ads;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Redis;
 
 class   AdsController extends Controller{
     public function getAd(){
         $device = Input::get('device',1);
-
-        $data = Ads::where('device',$device)->published()->get()->toArray();
-
-
+        $data = $this->getAds($device);
         //针对ios和安卓进行广告数据优化
         if($device == 2 || $device == 4){
             foreach($data as $key=>$value){
@@ -47,6 +47,18 @@ class   AdsController extends Controller{
           }
         }*/
         return SuccessResponse::create(compact('cdn','img_path','data'));
+    }
+
+
+    public function getAds($device)
+    {
+        //todo backend flush ads
+        $data = unserialize(Redis::get('ads:' . $device),['allowed_classes' => false]);
+        if (empty($data)) {
+            $data = Ads::where('device',$device)->published()->get()->toArray();
+            Redis::set('ads:' . $device,serialize($data));
+        }
+        return $data;
     }
 
 }

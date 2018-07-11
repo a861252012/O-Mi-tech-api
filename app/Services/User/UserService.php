@@ -891,6 +891,12 @@ class UserService extends Service
         return $result;
     }
 
+    public function getAllRank()
+    {
+
+        return $this->redis->get('vrank_data:' . SiteSer::siteId());
+    }
+
     /**
      * 前3个参数是省市区的code值，第4个参数是分隔符
      * @return string
