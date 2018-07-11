@@ -35,6 +35,9 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Mews\Captcha\Facades\Captcha;
+use App\Models\Agents;
+use DB;
+
 
 /**
  * Class ApiController
@@ -175,6 +178,8 @@ class ApiController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => '昵称已被注册或注册失败']);
         }
         $user = Users::find($uid);
+
+        $this->checkAgent($uid);
         // 此时调用的是单实例登录的session 验证
         $guard = null;
         if ($request->route()->getName() === 'm_reg' || $request->has('client') && in_array(strtolower($request->get('client')), ['android', 'ios'])) {
@@ -193,6 +198,49 @@ class ApiController extends Controller
             ];
         }
         return JsonResponse::create($return);
+    }
+
+    /**
+     * 检查代理商注册，获取cookie的agent值，来关联代理商
+     * @param $uid
+     * @return bool|int
+     */
+    private function checkAgent($uid){
+
+        if (isset($_REQUEST['origin'])&&$_REQUEST['origin']>=20&&$_REQUEST['origin']<=39){
+            //移动端，agent为id
+            $aid=isset($_REQUEST['aid'])?$_REQUEST['aid']:(isset($_REQUEST['agents'])?$_REQUEST['agents']:null);
+            $did = Domain::where('url', $aid)->first();
+            $agentid = Agents::where('did',$did['id'])->first();
+            $agent = array(
+                'aid'=>$agentid['id'],
+                'uid'=>$uid
+            );
+            DB::table((new AgentsRelationship)->getTable())->insert($agent);
+            return;
+        }else if(isset($_COOKIE['agent'])){
+            $agenturl=$_COOKIE['agent'];
+            $did = Domain::where('url', $agenturl)->first();
+            $agentid = Agents::where('did',$did['id'])->first();
+
+            if(empty($agentid)){
+                return false;
+            }
+            $agent = array(
+                'aid'=>$agentid['id'],
+                'uid'=>$uid
+            );
+
+            if (!empty($did))
+                $this->doclick($did);
+            DB::table((new AgentsRelationship)->getTable())->insert($agent);
+            return 0;
+        }
+
+    }
+    private  function doclick($did){//注册成功增加点击量
+        DB::table((new Domain)->getTable())->where('id',$did['id'])->increment('click',1);
+
     }
 
     /**
