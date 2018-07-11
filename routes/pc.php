@@ -358,7 +358,6 @@ Route::group(['prefix' => 'charge', 'middleware' => ['charge']], function () {
 Route::get('/ping', ['name' => 'ping', 'uses' => 'ApiController@ping']);
 
 Route::post('login', 'LoginController@login')->name('login');
-Route::post('logins', 'LoginController@logins')->name('login');
 Route::any('/logout', 'LoginController@logout');
 
 Route::match(['POST', 'GET'], '/get_lcertificate', ['name' => 'api_agents', 'uses' => 'ApiController@get_lcertificate']);
