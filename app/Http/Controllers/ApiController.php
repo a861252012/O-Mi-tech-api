@@ -196,7 +196,7 @@ class ApiController extends Controller
     }
 
     /**
-     *
+     * money 积分值或其他币值
      */
     public function platExchange()
     {
@@ -206,6 +206,7 @@ class ApiController extends Controller
         $request = $this->make('request');
         $money = trim($request->get('money')) ? $request->get('money') : 0;
         $rid = trim($request->get('rid'));
+        $site_id = 2;
 
         $redis = $this->make('redis');
 
@@ -218,6 +219,7 @@ class ApiController extends Controller
                 'uid' => $uid,
                 'rid' => $rid,
                 'money' => $money,
+                'site_id' => $site_id,
             ]));
         /** 检查状态 */
         $timeout = microtime(true) + 3;
