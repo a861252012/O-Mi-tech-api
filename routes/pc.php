@@ -159,6 +159,8 @@ Route::match(['GET', 'POST'], '/majax/{action}', ['name' => 'majax', 'uses' => '
 Route::match(['POST', 'GET'], '/indexinfo', ['name' => 'indexinfo', 'uses' => 'IndexController@getIndexInfo']);
 //代理
 Route::get('/extend/{url}', ['name' => 'business_extend', 'uses' => 'BusinessController@extend']);
+//代理
+Route::get('/dal/{url}', ['name' => 'business_dal', 'uses' => 'BusinessController@extend']);
 Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
 
 

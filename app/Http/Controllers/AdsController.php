@@ -52,7 +52,9 @@ class   AdsController extends Controller{
 
     public function getAds($device)
     {
-        $data = unserialize(Redis::hget('ads-' .SiteSer::siteId(),$device),['allowed_classes' => false]);
+
+
+        $data = unserialize(Redis::hget('ads-' .SiteSer::siteId(),$device),['allowed_classes' => ['stdClass']]);
         if (empty($data)) {
             $data = Ads::where('device',$device)->published()->get()->toArray();
             Redis::hset('ads-' .SiteSer::siteId(),$device,serialize($data));
