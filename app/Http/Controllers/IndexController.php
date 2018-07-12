@@ -283,13 +283,11 @@ class IndexController extends Controller
             'emailurl' => is_null($email_url) ? '' : $email_url,
 
         ];
-        $data = array_map(function ($item) {
+        array_walk($data,function (&$item) {
             if (\is_array($item)) {
-                return array_values($item);
+                $item =  array_values($item);
             }
-            return $item;
-        }, $data);
-
+        });
         return JsonResponse::create(
             [
                 'data' =>$data,
