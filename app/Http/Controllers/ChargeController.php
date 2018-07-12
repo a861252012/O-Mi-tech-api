@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpUndefinedClassInspection */
 
 namespace App\Http\Controllers;
 
@@ -10,7 +10,6 @@ use App\Models\PayAccount;
 use App\Models\PayGD;
 use App\Models\Recharge;
 use App\Models\Users;
-use App\Services\Site\SiteService;
 use App\Services\User\UserService;
 use DB;
 use Hashids\Hashids;
@@ -40,37 +39,29 @@ class ChargeController extends Controller
      * 于20160817重构多充值方式开发需求(旧版已注释)
      * @author dc
      * @version 20160817
-     * @return \Core\Response
+     * @return ErrorResponse
      */
     public function order(Request $request)
     {
         $uid = Auth::id();
         $user = resolve(UserService::class)->getUserByUid($uid);
 
-        $origin = $request->get('origin', 12);
         $client = $request->is('api/m/*') ? 2 : 1;
 
-        $token = $client==2 ? Auth::getToken() : "";
+        $token = $client == 2 ? Auth::getToken() : "";
 
         $var['user'] = $user;
 
         // 没有充值的权限
-        if (resolve('chargeGroup')->close($uid))
+        if (resolve('chargeGroup')->close($uid)) {
             return ErrorResponse::create(array('title' => '尊敬的用户，您好，恭喜您成为今日幸运之星，请点击在线客服领取钻石，感谢您的支持与理解！', 'msg' => ''));
+        }
 
         if (resolve('chargeGroup')->customer($uid)) {
             return ErrorResponse::create(array('title' => '需要充值请联系客服！！！', 'msg' => ''));
         }
 
         $var['active'] = GiftActivity::where('type', 2)->get();
-
-        //右边广告图
-        $var['ad'] = '';
-        $ad = $this->make('redis')->hget('img_cache', 3);// 获取右边的广告栏的数据
-        if ($ad) {
-            $a = json_decode($ad, true);
-            $var['ad'] = $a[0];
-        }
 
         //充值方式数组
         $var['recharge_type'] = resolve('chargeGroup')->channel($uid);
@@ -84,8 +75,10 @@ class ChargeController extends Controller
         //充值金额删选数组
         $recharge_money = $this->make('redis')->get('recharge_money') ? json_decode($this->make('redis')->get('recharge_money')) : [];
         $temp = [];
-        foreach ($recharge_money as $k=>$value){
-            if(isset($value->client) && $value->client==$client) array_push($temp,$value);
+        foreach ($recharge_money as $k => $value) {
+            if (isset($value->client) && $value->client == $client) {
+                array_push($temp, $value);
+            }
         }
         $var['recharge_money'] = json_encode($temp);
         $var['token'] = $token;
@@ -145,7 +138,9 @@ class ChargeController extends Controller
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
         }
         $fee = 0;
-        if ($giftactive = GiftActivity::query()->where('moneymin', intval($amount))->first()) $fee = $giftactive->fee;
+        if ($giftactive = GiftActivity::query()->where('moneymin', intval($amount))->first()) {
+            $fee = $giftactive->fee;
+        }
 
         //获取下渠道
         $channel = $_POST['vipLevel'];
@@ -200,8 +195,10 @@ class ChargeController extends Controller
         Log::channel('charge')->info($rtn);
         return new JsonResponse(array('status' => 0, 'data' => $rtn));
     }
-    private function getClient(){
-        $client = $this->request()->headers->get('client',12);
+
+    private function getClient()
+    {
+        $client = $this->request()->headers->get('client', 12);
         switch ($client) {
             case "1001":
                 $origin = 22;
@@ -215,6 +212,10 @@ class ChargeController extends Controller
         return $origin;
     }
 
+    /**
+     * @param $data
+     * @return JsonResponse
+     */
     public function processGD($data)
     {
         $money = $data['money'];
@@ -233,7 +234,11 @@ class ChargeController extends Controller
             $comment = (new Hashids($uid, 4, 'abcdefghijklmnopqrstuvwxyz1234567890'))
                 ->encode(mt_rand(1, 1000000));
         }
-        $obj = PayGD::query()->whereNotIn('status', [2, 4])->where('charge_amount', $money)->where('comment', $comment)->orderBy('id', 'desc')->first();
+        $obj = PayGD::query()
+            ->whereNotIn('status', [2, 4])->where('charge_amount', $money)
+            ->where('comment', $comment)
+            ->orderBy('id','desc')
+            ->first();
         if ($obj && strtotime($obj['created_at']) + static::ORDER_REPEAT_LIMIT_GD * 60 > time()) {
             $err = "1小时内，不能提同一金额，同一姓名的订单";
             return JsonResponse::create(['status' => 0, 'msg' => $err]);
@@ -264,8 +269,7 @@ class ChargeController extends Controller
                 'channel' => $channel,
                 'mode_type' => $modeType,
                 'origin' => $origin,
-            ]
-        );
+            ]);
 
         PayGD::create([
             'charge_id' => $recharge->id,
@@ -282,11 +286,10 @@ class ChargeController extends Controller
             'remoteUrl' => '',
         ];
 
-        if($this->getClient() !=12){
+        if ($this->getClient() != 12) {
             $rtn = $postdata;
         }
         return JsonResponse::create(['status' => 0, 'data' => $rtn]);
-
     }
 
     public function generateOrderId()
@@ -294,6 +297,10 @@ class ChargeController extends Controller
         return date('ymdHis') . mt_rand(10, 99) . sprintf('%08s', strrev(Auth::id())) . '';
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function testNoticeGD(Request $request)
     {
         $amount = $request->get('amount');
@@ -312,7 +319,7 @@ class ChargeController extends Controller
         ];
         $key = SiteSer::config('pay_gd_key');
         $verifymd5 = MD5($data['amount'] . $data['comment'] . $key);
-        $data = $this->sendCurlRequest(route('gd_notice'), ['data' => json_encode((object)$data), 'verifymd5' => $verifymd5]);
+        $this->sendCurlRequest(route('gd_notice'), ['data' => json_encode((object)$data), 'verifymd5' => $verifymd5]);
         return new JsonResponse(['data' => 'success']);
     }
 
@@ -334,6 +341,9 @@ class ChargeController extends Controller
         return ['data' => $output, 'errstr' => $errstr, 'errno' => $curl_errno];
     }
 
+    /**
+     * @return Response
+     */
     public function noticeGD()
     {
         $data = $this->request()->input('data');
@@ -354,7 +364,6 @@ class ChargeController extends Controller
 
         $strKeyInfo = SiteSer::config('pay_gd_key');
 
-        $strEncypty = "";
         switch ($bank_id) {
             case "13":
                 $comment = $obj->comment;
@@ -403,7 +412,8 @@ class ChargeController extends Controller
                 'status' => $status,
             ]);
 
-            $handlerResult = $this->orderHandler($payGD->order_id, $serial_num, $loginfo, $logPath = "", $amount, $chargeResult, '', date('Y-m-d H:i:s', $time));
+            $this->orderHandler($payGD->order_id, $serial_num, $loginfo, $logPath = "", $amount, $chargeResult, '',
+                date('Y-m-d H:i:s', $time));
             return $this->gdResponse($obj, $code);
         }
         //未匹配到订单
@@ -451,7 +461,7 @@ class ChargeController extends Controller
      * 充提返回值：-1未知 0已接受 1处理中 2处理成功
      * @Author Orino
      */
-    private function orderHandler($tradeno, $paytradeno, $loginfo, $logPath, $money, $chargeResult, $channel = '', $complateTime = '')
+    private function orderHandler($tradeno="", $paytradeno, $loginfo, $logPath, $money, $chargeResult, $channel = '', $complateTime = '')
     {
         $loginfo = "";
         //开启事务
@@ -459,11 +469,10 @@ class ChargeController extends Controller
             DB::beginTransaction();
             $sql = 'SELECT t.* FROM `video_recharge` t WHERE t.pay_type in(1,50) AND t.pay_status < ' . Recharge::SUCCESS . ' AND order_id = "' . $tradeno . '" LIMIT 1 FOR UPDATE';
             //强制查询主库
-            //$stmt = DB::select('/*' . MYSQLND_MS_MASTER_SWITCH . '*/' . $sql);
             $stmt = DB::select($sql);
 
             if (empty($stmt)) {
-                $dealOrCannotFind = "订单号：" . $tradeno . "\n数据已处理完毕，请查看'充值记录！'\n";
+                $dealOrCannotFind = $tradeno . "订单号：" . "\n数据已处理完毕，请查看'充值记录！'\n";
                 $loginfo .= $dealOrCannotFind;
                 Log::channel('charge')->info($loginfo);
                 return new JsonResponse(array('status' => 0, 'msg' => $dealOrCannotFind));
@@ -481,7 +490,6 @@ class ChargeController extends Controller
 
             $chargeStatus = false;//成功状态标记位
             if ($chargeResult == 2 && !empty($paytradeno)) {
-
                 $rs = DB::table('video_user')->where('uid', $stmt['uid'])->increment('points', $points);
                 if ($rs) {
                     $chargeStatus = true;//成功状态为1
@@ -510,7 +518,9 @@ class ChargeController extends Controller
         }
 
         //首次充值时间
-        if ($chargeStatus) resolve('charge')->chargeAfter($stmt['uid']);
+        if ($chargeStatus) {
+            resolve('charge')->chargeAfter($stmt['uid']);
+        }
 
         //第二步，更新数据
         $loginfo .= "订单号：" . $tradeno . " 数据处理成功！\n";
@@ -519,13 +529,12 @@ class ChargeController extends Controller
         $rtn2back = $this->back2Charge($chargeResult, $tradeno, $paytradeno);
         Log::channel('charge')->info($loginfo . "返回给充提中心的结果：$rtn2back");
         return new JsonResponse(array('status' => 0, 'msg' => $rtn2back));
-
     }
 
     /**
      * 返回给充提的结果
      */
-    public function back2Charge($chargeResult, $tradeno, $paytradeno)
+    public function back2Charge($chargeResult="", $tradeno="", $paytradeno)
     {
         //数据统计好后，根据状态来返回结果
         if ($chargeResult == 0) {
@@ -537,7 +546,6 @@ class ChargeController extends Controller
         } elseif ($chargeResult == 3) {
             $chargeResult2 = ' 处理失败！';
         }
-        //  return '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">订单号：' . $tradeno . $chargeResult2 . ' \n';
         return $tradeno . $chargeResult2 . $paytradeno;
     }
 
@@ -584,6 +592,7 @@ class ChargeController extends Controller
             Log::info($signError);
             return new JsonResponse(array('status' => 1, 'msg' => date('Y-m-d H:i:s') . " \n" . $postResult . "\n" . $signError));
         }
+        $money=$chargeResult=$channel=$complateTime=null;
         for ($i = 0; $i < $len; $i++) {
             $paytradeno = $jsondatas['Datas'][$i]['payOrderId'];
             $money = $jsondatas['Datas'][$i]['amount'];
@@ -591,7 +600,9 @@ class ChargeController extends Controller
             $channel = $jsondatas['Datas'][$i]['channel'];
             $complateTime = $jsondatas['Datas'][$i]['complateTime'];
             //存在同一个v项目订单号对应2个以上的财务财务订单号
-            if ($chargeResult == 2 && !empty($paytradeno)) break;
+            if ($chargeResult == 2 && !empty($paytradeno)) {
+                break;
+            }
         }
         return $this->orderHandler($tradeno, $paytradeno, $loginfo = "", $logPath = "", $money, $chargeResult, $channel, $complateTime);
     }
@@ -669,16 +680,18 @@ class ChargeController extends Controller
         switch ($data['type']) {
             case 1:
                 return new JsonResponse([
-                    'data' => ['Datas' => array(
-                        array(
-                            'result' => 2,
-                            'payOrderId' => 'test' . mt_rand(10000, 90000),
-                            'amount' => $recharge->paymoney,
-                            'orderId' => $data['orderId'],
-                            'complateTime' => date('Y-m-d H:i:s'),
+                    'data' => [
+                        'Datas' => array(
+                            array(
+                                'result' => 2,
+                                'payOrderId' => 'test' . mt_rand(10000, 90000),
+                                'amount' => $recharge->paymoney,
+                                'orderId' => $data['orderId'],
+                                'complateTime' => date('Y-m-d H:i:s'),
+                            )
                         )
-                    )
-                    ]]);
+                    ]
+                ]);
                 break;
             default:
                 ;
@@ -687,7 +700,7 @@ class ChargeController extends Controller
 
     /**
      * 通过订单号查询
-     * @return Response
+     * @return JsonResponse
      * @Author Orino
      */
     public function checkCharge(Request $request)
@@ -713,7 +726,8 @@ class ChargeController extends Controller
         $POST_Array = resolve('charge')->getFindRequest($orderId);
 
         $pay_call_url = SiteSer::config('pay_call_url');
-        if (config('app.debug')) {
+        $local_recharge = SiteSer::config('local_recharge') ?: false;
+        if (config('app.debug') && $local_recharge) {
             $pay_call_url = route('chongti');
         }
         $send_result = $this->sendCurlRequest($pay_call_url, ($POST_Array));

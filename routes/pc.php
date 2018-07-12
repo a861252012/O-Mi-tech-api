@@ -166,7 +166,6 @@ Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@c
 Route::get('/api/downrtmp', 'ApiController@getDownRtmp')->name('downrtmp');
 
 Route::post('/reg', 'ApiController@reg')->name('api_reg');
-Route::post('/regs', 'ApiController@regs')->name('api_reg');
 // PageController
 Route::get('/search', ['name' => 'search', 'uses' => 'PageController@search']);
 
@@ -359,7 +358,6 @@ Route::group(['prefix' => 'charge', 'middleware' => ['charge']], function () {
 Route::get('/ping', ['name' => 'ping', 'uses' => 'ApiController@ping']);
 
 Route::post('login', 'LoginController@login')->name('login');
-Route::post('logins', 'LoginController@logins')->name('login');
 Route::any('/logout', 'LoginController@logout');
 
 Route::match(['POST', 'GET'], '/get_lcertificate', ['name' => 'api_agents', 'uses' => 'ApiController@get_lcertificate']);

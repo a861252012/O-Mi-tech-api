@@ -91,6 +91,7 @@ class AnchorSearch extends Command
         
         if(isset($myfav_arr) && is_array($myfav_arr)){
             usort($myfav_arr, $this->make_comparer(['live_status', SORT_DESC], ['attens', SORT_DESC], ['lv_exp', SORT_DESC]));
+            //todo 考虑改成redis存储
             Storage::put('cache/anchor-search-data.php','<?php ' . PHP_EOL . 'return ' . preg_replace('/[\s' . PHP_EOL . ']+/m', '', var_export($myfav_arr, true)) . ';');
         }
 

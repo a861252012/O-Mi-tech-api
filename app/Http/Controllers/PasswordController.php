@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 
+use App\Facades\SiteSer;
 use App\Http\Middleware\ThrottleRoutes;
 use App\Mail\PwdReset;
 use App\Mail\SafeMailVerify;
 use App\Models\Users;
+use App\Services\Site\SiteService;
 use App\Services\User\UserService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -44,14 +46,54 @@ class PasswordController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => '此安全邮件已被使用']);
         }
         try {
-            $mail = (new SafeMailVerify($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST')));
-            Mail::send($mail);
+            //todo
+           $this->sendMail($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST'));
+
+            //$mail = (new SafeMailVerify($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST')));
+            //Mail::send($mail);
         } catch (Exception $e) {
             Log::error($e->getTraceAsString());
             return JsonResponse::create(['status' => 0, 'msg' => '发送失败！' . $e->getMessage()]);
         }
 
         return JsonResponse::create(['status' => 1, 'msg' => '发送成功！']);
+    }
+
+    /**
+     * 经clark 决定取消原先正常的发邮件及队列功能 ，重写邮件发送及相关功能！
+     * @param $user
+     * @param $email
+     * @param $basUrl
+     */
+    public function sendMail($user,$email,$basUrl){
+        $data = ['email'=>$email];
+        $token = Crypt::encrypt([
+            'email' => $email,
+            'uid' => $user->uid,
+            'time' => time(),
+        ]);
+        $url = $basUrl . '/mailverify/confirm/' . $token;
+        $name = $user['nickname'] ?: $user['username'];
+        $url_html = '<a href="' . $url . '" target="_blank"  style="word-wrap: break-word;cursor:pointer;text-decoration:none;color:#0082cb">' . $url . '</a>';
+        $emailtemplate = SiteSer::config('email');
+        $content = $emailtemplate ? $emailtemplate ?? '' : '';
+        $this->content = preg_replace([
+            '/{{\s*name\s*}}/i',
+            '/{{\s*url\s*}}/i',
+            '/{{\s*date\s*}}/i',
+        ], [
+            $name,
+            $url_html,
+            date('Y年m月d日 H:i:s'),
+        ], $content);
+
+        Mail::send('emails.safeMailVerify', ['content'=>$content], function($message) use($data)
+        {
+            $siteConfig = app(SiteService::class)->config();
+            $siteName = $siteConfig->get('name');
+            $subject = $siteName . '安全邮箱验证';
+            $message->to($data['email'])->subject($subject);
+        });
     }
 
     /**
@@ -101,6 +143,39 @@ class PasswordController extends Controller
         return JsonResponse::create(['status' => 0, 'msg' => '更新安全邮箱成功！']);
     }
 
+    /**
+     * 经clark 决定取消原先正常的发邮件及队列功能 ，重写改用普通的邮件发送功能！
+     * @param $user
+     */
+    private function  pwdreset($user){
+        $requestHost = request()->getSchemeAndHttpHost();
+        $token = Crypt::encrypt([
+            'uid' => $user->uid,
+            't'=>time(),
+        ]);
+        Redis::setex('pwdreset.token:'.$token,30*60,1);
+        $url = $requestHost . '/pwdreset/verify?token=' . urlencode($token);
+
+        $siteName = SiteSer::config('name');
+        Mail::send('emails.pwdreset',  [
+            'username' => $user->username,
+            'siteName' => $siteName,
+            'url' => $url,
+            'date' => date('Y-m-d H:i:s'),
+        ], function($message) use($user)
+        {
+            $siteConfig = app(SiteService::class)->config();
+
+            $mail_from = $siteConfig->get('mail_from', config('mail.from.address'));
+            $siteName = $siteConfig->get('name');
+
+            $subject = $siteName . '密码重置';
+            $mail_reply_to = $siteConfig->get('$mail_reply_to');
+            $message->to($user->safemail);
+            $mail_reply_to && $message->replyTo($mail_reply_to, $siteName);
+            $message->subject($subject)->from($mail_from, $siteName);
+        });
+    }
 
     /**
      * 安全邮箱找回密码
@@ -133,8 +208,10 @@ class PasswordController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => '该邮箱没有通过安全邮箱验证, 验证安全邮箱才能使用此功能。']);
         }
         try {
-            $mail = new PwdReset($user);
-            Mail::send($mail);
+
+            $mail = $this->pwdreset($user);
+            //$mail = new PwdReset($user);
+            //Mail::send($mail);
         } catch (Exception $e) {
             Log::error($e->getTraceAsString());
             return JsonResponse::create(['status' => 0, 'msg' => '发送失败！' . $e->getMessage()]);
