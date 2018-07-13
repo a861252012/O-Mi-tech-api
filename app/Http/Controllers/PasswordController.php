@@ -77,7 +77,7 @@ class PasswordController extends Controller
         $url_html = '<a href="' . $url . '" target="_blank"  style="word-wrap: break-word;cursor:pointer;text-decoration:none;color:#0082cb">' . $url . '</a>';
         $emailtemplate = SiteSer::config('email');
         $content = $emailtemplate ? $emailtemplate ?? '' : '';
-        $this->content = preg_replace([
+        $content = preg_replace([
             '/{{\s*name\s*}}/i',
             '/{{\s*url\s*}}/i',
             '/{{\s*date\s*}}/i',

@@ -43,5 +43,6 @@ class SiteInit extends Command
         $this->call('view:clear');
         $this->call('clear-compiled');
         $this->call('storage:link');
+        $this->call('dir-chmod');
     }
 }
