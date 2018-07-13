@@ -273,19 +273,24 @@ class IndexController extends Controller
             unset($oneToMore);
         }
 
+        $data = [
+            'status' => 1,
+            'myfav' => $myfav,
+            'myres' => $myres,
+            'myticket' => $myticket,
+            'notice' => $notice,
+            'qqurl' => is_null($qq_url) ? '' : $qq_url,
+            'emailurl' => is_null($email_url) ? '' : $email_url,
+
+        ];
+        array_walk($data,function (&$item) {
+            if (\is_array($item)) {
+                $item =  array_values($item);
+            }
+        });
         return JsonResponse::create(
             [
-                'data' =>
-                    [
-                        'status' => 1,
-                        'myfav' => $myfav,
-                        'myres' => $myres,
-                        'myticket' => $myticket,
-                        'notice' => $notice,
-                        'qqurl' => is_null($qq_url) ? '' : $qq_url,
-                        'emailurl' => is_null($email_url) ? '' : $email_url,
-
-                    ],
+                'data' =>$data,
                 'msg' => '获取成功',
                 'status' => 1,
             ]

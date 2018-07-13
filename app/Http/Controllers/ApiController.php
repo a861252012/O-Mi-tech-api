@@ -210,8 +210,9 @@ class ApiController extends Controller
         if (isset($_REQUEST['origin'])&&$_REQUEST['origin']>=20&&$_REQUEST['origin']<=39){
             //移动端，agent为id
             $aid=isset($_REQUEST['aid'])?$_REQUEST['aid']:(isset($_REQUEST['agents'])?$_REQUEST['agents']:null);
-            $did = Domain::where('url', $aid)->first();
-            $agentid = Agents::where('did',$did['id'])->first();
+
+           // $did = Domain::where('url', $aid)->first();
+            $agentid = Agents::where('id',$aid)->first();
             $agent = array(
                 'aid'=>$agentid['id'],
                 'uid'=>$uid
