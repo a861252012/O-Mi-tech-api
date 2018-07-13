@@ -38,11 +38,11 @@ class SiteInit extends Command
      */
     public function handle()
     {
+        $this->call('dir-chmod');
         $this->call('route:cache');
         $this->call('config:cache');
         $this->call('view:clear');
         $this->call('clear-compiled');
         $this->call('storage:link');
-        $this->call('dir-chmod');
     }
 }
