@@ -23,6 +23,7 @@ class DirChmod extends Command
     /**
      * The console command description.
      *
+     * test
      * @var string
      */
     protected $description = 'chmod -R 777 *';
