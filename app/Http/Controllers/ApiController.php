@@ -1012,7 +1012,12 @@ EOT;
     {
         $uname = $request->get('nickname') ?: '';
 
-        $arr = include Storage::path('cache/anchor-search-data.php');;
+       // $arr = include Storage::path('cache/anchor-search-data.php');;
+        $flashVersion = SiteSer::config('publish_version');
+        $userServer = resolve(UserService::class);
+        $pulish_version = Redis::get('home_all_:' .$flashVersion . SiteSer::siteId());
+        $arr = $userServer->anchorlist($pulish_version);
+
         $pageStart = isset($request['pageStart']) ? ($request['pageStart'] < 1 ? 1 : intval($request['pageStart'])) : 1;
         $pageLimit = isset($request['pageLimit']) ? (($request['pageLimit'] > 40 || $request['pageLimit'] < 1) ? 40 : intval($request['pageLimit'])) : 40;
 

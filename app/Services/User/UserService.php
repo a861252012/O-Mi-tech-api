@@ -993,4 +993,11 @@ class UserService extends Service
         return false;
     }
 
+    public function  anchorlist($pulish_version){
+        $arrdata = str_replace(['cb(', ');'], ['', ''], $pulish_version);
+        $arrdata = json_decode($arrdata, true);
+        $arr = $arrdata['rooms'];//考虑做个redis的配置
+        return $arr;
+
+    }
 }
