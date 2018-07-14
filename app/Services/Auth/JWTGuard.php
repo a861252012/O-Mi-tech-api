@@ -67,7 +67,8 @@ class JWTGuard implements StatefulGuard
                 'ES512' => \Lcobucci\JWT\Signer\Ecdsa\Sha512::class,
             ],
             //'expire' => 3650 * 24 * 60 * 60,//过期时间（秒）   经clark确认默认时间改成30天
-            'expire' => SiteSer::config('jwt_expire') ?: 30*86400,//过期时间（秒）
+            //20180714经clark确认默认时间改成360天
+            'expire' => SiteSer::config('jwt_expire') ?: 360*86400,//过期时间（秒）
         ];
     }
 
