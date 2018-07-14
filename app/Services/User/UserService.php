@@ -993,7 +993,9 @@ class UserService extends Service
         return false;
     }
 
-    public function  anchorlist($pulish_version){
+    public function  anchorlist(){
+        $flashVersion = SiteSer::config('publish_version');
+        $pulish_version = Redis::get('home_all_' .$flashVersion .':'.SiteSer::siteId());
         $arrdata = str_replace(['cb(', ');'], ['', ''], $pulish_version);
         $arrdata = json_decode($arrdata, true);
         $arr = $arrdata['rooms'];//考虑做个redis的配置

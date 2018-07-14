@@ -404,10 +404,8 @@ class MobileController extends Controller
     {
 
        // $arr = include(storage_path() . '/app/cache/anchor-search-data.php');
-        $flashVersion = SiteSer::config('publish_version');
         $userServer = resolve(UserService::class);
-        $pulish_version = Redis::get('home_all_:' .$flashVersion . SiteSer::siteId());
-        $arr = $userServer->anchorlist($pulish_version);
+        $arr = $userServer->anchorlist();
         $hasharr = [];
         foreach ($arr as $value) {
             $hasharr[$value['uid']] = $value;
@@ -513,10 +511,8 @@ class MobileController extends Controller
 //        $page = $this->request()->input('page', 1);
 //        $userServer = resolve(UserService::class);
        // $arr = include Storage::path('cache/anchor-search-data.php');
-        $flashVersion = SiteSer::config('publish_version');
         $userServer = resolve(UserService::class);
-        $pulish_version = Redis::get('home_all_:' .$flashVersion . SiteSer::siteId());
-        $arr = $userServer->anchorlist($pulish_version);
+        $arr = $userServer->anchorlist();
         $hasharr = [];
         foreach ($arr as $value) {
             $hasharr[$value['uid']] = $value;
@@ -598,10 +594,8 @@ class MobileController extends Controller
         //$uname = isset($_GET['nickname'])?$_GET['nickname']:'';//解码？
         $uname = $this->make('request')->get('nickname', '');
        // $arr = include storage_path('app') . '/cache/anchor-search-data.php';//BASEDIR . '/app/cache/cli-files/anchor-search-data.php';
-        $flashVersion = SiteSer::config('publish_version');
         $userServer = resolve(UserService::class);
-        $pulish_version = Redis::get('home_all_:' .$flashVersion . SiteSer::siteId());
-        $arr = $userServer->anchorlist($pulish_version);
+        $arr = $userServer->anchorlist();
 
         $pageStart = isset($_REQUEST['pageStart']) ? ($_REQUEST['pageStart'] < 1 ? 1 : intval($_REQUEST['pageStart'])) : 1;
         $pageLimit = isset($_REQUEST['pageLimit']) ? (($_REQUEST['pageLimit'] > 40 || $_REQUEST['pageLimit'] < 1) ? 40 : intval($_REQUEST['pageLimit'])) : 40;
