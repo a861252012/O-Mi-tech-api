@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\Faq;
+use App\Services\User\UserService;
 
 class IndexController extends Controller
 {
@@ -84,7 +85,7 @@ class IndexController extends Controller
                 break;
 
             default:
-                $list = Redis::get('home_' . $type . '_' . $flashVer);
+                $list = Redis::get('home_' . $type . '_' . $flashVer . ':' . SiteSer::siteId());
                 $list = str_replace(['cb(', ');'], '', $list);
         }
 
@@ -191,7 +192,12 @@ class IndexController extends Controller
         $myfav = [];
         if ($uid) {
             //主播列表
-            $arr = include Storage::path('cache/anchor-search-data.php');
+           // $arr = include Storage::path('cache/anchor-search-data.php');
+            //通过redis获取主播信息
+            $userServer = resolve(UserService::class);
+            $pulish_version = Redis::get('home_all_:' .$flashVersion . SiteSer::siteId());
+            $arr = $userServer->anchorlist($pulish_version);
+
 //            $hasharr = [];
 //            foreach ($arr as $value) {
 //                $hasharr[$value['uid']] = $value;

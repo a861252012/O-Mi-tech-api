@@ -553,17 +553,19 @@ class MemberController extends Controller
         $maxtime = date('Y-m-d H:i:s', strtotime($maxtimeDate . '23:59:59'));
 
         $all_data = UserCommission::where('uid', $uid)
+            ->allSites()
             ->where('create_at', '>', $mintime)->where('create_at', '<', $maxtime)->where('type', $type)
             ->where('dml_flag', '!=', 3)
             ->orderBy('create_at', 'desc')->with([
                 'user' => function ($q) {
-                    $q->selectRaw('uid, username, roled, lv_exp, lv_rich');
+                    $q->selectRaw('uid, username, roled, lv_exp, lv_rich')->allSites();
                 }
             ])
             ->with('userGroup')->paginate(10);
 
         $total = UserCommission::selectRaw('sum(points) as points')
             ->where('uid', $uid)
+            ->allSites()
             ->where('create_at', '>', $mintime)->where('create_at', '<', $maxtime)->where('type', $type)
             ->where('dml_flag', '!=', 3)
             ->first();

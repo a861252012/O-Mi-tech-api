@@ -210,15 +210,17 @@ class ApiController extends Controller
         if (isset($_REQUEST['origin'])&&$_REQUEST['origin']>=20&&$_REQUEST['origin']<=39){
             //移动端，agent为id
             $aid=isset($_REQUEST['aid'])?$_REQUEST['aid']:(isset($_REQUEST['agents'])?$_REQUEST['agents']:null);
+            if(!empty($aid)){
+                // $did = Domain::where('url', $aid)->first();
+                $agentid = Agents::where('id',$aid)->first();
+                $agent = array(
+                    'aid'=>$agentid['id'],
+                    'uid'=>$uid
+                );
+                DB::table((new AgentsRelationship)->getTable())->insert($agent);
+                return;
+            }
 
-           // $did = Domain::where('url', $aid)->first();
-            $agentid = Agents::where('id',$aid)->first();
-            $agent = array(
-                'aid'=>$agentid['id'],
-                'uid'=>$uid
-            );
-            DB::table((new AgentsRelationship)->getTable())->insert($agent);
-            return;
         }else if(isset($_COOKIE['agent'])){
             $agenturl=$_COOKIE['agent'];
             $did = Domain::where('url', $agenturl)->first();
@@ -1010,7 +1012,12 @@ EOT;
     {
         $uname = $request->get('nickname') ?: '';
 
-        $arr = include Storage::path('cache/anchor-search-data.php');;
+       // $arr = include Storage::path('cache/anchor-search-data.php');;
+        $flashVersion = SiteSer::config('publish_version');
+        $userServer = resolve(UserService::class);
+        $pulish_version = Redis::get('home_all_:' .$flashVersion . SiteSer::siteId());
+        $arr = $userServer->anchorlist($pulish_version);
+
         $pageStart = isset($request['pageStart']) ? ($request['pageStart'] < 1 ? 1 : intval($request['pageStart'])) : 1;
         $pageLimit = isset($request['pageLimit']) ? (($request['pageLimit'] > 40 || $request['pageLimit'] < 1) ? 40 : intval($request['pageLimit'])) : 40;
 
