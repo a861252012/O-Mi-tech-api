@@ -84,7 +84,7 @@ class IndexController extends Controller
                 break;
 
             default:
-                $list = Redis::get('home_' . $type . '_' . $flashVer);
+                $list = Redis::get('home_' . $type . '_' . $flashVer . ':' . SiteSer::siteId());
                 $list = str_replace(['cb(', ');'], '', $list);
         }
 
