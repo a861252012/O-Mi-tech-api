@@ -195,8 +195,7 @@ class IndexController extends Controller
            // $arr = include Storage::path('cache/anchor-search-data.php');
             //通过redis获取主播信息
             $userServer = resolve(UserService::class);
-            $pulish_version = Redis::get('home_all_:' .$flashVersion . SiteSer::siteId());
-            $arr = $userServer->anchorlist($pulish_version);
+            $arr = $userServer->anchorlist();
 
 //            $hasharr = [];
 //            foreach ($arr as $value) {
