@@ -9,7 +9,7 @@ use App\Services\Service;
  */
 class SocketService extends Service
 {
-    const CHANNEL_TIME_MILLS = 330000;
+    const CHANNEL_TIME_MILLS = 60000;
 
     public function getServer($channelID)
     {
@@ -26,7 +26,7 @@ class SocketService extends Service
 
     public static function socketExpired($time)
     {
-        return empty($time) || ($time + static::CHANNEL_TIME_MILLS) < microtime(true);
+        return empty($time) || ($time + static::CHANNEL_TIME_MILLS) < ceil(microtime(true)*1000);
     }
 
     /**

@@ -69,7 +69,7 @@ class PageController extends Controller
 
     public function  formatesort($sort){
         foreach ($sort as $key=>$value){
-            $faq = Faq::where('site_id',SiteSer::siteId())->where('id',$value)->first();
+            $faq = Faq::where('id',$value)->first();
             if(is_null($faq)){
                 unset($sort[$key]);
             }

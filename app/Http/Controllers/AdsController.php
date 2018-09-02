@@ -25,7 +25,7 @@ class   AdsController extends Controller{
         //针对ios和安卓进行广告数据优化
         if($device == 2 || $device == 4){
             foreach($data as $key=>$value){
-                if(!empty($value['meta'])){
+                if(\is_object($value['meta'])){
                     $data[$key]['aspect_ratio'] = $value['meta']->aspect_ratio;
                     $data[$key]['duration'] = $value['meta']->duration;
                     unset( $data[$key]['meta']);

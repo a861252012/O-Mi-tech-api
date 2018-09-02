@@ -159,7 +159,7 @@ class MobileController extends Controller
                 'gender' => $userinfo->sex,
                 'follows' => $userfollow,
                 'fansCount' => $by_atttennums,
-                'system_tip_count' => Messages::where('rec_uid', $uid)->where('send_uid', $uid)->count()
+                'system_tip_count' => Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status', 0)->count()
             ],
         ]);
     }
@@ -381,6 +381,32 @@ class MobileController extends Controller
                 ]]);
     }
 
+    public function domain()
+    {
+        $redis = resolve('redis');
+        $redisDomains = $redis->get('domain:list:' . SiteSer::siteId());
+        if (false == $redisDomains) {
+            $backData = [
+                'greenips' => [],
+                'ips' => [],
+            ];
+            DomainList::orderBy('id', 'desc')->get()->each(function ($vo) use (&$backData) {
+                if ($vo->green) {
+                    $backData['greenips'][] = $vo->url;
+                } else {
+                    $backData['ips'][] = $vo->url;
+                }
+            });
+            $redis->set('domain:list:' . SiteSer::siteId(), json_encode($backData));
+        } else {
+            $backData = json_decode($redisDomains, true);
+        }
+        return JsonResponse::create([
+            'status' => empty($backData['ips']) ? 0 : 1,
+            'data' => $backData
+        ]);
+    }
+
     public function changePwd()
     {
         $request = $this->request();
@@ -403,7 +429,7 @@ class MobileController extends Controller
     public function userFollowings()
     {
 
-       // $arr = include(storage_path() . '/app/cache/anchor-search-data.php');
+        // $arr = include(storage_path() . '/app/cache/anchor-search-data.php');
         $userServer = resolve(UserService::class);
         $arr = $userServer->anchorlist();
         $hasharr = [];
@@ -510,7 +536,7 @@ class MobileController extends Controller
     {
 //        $page = $this->request()->input('page', 1);
 //        $userServer = resolve(UserService::class);
-       // $arr = include Storage::path('cache/anchor-search-data.php');
+        // $arr = include Storage::path('cache/anchor-search-data.php');
         $userServer = resolve(UserService::class);
         $arr = $userServer->anchorlist();
         $hasharr = [];
@@ -586,14 +612,33 @@ class MobileController extends Controller
 
             if ($version) $versions[$branch] = $version;
         }
-        return JsonResponse::create(['status' => empty($versions) ? 0 : 1, 'data' => $versions]);
+        return JsonResponse::create(['status' => empty($versions[1]->toArray()) ? 0 : 1, 'data' => $versions]);
+    }
+
+    /**
+     * 兼容老版本的ios更新
+     */
+    public function appVersionIOS(Request $request)
+    {
+        $branches = $request->get('branch');
+        if ($branches) {
+            $branches = explode(',', $branches);
+        } else {
+            $branches = range(1, 5);
+        }
+        $versions = [];
+        foreach ($branches as $branch) {
+            $version = Mobile::getLastIosVersion($branch);
+            if ($version) $versions[$branch] = $version;
+        }
+        return JsonResponse::create(['status' => empty($versions[1]->toArray()) ? 0 : 1, 'data' => $versions]);
     }
 
     public function searchAnchor()
     {
         //$uname = isset($_GET['nickname'])?$_GET['nickname']:'';//解码？
         $uname = $this->make('request')->get('nickname', '');
-       // $arr = include storage_path('app') . '/cache/anchor-search-data.php';//BASEDIR . '/app/cache/cli-files/anchor-search-data.php';
+        // $arr = include storage_path('app') . '/cache/anchor-search-data.php';//BASEDIR . '/app/cache/cli-files/anchor-search-data.php';
         $userServer = resolve(UserService::class);
         $arr = $userServer->anchorlist();
 
@@ -721,10 +766,14 @@ class MobileController extends Controller
         $page_size = $page_size ? $page_size : 15;
         $uid = Auth::id();
         $list = Messages::where('rec_uid', $uid)->where('send_uid', 0)->orderBy('created', 'desc')->paginate($page_size);
+        //更新消息为已读状态
+        if(!$list->isEmpty()){
+            Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status', 0)->update(['status' => 1]);
+        }
         return JsonResponse::create([
             'status' => 1,
             'data' => $list,
-            'meg' => '成功'
+            'msg' => '成功'
         ]);
     }
 

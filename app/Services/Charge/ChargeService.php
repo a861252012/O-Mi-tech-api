@@ -15,6 +15,7 @@ use App\Services\Auth\JWTGuard;
 use App\Services\Service;
 use App\Services\Site\SiteService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ChargeService extends Service
 {
@@ -56,7 +57,7 @@ class ChargeService extends Service
     public function generateOrderId()
     {
         $uid = Auth::id();
-        return date('ymdHis') . mt_rand(10, 99) . sprintf('%08s', strrev($uid)) . '';
+        return sprintf('%08s', strrev($uid)) . date('ymdHis') . mt_rand(10, 99) . '';
     }
 
     public function getDataNo()
@@ -180,7 +181,9 @@ class ChargeService extends Service
             $str .= $value;
         }
         $str .= $priviteKey;
-        return MD5($str);
+        $str = trim($str);
+
+        return MD5((string)$str);
     }
 
     public function getFindRequest($orderId = ""): array

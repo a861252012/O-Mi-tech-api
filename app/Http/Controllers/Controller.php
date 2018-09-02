@@ -102,7 +102,7 @@ class Controller extends BaseController
      * @author D.C
      * @update 2015-02-04
      */
-    public function decode($o="")
+    public function decode($o = "")
     {
         $a = str_split($o, 2);
         $s = '%' . implode('%', $a);
@@ -254,49 +254,50 @@ class Controller extends BaseController
      * @param $request
      * @return string
      */
-    public function doChangePwd($request){
+    public function doChangePwd($request)
+    {
         $username = $request->get('username');
         $password = $this->decode(trim($request->get('password')));
         $password1 = $this->decode(trim($request->get('password1')));
         $password2 = $this->decode(trim($request->get('password2')));
-        if(empty($username)  ||  empty($password1) || empty($password2)){
+        if (empty($username) || empty($password1) || empty($password2)) {
             return json_encode(array(
-                "status"=> 0,
+                "status" => 0,
                 "msg" => '用户名或密码不能为空',
             ));
         }
         //用户名规则限制
-        if(  !preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/',$username) || strlen($username) < 5 || strlen($username) > 30  ){
-            return  json_encode(array(
-                "status"=> 0,
+        if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $username) || strlen($username) < 5 || strlen($username) > 30) {
+            return json_encode(array(
+                "status" => 0,
                 "msg" => "用户名不合法",
             ));
         }
 
         //新密码规则限制
-        if( $this->checkPasswordVaild($password1) || $this->checkPasswordVaild($password2) ){
+        if ($this->checkPasswordVaild($password1) || $this->checkPasswordVaild($password2)) {
             return json_encode(array(
-                "status"=> 0,
+                "status" => 0,
                 "msg" => "密码不合法！"
             ));
         }
 
-        if($password == $password1){
+        if ($password == $password1) {
             return json_encode(array(
-                "status"=> 0,
+                "status" => 0,
                 "msg" => "新旧密码不能相同"
             ));
         }
-        if($password1 != $password2){
+        if ($password1 != $password2) {
             return json_encode(array(
-                "status"=> 0,
+                "status" => 0,
                 "msg" => "新密码两次输入不一致"
             ));
         }
         //用户名是否存在
         $uid = UserSer::getUidByUsername($username);
-        if(empty($uid)) return json_encode(array(
-            "status"=> 0,
+        if (empty($uid)) return json_encode(array(
+            "status" => 0,
             "msg" => "用户名不存在"
         ));
 
@@ -305,26 +306,29 @@ class Controller extends BaseController
 
         //旧密码是否正确
         $old_password = md5($password);
-        if($user['password']!=$old_password) return json_encode(array(
-            "status"=> 0,
+        if ($user['password'] != $old_password) return json_encode(array(
+            "status" => 0,
             "msg" => "旧密码验证失败"
         ));
 
         //修改新密码，更新状态及时间
-        Users::query()->where('uid',$uid)->update([
-            'password'=>md5($password1),
-            'pwd_change'=>1,
-            'cpwd_time'=>date('Y-m-d H:i:s'),
+        Users::query()->where('uid', $uid)->update([
+            'password' => md5($password1),
+            'pwd_change' => 1,
+            'cpwd_time' => date('Y-m-d H:i:s'),
         ]);
         UserSer::getUserReset($uid);
         return json_encode(array(
-            "status"=> 1,
+            "status" => 1,
             "msg" => "修改成功"
         ));
     }
-    public function checkPasswordVaild($password1=""){
-        return strlen($password1) < 6 ||  strlen($password1) > 22;
+
+    public function checkPasswordVaild($password1 = "")
+    {
+        return strlen($password1) < 6 || strlen($password1) > 22;
     }
+
     /**
      * 渲染模板
      *
@@ -471,7 +475,7 @@ class Controller extends BaseController
         $siteConfig = app(SiteService::class)->config();
         $ticheng_company_percent = $siteConfig->get('ticheng_company_percent');
         if (empty($ticheng_company_percent)) {
-            Redis::hSet('hsite_config:'.SiteSer::siteId(),'ticheng_company_percent',30);
+            Redis::hSet('hsite_config:' . SiteSer::siteId(), 'ticheng_company_percent', 30);
             $ticheng_company_percent = $siteConfig->get('ticheng_company_percent');
         }
 
@@ -512,7 +516,7 @@ class Controller extends BaseController
         $siteConfig = app(SiteService::class)->config();
         $ticheng_company_percent = $siteConfig->get('ticheng_company_percent');
         if (empty($ticheng_company_percent)) {
-            Redis::hSet('hsite_config:'.SiteSer::siteId(),'ticheng_company_percent',30);
+            Redis::hSet('hsite_config:' . SiteSer::siteId(), 'ticheng_company_percent', 30);
             $ticheng_company_percent = $siteConfig->get('ticheng_company_percent');
         }
         $avi = ($money * 10) / ($otype['rpercentage'] * ((100 - $ticheng_company_percent) / 100));
@@ -599,10 +603,9 @@ class Controller extends BaseController
             $cacheKey .= 'exp';
         } else {
 
-            //用户身份等级从1级（屌丝）开始
             //用户身份
             $modle = new UserGroup();
-            $levelid = $userinfo['lv_rich'] + 1;
+            $levelid = $userinfo['lv_rich'];
             $cacheKey .= 'rich';
         }
 
@@ -628,9 +631,13 @@ class Controller extends BaseController
          * @author  dc
          * @version 20160325
          */
-        $currentExp = isset($hashData[$levelid - 1]) ? $hashData[$levelid - 1]['level_value'] : 0;
-
-        $nextExp = isset($hashData[$levelid]) ? $hashData[$levelid]['level_value'] : 0;
+        if(isset($levelid)) {
+            $currentExp = isset($hashData[$levelid]) ? $hashData[$levelid]['level_value'] : 0;
+            $nextExp = isset($hashData[$levelid + 1]) ? $hashData[$levelid + 1]['level_value'] : 0;
+        } else {
+            $currentExp = 0;
+            $nextExp =  0;
+        }
 
         //var_dump($hashData[$levelid]); die;
 
@@ -1491,7 +1498,7 @@ class Controller extends BaseController
     {
         $res = array(
             'status' => 1,
-            'data' => $arr ?:[],
+            'data' => $arr ?: [],
             'msg' => '获取成功'
         );
         return $res;

@@ -55,7 +55,7 @@ class ApiController extends Controller
      */
     public function ping()
     {
-        return new Response(time());
+        return ['status'=>1,'data'=>['code'=>time()],'msg'=>''];
     }
 
 
@@ -191,6 +191,9 @@ class ApiController extends Controller
                 'user' => $user,
             ];
         } else {
+            if (empty($user)) {
+                return JsonResponse::create(['status' => 0, 'msg' => '请重新登陆!']);
+            }
             $guard = Auth::guard('pc');
             $guard->login($user);
             $return['data'] = [
@@ -264,6 +267,7 @@ class ApiController extends Controller
         Log::channel('daily')->info('user exchange', [" user id:$uid  origin:$origin  money:$money "]);
 
         /** 通知java获取*/
+        $redis->del("hplat_user:$uid");
         $redis->publish('plat_exchange',
             json_encode([
                 'origin' => $origin,
@@ -275,12 +279,13 @@ class ApiController extends Controller
         /** 检查状态 */
         $timeout = microtime(true) + 3;
         while (true) {
+            if($redis->exists("hplat_user:$uid")) break;
             if (microtime(true) > $timeout) break;
             usleep(100);
         }
         $hplat_user = $redis->exists("hplat_user:$uid") ? $redis->hgetall("hplat_user:" . $uid) : [];
         if (isset($hplat_user['exchange']) && $hplat_user['exchange'] == 1) return JsonResponse::create(['status' => 1, 'msg' => '兑换成功']);
-        return JsonResponse::create(['status' => 0, 'msg' => '兑换失败']);
+        return JsonResponse::create(['status' => 0, 'msg' => '兑换失败'.json_encode($hplat_user)]);
     }
 
     /**
@@ -410,6 +415,7 @@ class ApiController extends Controller
         $data = isset($temp_data['data']) ? $temp_data['data'] : 0;
         if (empty($data)) return new Response("接入方数据获取失败" . $url . " $data" . "  返回：$res");
         if (empty($data['uuid'])) return new Response("接入方uuid不存在");
+        if (empty($data['nickename'])) return new Response("接入方用户名为空");
 
 
         //注册
@@ -464,7 +470,7 @@ class ApiController extends Controller
         ]);
 
         // 此时调用的是单实例登录的session 验证
-        if (Auth::guest()) {
+        if (Auth::guest() || (Auth::check() && Auth::id()!=$this->userInfo['uid'])) {
             if (!Auth::attempt([
                 'username' => $this->userInfo['username'],
                 'password' => $password,

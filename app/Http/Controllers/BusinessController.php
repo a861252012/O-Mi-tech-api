@@ -74,7 +74,7 @@ class BusinessController extends Controller
         }
         //通过域名查询对应的代理列表（did为对应的domain id）
         $agent = Agents::where('did','=',$domain->id)->where('status','=',0)->first();
-        //如果不存在，返回首页
+        //如果不存在代理商，返回首页
         if(empty($agent)||!$agent->exists){
             return SuccessResponse::create(array('extendUrl'=>'/'));
         }
@@ -147,7 +147,12 @@ class BusinessController extends Controller
         //先查找rid为空的
         $redirect = Redirect::where('did', $did)->whereRaw('(rid is null or rid = \' \')')->normal()->first();
         if ($redirect && $redirect->exists) {
-            $ret = '/';
+            //配置的跳转链接是空，跳转到当前域名，同时增加点击数--已和clark确认该功能。
+            $ret = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
+            $ret='http://'.rtrim(preg_replace('/^http:\/\//','',$ret,1),'/');
+            Domain::whereId($did)->normal()->increment('click');
+            return $ret;
+
         } else {
             //再随机取rid不为空的
             $redirect = Redirect::where('did', $did)->normal()->orderByRaw('rand()')->first();
@@ -155,6 +160,7 @@ class BusinessController extends Controller
                 $rurl = Domain::where('id', $redirect->rid)->normal()->first();
                 $ret = $rurl->url;
             } else {
+
                 return 0;
             }
         }

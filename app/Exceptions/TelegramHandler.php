@@ -11,8 +11,8 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Support\Facades\Route;
 use Monolog\Handler\AbstractProcessingHandler;
-use Monolog\Handler\Curl\Util;
 
 /**
  * Base class for all mail handlers
@@ -24,12 +24,14 @@ class TelegramHandler extends AbstractProcessingHandler
 
     /**
      * @var string Telegram API token
+     * https://api.telegram.org/bot632188770:AAFLLENMyaxIszdhm9Tx8Sy7MmE0DeRlINE/sendMessage?chat_id=247946941&text=Hello%20World
      */
-    private $token='476921246:AAF8GZ_70hZQuaaNP0oEog3PHVAvGYQRU3U';
+    private $token = '632188770:AAFLLENMyaxIszdhm9Tx8Sy7MmE0DeRlINE';
     /**
      * @var int Chat identifier
      */
-    private $chatId='-289417825';
+    private $chatId = '-247946941';
+
     /**
      * Builds the header of the API Call.
      *
@@ -41,26 +43,45 @@ class TelegramHandler extends AbstractProcessingHandler
     {
         return [
             'Content-Type: application/json',
-            'Content-Length: '.strlen($content),
+            'Content-Length: ' . strlen($content),
         ];
     }
+
     /**
      * {@inheritdoc}
      */
-    protected function write(array $record=[])
+    protected function write(array $record = [])
     {
-        $content = [
-            'chat_id' => $this->chatId,
-            'text' => $record['formatted'],
-        ];
-        $content = json_encode($content);
-        //dd($content);
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $this->buildHeader($content));
-        curl_setopt($ch, CURLOPT_URL, sprintf('https://api.telegram.org/bot%s/sendMessage', $this->token));
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $content);
-        Util::execute($ch);
+        try {
+            $tmp = tmpfile();
+            fwrite($tmp, $record['formatted']);
+            fseek($tmp, 0);
+            $meta = stream_get_meta_data($tmp);
+            $routename = 'none';
+            if (is_object(Route::getCurrentRoute())) {
+                $routename = str_replace('/', '.', Route::getCurrentRoute()->uri ?? '');
+            }
+            $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => sprintf('https://api.telegram.org/bot%s/sendDocument?chat_id=%s', $this->token, $this->chatId),
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => [
+                    'document' => curl_file_create($meta['uri'], 'plain/text', date('ymd:') . \Request::getHost() . '-' . $routename),
+                    'caption' => $record['context']['exception']->getMessage()
+                ],
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type: multipart/form-data'
+                ],
+            ));
+            $result = curl_exec($curl);
+            curl_close($result);
+        } catch (\Exception $e) {
+            return;
+        }
+
     }
 }

@@ -281,9 +281,8 @@ class ChargeController extends Controller
 
         $rtn = [
             'orderId' => $order_id,
-            'gotourl' => '/charge/showGD',
             'postdata' => $postdata,
-            'remoteUrl' => '',
+            'remoteUrl' => '/charge/showGD',
         ];
 
         if ($this->getClient() != 12) {

@@ -153,7 +153,7 @@ class MemberController extends Controller
     public function getMenu()
     {
         $user = Auth::user();
-        $hasAgentsPriv = AgentsPriv::where('uid', $this->userInfo['uid'])->count();
+        $hasAgentsPriv = AgentsPriv::where('uid', Auth::user()->uid)->count();
 
         $params['menus_list'] = [];
 
@@ -255,7 +255,7 @@ class MemberController extends Controller
             return new JsonResponse(['status' => 0, 'msg' => '交易密码错误']);
         }
 
-        if ($username == $user['username'] || $username == $user['uid']) {
+        if (/*$username == $user['username'] || */$username == $user['uid']) {
             return new JsonResponse(['status' => 0, 'msg' => '不能转给自己!']);
         }
 
@@ -263,11 +263,11 @@ class MemberController extends Controller
             return new JsonResponse(['status' => 0, 'msg' => '转帐金额错误!']);
         }
 
-        //获取转到用户信息
-        $userTo = (array)DB::table((new Users)->getTable())->where('username', $username)->first();
-        if (!$userTo) {
+        //获取转到用户信息   clark已确认，转账只能uid  2018/7/20
+        $userTo = (array)DB::table((new Users)->getTable())->where('uid', $username)->first();
+      /*  if (!$userTo) {
             $userTo = (array)DB::table((new Users)->getTable())->where('uid', $username)->first();
-        }
+        }*/
 
         if (!$userTo) {
             return new JsonResponse(['status' => 0, 'msg' => '对不起！该用户不存在']);
@@ -386,8 +386,8 @@ class MemberController extends Controller
 
         if (!$agentsPriv) {
             // return new RedirectResponse('/');
-            return new JsonResponse(['status' => 0, 'msg' => '代理数据为空']);
-        }
+            return new JsonResponse(['status' => 0, 'msg' => '']);
+            }
         $agentsRelationship = AgentsRelationship::where('aid', $agentsPriv->aid)->get()->toArray();
         $uidArray = array_column($agentsRelationship, 'uid');
 
@@ -395,9 +395,9 @@ class MemberController extends Controller
         $maxtimeDate = $this->request()->get('maxtimeDate') ?: date('Y-m-d');
         $mintime = date('Y-m-d H:i:s', strtotime($mintimeDate));
         $maxtime = date('Y-m-d H:i:s', strtotime($maxtimeDate . '23:59:59'));
-
+        //查询充值成功的记录，而不是处理中的记录
         $recharge_points = Recharge::whereIn('uid', $uidArray)->whereBetween('created', [$mintime, $maxtime])
-            ->where('pay_status', 1)
+            ->where('pay_status', 2)
             ->whereIn('pay_type', [1, 4, 7])
             ->sum('paymoney');
         $recharge_points = $recharge_points * 10;
