@@ -479,7 +479,9 @@ class ChargeController extends Controller
             $stmt = (array)$stmt[0];
             //第一步，写日志
             $loginfo .= "订单号：" . $tradeno . " 收到，并且准备更新：\n";
-            $points = $stmt['points'];
+
+            $points = (int)ceil($stmt['points']);
+
             DB::table('video_recharge')->where('id', $stmt['id'])->update(array(
                 'paymoney' => $money,
                 'pay_status' => $chargeResult,
