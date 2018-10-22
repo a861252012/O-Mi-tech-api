@@ -38,7 +38,7 @@ class SiteInit extends Command
      */
     public function handle()
     {
-        $this->call('flush:cache');
+        //$this->call('flush:cache');
         $this->call('dir-chmod');
         $this->call('route:cache');
         $this->call('config:cache');
