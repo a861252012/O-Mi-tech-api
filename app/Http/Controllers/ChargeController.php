@@ -364,10 +364,11 @@ class ChargeController extends Controller
         $strKeyInfo = SiteSer::config('pay_gd_key');
 
         switch ($bank_id) {
-            case "13":
+            case "13":  //招商卡
                 $comment = $obj->comment;
                 $strEncypty = MD5($amount . $comment . $strKeyInfo);
                 break;
+            case "10":  //农行卡
             default:
                 $comment = $obj->comment;
                 $strEncypty = MD5($amount . $incomebankcard . $strKeyInfo);
