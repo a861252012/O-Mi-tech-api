@@ -89,8 +89,15 @@ class IndexController extends Controller
                 $list = str_replace(['cb(', ');'], '', $list);
         }
 
+
 //        $list = json_decode($list, true);
-        return JsonResponse::create(['data' => json_decode($list ?: '{}')]);
+        //兼容论坛结构，数据移动到data外！
+        //   return JsonResponse::create(json_decode($list ?: '{}'));
+
+        $result = json_decode($list ?: '{}');
+        $result->data = json_decode($list ?: '{}');
+
+        return JsonResponse::create($result);
     }
 
     /**
