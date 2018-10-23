@@ -312,7 +312,7 @@ class IndexController extends Controller
         $ids = $redis->get('video:faq:sort:class:' . $sort);
         if (!empty($ids)) {
             $ids = json_decode($ids);
-            $data = Faq::where('site_id', SiteSer::siteId())->whereIn('id', $ids)->limit($num)->get();
+            $data = Faq::whereIn('id', $ids)->limit($num)->get();
         } else {
             $data = [];
         }
