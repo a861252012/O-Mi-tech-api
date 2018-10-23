@@ -42,7 +42,7 @@ class IndexController extends Controller
         //updata by Young
         //获取flash版本
         $flashVer = SiteSer::config('publish_version');
-
+        !$flashVer && $flashVer = 'v201504092044';
 
         //初始化$list数据
         $list = [
@@ -90,13 +90,7 @@ class IndexController extends Controller
         }
 
 //        $list = json_decode($list, true);
-        //兼容论坛结构，数据移动到data外！
-        //   return JsonResponse::create(json_decode($list ?: '{}'));
-
-        $result = json_decode($list ?: '{}');
-        $result->data = json_decode($list ?: '{}');
-
-        return JsonResponse::create($result);
+        return JsonResponse::create(['data' => json_decode($list ?: '{}')]);
     }
 
     /**
@@ -198,7 +192,7 @@ class IndexController extends Controller
         $myfav = [];
         if ($uid) {
             //主播列表
-            // $arr = include Storage::path('cache/anchor-search-data.php');
+           // $arr = include Storage::path('cache/anchor-search-data.php');
             //通过redis获取主播信息
             $userServer = resolve(UserService::class);
             $arr = $userServer->anchorlist();
@@ -271,7 +265,7 @@ class IndexController extends Controller
                         foreach ($rooms as $roomp) {
                             if ($item->rid == $roomp['uid'] && $item->onetomore == $roomp['id']) {
 //                                $room['listType'] = 'myticket';
-                                $room = Arr::only($roomp, ['id', 'rid', 'username', 'cover', 'start_time', 'end_time', 'duration', 'origin', 'new_user', 'live_status']);
+                                $room = Arr::only($roomp,['id','rid','username','cover','start_time','end_time','duration','origin','new_user','live_status']);
                                 $room['tid'] = 7;
                                 $room['one_to_many_status'] = 1;
                                 $room['top'] = isset($roomp['top']) ? $roomp['top'] : 0;
@@ -294,14 +288,14 @@ class IndexController extends Controller
             'emailurl' => is_null($email_url) ? '' : $email_url,
 
         ];
-        array_walk($data, function (&$item) {
+        array_walk($data,function (&$item) {
             if (\is_array($item)) {
-                $item = array_values($item);
+                $item =  array_values($item);
             }
         });
         return JsonResponse::create(
             [
-                'data' => $data,
+                'data' =>$data,
                 'msg' => '获取成功',
                 'status' => 1,
             ]
@@ -317,11 +311,8 @@ class IndexController extends Controller
         $redis = $this->make('redis');
         $ids = $redis->get('video:faq:sort:class:' . $sort);
         if (!empty($ids)) {
-            $num = $num > 20 ? 20 : $num;
             $ids = json_decode($ids);
-//            $data = Faq::where('site_id', SiteSer::siteId())->whereIn('id', $ids)->limit($num)->get();
-            //todo 固定调用2站帮助数据
-            $data = Faq::where('site_id', 2)->whereIn('id', $ids)->orderBy('id','desc')->limit($num)->get();
+            $data = Faq::where('site_id', SiteSer::siteId())->whereIn('id', $ids)->limit($num)->get();
         } else {
             $data = [];
         }
