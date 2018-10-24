@@ -37,7 +37,7 @@ class UserController extends Controller
             }
 
         }
-        return JsonResponse::create(['status' => 1, 'data' => $userInfo]);
+        return JsonResponse::create(['status' => 1, 'data' => $userInfo??'']);
     }
 
     public function following()

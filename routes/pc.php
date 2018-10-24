@@ -16,8 +16,8 @@ Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopControl
 Route::get('room/{rid}/{h5?}', 'RoomController@index')
     ->where('rid', '[0-9]+')
     ->where('h5', '(h5|h5hls)');
-//一对一进入table专用
-Route::get('/room/roommid/{roomid?}/{rid?}/{id?}', ['name' => 'room_roommid', 'uses' => 'RoomController@roommid']);
+//房间中间页
+Route::get('/room/roommid/{roomid}/{rid}/{id?}', ['name' => 'room_roommid', 'uses' => 'RoomController@roommid'])->where('roomid', '[0-9]+')->where('rid', '[0-9]+')->where('id', '[0-9]+');
 // 招募页面
 Route::post('/business/{act}', ['name' => 'shop_getgroupall', 'uses' => 'BusinessController@index']);
 
@@ -151,7 +151,7 @@ Route::get('/rank_data', ['name' => 'rank_data', 'uses' => 'RankController@rankD
 // 关于 帮助 投诉
 Route::get('/about/{act}', ['uses' => 'PageController@index']);
 //首页帮助sort分类 num获取条数
-Route::get('/help/{sort}/{num}', ['uses' => 'IndexController@getHelp'])->where('sort', '[0-9]+')->where('sort', '[0-9]+');
+Route::get('/help/{sort}/{num}', ['uses' => 'IndexController@getHelp'])->where('sort', '[0-9]+')->where('num', '[0-9]+');
 // 活动详情页面
 Route::get('/nac/{id}', ['name' => 'ac_info', 'uses' => 'ActivityController@info']);
 Route::match(['GET', 'POST'], '/majax/{action}', ['name' => 'majax', 'uses' => 'MemberController@ajax']);
@@ -176,9 +176,6 @@ Route::get('/find', 'ApiController@searchAnchor')->name('find');
 
 // 验证是否登录
 Route::group(['middleware' => ['login_auth']], function () {
-
-// 排行榜页面
-    Route::get('/ranking', ['name' => 'rank_index', 'uses' => 'RankController@index']);
 
 
 // PageController 招募页面

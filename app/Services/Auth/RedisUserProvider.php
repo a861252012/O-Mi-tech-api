@@ -9,6 +9,7 @@
 namespace App\Services\Auth;
 
 
+use App\Facades\UserSer;
 use App\Services\User\UserService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider;
@@ -79,7 +80,12 @@ class RedisUserProvider implements UserProvider
                 array_key_exists('password', $credentials))) {
             return;
         }
-        $user = resolve(UserService::class)->getUserByUsername($credentials['username']);
+        $username = $credentials['username'];
+        if (filter_var($username,FILTER_VALIDATE_EMAIL)){
+            $user = UserSer::getUserByUsername($username);
+        }else{
+            $user = UserSer::getUserByNickname($username);
+        }
         if ($user && $user->banned()) {
             throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '您的账号已经被禁止登录，请联系客服！']));
         }

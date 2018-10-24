@@ -20,6 +20,7 @@ use Illuminate\Foundation\Auth\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 
 class RoomController extends Controller
@@ -80,6 +81,9 @@ class RoomController extends Controller
         if (!isset($user['origin'])) $user['origin'] = 12;
         if (!isset($user['created'])) $user['created'] = "";
         $origin = $user['origin'];
+        $plat_backurl = [];
+        $hplat_info = [];
+        $hplat_user = [];
 
         if (!$this->isHost($rid)) {   //不是主播自己进自己房间
             $tid = $roomService->getCurrentTimeRoomStatus();
@@ -105,6 +109,12 @@ class RoomController extends Controller
 
                             return JsonResponse::create(['status' => 0, 'data' => $result, 'msg' => '已被其他用户购买']);
                         }
+                        //平台跳转信息
+                        $result['plat_url'] = json_encode($plat_backurl, JSON_FORCE_OBJECT);
+                        //平台信息
+                        $result['hplat_info'] = json_encode($hplat_info, JSON_FORCE_OBJECT);
+                        //平台用户信息
+                        $result['hplat_user'] = json_encode($hplat_user, JSON_FORCE_OBJECT);
                         // return JsonResponse::create(['status' => 0, 'data' => ['handle' => $handle]]);
                         return JsonResponse::create(['status' => 0, 'data' => $result, 'msg' => '未购买该房间']);
                     }
@@ -121,6 +131,12 @@ class RoomController extends Controller
                                 'discount' => $room['discount']['discount'],
                                 'discountValue' => $room['discount']['discountValue'],
                                 'room' => ['chat_server_addr' => $chat_server_addr],
+                                //平台跳转信息
+                                'plat_url' => json_encode($plat_backurl, JSON_FORCE_OBJECT),
+                                //平台信息
+                                'hplat_info' => json_encode($hplat_info, JSON_FORCE_OBJECT),
+                                //平台用户信息
+                                'hplat_user' => json_encode($hplat_user, JSON_FORCE_OBJECT),
                             ],
                         ]);
                     }
@@ -152,9 +168,7 @@ class RoomController extends Controller
                         }
 
                         $hplat = $redis->exists("hplatforms:$origin") ? "plat_whitename_room" : "not_whitename_room";
-                        $hplat_user = [];
-                        $plat_backurl = [];
-                        $hplat_info = [];
+
 
                         if ($hplat == 'plat_whitename_room') {
                             $uid = $user['uid'];
@@ -182,9 +196,9 @@ class RoomController extends Controller
                             //平台跳转信息
                             'plat_url' => json_encode($plat_backurl, JSON_FORCE_OBJECT),
                             //平台信息
-                            'hplat_info' => json_encode($hplat_info),
+                            'hplat_info' => json_encode($hplat_info, JSON_FORCE_OBJECT),
                             //平台用户信息
-                            'hplat_user' => json_encode($hplat_user),
+                            'hplat_user' => json_encode($hplat_user, JSON_FORCE_OBJECT),
 
                         ]]);
                     }
@@ -226,12 +240,17 @@ class RoomController extends Controller
         $plat_backurl = $roomService->getPlatUrl($origin);
         //$httphost = $roomService->getPlatHost();
         $data = [
-//            'room' => &$room,
+            'room' => &$room,
             'handle' => 'common',
             'rid' => $rid,
             'origin' => $origin,
             'roomOrigin' => (int)($room['origin'] ?? 11),
-            'plat_url' => $plat_backurl,
+            //平台跳转信息
+            'plat_url' => json_encode($plat_backurl, JSON_FORCE_OBJECT),
+            //平台信息
+            'hplat_info' => json_encode($hplat_info, JSON_FORCE_OBJECT),
+            //平台用户信息
+            'hplat_user' => json_encode($hplat_user, JSON_FORCE_OBJECT),
             'in_limit_points' => SiteSer::config('in_limit_points') ?: 0,
             'in_limit_safemail' => SiteSer::config('in_limit_safemail') ?: 0,   //1开，0关
             'certificate' => $certificate,
@@ -249,7 +268,6 @@ class RoomController extends Controller
         }
         return JsonResponse::create(['data' => $data]);
     }
-
 
 
     /**
@@ -366,11 +384,7 @@ class RoomController extends Controller
                         $v['rid'] = $roomid;
                         $v['handle'] = 'room_one_to_many';
                         $origin = RoomOneToMore::query()->where('id', $id)->pluck('origin');
-                        if (!empty($origin)) {
-                            $v['origin'] = $origin[0];
-                        } else {
-                            $v['origin'] = 12;
-                        }
+                        $v['origin'] = isset($origin[0]) ? $origin[0] : 12;
                         $v['duration'] = strtotime($v['endtime']) - strtotime($v['starttime']);
                         if (isset($hostinfo['nickname'])) {
                             $v['nickname'] = $hostinfo['nickname'];
@@ -401,7 +415,12 @@ class RoomController extends Controller
 
     public function getMoney($uid, $rid, $origin)
     {
+        /**
+         * @var \Redis $redis
+         */
         $redis = $this->make('redis');
+        $redis->del("hplat_user:$uid");
+
         /** 通知java获取*/
         $redis->publish('plat_money',
             json_encode([
@@ -412,6 +431,7 @@ class RoomController extends Controller
         /** 检查购买状态 */
         $timeout = microtime(true) + 3;
         while (true) {
+            if ($redis->exists("hplat_user:$uid")) break;
             if (microtime(true) > $timeout) break;
             usleep(100);
         }

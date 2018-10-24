@@ -27,6 +27,7 @@ class UserService extends Service
 {
 
     const KEY_USERNAME_TO_ID = 'husername_to_id';
+    const KEY_NICKNAME_TO_ID = 'hnickname_to_id';
     const KEY_USER_INFO = 'huser_info:';
     const KEY_USER_SID = 'huser_sid';
     public $user;
@@ -198,7 +199,7 @@ class UserService extends Service
             $user = (new Users())->setRawAttributes($arr, true);
             $user->exists = true;
         } else {
-            $user = Users::find($uid);
+            $user = Users::allSites()->find($uid);
             if ($user && $user->exists) {
                 $this->redis->hmset($hashtable, $user->toArray());
             }
@@ -408,6 +409,20 @@ class UserService extends Service
         return $this->getUserByUid($uid);
     }
 
+    /**
+     * [getUserByUsername 通过帐号获取用户]
+     *
+     * @author  dc <dc#wisdominfo.my>
+     * @version 2015-11-13
+     * @param   string $nickname [用户昵称]
+     * @return  array|bool               返回用户数据
+     */
+    public function getUserByNickname($nickname)
+    {
+        $uid = $this->getUidByNickname($nickname);
+        return $this->getUserByUid($uid);
+    }
+
     public function getUidByUsername($username)
     {
         $uid = $this->redis->hget(static::KEY_USERNAME_TO_ID . ':' . SiteSer::siteId(), $username);
@@ -417,6 +432,19 @@ class UserService extends Service
             $uid = $uid ? $uid['uid'] : null;
             if (!$uid) return null;
             $uid = $this->redis->hset(static::KEY_USERNAME_TO_ID . ':' . SiteSer::siteId(), $username, $uid);
+
+        }
+        return $uid;
+    }
+    public function getUidByNickname($nickname)
+    {
+        $uid = $this->redis->hget(static::KEY_NICKNAME_TO_ID . ':' . SiteSer::siteId(), $nickname);
+
+        if (!$uid) {
+            $uid = Users::query()->where('nickname', $nickname)->first();
+            $uid = $uid ? $uid['uid'] : null;
+            if (!$uid) return null;
+            $uid = $this->redis->hset(static::KEY_NICKNAME_TO_ID . ':' . SiteSer::siteId(), $nickname, $uid);
 
         }
         return $uid;
@@ -454,16 +482,18 @@ class UserService extends Service
         }
         foreach ($uids as $uid) {
             $user = UserSer::getUserByUid($uid);
-            $items->push([
-                'headimg' => $user->headimg,
-                'rid' => $user->uid,
-                'nickname' => $user->nickname,
-                'roled' => $user->roled,
-                'lv_exp' => $user->lv_exp,
-                'lv_rich' => $user->lv_rich,
-                'cover' => $user->cover ? $user->cover : '',
-                'fid' => $uid,
-            ]);
+            if ($user) {
+                $items->push([
+                    'headimg' => $user->headimg,
+                    'rid' => $user->uid,
+                    'nickname' => $user->nickname,
+                    'roled' => $user->roled,
+                    'lv_exp' => $user->lv_exp,
+                    'lv_rich' => $user->lv_rich,
+                    'cover' => $user->cover ? $user->cover : '',
+                    'fid' => $uid,
+                ]);
+            }
         }
 
         $paginator = new LengthAwarePaginator($items, $total, $perPage, $currentPage);
@@ -840,7 +870,7 @@ class UserService extends Service
         /** @var \Redis $redis */
         $redis = $this->make('redis');
         $mouth = date('Ym', time());
-        $member_rank = ['zrank_rich_day', 'zrank_rich_week', 'zrank_rich_month:' . $mouth, 'zrank_rich_history','rank_game_day','rank_game_week','rank_game_month:' .$mouth,'rank_game_his'];
+        $member_rank = ['zrank_rich_day', 'zrank_rich_week', 'zrank_rich_month:' . $mouth, 'zrank_rich_history', 'rank_game_day', 'rank_game_week', 'rank_game_month:' . $mouth, 'rank_game_his'];
 
         if (in_array($key, $member_rank)) {
 
@@ -993,9 +1023,10 @@ class UserService extends Service
         return false;
     }
 
-    public function  anchorlist(){
+    public function anchorlist()
+    {
         $flashVersion = SiteSer::config('publish_version');
-        $pulish_version = Redis::get('home_all_' .$flashVersion .':'.SiteSer::siteId());
+        $pulish_version = Redis::get('home_all_' . $flashVersion . ':' . SiteSer::siteId());
         $arrdata = str_replace(['cb(', ');'], ['', ''], $pulish_version);
         $arrdata = json_decode($arrdata, true);
         $arr = $arrdata['rooms'];//考虑做个redis的配置

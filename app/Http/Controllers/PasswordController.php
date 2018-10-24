@@ -47,7 +47,7 @@ class PasswordController extends Controller
         }
         try {
             //todo
-           $this->sendMail($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST'));
+            $this->sendMail($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST'));
 
             //$mail = (new SafeMailVerify($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST')));
             //Mail::send($mail);
@@ -65,8 +65,9 @@ class PasswordController extends Controller
      * @param $email
      * @param $basUrl
      */
-    public function sendMail($user,$email,$basUrl){
-        $data = ['email'=>$email];
+    public function sendMail($user, $email, $basUrl)
+    {
+        $data = ['email' => $email];
         $token = Crypt::encrypt([
             'email' => $email,
             'uid' => $user->uid,
@@ -87,8 +88,9 @@ class PasswordController extends Controller
             date('Y年m月d日 H:i:s'),
         ], $content);
 
-        Mail::send('emails.safeMailVerify', ['content'=>$content], function($message) use($data)
-        {
+        //去掉邮件内容html标签反斜杠
+        $content = stripslashes($content);
+        Mail::send('emails.safeMailVerify', ['content' => $content], function ($message) use ($data) {
             $siteConfig = app(SiteService::class)->config();
             $siteName = $siteConfig->get('name');
             $subject = $siteName . '安全邮箱验证';
@@ -100,11 +102,12 @@ class PasswordController extends Controller
      * 密码悠
      * @return bool|JsonResponse
      */
-    public function changePwd(){
+    public function changePwd()
+    {
         $request = $this->make('request');
         $sCode = $this->make('request')->get('captcha');
 
-        if (!Captcha::check($sCode)){
+        if (!Captcha::check($sCode)) {
             return new JsonResponse(array('status' => 0, 'msg' => '验证码错误'));;
         }
         return $this->doChangePwd($request);
@@ -128,7 +131,7 @@ class PasswordController extends Controller
         }
 
         //$getMailStatus =  $this->getDoctrine()->getManager()->getRepository('Video\ProjectBundle\Entity\VideoUser')->findOneBy(array('safemail' => $email));
-        $getMailStatus = Users::query()->where('safemail', $token['email'])->get();
+        $getMailStatus = Users::query()->where('safemail', $token['email'])->exists();
 
         if ($getMailStatus) {
             return JsonResponse::create(['status' => 0, 'msg' => '对不起！该邮箱已绑定其他帐号！']);
@@ -140,30 +143,30 @@ class PasswordController extends Controller
         resolve(UserService::class)->getUserReset($token['uid']);
         //赠送砖石奖励
         //$this->addUserPoints($uid,500, array('date'=>date('Y-m-d H:i:s'),'pay_type'=>5 ,'nickname'=>$user['nickname']?:$user['username']), array('mailcontent'=>'你通过“安全邮箱验证”获得500钻石奖励！','date'=>date('Y-m-d H:i:s')), $dm);
-        return JsonResponse::create(['status' => 0, 'msg' => '更新安全邮箱成功！']);
+        return JsonResponse::create(['status' => 1, 'msg' => '更新安全邮箱成功！']);
     }
 
     /**
      * 经clark 决定取消原先正常的发邮件及队列功能 ，重写改用普通的邮件发送功能！
      * @param $user
      */
-    private function  pwdreset($user){
+    private function pwdreset($user)
+    {
         $requestHost = request()->getSchemeAndHttpHost();
         $token = Crypt::encrypt([
             'uid' => $user->uid,
-            't'=>time(),
+            't' => time(),
         ]);
-        Redis::setex('pwdreset.token:'.$token,30*60,1);
+        Redis::setex('pwdreset.token:' . $token, 30 * 60, 1);
         $url = $requestHost . '/pwdreset/verify?token=' . urlencode($token);
 
         $siteName = SiteSer::config('name');
-        Mail::send('emails.pwdreset',  [
+        Mail::send('emails.pwdreset', [
             'username' => $user->username,
             'siteName' => $siteName,
             'url' => $url,
             'date' => date('Y-m-d H:i:s'),
-        ], function($message) use($user)
-        {
+        ], function ($message) use ($user) {
             $siteConfig = app(SiteService::class)->config();
 
             $mail_from = $siteConfig->get('mail_from', config('mail.from.address'));

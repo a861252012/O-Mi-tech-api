@@ -281,9 +281,8 @@ class ChargeController extends Controller
 
         $rtn = [
             'orderId' => $order_id,
-            'gotourl' => '/charge/showGD',
             'postdata' => $postdata,
-            'remoteUrl' => '',
+            'remoteUrl' => '/charge/showGD',
         ];
 
         if ($this->getClient() != 12) {
@@ -365,10 +364,11 @@ class ChargeController extends Controller
         $strKeyInfo = SiteSer::config('pay_gd_key');
 
         switch ($bank_id) {
-            case "13":
+            case "13":  //招商卡
                 $comment = $obj->comment;
                 $strEncypty = MD5($amount . $comment . $strKeyInfo);
                 break;
+            case "10":  //农行卡
             default:
                 $comment = $obj->comment;
                 $strEncypty = MD5($amount . $incomebankcard . $strKeyInfo);
@@ -480,7 +480,9 @@ class ChargeController extends Controller
             $stmt = (array)$stmt[0];
             //第一步，写日志
             $loginfo .= "订单号：" . $tradeno . " 收到，并且准备更新：\n";
-            $points = $stmt['points'];
+
+            $points = (int)ceil($stmt['points']);
+
             DB::table('video_recharge')->where('id', $stmt['id'])->update(array(
                 'paymoney' => $money,
                 'pay_status' => $chargeResult,

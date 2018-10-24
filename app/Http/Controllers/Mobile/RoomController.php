@@ -308,11 +308,14 @@ class RoomController extends Controller
                 'header_pic'=>$room['user']['headimg'],
                 'room_pic'=>$room['user']['cover'],
                 'live_status'=>$room['status'],
-                'live_device_type'=>$room['origin'],
+                //add default -1
+                'live_device_type'=>$room['origin']??-1,
                 'tid'=>$tid ?: 1,
                 'is_password'=>$roomService->getPasswordRoom()?1:0,
             ];
-
+            if (!isset($room['origin'])) {
+                Log::info('origin is null');
+            }
             $roomExtend = [
                 'start_time'=> null,
                 'end_time'=> null,
@@ -385,7 +388,6 @@ class RoomController extends Controller
             $socket['host'] =  $chatServer['host'];
             $socket['ip'] =  $chatServer['ip'];
             $socket['port'] =  $chatServer['port'];
-
         } catch (NoSocketChannelException $e) {
             $msg = $e->getMessage();
             $socket['host'] =  "";
