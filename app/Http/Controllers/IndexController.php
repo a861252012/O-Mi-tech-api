@@ -300,10 +300,12 @@ class IndexController extends Controller
                 $item =  array_values($item);
             }
         });
+        $file = base_path("bootstrap/cache/")."config.php";
+        $publish = "publish time:".date('Y-m-d H:i:s',filectime($file));
         return JsonResponse::create(
             [
                 'data' =>$data,
-                'msg' => '获取成功',
+                'msg' => '获取成功 '.$publish,
                 'status' => 1,
             ]
         );
