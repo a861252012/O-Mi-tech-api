@@ -8,11 +8,13 @@ use App\Http\Middleware\ThrottleRoutes;
 use App\Mail\PwdReset;
 use App\Mail\SafeMailVerify;
 use App\Models\Users;
+use App\Services\Service;
 use App\Services\Site\SiteService;
 use App\Services\User\UserService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
@@ -21,6 +23,12 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\MessageBag;
 use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use App\Services\Email\HttpClient;
+use App\Services\Email\SendCloud;
+use App\Services\Email\AttachmentService;
+use App\Services\Email\TemplateContentService;
+use App\Services\Email\Mimetypes;
+
 
 /**
  * Class PasswordController
@@ -45,12 +53,37 @@ class PasswordController extends Controller
             ThrottleRoutes::clear($request);
             return JsonResponse::create(['status' => 0, 'msg' => '此安全邮件已被使用']);
         }
+
         try {
             //todo
-            $this->sendMail($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST'));
+            $url =  $this->sendMail($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST'));
 
             //$mail = (new SafeMailVerify($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST')));
             //Mail::send($mail);
+            $sendcloud=new SendCloud("IEVVV_test_fUtIsw", "ZVNGsK4VumbMEoQt",'v2');
+            $mail = resolve(AttachmentService::class);
+            $mail->addCc("bida@ifaxin.com");
+            $mail->setFrom("test@test.com");
+            $name = $user['nickname'] ?: $user['username'];
+
+            $mail->setXsmtpApi(json_encode(array(
+                'to'=>array($email),
+                'sub'=>array(
+                     '%money%'=>array('123'),
+                     '%url%'=>array($url),
+                     '%name%'=>array($name),
+                )
+
+
+            )));
+           // $mail->setSubject("MOBANCESHI");
+            $mail->setRespEmailId(true);
+            $templateContent=resolve(TemplateContentService::class);
+            $templateContent->setTemplateInvokeName("test_template");
+
+            $mail->setTemplateContent($templateContent);
+            $sendcloud->sendTemplate($mail);
+
         } catch (Exception $e) {
             Log::error($e->getTraceAsString());
             return JsonResponse::create(['status' => 0, 'msg' => '发送失败！' . $e->getMessage()]);
@@ -74,28 +107,8 @@ class PasswordController extends Controller
             'time' => time(),
         ]);
         $url = $basUrl . '/mailverify/confirm/' . $token;
-        $name = $user['nickname'] ?: $user['username'];
-        $url_html = '<a href="' . $url . '" target="_blank"  style="word-wrap: break-word;cursor:pointer;text-decoration:none;color:#0082cb">' . $url . '</a>';
-        $emailtemplate = SiteSer::config('email');
-        $content = $emailtemplate ? $emailtemplate ?? '' : '';
-        $content = preg_replace([
-            '/{{\s*name\s*}}/i',
-            '/{{\s*url\s*}}/i',
-            '/{{\s*date\s*}}/i',
-        ], [
-            $name,
-            $url_html,
-            date('Y年m月d日 H:i:s'),
-        ], $content);
+        return $url;
 
-        //去掉邮件内容html标签反斜杠
-        $content = stripslashes($content);
-        Mail::send('emails.safeMailVerify', ['content' => $content], function ($message) use ($data) {
-            $siteConfig = app(SiteService::class)->config();
-            $siteName = $siteConfig->get('name');
-            $subject = $siteName . '安全邮箱验证';
-            $message->to($data['email'])->subject($subject);
-        });
     }
 
     /**
@@ -136,6 +149,7 @@ class PasswordController extends Controller
         if ($getMailStatus) {
             return JsonResponse::create(['status' => 0, 'msg' => '对不起！该邮箱已绑定其他帐号！']);
         }
+
         if (!Users::where('uid', $token['uid'])->update(['safemail' => $token['email'], 'safemail_at' => date('Y-m-d H:i:s')])) {
             return JsonResponse::create(['status' => 0, 'msg' => '更新安全邮箱失败！']);
         }
