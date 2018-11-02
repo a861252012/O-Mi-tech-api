@@ -61,11 +61,12 @@ class PasswordController extends Controller
             //$mail = (new SafeMailVerify($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST')));
             //Mail::send($mail);
             $sendclound= SiteSer::config('sendclound');
+            $sendfrom= SiteSer::config('sendfrom');
             $sendclound = json_decode($sendclound,true);
-           // dd($sendclound);
+
             $sendcloud=new SendCloud($sendclound['name'], $sendclound['pass'],'v2');
             $mail = resolve(AttachmentService::class);
-            $mail->setFrom("diyifang@test.com");
+            $mail->setFrom($sendfrom);
             $name = $user['nickname'] ?: $user['username'];
 
             $mail->setXsmtpApi(json_encode(array(
