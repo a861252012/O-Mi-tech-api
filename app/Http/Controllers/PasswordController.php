@@ -54,33 +54,30 @@ class PasswordController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => '此安全邮件已被使用']);
         }
 
-
-        $sendclound_name = SiteSer::config('sendclound_name');
-        $sendclound_pass = SiteSer::config('sendclound_pass');
-
         try {
             //todo
             $url =  $this->sendMail($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST'));
 
             //$mail = (new SafeMailVerify($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST')));
             //Mail::send($mail);
-            $sendcloud=new SendCloud($sendclound_name, $sendclound_pass,'v2');
+            $sendclound= SiteSer::config('sendclound');
+            $sendclound = json_decode($sendclound,true);
+           // dd($sendclound);
+            $sendcloud=new SendCloud($sendclound['name'], $sendclound['pass'],'v2');
             $mail = resolve(AttachmentService::class);
-            //$mail->addCc("bida@ifaxin.com");
-            //$mail->setFrom("test@test.com");
+            $mail->setFrom("diyifang@test.com");
             $name = $user['nickname'] ?: $user['username'];
 
             $mail->setXsmtpApi(json_encode(array(
                 'to'=>array($email),
                 'sub'=>array(
-                     '%date%'=>array(date('Y年m月d日 H:i:s')),
-                     '%url%'=>array($url),
-                     '%name%'=>array($name),
+                    '%url%'=>array($url),
+                    '%name%'=>array($name),
                 )
 
 
             )));
-           // $mail->setSubject("MOBANCESHI");
+            // $mail->setSubject("MOBANCESHI");
             $mail->setRespEmailId(true);
             $templateContent=resolve(TemplateContentService::class);
             $templateContent->setTemplateInvokeName("test_template");
