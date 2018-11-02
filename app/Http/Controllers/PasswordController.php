@@ -54,22 +54,26 @@ class PasswordController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => '此安全邮件已被使用']);
         }
 
+
+        $sendclound_name = SiteSer::config('sendclound_name');
+        $sendclound_pass = SiteSer::config('sendclound_pass');
+
         try {
             //todo
             $url =  $this->sendMail($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST'));
 
             //$mail = (new SafeMailVerify($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST')));
             //Mail::send($mail);
-            $sendcloud=new SendCloud("IEVVV_test_fUtIsw", "ZVNGsK4VumbMEoQt",'v2');
+            $sendcloud=new SendCloud($sendclound_name, $sendclound_pass,'v2');
             $mail = resolve(AttachmentService::class);
-            $mail->addCc("bida@ifaxin.com");
-            $mail->setFrom("test@test.com");
+            //$mail->addCc("bida@ifaxin.com");
+            //$mail->setFrom("test@test.com");
             $name = $user['nickname'] ?: $user['username'];
 
             $mail->setXsmtpApi(json_encode(array(
                 'to'=>array($email),
                 'sub'=>array(
-                     '%money%'=>array('123'),
+                     '%date%'=>array(date('Y年m月d日 H:i:s')),
                      '%url%'=>array($url),
                      '%name%'=>array($name),
                 )
