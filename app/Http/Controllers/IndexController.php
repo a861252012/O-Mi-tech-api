@@ -219,7 +219,7 @@ class IndexController extends Controller
 //                }
 //            }
 
-            $myfavArr = $this->getUserAttensBycuruid($uid);
+            $myfavArr = $this->getUserAttensBycuruid($uid, $start = 0, $limit = 400);
             if (!!$myfavArr) {
                 $myfav = collect($arr)->whereIn('uid', $myfavArr)->toArray();
                 unset($myfavArr);
