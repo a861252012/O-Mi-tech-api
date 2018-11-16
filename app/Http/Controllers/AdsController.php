@@ -59,6 +59,8 @@ class   AdsController extends Controller{
             $data = Ads::where('device',$device)->published()->get()->toArray();
             Redis::hset('ads-' .SiteSer::siteId(),$device,serialize($data));
         }
+        //$file = base_path("bootstrap/cache/")."config.php";
+        //return new JsonResponse(['status'=>1,'data'=>$data,'msg'=>"publish time:".date('Y-m-d H:i:s',filectime($file))]);
         return $data;
     }
 

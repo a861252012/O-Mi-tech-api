@@ -219,7 +219,7 @@ class IndexController extends Controller
 //                }
 //            }
 
-            $myfavArr = $this->getUserAttensBycuruid($uid);
+            $myfavArr = $this->getUserAttensBycuruid($uid, $start = 0, $limit = 400);
             if (!!$myfavArr) {
                 $myfav = collect($arr)->whereIn('uid', $myfavArr)->toArray();
                 unset($myfavArr);
@@ -300,10 +300,12 @@ class IndexController extends Controller
                 $item =  array_values($item);
             }
         });
+        $file = base_path("bootstrap/cache/")."config.php";
+        $publish = "publish time:".date('Y-m-d H:i:s',filectime($file));
         return JsonResponse::create(
             [
                 'data' =>$data,
-                'msg' => '获取成功',
+                'msg' => '获取成功 '.$publish,
                 'status' => 1,
             ]
         );
@@ -319,7 +321,7 @@ class IndexController extends Controller
         $ids = $redis->get('video:faq:sort:class:' . $sort);
         if (!empty($ids)) {
             $ids = json_decode($ids);
-            $data = Faq::where('site_id', SiteSer::siteId())->whereIn('id', $ids)->limit($num)->get();
+            $data = Faq::whereIn('id', $ids)->limit($num)->get();
         } else {
             $data = [];
         }

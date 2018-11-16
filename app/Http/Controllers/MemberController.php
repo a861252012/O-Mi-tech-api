@@ -666,7 +666,7 @@ class MemberController extends Controller
     {
         $page = $request->get('page', 1);
         $userServer = resolve(UserService::class);
-        $data = $userServer->getUserAttens(Auth::id(), $page)
+        $data = $userServer->getUserAttens(Auth::id(), $page,$fid = true, $perPage =15)
             ->setPath($request->getPathInfo());
         return JsonResponse::create(['data' => ['list' => $data]]);
     }
