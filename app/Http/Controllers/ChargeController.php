@@ -231,8 +231,9 @@ class ChargeController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => '请输入名称']);
         } elseif ($modeType == static::CHANNEL_GD_BANK) {
             //银行转账生成唯一备注
-            $comment = (new Hashids($uid, 4, 'abcdefghijklmnopqrstuvwxyz1234567890'))
-                ->encode(mt_rand(1, 1000000));
+            //$comment = (new Hashids($uid, 4, 'abcdefghijklmnopqrstuvwxyz1234567890'))
+            //    ->encode(mt_rand(1, 1000000));
+            $comment = $this->generateOrderId();
         }
         $obj = PayGD::query()
             ->whereNotIn('status', [2, 4])->where('charge_amount', $money)
