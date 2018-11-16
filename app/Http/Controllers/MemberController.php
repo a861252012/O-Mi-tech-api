@@ -255,7 +255,8 @@ class MemberController extends Controller
             return new JsonResponse(['status' => 0, 'msg' => '交易密码错误']);
         }
 
-        if (/*$username == $user['username'] || */$username == $user['uid']) {
+        if (/*$username == $user['username'] || */
+            $username == $user['uid']) {
             return new JsonResponse(['status' => 0, 'msg' => '不能转给自己!']);
         }
 
@@ -265,9 +266,9 @@ class MemberController extends Controller
 
         //获取转到用户信息   clark已确认，转账只能uid  2018/7/20
         $userTo = (array)DB::table((new Users)->getTable())->where('uid', $username)->first();
-      /*  if (!$userTo) {
-            $userTo = (array)DB::table((new Users)->getTable())->where('uid', $username)->first();
-        }*/
+        /*  if (!$userTo) {
+              $userTo = (array)DB::table((new Users)->getTable())->where('uid', $username)->first();
+          }*/
 
         if (!$userTo) {
             return new JsonResponse(['status' => 0, 'msg' => '对不起！该用户不存在']);
@@ -339,11 +340,18 @@ class MemberController extends Controller
 
             //检查收款人用户VIP保级状态 一定要在事务之后进行验证
             $this->checkUserVipStatus($userTo);
+
+
+            $redis = $this->make('redis');
+            $redis->hIncrBy('huser_info:' . $uid, 'points', -$points);
+            $redis->hIncrBy('huser_info:' . $userTo['uid'], 'points', $points);
+
+
             //更新转帐人用户redis信息
-            resolve(UserService::class)->getUserReset($uid);
+           /* resolve(UserService::class)->getUserReset($uid);
 
             //更新收款人用户redis信息
-            resolve(UserService::class)->getUserReset($userTo['uid']);
+            resolve(UserService::class)->getUserReset($userTo['uid']);*/
 
 
             return new JsonResponse(['status' => 1, 'msg' => '您成功转出' . $points . '钻石']);
@@ -387,7 +395,7 @@ class MemberController extends Controller
         if (!$agentsPriv) {
             // return new RedirectResponse('/');
             return new JsonResponse(['status' => 0, 'msg' => '']);
-            }
+        }
         $agentsRelationship = AgentsRelationship::where('aid', $agentsPriv->aid)->get()->toArray();
         $uidArray = array_column($agentsRelationship, 'uid');
 
