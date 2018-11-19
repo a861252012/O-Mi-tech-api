@@ -233,7 +233,7 @@ class ChargeController extends Controller
             //银行转账生成唯一备注
             //$comment = (new Hashids($uid, 4, 'abcdefghijklmnopqrstuvwxyz1234567890'))
             //    ->encode(mt_rand(1, 1000000));
-            $comment = $this->generateOrderId();
+            $comment = substr(md5(uniqid(md5(microtime(true),true))),0,4);
         }
         $obj = PayGD::query()
             ->whereNotIn('status', [2, 4])->where('charge_amount', $money)
