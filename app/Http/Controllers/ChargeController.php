@@ -199,15 +199,19 @@ class ChargeController extends Controller
     private function getClient()
     {
         $client = $this->request()->headers->get('client', 12);
-        switch ($client) {
-            case "1001":
-                $origin = 22;
-                break;
-            case "1002":
-                $origin = 32;
-                break;
-            default:
-                $origin = 12;
+        if ($client){
+            switch ($client) {
+                case "1001":
+                    $origin = 22;
+                    break;
+                case "1002":
+                    $origin = 32;
+                    break;
+                default:
+                    $origin = 12;
+            }
+        }else{
+            $origin = $this->request()->get('origin');
         }
         return $origin;
     }
@@ -231,8 +235,9 @@ class ChargeController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => '请输入名称']);
         } elseif ($modeType == static::CHANNEL_GD_BANK) {
             //银行转账生成唯一备注
-            $comment = (new Hashids($uid, 4, 'abcdefghijklmnopqrstuvwxyz1234567890'))
-                ->encode(mt_rand(1, 1000000));
+            //$comment = (new Hashids($uid, 4, 'abcdefghijklmnopqrstuvwxyz1234567890'))
+            //    ->encode(mt_rand(1, 1000000));
+            $comment = substr(md5(uniqid(md5(microtime(true),true))),0,4);
         }
         $obj = PayGD::query()
             ->whereNotIn('status', [2, 4])->where('charge_amount', $money)

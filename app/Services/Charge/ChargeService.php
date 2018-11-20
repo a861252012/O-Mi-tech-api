@@ -57,7 +57,8 @@ class ChargeService extends Service
     public function generateOrderId()
     {
         $uid = Auth::id();
-        return sprintf('%08s', strrev($uid)) . date('ymdHis') . mt_rand(10, 99) . '';
+        //return sprintf('%08s', strrev($uid)) . date('ymdHis') . mt_rand(10, 99) . '';
+        return sprintf('%08s', strrev($uid)) . microtime(true)*10000;
     }
 
     public function getDataNo()

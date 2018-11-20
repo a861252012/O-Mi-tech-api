@@ -41,7 +41,7 @@ Route::any('change_pwd', 'PasswordController@changePwd')->name('change_pwd');
 
 /** 用户中心路由组 */
 Route::group(['prefix' => 'member'], function () {
-    Route::any('mailverify/confirm/{token}', 'PasswordController@VerifySafeMail')->name('mail_verify_confirm');
+    Route::any('mail/verify/confirm/{token}', 'PasswordController@VerifySafeMail')->name('mail_verify_confirm');
 
     Route::group(['middleware' => 'login_auth'], function () {
         Route::get('menu', 'MemberController@getMenu');
