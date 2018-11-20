@@ -199,15 +199,19 @@ class ChargeController extends Controller
     private function getClient()
     {
         $client = $this->request()->headers->get('client', 12);
-        switch ($client) {
-            case "1001":
-                $origin = 22;
-                break;
-            case "1002":
-                $origin = 32;
-                break;
-            default:
-                $origin = 12;
+        if ($client){
+            switch ($client) {
+                case "1001":
+                    $origin = 22;
+                    break;
+                case "1002":
+                    $origin = 32;
+                    break;
+                default:
+                    $origin = 12;
+            }
+        }else{
+            $origin = $this->request()->get('origin');
         }
         return $origin;
     }
