@@ -31,11 +31,15 @@ class ActivityController extends Controller
         $list = collect(json_decode($data))->where('pid', 0);
 
         $list = json_decode(json_encode($list), true);
-        $temp = [];
         $result = [];
         foreach ($list as $key => $value) {
-            $temp[] = $value;
-            array_push($result, $value);
+            //不显示即将开始的活动
+            if (time() > strtotime($value['init_time'])) {
+                array_push($result, $value);
+            }
+        }
+        if ([] != $result) {
+            $result = array_reverse($result);
         }
         $list = $this->format_jsoncode($result);
         return new jsonresponse($list);
@@ -64,7 +68,7 @@ class ActivityController extends Controller
             $status = 1;
         }
         $result['type'] = 3;
-        if(isset($data['type'])){
+        if (isset($data['type'])) {
             unset($data['type']);
         }
         $result['activity'] = $data;
@@ -296,9 +300,9 @@ class ActivityController extends Controller
         }
         if ($url_type[1] == 'activity') {
             $data['activity'] = $this->activity($url_type[2]);
-            if(isset($data['activity']['type'])){
+            if (isset($data['activity']['type'])) {
                 $data['type'] = $data['activity']['type'];
-            }else{
+            } else {
                 return new JsonResponse(['status' => 0, 'msg' => '配置的链接错误或者type类型错误']);
             }
 
