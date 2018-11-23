@@ -121,10 +121,10 @@ class BusinessController extends Controller
              */
             if(!empty($aRandRooms)){
                 // 解析域名
-                $aUrlParse = parse_url($arrUrl);
+                $aUrlParse = parse_url(strpos($arrUrl,"http")===false ? $arrUrl : "http://".$arrUrl);
                 $sVDomain = $aUrlParse['host'];
                 $aRandRoom = $aRandRooms[mt_rand(0,count($aRandRooms)-1)];
-                $var['extendUrl'] = 'http://'.$sVDomain.'/'.$aRandRoom['rid'].'?agent='.$url;
+                $var['extendUrl'] = $sVDomain.'/'.$aRandRoom['rid'].'?agent='.$url;
 
             }else {
                 $var['extendUrl'] = $arrUrl . '?agent=' . $url;
@@ -164,7 +164,8 @@ class BusinessController extends Controller
                 return 0;
             }
         }
-        $ret='http://'.rtrim(preg_replace('/^http:\/\//','',$ret,1),'/');
+        //$ret='http://'.rtrim(preg_replace('/^http:\/\//','',$ret,1),'/');
+        $ret=rtrim($ret,'/');
         Domain::whereId($redirect->did)->normal()->increment('click');
         Domain::whereId($redirect->rid)->normal()->increment('click');
         return $ret;
