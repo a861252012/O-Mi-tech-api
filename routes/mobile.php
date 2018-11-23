@@ -21,6 +21,7 @@ Route::any('app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileContro
 Route::any('app/versionIOS', ['name' => 'm_app_ver_ios', 'uses' => 'Mobile\MobileController@appVersionIOS']);
 
 Route::get('conf',['name'=>'m_conf', 'uses'=>'ApiController@getConf']);
+Route::get('pre_conf',['name'=>'m_pre_conf', 'uses'=>'ApiController@getPreConf']);
 Route::get('room/conf',['name'=>'m_room_conf', 'uses'=>'Mobile\RoomController@getRoomConf']);
 // 首页房间数据json
 Route::get('/videoList', ['as' => 'index_videoList', 'uses' => 'IndexController@videoList']);

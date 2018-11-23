@@ -97,6 +97,21 @@ class ApiController extends Controller
     }
 
     /**
+     * @return array
+     */
+    public function getPreConf(){
+        return [
+            "OPEN_WEB"=>"1",
+            "IMG_HOST"=>"1",
+            "PIC_CDN_STATIC"=>"1",
+            "flash_version"=>"",
+            "publish_version"=>"1",
+            "in_limit_points"=>"1",
+            "in_limit_safemail"=>"1",
+        ];
+    }
+
+    /**
      * 注册接口
      */
     public function reg(Request $request)
