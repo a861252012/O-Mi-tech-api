@@ -68,12 +68,18 @@ class PasswordController extends Controller
             $mail = resolve(AttachmentService::class);
             $mail->setFrom($sendfrom);
             $name = $user['nickname'] ?: $user['username'];
+            $date =  date("Y-m-d H:i:s");
+            $redis = $this->make('redis');
+            $content = $redis->hGet("hsite_config:".SiteSer::siteId(), "email");
+            $content = str_replace("{{name}}",$name,$content);
+            $content = str_replace("{{url}}",$url,$content);
+            $content = str_replace("{{date}}",$date,$content);
 
             $mail->setXsmtpApi(json_encode(array(
                 'to'=>array($email),
                 'sub'=>array(
-                    '%url%'=>array($url),
-                    '%name%'=>array($name),
+                    '%title%'=>array('验证安全邮箱'),
+                    '%content%'=>array($content),
                 )
 
 
@@ -141,6 +147,7 @@ class PasswordController extends Controller
         }
 
         $user = resolve(UserService::class)->getUserByUid($token['uid']);
+
         if ($user->safemail) {
             return JsonResponse::create(['status' => 0, 'msg' => '你已验证过安全邮箱！']);
         }
@@ -176,24 +183,46 @@ class PasswordController extends Controller
         Redis::setex('pwdreset.token:' . $token, 30 * 60, 1);
         $url = $requestHost . '/pwdreset/verify?token=' . urlencode($token);
 
-        $siteName = SiteSer::config('name');
-        Mail::send('emails.pwdreset', [
-            'username' => $user->username,
-            'siteName' => $siteName,
-            'url' => $url,
-            'date' => date('Y-m-d H:i:s'),
-        ], function ($message) use ($user) {
-            $siteConfig = app(SiteService::class)->config();
 
-            $mail_from = $siteConfig->get('mail_from', config('mail.from.address'));
-            $siteName = $siteConfig->get('name');
+        $redis = $this->make('redis');
+        $siteName = $redis->hGet("hsite_config:".SiteSer::siteId(), "name");
+        $content = file_get_contents('../resources/views/emails/pwdreset.blade.php');
 
-            $subject = $siteName . '密码重置';
-            $mail_reply_to = $siteConfig->get('$mail_reply_to');
-            $message->to($user->safemail);
-            $mail_reply_to && $message->replyTo($mail_reply_to, $siteName);
-            $message->subject($subject)->from($mail_from, $siteName);
-        });
+        $sendclound= SiteSer::config('sendclound');
+        $sendfrom= SiteSer::config('sendfrom');
+        $sendclound = json_decode($sendclound,true);
+
+        $sendcloud=new SendCloud($sendclound['name'], $sendclound['pass'],'v2');
+        $mail = resolve(AttachmentService::class);
+        $mail->setFrom($sendfrom);
+        $nickname = $user->nickname ?: $user->username;
+
+        $date =  date("Y-m-d H:i:s");
+        $redis = $this->make('redis');
+
+        $content = str_replace('{{$siteName}}',$siteName,$content);
+        $content = str_replace('{{$url}}',$url,$content);
+        $content = str_replace('{{$date}}',$date,$content);
+        $content = str_replace('{{$username}}',$nickname,$content);
+
+
+        $mail->setXsmtpApi(json_encode(array(
+            'to'=>array($user->safemail),
+            'sub'=>array(
+                '%title%'=>array('邮箱找回密码'),
+                '%content%'=>array($content),
+            )
+
+
+        )));
+        // $mail->setSubject("MOBANCESHI");
+        $mail->setRespEmailId(true);
+        $templateContent=resolve(TemplateContentService::class);
+        $templateContent->setTemplateInvokeName("test_template");
+
+        $mail->setTemplateContent($templateContent);
+        $sendcloud->sendTemplate($mail);
+        return JsonResponse::create(['status' => 1, 'msg' => '邮件发送成功']);exit;
     }
 
     /**
@@ -240,7 +269,8 @@ class PasswordController extends Controller
 
     public function pwdResetConfirm(Request $request)
     {
-        $token = $request->get('pwdreset_token');
+
+        $token = $request->get('pwdreset_token');dd($token);exit;
         if (!$token || !Redis::exists('pwdreset.token:' . $token)) {
             return JsonResponse::create(['status' => 0, 'msg' => '链接已过期']);
         }
