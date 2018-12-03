@@ -155,10 +155,10 @@ class IndexController extends Controller
             }
         } else {
             $len = $this->count_chinese_utf8($username);
-            if ($len < 2 || $len > 8 || !preg_match("/^[^\s\/\:;]+$/", $username)) {
+            if ($len < 2 || $len > 11 || !preg_match("/^[^\s\/\:;]+$/", $username)) {
                 return new Response(json_encode([
                     "data" => 0,
-                    "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)",
+                    "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-11位的昵称)",
                 ]));
             }
             $msg0 = '该昵称已被使用，请换一个试试！';

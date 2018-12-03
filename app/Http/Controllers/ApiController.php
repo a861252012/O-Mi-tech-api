@@ -136,10 +136,10 @@ class ApiController extends Controller
         $len = sizeof(preg_split("//u", $nickname, -1, PREG_SPLIT_NO_EMPTY));
 
         //昵称不能使用/:;\空格,换行等符号。
-        if ($len < 2 || $len > 8 || !preg_match("/^[^\s\/\:;]+$/", $nickname)) {
+        if ($len < 2 || $len > 11 || !preg_match("/^[^\s\/\:;]+$/", $nickname)) {
             return JsonResponse::create([
                 "status" => 0,
-                "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)",
+                "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-11位的昵称)",
             ]);
         }
 
