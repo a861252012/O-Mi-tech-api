@@ -270,7 +270,7 @@ class PasswordController extends Controller
     public function pwdResetConfirm(Request $request)
     {
 
-        $token = $request->get('pwdreset_token');dd($token);exit;
+        $token = $request->get('pwdreset_token');
         if (!$token || !Redis::exists('pwdreset.token:' . $token)) {
             return JsonResponse::create(['status' => 0, 'msg' => '链接已过期']);
         }
