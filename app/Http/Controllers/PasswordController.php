@@ -56,7 +56,8 @@ class PasswordController extends Controller
 
         try {
             //todo
-            $url =  $this->sendMail($user, $email, $this->request()->server('REQUEST_SCHEME') . 's://' . $this->request()->server('HTTP_HOST'));
+            $http_host = explode(':',$_SERVER['HTTP_HOST']);
+            $url =  $this->sendMail($user, $email,$_SERVER['HTTP_X_FORWARDED_PROTO'].'://'.$http_host[0]);
 
             //$mail = (new SafeMailVerify($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST')));
             //Mail::send($mail);
