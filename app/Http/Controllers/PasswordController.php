@@ -57,7 +57,8 @@ class PasswordController extends Controller
         try {
             //todo
             $http_host = explode(':',$_SERVER['HTTP_HOST']);
-            $url =  $this->sendMail($user, $email,$_SERVER['HTTP_X_FORWARDED_PROTO'].'://'.$http_host[0]);
+            $ishttps=   ($this->is_https() == TRUE )? "https":"http";
+            $url =  $this->sendMail($user, $email,$ishttps.'://'.$http_host[0]);
 
             //$mail = (new SafeMailVerify($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST')));
             //Mail::send($mail);
@@ -99,6 +100,26 @@ class PasswordController extends Controller
         }
 
         return JsonResponse::create(['status' => 1, 'msg' => '发送成功！']);
+    }
+    /*
+     * ISHTTPS
+     */
+    function is_https()
+    {
+        if ( ! empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
+        {
+            return TRUE;
+        }
+        elseif (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+        {
+            return TRUE;
+        }
+        elseif ( ! empty($_SERVER['HTTP_FRONT_END_HTTPS']) && strtolower($_SERVER['HTTP_FRONT_END_HTTPS']) !== 'off')
+        {
+            return TRUE;
+        }
+
+        return FALSE;
     }
 
     /**
