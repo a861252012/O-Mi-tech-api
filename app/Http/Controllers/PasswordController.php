@@ -57,7 +57,8 @@ class PasswordController extends Controller
         try {
             //todo
             $http_host = explode(':',$_SERVER['HTTP_HOST']);
-            $ishttps=   ($this->is_https() == TRUE )? "https":"http";
+            //$ishttps =   ($this->is_https() == TRUE )? "https":"http";
+            $ishttps = $request->get('httpType');
             $url =  $this->sendMail($user, $email,$ishttps.'://'.$http_host[0]);
 
             //$mail = (new SafeMailVerify($user, $email, $this->request()->server('REQUEST_SCHEME') . '://' . $this->request()->server('HTTP_HOST')));
