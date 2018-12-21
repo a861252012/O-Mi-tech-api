@@ -45,7 +45,9 @@ class ChargeController extends Controller
     {
         $uid = Auth::id();
         $user = resolve(UserService::class)->getUserByUid($uid);
-
+        unset($user->password);
+        unset($user->p2p_password);
+        unset($user->trade_password);
         $client = $request->is('api/m/*') ? 2 : 1;
 
         $token = $client == 2 ? Auth::getToken() : "";
