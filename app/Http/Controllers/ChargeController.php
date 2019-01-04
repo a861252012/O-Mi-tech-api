@@ -284,6 +284,7 @@ class ChargeController extends Controller
             'comment' => $comment,
             'charge_amount' => $money,
             'uid' => $uid,
+            'site_id' => SiteSer::siteId(),
         ]);
 
         $rtn = [
