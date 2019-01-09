@@ -751,7 +751,7 @@ class ChargeController extends Controller
         $output = json_decode($output, true);
         $output = $output['data'];
         if (!isset($output['Datas'])) {
-            return new JsonResponse(array('status' => 1, 'msg' => '充提返回数据有问题'));
+            return new JsonResponse(array('status' => 1, 'msg' => '订单未成功支付！'));
         }
         $len = count($output['Datas']);
         $payOrderJson = [];
