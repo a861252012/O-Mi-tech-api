@@ -55,7 +55,7 @@ class AnchorList extends Command
         $this->siteService->fromID($id);
         if (!$this->siteService->isValid()){
             $this->info('invalid site config for id '.$id);
-            Log::error('invalid site config  ',['id'=>$id]);
+            //Log::error('invalid site config  ',['id'=>$id]);
             return;
         }
         $flashVer = $this->siteService->config('publish_version');
