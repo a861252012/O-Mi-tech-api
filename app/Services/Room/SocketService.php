@@ -44,11 +44,12 @@ class SocketService extends Service
 //                $channelIDs->push($channelID);
                 $channelInfo = $redis->hgetall('channel_info:' . $channelID);
                 if ($this->lessLoad($channelInfo, $minLoadChannel)) {
+                    $minLoadChannel = $channelInfo;
                     $chanhost = explode('|',$channelInfo['host']);
-                        if(!empty($chanhost[0])){
+                    if(!empty($chanhost[0])){
                         $minLoadChannel['host'] = $chanhost[0];
                     }else{
-                         $minLoadChannel['host'] = $chanhost[1];
+                        $minLoadChannel['host'] = $chanhost[1];
                     }
 
                 }
