@@ -66,7 +66,37 @@ class SocketService extends Service
         }
         return $minLoadChannel;
     }
-
+    /**
+     * @return mixed
+     * pc端接口维持原先用法
+     * @throws NoSocketChannelException
+     */
+    public function getNextServerAvailablepc()
+    {
+        $redis = resolve('redis');
+        $channels_update = collect($redis->hgetall('channel_update'));
+        $minLoadChannel = null;
+//        $channelIDs = collect();//可用的channel id
+        $channels_update->keys()->map(function ($channelID) use (&$channels_update, &$redis, &$minLoadChannel, &$channelIDs) {
+            if (!self::socketExpired($channels_update[$channelID])) {
+//                $channelIDs->push($channelID);
+                $channelInfo = $redis->hgetall('channel_info:' . $channelID);
+                if ($this->lessLoad($channelInfo, $minLoadChannel)) {
+                    $minLoadChannel = $channelInfo;
+                }
+            }
+        });
+//        if ($channelIDs->count() == 0) {
+        if (!$minLoadChannel) {
+            throw new NoSocketChannelException('没有可用channel');
+        }
+//        $idSelected = $channelIDs->get($uid % $channelIDs->count());
+//        $channelInfo = $redis->hgetall('channel_info:' . $idSelected);
+        if (empty($minLoadChannel)) {
+            throw new NoSocketChannelException('获取Socket Channel失败');
+        }
+        return $minLoadChannel;
+    }
     /**
      * 比较两个频道负载 return c1<c2
      * @param $c1
