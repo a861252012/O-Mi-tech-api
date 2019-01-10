@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use App\Traits\SiteSpecific;
 class PayGD extends \Illuminate\Database\Eloquent\Model
 {
     use SoftDeletes;
