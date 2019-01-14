@@ -1074,9 +1074,9 @@ class Controller extends BaseController
             // 判断长度 和 格式 是否正确
             $len = $this->count_chinese_utf8($postData['nickname']);
             //昵称不能使用/:;\空格,换行等符号。
-            if ($len < 2 || $len > 8 || !preg_match("/^[^\s\/\:;]+$/", $postData['nickname'])) {
+            if ($len < 2 || $len > 11 || !preg_match("/^[^\s\/\:;]+$/", $postData['nickname'])) {
                 $msg = [
-                    'msg' => '注册昵称不能使用/:;\空格,换行等符号！(2-8位的昵称)',
+                    'msg' => '注册昵称不能使用/:;\空格,换行等符号！(2-11位的昵称)',
                     'status' => 0,
                 ];
                 return new JsonResponse($msg);

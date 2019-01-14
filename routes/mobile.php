@@ -31,7 +31,7 @@ Route::get('ping', ['as' => 'ping', 'uses' => 'ApiController@ping']);
 //活动列表
 Route::get('activitylist', ['name' => 'm_activitylist', 'uses' => 'ActivityController@index']);
 //域名列表
-Route::get('domain_list', ['name' => 'domain_list', 'uses' => 'Mobile\MobileController@domain']);
+Route::any('domain_list', ['name' => 'domain_list', 'uses' => 'Mobile\MobileController@domain']);
 //活动详情
 Route::get('activitydetail', ['name' => 'm_activitydetail', 'uses' => 'ActivityController@detailtype']);
 

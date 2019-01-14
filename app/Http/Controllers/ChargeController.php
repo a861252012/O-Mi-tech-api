@@ -45,7 +45,9 @@ class ChargeController extends Controller
     {
         $uid = Auth::id();
         $user = resolve(UserService::class)->getUserByUid($uid);
-
+        unset($user->password);
+        unset($user->p2p_password);
+        unset($user->trade_password);
         $client = $request->is('api/m/*') ? 2 : 1;
 
         $token = $client == 2 ? Auth::getToken() : "";
@@ -282,6 +284,7 @@ class ChargeController extends Controller
             'comment' => $comment,
             'charge_amount' => $money,
             'uid' => $uid,
+            'site_id' => SiteSer::siteId(),
         ]);
 
         $rtn = [
@@ -748,7 +751,7 @@ class ChargeController extends Controller
         $output = json_decode($output, true);
         $output = $output['data'];
         if (!isset($output['Datas'])) {
-            return new JsonResponse(array('status' => 1, 'msg' => '充提返回数据有问题'));
+            return new JsonResponse(array('status' => 1, 'msg' => '订单未成功支付！'));
         }
         $len = count($output['Datas']);
         $payOrderJson = [];

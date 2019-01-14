@@ -234,8 +234,8 @@ class ChargeService extends Service
 
     public function chargeAfter($uid): void
     {
-        Users::where('uid', $uid)->whereNull('first_charge_time')->update(array('first_charge_time' => date('Y-m-d H:i:s')));
-        $this->make('redis')->hset('huser_info:' . $uid, 'first_charge_time', date('Y-m-d H:i:s', time()));
+        $rs = Users::query()->whereRaw('uid='.$uid.'  and first_charge_time is NULL')->update(array('first_charge_time' => date('Y-m-d H:i:s')));
+        $rs && $this->make('redis')->hset('huser_info:' . $uid, 'first_charge_time', date('Y-m-d H:i:s', time()));
     }
 
     public function checkSign($postResult)
