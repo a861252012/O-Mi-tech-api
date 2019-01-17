@@ -234,7 +234,7 @@ class ChargeController extends Controller
         $uid = $data['uid'];
         if ($modeType == static::CHANNEL_GD_ALI && empty($comment)) {
             //支付宝转账需要输入名字
-            return JsonResponse::create(['status' => 0, 'msg' => '请输入名称']);
+            return JsonResponse::create(['status' => 1, 'msg' => '请输入名称']);
         } elseif ($modeType == static::CHANNEL_GD_BANK) {
             //银行转账生成唯一备注
             //$comment = (new Hashids($uid, 4, 'abcdefghijklmnopqrstuvwxyz1234567890'))
@@ -248,7 +248,7 @@ class ChargeController extends Controller
             ->first();
         if ($obj && strtotime($obj['created_at']) + static::ORDER_REPEAT_LIMIT_GD * 60 > time()) {
             $err = "1小时内，不能提同一金额，同一姓名的订单";
-            return JsonResponse::create(['status' => 0, 'msg' => $err]);
+            return JsonResponse::create(['status' => 1, 'msg' => $err]);
         }
         $account = PayAccount::query()->orderByRaw('rand()')->first();
 
