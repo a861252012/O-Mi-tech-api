@@ -239,6 +239,9 @@ class SiteService
         View::share('open_web', $this->config()->get('open_web'));
         View::share('publish_version', $this->config()->get('publish_version'));
         View::share('public_path', $this->getPublicPath());
+
+        //下载地址（Young添加, 用于promo页面直接获取下载地址）
+        View::share('down_url', $this->config()->get('down_url'));
     }
 
     public function getPublicPath()
