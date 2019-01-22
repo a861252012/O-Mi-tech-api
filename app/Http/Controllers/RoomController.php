@@ -14,6 +14,7 @@ use App\Services\Room\One2OneRoomService;
 use App\Services\Room\RoomService;
 use App\Services\Room\SocketService;
 use App\Services\Safe\SafeService;
+use App\Services\Safe\RtmpService;
 use App\Services\User\UserService;
 use Exception;
 use Illuminate\Foundation\Auth\User;
@@ -552,7 +553,7 @@ class RoomController extends Controller
             $certi = $this->make("safeService")->getLcertificate("cdn");
             foreach ($rtmp['rtmp'] as $v) {
                 /**@var $rtmpObj RtmpService */
-                $rtmpObj = $this->make('rtmpService')->getRtmp($v, $rtmp['sid']);
+                $rtmpObj = resolve(RtmpService::class)->getRtmp($v, $rtmp['sid']);
 
                 $ara = $rtmpObj->append(['certi' => $certi])->getParams();
                 $tmp['sid'] = $rtmp['sid'] . ($ara ? '?' . $ara : "");
