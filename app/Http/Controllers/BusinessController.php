@@ -87,8 +87,13 @@ class BusinessController extends Controller
          * Update by Young
          */
         if (empty($_GET['dir'])) {
-            $var['extendUrl'] =$arrUrl . '?agent=' . $url;
-            return SuccessResponse::create($var);
+            if (empty($arrUrl)){
+              //修復20190123之https跳轉http問題
+              return SuccessResponse::create(array('extendUrl'=>'/?agent=' . $url));
+            }else{
+              $var['extendUrl'] =$arrUrl . '?agent=' . $url;
+              return SuccessResponse::create($var);
+            }
         }
         //参数判断，dir跳转方向，用于跳转到直播间的功能
         if (!empty($_GET['dir']) && $_GET['dir'] === 'room') {
