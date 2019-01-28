@@ -163,7 +163,7 @@ class ApiController extends Controller
         if ($redis->hExists('husername_to_id:' . SiteSer::siteId(), $username)) {
             return JsonResponse::create([
                 "status" => 0,
-                "msg" => "对不起, 该帐号不可用!",
+                "msg" => "对不起, 该帐号已被使用!",
             ]);
         }
         if ($redis->hExists('hnickname_to_id:' . SiteSer::siteId(), $nickname)) {
@@ -201,6 +201,16 @@ class ApiController extends Controller
             /** @var JWTGuard $guard */
             $guard = Auth::guard('mobile');
             $guard->login($user);
+            //添加是否写入sid判断
+            $token = (string)$guard->getToken();
+            $huser_sid = (int)resolve('redis')->hget('huser_sid', $uid);
+            if(empty($huser_sid)){
+                resolve('redis')->hset('huser_sid', $uid, $token);
+                $huser_sid_confirm = (int)resolve('redis')->hget('huser_sid', $uid);
+                if($huser_sid_confirm){
+                    return JsonResponse::create(['status' => 0, 'msg' => 'token写入redis失败，请重新登录!']);
+                }
+            }
             $return['data'] = [
                 'jwt' => (string)$guard->getToken(),
                 'user' => $user,

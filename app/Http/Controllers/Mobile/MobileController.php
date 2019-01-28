@@ -338,6 +338,17 @@ class MobileController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => '用户名密码错误']);
         }
         $user = $jwt->user();
+        //添加是否写入sid判断
+        $token = (string)$jwt->getToken();
+        $huser_sid = (int)resolve('redis')->hget('huser_sid', $user->uid);
+        if(empty($huser_sid)){
+            resolve('redis')->hset('huser_sid', $user->uid, $token);
+            $huser_sid_confirm = (int)resolve('redis')->hget('huser_sid', $user->uid);
+            if($huser_sid_confirm){
+                return JsonResponse::create(['status' => 0, 'msg' => 'token写入redis失败，请重新登录!']);
+            }
+        }
+
         $statis_date = date('Y-m-d');
         MobileUseLogs::create([
             'imei' => $request->get('imei'),

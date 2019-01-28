@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Services\Safe;
 
 use App\Services\Service;
@@ -73,8 +74,8 @@ class RtmpService extends Service
                 $this->ext = [];
                 $param_arr = [];
         }
-        $logPath = BASEDIR . '/app/logs/room' . date('Y-m') . '.log';
-        $this->make('systemServer')->logResult(' 线路:' . $this->name, $logPath);
+        //$logPath = BASEDIR . '/app/logs/room' . date('Y-m') . '.log';
+        //resolve(SystemService::class)->logResult(' 线路:' . $this->name, $logPath);
 
         $this->params = http_build_query(array_merge($param_arr,$this->ext));
         return $this->params;
