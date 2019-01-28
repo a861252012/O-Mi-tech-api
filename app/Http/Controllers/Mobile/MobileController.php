@@ -159,7 +159,8 @@ class MobileController extends Controller
                 'gender' => $userinfo->sex,
                 'follows' => $userfollow,
                 'fansCount' => $by_atttennums,
-                'system_tip_count' => Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status', 0)->count()
+                'system_tip_count' => Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status', 0)->count(),
+                'transfer' => $userinfo->transfer
             ],
         ]);
     }

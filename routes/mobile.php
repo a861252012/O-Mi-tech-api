@@ -118,7 +118,10 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     //移动端一对一房间用户
     Route::get('OneToOne/list', ['as' => 'member_onetoONElist', 'uses' => 'Mobile\RoomController@listOneToOneByHost']);
 
-
+    //转账功能
+    Route::get('transfer', 'MemberController@transferHistory')->name('member_transfer_history');
+    Route::post('transfer/create', 'MemberController@transfer')->name('member_transfer_create');
+    Route::post('password', 'MemberController@password')->name('password');
 });
 /** 进房间 */
 Route::any('get_room/{rid}', 'Mobile\RoomController@getRoom')->where('rid','[0-9]{5,15}')->name('m_get_room');

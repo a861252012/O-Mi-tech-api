@@ -163,7 +163,7 @@ class ApiController extends Controller
         if ($redis->hExists('husername_to_id:' . SiteSer::siteId(), $username)) {
             return JsonResponse::create([
                 "status" => 0,
-                "msg" => "对不起, 该帐号不可用!",
+                "msg" => "对不起, 该帐号已被使用!",
             ]);
         }
         if ($redis->hExists('hnickname_to_id:' . SiteSer::siteId(), $nickname)) {
