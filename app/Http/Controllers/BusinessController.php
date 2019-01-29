@@ -87,13 +87,13 @@ class BusinessController extends Controller
          * Update by Young
          */
         if (empty($_GET['dir'])) {
-            if (empty($arrUrl)){
+            //if (empty($arrUrl)){
               //修復20190123之https跳轉http問題
-              return SuccessResponse::create(array('extendUrl'=>'/?agent=' . $url));
-            }else{
+              //return SuccessResponse::create(array('extendUrl'=>'/?agent=' . $url));
+            //}else{
               $var['extendUrl'] =$arrUrl . '?agent=' . $url;
               return SuccessResponse::create($var);
-            }
+            //}
         }
         //参数判断，dir跳转方向，用于跳转到直播间的功能
         if (!empty($_GET['dir']) && $_GET['dir'] === 'room') {
@@ -154,7 +154,7 @@ class BusinessController extends Controller
         if ($redirect && $redirect->exists) {
             //配置的跳转链接是空，跳转到当前域名，同时增加点击数--已和clark确认该功能。
             $ret = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
-            $ret='http://'.rtrim(preg_replace('/^http:\/\//','',$ret,1),'/');
+            $ret='//'.rtrim(preg_replace('/^http:\/\//','',$ret,1),'/');
             Domain::whereId($did)->normal()->increment('click');
             return $ret;
 
