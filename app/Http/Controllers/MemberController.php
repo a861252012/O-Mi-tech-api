@@ -376,13 +376,13 @@ class MemberController extends Controller
             $transfers->where('datetime', '>=', $mintime)->where('datetime', '<=', $maxtime);
         }
         $transfersall = $transfers->orderBy('datetime', 'desc')->pluck('points');
-        $totalpoint=0;
+        $total_amount=0;
         foreach ($transfersall as $transfersallval) {
-           $totalpoint += $transfersallval;
+           $total_amount += $transfersallval;
         }
         $transfers = $transfers->orderBy('datetime', 'desc')->paginate(10)
             ->appends(['mintime' => $mintime, 'maxtime' => $maxtime]);
-        return new JsonResponse(['status' => 1, 'data' => ['list' => $transfers,'totalpoint'=>$totalpoint]]);
+        return new JsonResponse(['status' => 1, 'data' => ['list' => $transfers,'total_amount'=>$total_amount]]);
 
     }
 
