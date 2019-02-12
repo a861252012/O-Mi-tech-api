@@ -375,9 +375,14 @@ class MemberController extends Controller
             $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
             $transfers->where('datetime', '>=', $mintime)->where('datetime', '<=', $maxtime);
         }
+        $transfersall = $transfers->orderBy('datetime', 'desc')->pluck('points');
+        $totalpoint=0;
+        foreach ($transfersall as $transfersallval) {
+           $totalpoint += $transfersallval;
+        }
         $transfers = $transfers->orderBy('datetime', 'desc')->paginate(10)
             ->appends(['mintime' => $mintime, 'maxtime' => $maxtime]);
-        return new JsonResponse(['status' => 1, 'data' => ['list' => $transfers]]);
+        return new JsonResponse(['status' => 1, 'data' => ['list' => $transfers,'totalpoint'=>$totalpoint]]);
 
     }
 
