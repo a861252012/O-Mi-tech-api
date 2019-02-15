@@ -2867,7 +2867,7 @@ class MemberController extends Controller
         $uid = Auth::id();
         //$user = Auth::user();
         $userex = UserExtends::find($uid);
-        //post value:cha contact
+        //save post value to contact table
         $post = $request->all();
         if (!empty($post['phone'])) {
             $userex->phone=$post['phone'];
