@@ -27,6 +27,7 @@ use App\Models\UserBuyOneToMore;
 use App\Models\UserCommission;
 use App\Models\UserGroup;
 use App\Models\Users;
+use App\Models\UserExtends;
 use App\Models\WithDrawalList;
 use App\Services\Message\MessageService;
 use App\Services\Room\RoomService;
@@ -113,6 +114,11 @@ class MemberController extends Controller
             'action' => 'transfer',
             'name' => '转账',
         ],//主播才有
+        [
+            'role' => 2,
+            'action' => 'contact',
+            'name' => '联系信息',
+        ],
         [
             'role' => 2,
             'action' => 'withdraw',
@@ -2815,5 +2821,64 @@ class MemberController extends Controller
         return new JsonResponse(['msg' => 0, 'data' => ['user' => $user]]);
     }
 
+    /**
+     * 用户中心 联系信息管理
+     * @name contact
+     * @author D.C
+     * @version 1.0
+     * @return JsonResponse
+     */
+    public function contact()
+    {
+        //$uid = Auth::id();
+        //$user = Auth::user();
+
+        $flashVer = SiteSer::config('publish_version');
+        !$flashVer && $flashVer = 'v201504092044';
+
+        //初始化$list数据
+        $list = [
+            'rooms' => [],
+        ];
+        $list = Redis::get('home_all_' . $flashVer. ':' . SiteSer::siteId());
+        $list = str_replace(['cb(', ');'], ['', ''], $list);
+        $J_list = json_decode($list, true);
+
+        $data = [];
+        foreach($J_list['rooms'] as $O_list){
+            if($O_list['live_status']>0){//find out who is live now
+                $user = Users::find($O_list['uid']);
+                if($user['transfer']>0){//find out who can transfer
+                    $userex = UserExtends::find($O_list['uid']);
+                    array_push($data,$userex);
+                }
+            }
+        }
+
+        return new JsonResponse(['msg' => 0, 'data' => ['live'=>$data]]);
+    }
+    /**
+     * 用户中心 联系信息管理
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function contactChange(Request $request)
+    {
+        $uid = Auth::id();
+        //$user = Auth::user();
+        $userex = UserExtends::find($uid);
+        //post value:cha contact
+        $post = $request->all();
+        if (!empty($post['phone'])) {
+            $userex->phone=$post['phone'];
+        }
+        if (!empty($post['qq'])) {
+            $userex->qq=$post['qq'];
+        }
+        if (!$userex->save()) {
+            return new JsonResponse(array('status' => 304, 'msg' => '修改失败'));
+        }
+        return new JsonResponse(array('status' => 1, 'msg' => '修改成功!'));
+    }
 }
 
