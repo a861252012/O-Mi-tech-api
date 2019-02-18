@@ -114,11 +114,11 @@ class MemberController extends Controller
             'action' => 'transfer',
             'name' => '转账',
         ],//主播才有
-        [
+        /*[
             'role' => 2,
             'action' => 'contact',
             'name' => '联系信息',
-        ],
+        ],//主播才有*/
         [
             'role' => 2,
             'action' => 'withdraw',
@@ -2869,16 +2869,24 @@ class MemberController extends Controller
         $userex = UserExtends::find($uid);
         //save post value to contact table
         $post = $request->all();
+        $check_change = 0;
         if (!empty($post['phone'])) {
             $userex->phone=$post['phone'];
+            $check_change++;
         }
         if (!empty($post['qq'])) {
             $userex->qq=$post['qq'];
+            $check_change++;
         }
         if (!$userex->save()) {
             return new JsonResponse(array('status' => 304, 'msg' => '修改失败'));
         }
-        return new JsonResponse(array('status' => 1, 'msg' => '修改成功!'));
+        if($check_change>0){
+            return new JsonResponse(array('status' => 1, 'msg' => '修改成功!'));
+        }else{
+            return new JsonResponse(array('status' => 0, 'msg' => '傳遞參數錯誤!'));
+        }
+        
     }
 }
 
