@@ -162,6 +162,8 @@ Route::group(['prefix' => 'pay', 'middleware' => ['charge']], function () {
 Route::match(['POST', 'GET'], '/statistic', ['name' => 'm_statistic', 'uses' => 'Mobile\MobileController@statistic']);
 Route::post('/send_crash', ['name' => 'send_crash', 'uses' => 'Mobile\MobileController@saveCrash']);//app报错接口
 
+//app探索页
+Route::get('appMarket', ['name' => 'm_appmarket', 'uses' => 'Mobile\MobileController@appMarket']);
 
 //生成数据
 Route::any('other/homeonetomany', ['name' => 'm_homeonetomany', 'uses' => 'OtherController@createHomeOneToManyList']);
