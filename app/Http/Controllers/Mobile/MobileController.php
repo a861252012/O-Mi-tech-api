@@ -355,7 +355,7 @@ class MobileController extends Controller
         MobileUseLogs::create([
             'imei' => $request->get('imei'),
             'uid' => $user->getAuthIdentifier(),
-            'ip' => $request->getClientIp(),
+            'ip' => $_SERVER['HTTP_X_FORWARDED_FOR'],
             'statis_date' => $statis_date,
         ]);
         $userfollow = $this->userFollowings();
