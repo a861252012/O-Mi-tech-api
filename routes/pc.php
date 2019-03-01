@@ -65,6 +65,9 @@ Route::group(['prefix' => 'member'], function () {
         // 用户中心 密码修改
         Route::post('password/change', 'MemberController@passwordChange')->name('member_password');
         Route::post('password', 'MemberController@password')->name('password');
+        // 用户中心 取得充值小妹live與contact修改
+        Route::get('contact', 'MemberController@contact')->name('contact');
+        Route::post('contact/change', 'MemberController@contactChange')->name('member_contact');
         // 用户中心 我的预约
         Route::get('reservation', 'MemberController@reservation')->name('member_reservation');
         // 用户中心 转账
@@ -375,3 +378,6 @@ Route::match(['POST', 'GET'], 'log', ['name' => 'getss', 'uses' => 'ApiControlle
 //古都通知接口
 Route::post('v2pay/inner', 'ChargeController@noticeGD')->name('gd_notice');
 Route::post('gd_test', 'ChargeController@testNoticeGD')->name('gd_test');
+
+//app探索页
+Route::get('appMarket', ['name' => 'm_appmarket', 'uses' => 'Mobile\MobileController@appMarket']);

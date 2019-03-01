@@ -118,6 +118,9 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     //移动端一对一房间用户
     Route::get('OneToOne/list', ['as' => 'member_onetoONElist', 'uses' => 'Mobile\RoomController@listOneToOneByHost']);
 
+    // 用户中心 收入统计
+    Route::get('member/income', ['name' => 'member_count', 'uses' => 'MemberController@income']);
+
     //转账功能
     //Route::get('transfer', 'MemberController@transferHistory')->name('member_transfer_history');
     //Route::post('transfer/create', 'MemberController@transfer')->name('member_transfer_create')->middleware('mobile.session');
@@ -159,6 +162,8 @@ Route::group(['prefix' => 'pay', 'middleware' => ['charge']], function () {
 Route::match(['POST', 'GET'], '/statistic', ['name' => 'm_statistic', 'uses' => 'Mobile\MobileController@statistic']);
 Route::post('/send_crash', ['name' => 'send_crash', 'uses' => 'Mobile\MobileController@saveCrash']);//app报错接口
 
+//app探索页
+Route::get('appMarket', ['name' => 'm_appmarket', 'uses' => 'Mobile\MobileController@appMarket']);
 
 //生成数据
 Route::any('other/homeonetomany', ['name' => 'm_homeonetomany', 'uses' => 'OtherController@createHomeOneToManyList']);
