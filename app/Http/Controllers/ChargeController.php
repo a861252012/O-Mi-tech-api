@@ -145,8 +145,9 @@ class ChargeController extends Controller
         }
 
         //获取下渠道
-        $channel = $_POST['vipLevel'];
-        $mode_type = $_POST['mode_type'];
+        //防止带入恶意参数
+        $channel = $this->request()->input('vipLevel');
+        $mode_type = $this->request()->input('mode_type');
         //判断下渠道存不存在
         if (empty($channel)) {
             $msg = '请选择充值渠道!';
