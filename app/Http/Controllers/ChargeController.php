@@ -725,7 +725,7 @@ class ChargeController extends Controller
         //强制查询主库
         $ret = DB::select($sql);
         //$ret = DB::select('/*' . MYSQLND_MS_MASTER_SWITCH . '*/' . $sql);
-        $ret = (array)$ret[0];// stdClass 转数组
+        $ret = (array)$ret[0]??'';// stdClass 转数组
         if (!$ret) {
             return new JsonResponse(array('status' => 1, 'msg' => '该订单号不存在！'));
         }
