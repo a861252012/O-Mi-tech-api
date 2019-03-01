@@ -715,7 +715,8 @@ class ChargeController extends Controller
      */
     public function checkCharge(Request $request)
     {
-        $orderId = isset($_GET['orderId']) ? $_GET['orderId'] : '';
+        //修复注入漏洞
+        $orderId = $request->input('orderId')??'';
         if (!$orderId) {
             return new JsonResponse(array('status' => 1, 'msg' => '该订单号不存在！'));
         }
