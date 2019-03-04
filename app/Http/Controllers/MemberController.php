@@ -27,7 +27,7 @@ use App\Models\UserBuyOneToMore;
 use App\Models\UserCommission;
 use App\Models\UserGroup;
 use App\Models\Users;
-use App\Models\UserExtends;
+use App\Models\HostInfo;
 use App\Models\WithDrawalList;
 use App\Services\Message\MessageService;
 use App\Services\Room\RoomService;
@@ -114,11 +114,6 @@ class MemberController extends Controller
             'action' => 'transfer',
             'name' => '转账',
         ],//主播才有
-        /*[
-            'role' => 2,
-            'action' => 'contact',
-            'name' => '联系信息',
-        ],//主播才有*/
         [
             'role' => 2,
             'action' => 'withdraw',
@@ -155,6 +150,8 @@ class MemberController extends Controller
             'name' => '代理数据',
         ],
     ];
+
+    protected $hostImgUrl = './storage/app/uploads/s88888/anchor/';
 
     public function getMenu()
     {
@@ -2847,46 +2844,19 @@ class MemberController extends Controller
         $data = [];
         foreach($J_list['rooms'] as $O_list){
             if($O_list['live_status']>0){//find out who is live now
-                $user = Users::find($O_list['uid']);
-                if($user['transfer']>0){//find out who can transfer
-                    $userex = UserExtends::find($O_list['uid']);
-                    array_push($data,$userex);
+                $user = Users::select('qrcode_image')->find($O_list['uid']);
+                if(!empty($user['qrcode_image'])){//find out who has QR image
+                    
+                    $userex = HostInfo::select('uid','nick')->where('agents',1)->where('dml_flag','<>',3)->find($O_list['uid']);
+                    $userex['qrcode_image'] = $this->hostImgUrl.$user['qrcode_image'];
+                    if(!empty($userex)){
+                        array_push($data,$userex);
+                    }
                 }
             }
         }
 
         return new JsonResponse(['msg' => 0, 'data' => ['live'=>$data]]);
-    }
-    /**
-     * 用户中心 联系信息管理
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function contactChange(Request $request)
-    {
-        $uid = Auth::id();
-        //$user = Auth::user();
-        $userex = UserExtends::find($uid);
-        //save post value to contact table
-        $post = $request->all();
-        $check_change = 0;
-        if (!empty($post['phone'])) {
-            $userex->phone=$post['phone'];
-            $check_change++;
-        }
-        if (!empty($post['qq'])) {
-            $userex->qq=$post['qq'];
-            $check_change++;
-        }
-        if (!$userex->save()) {
-            return new JsonResponse(array('status' => 304, 'msg' => '修改失败'));
-        }
-        if($check_change>0){
-            return new JsonResponse(array('status' => 1, 'msg' => '修改成功!'));
-        }else{
-            return new JsonResponse(array('status' => 0, 'msg' => '傳遞參數錯誤!'));
-        }
-        
     }
 }
 
