@@ -827,10 +827,10 @@ class MobileController extends Controller
                 array_push($market->recommend,$one);
             }
             if($position==3){
-                array_push($market->allApp,$one);
+                array_push($market->list,$one);
             }
             if($position==4){
-                array_push($market->list,$one);
+                array_push($market->allApp,$one);
             }
         }
 
