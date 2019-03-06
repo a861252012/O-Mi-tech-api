@@ -65,7 +65,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton('safeService', function ($app) {
             return new SafeService();
         });
-
+        //屏蔽报错，头部加DEV=debug时显示错误信息
+        if(($_SERVER['HTTP_DEV']??'') !== "debug") error_reporting(0);
     }
 
     /**
