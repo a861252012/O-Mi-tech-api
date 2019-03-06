@@ -151,8 +151,6 @@ class MemberController extends Controller
         ],
     ];
 
-    protected $hostImgUrl = './storage/app/uploads/s88888/anchor/';
-
     public function getMenu()
     {
         $user = Auth::user();
@@ -387,6 +385,39 @@ class MemberController extends Controller
             ->appends(['mintime' => $mintime, 'maxtime' => $maxtime]);
         return new JsonResponse(['status' => 1, 'data' => ['list' => $transfers,'total_amount'=>$total_amount]]);
 
+    }
+
+    public function transferList(Request $request)
+    {
+        $mintime = $request->get('starttime');
+        $maxtime = $request->get('endtime');
+        $uid = Auth::id();
+        //if(isset($uid)){
+            $transfers = Transfer::where(function ($query) use ($uid) {
+                $query->where('by_uid', $uid)->orWhere('to_uid', $uid);
+            });
+            if ($mintime && $maxtime) {
+                $transfers->where('datetime', '>=', $mintime)->where('datetime', '<=', $maxtime);
+            }
+
+            $transfers = $transfers->orderBy('datetime', 'desc')->get();
+            $transfersall = array();
+            foreach ($transfers as $transfersval) {
+                $O = (object) array();
+                $O->odd_number=(string) $transfersval['auto_id'];
+                $O->time=(string) $transfersval['datetime'];
+                $O->account_transfer=(string) $transfersval['by_uid'];
+                $O->account_receipt=(string) $transfersval['to_uid'];
+                $O->diamond=(string) $transfersval['points'];
+                $O->marks=(string) $transfersval['content'];
+                array_push($transfersall, $O);
+            }
+            return new JsonResponse(['status' => 1, 'data' => ['list' => $transfersall],'msg'=>'获取成功']);
+        /*return new JsonResponse(['status' => 123]);*/
+        /*}else{
+            return new JsonResponse(['status' => 1, 'data' => [],'msg'=>'未登录']);
+        }*/
+        
     }
 
     /**
@@ -1825,6 +1856,43 @@ class MemberController extends Controller
 
     }
 
+    public function giftList(Request $request)
+    {
+        $mintime = $request->get('starttime');
+        $maxtime = $request->get('endtime');
+        $uid = Auth::id();
+        //if(isset($uid)){
+            $gifts = MallList::where(function ($query) use ($uid) {
+                $query->where('rec_uid', $uid);
+            });
+            if ($mintime && $maxtime) {
+                $gifts->where('created', '>=', $mintime)->where('created', '<=', $maxtime);
+            }
+
+            $gifts = $gifts->orderBy('created', 'desc')->get();
+            $giftsall = array();
+            foreach ($gifts as $giftsval) {
+                $user = Users::find($giftsval['send_uid']);
+                $good = Goods::find($giftsval['gid']);
+                $O = (object) array();
+
+                $O->odd_number=(string) $giftsval['id'];
+                $O->good_name=(string) $good->name;
+                $O->good_number=(string) $giftsval['gnum'];
+                $O->diamond=(string) $giftsval['points'];
+                $O->time=(string) $giftsval['created'];
+                $O->sender=(string) $user->nickname;
+                $O->platform=(string) $giftsval['site_id'];
+                array_push($giftsall, $O);
+            }
+            return new JsonResponse(['status' => 1, 'data' => ['list' => $giftsall],'msg'=>'获取成功']);
+        /*return new JsonResponse(['status' => 123]);*/
+        /*}else{
+            return new JsonResponse(['status' => 1, 'data' => [],'msg'=>'未登录']);
+        }*/
+        
+    }
+
     /**
      * 用户中心 直播时间
      */
@@ -2842,13 +2910,14 @@ class MemberController extends Controller
         $J_list = json_decode($list, true);
 
         $data = [];
+
         foreach($J_list['rooms'] as $O_list){
             if($O_list['live_status']>0){//find out who is live now
                 $user = Users::select('qrcode_image')->find($O_list['uid']);
                 if(!empty($user['qrcode_image'])){//find out who has QR image
                     
                     $userex = HostInfo::select('uid','nick')->where('agents',1)->where('dml_flag','<>',3)->find($O_list['uid']);
-                    $userex['qrcode_image'] = $this->hostImgUrl.$user['qrcode_image'];
+                    $userex['qrcode_image'] = $user['qrcode_image'];
                     if(!empty($userex)){
                         array_push($data,$userex);
                     }

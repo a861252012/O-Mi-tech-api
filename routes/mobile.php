@@ -125,6 +125,9 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('transfer', 'MemberController@transferHistory')->name('member_transfer_history');
     Route::post('transfer/create', 'MemberController@transfer')->name('member_transfer_create')->middleware('mobile.session');
     Route::post('password', 'MemberController@password')->name('password')->middleware('mobile.session');
+    //转帐明细查询
+    Route::get('transferlist', 'MemberController@transferList')->name('member_transfer_list');
+    Route::get('giftlist', 'MemberController@giftList')->name('member_gift_list');
 });
 /** 进房间 */
 Route::any('get_room/{rid}', 'Mobile\RoomController@getRoom')->where('rid','[0-9]{5,15}')->name('m_get_room');
