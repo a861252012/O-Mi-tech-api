@@ -27,7 +27,7 @@ use App\Models\UserBuyOneToMore;
 use App\Models\UserCommission;
 use App\Models\UserGroup;
 use App\Models\Users;
-use App\Models\UserExtends;
+use App\Models\HostInfo;
 use App\Models\WithDrawalList;
 use App\Services\Message\MessageService;
 use App\Services\Room\RoomService;
@@ -114,11 +114,6 @@ class MemberController extends Controller
             'action' => 'transfer',
             'name' => '转账',
         ],//主播才有
-        /*[
-            'role' => 2,
-            'action' => 'contact',
-            'name' => '联系信息',
-        ],//主播才有*/
         [
             'role' => 2,
             'action' => 'withdraw',
@@ -390,6 +385,39 @@ class MemberController extends Controller
             ->appends(['mintime' => $mintime, 'maxtime' => $maxtime]);
         return new JsonResponse(['status' => 1, 'data' => ['list' => $transfers,'total_amount'=>$total_amount]]);
 
+    }
+
+    public function transferList(Request $request)
+    {
+        $mintime = $request->get('starttime');
+        $maxtime = $request->get('endtime');
+        $uid = Auth::id();
+        //if(isset($uid)){
+            $transfers = Transfer::where(function ($query) use ($uid) {
+                $query->where('by_uid', $uid)->orWhere('to_uid', $uid);
+            });
+            if ($mintime && $maxtime) {
+                $transfers->where('datetime', '>=', $mintime)->where('datetime', '<=', $maxtime);
+            }
+
+            $transfers = $transfers->orderBy('datetime', 'desc')->get();
+            $transfersall = array();
+            foreach ($transfers as $transfersval) {
+                $O = (object) array();
+                $O->odd_number=(string) $transfersval['auto_id'];
+                $O->time=(string) $transfersval['datetime'];
+                $O->account_transfer=(string) $transfersval['by_uid'];
+                $O->account_receipt=(string) $transfersval['to_uid'];
+                $O->diamond=(string) $transfersval['points'];
+                $O->marks=(string) $transfersval['content'];
+                array_push($transfersall, $O);
+            }
+            return new JsonResponse(['status' => 1, 'data' => ['list' => $transfersall],'msg'=>'获取成功']);
+        /*return new JsonResponse(['status' => 123]);*/
+        /*}else{
+            return new JsonResponse(['status' => 1, 'data' => [],'msg'=>'未登录']);
+        }*/
+        
     }
 
     /**
@@ -1831,6 +1859,43 @@ class MemberController extends Controller
 
     }
 
+    public function giftList(Request $request)
+    {
+        $mintime = $request->get('starttime');
+        $maxtime = $request->get('endtime');
+        $uid = Auth::id();
+        //if(isset($uid)){
+            $gifts = MallList::where(function ($query) use ($uid) {
+                $query->where('rec_uid', $uid);
+            });
+            if ($mintime && $maxtime) {
+                $gifts->where('created', '>=', $mintime)->where('created', '<=', $maxtime);
+            }
+
+            $gifts = $gifts->orderBy('created', 'desc')->get();
+            $giftsall = array();
+            foreach ($gifts as $giftsval) {
+                $user = Users::find($giftsval['send_uid']);
+                $good = Goods::find($giftsval['gid']);
+                $O = (object) array();
+
+                $O->odd_number=(string) $giftsval['id'];
+                $O->good_name=(string) $good->name;
+                $O->good_number=(string) $giftsval['gnum'];
+                $O->diamond=(string) $giftsval['points'];
+                $O->time=(string) $giftsval['created'];
+                $O->sender=(string) $user->nickname;
+                $O->platform=(string) $giftsval['site_id'];
+                array_push($giftsall, $O);
+            }
+            return new JsonResponse(['status' => 1, 'data' => ['list' => $giftsall],'msg'=>'获取成功']);
+        /*return new JsonResponse(['status' => 123]);*/
+        /*}else{
+            return new JsonResponse(['status' => 1, 'data' => [],'msg'=>'未登录']);
+        }*/
+        
+    }
+
     /**
      * 用户中心 直播时间
      */
@@ -2848,48 +2913,22 @@ class MemberController extends Controller
         $J_list = json_decode($list, true);
 
         $data = [];
+
         foreach($J_list['rooms'] as $O_list){
             if($O_list['live_status']>0){//find out who is live now
-                $user = Users::find($O_list['uid']);
-                if($user['transfer']>0){//find out who can transfer
-                    $userex = UserExtends::find($O_list['uid']);
-                    array_push($data,$userex);
+                $user = Users::select('qrcode_image')->find($O_list['uid']);
+                if(!empty($user['qrcode_image'])){//find out who has QR image
+                    
+                    $userex = HostInfo::select('uid','nick')->where('agents',1)->where('dml_flag','<>',3)->find($O_list['uid']);
+                    $userex['qrcode_image'] = $user['qrcode_image'];
+                    if(!empty($userex)){
+                        array_push($data,$userex);
+                    }
                 }
             }
         }
 
         return new JsonResponse(['msg' => 0, 'data' => ['live'=>$data]]);
-    }
-    /**
-     * 用户中心 联系信息管理
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function contactChange(Request $request)
-    {
-        $uid = Auth::id();
-        //$user = Auth::user();
-        $userex = UserExtends::find($uid);
-        //save post value to contact table
-        $post = $request->all();
-        $check_change = 0;
-        if (!empty($post['phone'])) {
-            $userex->phone=$post['phone'];
-            $check_change++;
-        }
-        if (!empty($post['qq'])) {
-            $userex->qq=$post['qq'];
-            $check_change++;
-        }
-        if (!$userex->save()) {
-            return new JsonResponse(array('status' => 304, 'msg' => '修改失败'));
-        }
-        if($check_change>0){
-            return new JsonResponse(array('status' => 1, 'msg' => '修改成功!'));
-        }else{
-            return new JsonResponse(array('status' => 0, 'msg' => '傳遞參數錯誤!'));
-        }
-        
     }
 }
 

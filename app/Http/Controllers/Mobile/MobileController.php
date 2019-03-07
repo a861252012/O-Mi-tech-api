@@ -31,7 +31,6 @@ class MobileController extends Controller
     const ACTIVITY_LIST_PAGE_SIZE = 15;
     const MOUNT_LIST_PAGE_SIZE = 0;
 
-
     /**
      * 移动端首页
      * 美女主播x4   全部主播x4
@@ -796,6 +795,8 @@ class MobileController extends Controller
      */
     public function appMarket()
     {
+        $cdn = SiteSer::config('cdn_host')."/storage/uploads/s".SiteSer::siteId()."/oort/"; // 'http://s.tnmhl.com/public/oort';
+
         $page_size = intval($this->request()->get('page_size'));
         $page_size = $page_size ? $page_size : 15;
         $uid = Auth::id();
@@ -816,7 +817,13 @@ class MobileController extends Controller
             $one->android_url = $S_list['android_url'];
             $one->ios_url = $S_list['ios_url'];
             $one->position = (string)$S_list['position'];
-            $one->pic = !empty($S_list['pic'])?$S_list['pic']:'';
+            
+            if(!empty($S_list['image'])){
+                //图片实际连结存在时 不导入cdn路径
+                $one->pic = strpos($S_list['image'],'://')?$S_list['image']:$cdn.$S_list['image'];
+            }else{
+                $one->pic = '';
+            }
 
             $position = $S_list['position'];
 
