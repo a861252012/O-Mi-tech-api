@@ -348,10 +348,10 @@ class MemberController extends Controller
 
 
             //更新转帐人用户redis信息
-           /* resolve(UserService::class)->getUserReset($uid);
+            /* resolve(UserService::class)->getUserReset($uid);
 
-            //更新收款人用户redis信息
-            resolve(UserService::class)->getUserReset($userTo['uid']);*/
+             //更新收款人用户redis信息
+             resolve(UserService::class)->getUserReset($userTo['uid']);*/
 
 
             return new JsonResponse(['status' => 1, 'msg' => '您成功转出' . $points . '钻石']);
@@ -411,7 +411,10 @@ class MemberController extends Controller
         $recharge_points = $recharge_points * 10;
         $rebate_points = ($recharge_points * $agentsPriv->agents->rebate) / 100;
 
-        $agent_members = AgentsRelationship::where('aid', $agentsPriv->aid)->count();
+        $agent_members = AgentsRelationship::where('aid', $agentsPriv->aid)
+            ->when($maxtime || $mintime, function ($query) use ($mintime, $maxtime) {
+                $query->join('video_user','video_agent_relationship.uid','=','video_user.uid')->whereBetween('video_user.created', [$mintime, $maxtime]);
+            })->count();
 
         $list = [
             [
@@ -666,7 +669,7 @@ class MemberController extends Controller
     {
         $page = $request->get('page', 1);
         $userServer = resolve(UserService::class);
-        $data = $userServer->getUserAttens(Auth::id(), $page,$fid = true, $perPage =15)
+        $data = $userServer->getUserAttens(Auth::id(), $page, $fid = true, $perPage = 15)
             ->setPath($request->getPathInfo());
         return JsonResponse::create(['data' => ['list' => $data]]);
     }
