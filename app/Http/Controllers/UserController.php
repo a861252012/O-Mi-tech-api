@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Users;
+use App\Models\UserExtends;
 use App\Services\Message\MessageService;
 use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
@@ -34,6 +35,16 @@ class UserController extends Controller
                 resolve(UserService::class)->cancelVip(Auth::id());
                 $userInfo['vip'] = 0;
                 $userInfo['vip_end'] = '';
+            }
+
+            //20190218 UserExtends
+            $uid = Auth::id();
+            $userex = UserExtends::find($uid);
+            if(!empty($userex['phone'])){
+                $userInfo['phone']=$userex['phone'];
+            }
+            if(!empty($userex['qq'])){
+                $userInfo['qq']=$userex['qq'];
             }
 
         }

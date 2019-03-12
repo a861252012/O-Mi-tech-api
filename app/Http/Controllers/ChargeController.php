@@ -145,8 +145,9 @@ class ChargeController extends Controller
         }
 
         //获取下渠道
-        $channel = $_POST['vipLevel'];
-        $mode_type = $_POST['mode_type'];
+        //防止带入恶意参数
+        $channel = $this->request()->input('vipLevel');
+        $mode_type = $this->request()->input('mode_type');
         //判断下渠道存不存在
         if (empty($channel)) {
             $msg = '请选择充值渠道!';
@@ -715,7 +716,8 @@ class ChargeController extends Controller
      */
     public function checkCharge(Request $request)
     {
-        $orderId = isset($_GET['orderId']) ? $_GET['orderId'] : '';
+        //修复注入漏洞
+        $orderId = $request->input('orderId')??'';
         if (!$orderId) {
             return new JsonResponse(array('status' => 1, 'msg' => '该订单号不存在！'));
         }
@@ -723,7 +725,7 @@ class ChargeController extends Controller
         //强制查询主库
         $ret = DB::select($sql);
         //$ret = DB::select('/*' . MYSQLND_MS_MASTER_SWITCH . '*/' . $sql);
-        $ret = (array)$ret[0];// stdClass 转数组
+        $ret = (array)$ret[0]??'';// stdClass 转数组
         if (!$ret) {
             return new JsonResponse(array('status' => 1, 'msg' => '该订单号不存在！'));
         }

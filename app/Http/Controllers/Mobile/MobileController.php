@@ -15,6 +15,7 @@ use App\Models\MobileUseLogs;
 use App\Models\Pack;
 use App\Models\Users;
 use App\Models\Messages;
+use App\Models\AppMarket;
 use App\Services\Site\SiteService;
 use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
@@ -29,7 +30,6 @@ class MobileController extends Controller
 {
     const ACTIVITY_LIST_PAGE_SIZE = 15;
     const MOUNT_LIST_PAGE_SIZE = 0;
-
 
     /**
      * 移动端首页
@@ -354,7 +354,7 @@ class MobileController extends Controller
         MobileUseLogs::create([
             'imei' => $request->get('imei'),
             'uid' => $user->getAuthIdentifier(),
-            'ip' => $request->getClientIp(),
+            'ip' => $_SERVER['HTTP_X_FORWARDED_FOR'],
             'statis_date' => $statis_date,
         ]);
         $userfollow = $this->userFollowings();
@@ -789,4 +789,62 @@ class MobileController extends Controller
         ]);
     }
 
+    /**
+     * 系统消息列表页面
+     * @return JsonResponse
+     */
+    public function appMarket()
+    {
+        $cdn = SiteSer::config('cdn_host')."/storage/uploads/s".SiteSer::siteId()."/oort/"; // 'http://s.tnmhl.com/public/oort';
+
+        $page_size = intval($this->request()->get('page_size'));
+        $page_size = $page_size ? $page_size : 15;
+        $uid = Auth::id();
+        $list = AppMarket::where('status', 1)->orderBy('order', 'asc')->paginate($page_size);
+
+        $market = (object)array();
+        $market->banner= array();
+        $market->recommend= array();
+        $market->allApp= array();
+        $market->list= array();
+
+        foreach($list as $S_list){
+
+            $one = (object)array();
+            $one->app_id = (string)$S_list['id'];
+            $one->app_name = $S_list['name'];
+            $one->app_desc = $S_list['desc'];
+            $one->android_url = $S_list['android_url'];
+            $one->ios_url = $S_list['ios_url'];
+            $one->position = (string)$S_list['position'];
+            
+            if(!empty($S_list['image'])){
+                //图片实际连结存在时 不导入cdn路径
+                $one->pic = strpos($S_list['image'],'://')?$S_list['image']:$cdn.$S_list['image'];
+            }else{
+                $one->pic = '';
+            }
+
+            $position = $S_list['position'];
+
+            if($position==1){
+                array_push($market->banner,$one);
+            }
+            if($position==2){
+                array_push($market->recommend,$one);
+            }
+            if($position==3){
+                array_push($market->list,$one);
+            }
+            if($position==4){
+                array_push($market->allApp,$one);
+            }
+        }
+
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => $market,
+            'msg' => '成功'
+        ]);
+    }
 }
