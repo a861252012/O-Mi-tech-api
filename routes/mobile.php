@@ -170,3 +170,6 @@ Route::get('appMarket', ['name' => 'm_appmarket', 'uses' => 'Mobile\MobileContro
 
 //生成数据
 Route::any('other/homeonetomany', ['name' => 'm_homeonetomany', 'uses' => 'OtherController@createHomeOneToManyList']);
+
+// 关键字屏蔽
+Route::get('/kw', ['name' => 'json_kw', 'uses' => 'ApiController@kw']);
