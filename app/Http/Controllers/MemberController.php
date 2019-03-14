@@ -1763,9 +1763,17 @@ class MemberController extends Controller
             }
         }
 
-        $all_data = MallList::query()->leftJoin('video_goods', function ($leftJoin) {
+        $all_data = MallList::select(
+            'video_user.nickname AS nickname',
+            'video_goods.*',
+            'video_mall_list.*'
+        )
+        ->leftJoin('video_goods', function ($leftJoin) {
             $leftJoin->on('video_goods.gid', '=', 'video_mall_list.gid');
         })
+            ->leftJoin('video_user', function ($query) {
+                $query->on('video_user.uid', '=', 'video_mall_list.send_uid');
+            })
             ->where($selectTypeName, $uid)
             ->where('video_mall_list.created', '>', $mintime)
             ->where('video_mall_list.created', '<', $maxtime)
@@ -1775,7 +1783,6 @@ class MemberController extends Controller
             ->orderBy('video_mall_list.created', 'desc')
             ->allSites()
             ->paginate();
-
 
         $sum_gift_num = MallList::query()->leftJoin('video_goods', function ($leftJoin) {
             $leftJoin->on('video_goods.gid', '=', 'video_mall_list.gid');
