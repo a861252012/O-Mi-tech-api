@@ -803,14 +803,37 @@ class MemberController extends Controller
      * @author cannyco<cannyco@weststarinc.co>
      * @update 2015.01.30
      */
-    public function charge()
+    public function charge(Request $request)
     {
+        $mintime = $request->get('mintime');
+        $maxtime = $request->get('maxtime');
+
+        $status = $request->get('status');
         //获取用户ID
         $uid = Auth::id();
         //获取下用户信息
-        $chargelist = Recharge::where('uid', $uid)->where('del', 0)
-            ->orderBy('id', 'DESC')->paginate();
-        return JsonResponse::create(['status' => 1, 'data' => ['list' => $chargelist]]);
+        $chargelist = Recharge::where('uid', $uid)->where('del', 0);
+
+        if ($mintime && $maxtime) {
+            $v['mintime'] = date('Y-m-d 00:00:00', strtotime($mintime));
+            $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
+            $chargelist->where('created', '>=', $mintime)->where('created', '<=', $maxtime);
+        }
+
+        if ($status) {
+            $chargelist->where('pay_status', $status);
+        }
+
+        $chargelistall = $chargelist->orderBy('created', 'desc')->pluck('points');
+        $total_amount=0;
+        foreach ($chargelistall as $chargelistallval) {
+           $total_amount += $chargelistallval;
+        }
+
+        $chargelists = $chargelist->orderBy('id', 'DESC')->paginate(10)
+            ->appends(['mintime' => $mintime, 'maxtime' => $maxtime]);
+        
+        return JsonResponse::create(['status' => 1, 'data' => ['list' => $chargelists,'total_amount'=>$total_amount]]);
     }
 
     /**
