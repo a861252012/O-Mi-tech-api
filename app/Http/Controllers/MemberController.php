@@ -402,7 +402,9 @@ class MemberController extends Controller
 
             $transfers = $transfers->orderBy('datetime', 'desc')->get();
             $transfersall = array();
+            $total_amount=0;
             foreach ($transfers as $transfersval) {
+                $total_amount += $transfersval['points'];
                 $O = (object) array();
                 $O->odd_number=(string) $transfersval['auto_id'];
                 $O->time=(string) $transfersval['datetime'];
@@ -412,7 +414,7 @@ class MemberController extends Controller
                 $O->marks=(string) $transfersval['content'];
                 array_push($transfersall, $O);
             }
-            return new JsonResponse(['status' => 1, 'data' => ['list' => $transfersall],'msg'=>'获取成功']);
+            return new JsonResponse(['status' => 1, 'data' => ['list' => $transfersall,'total_amount'=>$total_amount],'msg'=>'获取成功']);
         /*return new JsonResponse(['status' => 123]);*/
         /*}else{
             return new JsonResponse(['status' => 1, 'data' => [],'msg'=>'未登录']);

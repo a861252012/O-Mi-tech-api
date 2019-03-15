@@ -16,6 +16,7 @@ use App\Models\Pack;
 use App\Models\Users;
 use App\Models\Messages;
 use App\Models\AppMarket;
+use App\Models\UserModNickName;
 use App\Services\Site\SiteService;
 use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
@@ -139,6 +140,14 @@ class MobileController extends Controller
         $userfollow = $this->userFollowings();
         $hashtable = 'zuser_byattens:' . $uid;
         $by_atttennums = $this->make('redis')->zSize($hashtable);
+
+        // 普通用户修改的权限 只允许一次
+        $nickcount = 1;
+        $uMod = UserModNickName::where('uid', $uid)->first();
+        if ($uMod && $uMod->exists) {
+            $nickcount = 0;
+        }
+        
         return JsonResponse::create([
             'status' => 1,
             'data' => [
@@ -160,7 +169,11 @@ class MobileController extends Controller
                 'follows' => $userfollow,
                 'fansCount' => $by_atttennums,
                 'system_tip_count' => Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status', 0)->count(),
-                'transfer' => $userinfo->transfer
+                'transfer' => $userinfo->transfer,
+                'birthday' => $userinfo->birthday,
+                'city' => $userinfo->city,
+                'nickcount' => $nickcount,
+                'age' => date('Y') - explode('-',$userinfo->birthday)[0]
             ],
         ]);
     }
