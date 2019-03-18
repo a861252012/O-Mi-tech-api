@@ -13,6 +13,7 @@ use App\Models\CarGameBetBak;
 use App\Models\Goods;
 use App\Models\LevelRich;
 use App\Models\MallList;
+use App\Models\GiftList;
 use App\Models\Messages;
 use App\Models\Pack;
 use App\Models\Recharge;
@@ -1865,7 +1866,7 @@ class MemberController extends Controller
         $maxtime = $request->get('endtime');
         $uid = Auth::id();
         //if(isset($uid)){
-            $gifts = MallList::where(function ($query) use ($uid) {
+            $gifts = GiftList::where(function ($query) use ($uid) {
                 $query->where('rec_uid', $uid);
             });
             if ($mintime && $maxtime) {
