@@ -375,7 +375,7 @@ class MemberController extends Controller
         if ($mintime && $maxtime) {
             $v['mintime'] = date('Y-m-d 00:00:00', strtotime($mintime));
             $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
-            $transfers->where('datetime', '>=', $mintime)->where('datetime', '<=', $maxtime);
+            $transfers->where('datetime', '>=', $v['mintime'])->where('datetime', '<=', $v['maxtime']);
         }
         $transfersall = $transfers->orderBy('datetime', 'desc')->pluck('points');
         $total_amount=0;
@@ -809,8 +809,7 @@ class MemberController extends Controller
         //获取用户ID
         $uid = Auth::id();
         //获取下用户信息
-        $chargelist = Recharge::where('uid', $uid)->where('del', 0)
-            ->orderBy('id', 'DESC')->paginate();
+        $chargelist = Recharge::where('uid', $uid)->where('del', 0)->orderBy('id', 'DESC')->paginate();
         return JsonResponse::create(['status' => 1, 'data' => ['list' => $chargelist]]);
     }
 
