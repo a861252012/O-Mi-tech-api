@@ -28,6 +28,7 @@ use App\Models\UserBuyOneToMore;
 use App\Models\UserCommission;
 use App\Models\UserGroup;
 use App\Models\Users;
+use App\Models\Usersall;
 use App\Models\HostInfo;
 use App\Models\WithDrawalList;
 use App\Services\Message\MessageService;
@@ -2908,22 +2909,29 @@ class MemberController extends Controller
         $list = [
             'rooms' => [],
         ];
-        $list = Redis::get('home_all_' . $flashVer. ':' . SiteSer::siteId());
-        $list = str_replace(['cb(', ');'], ['', ''], $list);
-        $J_list = json_decode($list, true);
-
+        $A_keys = Redis::keys('home_all_' . $flashVer. ':?');
         $data = [];
+        foreach ($A_keys as $S_keys) {
+            $list = Redis::get($S_keys);
+            $list = str_replace(['cb(', ');'], ['', ''], $list);
+            $J_list = json_decode($list, true);
 
-        foreach($J_list['rooms'] as $O_list){
-            if($O_list['live_status']>0){//find out who is live now
-                $user = Users::select('qrcode_image')->find($O_list['uid']);
-                if(!empty($user['qrcode_image'])){//find out who has QR image
-                    
-                    $userex = HostInfo::select('uid','nick')->where('agents',1)->where('dml_flag','<>',3)->find($O_list['uid']);
-                    $userex['qrcode_image'] = $user['qrcode_image'];
-                    if(!empty($userex)){
-                        array_push($data,$userex);
+            foreach($J_list['rooms'] as $O_list){
+                if($O_list['live_status']>0){//find out who is live now
+                    $qrcode_image = Usersall::where('uid',$O_list['uid'])->pluck('qrcode_image');
+
+                    if(!empty($qrcode_image)){//find out who has QR image
+                        //array_push($data,$qrcode_image);
+                        $userex = HostInfo::select('uid','nick')->where('agents',1)->where('dml_flag','<>',3)->find($O_list['uid']);
+                        $userex['qrcode_image'] = $qrcode_image;
+                        if(!empty($userex)){
+                            if(!in_array($userex, $data)){
+                                array_push($data,$userex);
+                            }
+                        }
                     }
+                    /**/
+                    
                 }
             }
         }
