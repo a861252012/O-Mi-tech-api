@@ -13,6 +13,7 @@ use App\Models\CarGameBetBak;
 use App\Models\Goods;
 use App\Models\LevelRich;
 use App\Models\MallList;
+use App\Models\GiftList;
 use App\Models\Messages;
 use App\Models\Pack;
 use App\Models\Recharge;
@@ -27,6 +28,7 @@ use App\Models\UserBuyOneToMore;
 use App\Models\UserCommission;
 use App\Models\UserGroup;
 use App\Models\Users;
+use App\Models\Usersall;
 use App\Models\HostInfo;
 use App\Models\WithDrawalList;
 use App\Services\Message\MessageService;
@@ -374,7 +376,7 @@ class MemberController extends Controller
         if ($mintime && $maxtime) {
             $v['mintime'] = date('Y-m-d 00:00:00', strtotime($mintime));
             $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
-            $transfers->where('datetime', '>=', $mintime)->where('datetime', '<=', $maxtime);
+            $transfers->where('datetime', '>=', $v['mintime'])->where('datetime', '<=', $v['maxtime']);
         }
         $transfersall = $transfers->orderBy('datetime', 'desc')->pluck('points');
         $total_amount=0;
@@ -1897,7 +1899,7 @@ class MemberController extends Controller
         $maxtime = $request->get('endtime');
         $uid = Auth::id();
         //if(isset($uid)){
-            $gifts = MallList::where(function ($query) use ($uid) {
+            $gifts = GiftList::where(function ($query) use ($uid) {
                 $query->where('rec_uid', $uid);
             });
             if ($mintime && $maxtime) {
@@ -2940,22 +2942,29 @@ class MemberController extends Controller
         $list = [
             'rooms' => [],
         ];
-        $list = Redis::get('home_all_' . $flashVer. ':' . SiteSer::siteId());
-        $list = str_replace(['cb(', ');'], ['', ''], $list);
-        $J_list = json_decode($list, true);
-
+        $A_keys = Redis::keys('home_all_' . $flashVer. ':?');
         $data = [];
+        foreach ($A_keys as $S_keys) {
+            $list = Redis::get($S_keys);
+            $list = str_replace(['cb(', ');'], ['', ''], $list);
+            $J_list = json_decode($list, true);
 
-        foreach($J_list['rooms'] as $O_list){
-            if($O_list['live_status']>0){//find out who is live now
-                $user = Users::select('qrcode_image')->find($O_list['uid']);
-                if(!empty($user['qrcode_image'])){//find out who has QR image
-                    
-                    $userex = HostInfo::select('uid','nick')->where('agents',1)->where('dml_flag','<>',3)->find($O_list['uid']);
-                    $userex['qrcode_image'] = $user['qrcode_image'];
-                    if(!empty($userex)){
-                        array_push($data,$userex);
+            foreach($J_list['rooms'] as $O_list){
+                if($O_list['live_status']>0){//find out who is live now
+                    $qrcode_image = Usersall::where('uid',$O_list['uid'])->pluck('qrcode_image');
+
+                    if(!empty($qrcode_image)){//find out who has QR image
+                        //array_push($data,$qrcode_image);
+                        $userex = HostInfo::select('uid','nick')->where('agents',1)->where('dml_flag','<>',3)->find($O_list['uid']);
+                        $userex['qrcode_image'] = $qrcode_image;
+                        if(!empty($userex)){
+                            if(!in_array($userex, $data)){
+                                array_push($data,$userex);
+                            }
+                        }
                     }
+                    /**/
+                    
                 }
             }
         }

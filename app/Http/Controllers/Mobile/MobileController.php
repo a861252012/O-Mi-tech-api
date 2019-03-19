@@ -630,6 +630,7 @@ class MobileController extends Controller
             $branches = range(1, 5);
         }
         $versions = [];
+
         foreach ($branches as $branch) {
             $version = Mobile::checkIos() ?
                 Mobile::getLastIosVersion($branch) :
@@ -813,7 +814,7 @@ class MobileController extends Controller
         $page_size = intval($this->request()->get('page_size'));
         $page_size = $page_size ? $page_size : 15;
         $uid = Auth::id();
-        $list = AppMarket::where('status', 1)->orderBy('order', 'asc')->paginate($page_size);
+        $list = AppMarket::where('status', 1)->where('site_id',SiteSer::siteId())->orderBy('order', 'asc')->paginate($page_size);
 
         $market = (object)array();
         $market->banner= array();

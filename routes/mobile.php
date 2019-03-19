@@ -129,11 +129,16 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('transferlist', 'MemberController@transferList')->name('member_transfer_list');
     Route::get('giftlist', 'MemberController@giftList')->name('member_gift_list');
 
+
     // 用户中心修改基本信息
     Route::post('edituserinfo', 'MemberController@editUserInfo')->name('member_edituserinfo');
 
     // 用户中心 充值记录
     Route::get('charge', 'MemberController@charge')->name('member_charge');
+
+    // 用户中心 取得live的充值小妹contact
+    Route::get('contact', 'MemberController@contact')->name('contact');
+
 });
 /** 进房间 */
 Route::any('get_room/{rid}', 'Mobile\RoomController@getRoom')->where('rid','[0-9]{5,15}')->name('m_get_room');
