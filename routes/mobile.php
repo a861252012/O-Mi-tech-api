@@ -128,6 +128,9 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     //转帐明细查询
     Route::get('transferlist', 'MemberController@transferList')->name('member_transfer_list');
     Route::get('giftlist', 'MemberController@giftList')->name('member_gift_list');
+
+    // 用户中心 取得live的充值小妹contact
+    Route::get('contact', 'MemberController@contact')->name('contact');
 });
 /** 进房间 */
 Route::any('get_room/{rid}', 'Mobile\RoomController@getRoom')->where('rid','[0-9]{5,15}')->name('m_get_room');
