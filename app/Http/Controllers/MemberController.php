@@ -399,7 +399,9 @@ class MemberController extends Controller
                 $query->where('by_uid', $uid)->orWhere('to_uid', $uid);
             });
             if ($mintime && $maxtime) {
-                $transfers->where('datetime', '>=', $mintime)->where('datetime', '<=', $maxtime);
+                $v['mintime'] = date('Y-m-d 00:00:00', strtotime($mintime));
+                $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
+                $transfers->where('datetime', '>=', $v['mintime'])->where('datetime', '<=', $v['maxtime']);
             }
 
             $transfers = $transfers->orderBy('datetime', 'desc')->get();
