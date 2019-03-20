@@ -1900,7 +1900,7 @@ class MemberController extends Controller
             $gifts = $gifts->orderBy('created', 'desc')->get();
             $giftsall = array();
             foreach ($gifts as $giftsval) {
-                $user = Users::find($giftsval['send_uid']);
+                $user = Usersall::find($giftsval['send_uid']);
                 $good = Goods::find($giftsval['gid']);
                 $O = (object) array();
 
