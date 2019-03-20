@@ -1892,7 +1892,9 @@ class MemberController extends Controller
                 $query->where('rec_uid', $uid);
             });
             if ($mintime && $maxtime) {
-                $gifts->where('created', '>=', $mintime)->where('created', '<=', $maxtime);
+                $v['mintime'] = date('Y-m-d 00:00:00', strtotime($mintime));
+                $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
+                $gifts->where('created', '>=', $v['mintime'])->where('created', '<=', $v['maxtime']);
             }
 
             $gifts = $gifts->orderBy('created', 'desc')->get();
