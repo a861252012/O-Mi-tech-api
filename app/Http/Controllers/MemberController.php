@@ -2947,8 +2947,8 @@ class MemberController extends Controller
                     if(!empty($qrcode_image)){//find out who has QR image
                         //array_push($data,$qrcode_image);
                         $userex = HostInfo::select('uid','nick')->where('agents',1)->where('dml_flag','<>',3)->find($O_list['uid']);
-                        $userex['qrcode_image'] = $qrcode_image;
                         if(!empty($userex)){
+                            $userex['qrcode_image'] = $qrcode_image;
                             if(!in_array($userex, $data)){
                                 array_push($data,$userex);
                             }
