@@ -399,7 +399,9 @@ class MemberController extends Controller
                 $query->where('by_uid', $uid)->orWhere('to_uid', $uid);
             });
             if ($mintime && $maxtime) {
-                $transfers->where('datetime', '>=', $mintime)->where('datetime', '<=', $maxtime);
+                $v['mintime'] = date('Y-m-d 00:00:00', strtotime($mintime));
+                $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
+                $transfers->where('datetime', '>=', $v['mintime'])->where('datetime', '<=', $v['maxtime']);
             }
 
             $transfers = $transfers->orderBy('datetime', 'desc')->get();
@@ -1890,13 +1892,15 @@ class MemberController extends Controller
                 $query->where('rec_uid', $uid);
             });
             if ($mintime && $maxtime) {
-                $gifts->where('created', '>=', $mintime)->where('created', '<=', $maxtime);
+                $v['mintime'] = date('Y-m-d 00:00:00', strtotime($mintime));
+                $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
+                $gifts->where('created', '>=', $v['mintime'])->where('created', '<=', $v['maxtime']);
             }
 
             $gifts = $gifts->orderBy('created', 'desc')->get();
             $giftsall = array();
             foreach ($gifts as $giftsval) {
-                $user = Users::find($giftsval['send_uid']);
+                $user = Usersall::find($giftsval['send_uid']);
                 $good = Goods::find($giftsval['gid']);
                 $O = (object) array();
 
