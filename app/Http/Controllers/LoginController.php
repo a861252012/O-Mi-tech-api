@@ -185,21 +185,15 @@ class LoginController extends Controller
 
         $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
         $uid = UserSer::getUidByUsername($username);
-        if(Redis::hget('huser_suspend:'.SiteSer::siteId(), $username)){
-            return [
-                'status' => 0,
-                'msg' => '您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq
-            ];
-        }else{
-            if($member = Users::find($uid)){
-                if ($member->status==2) {
-                    return [
-                        'status' => 0,
-                        'msg' => '您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq
-                    ];
-                }
+        if($member = Users::find($uid)){
+            if ($member->status==2) {
+                return [
+                    'status' => 0,
+                    'msg' => '您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq
+                ];
             }
         }
+
 
         if($open_pwd_change && (!$this->checkPwdChanged($uid))){
             return array(
