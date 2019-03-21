@@ -1054,6 +1054,22 @@ class MemberController extends Controller
 
         $data['uid'] = Auth::guard()->id();
         //  var_dump($data);exit;
+
+        /*检查是否已开启一对多*/
+        $flashVersion = SiteSer::config('publish_version');
+        $oneManyRooms = Redis::get('home_one_many_' . $flashVersion . ':' . SiteSer::siteId());
+        $oneManyRooms = str_replace(['cb(', ');'], ['', ''], $oneManyRooms);
+        $oneManyRooms = json_decode($oneManyRooms, true);
+        $S_check = 0;
+        foreach ($oneManyRooms['rooms'] as $S_room) {
+            if($S_room['uid']==$data['uid']){
+                $S_check++;
+            }
+        }
+        if($S_check>0){
+            return new JsonResponse(['status' => 0, 'msg' => '开启一对多房间时，无法设定']);
+        }
+
         $roomservice = resolve(RoomService::class);
         $result = $roomservice->addOnetomore($data);
         return new JsonResponse($result);
@@ -1897,31 +1913,37 @@ class MemberController extends Controller
     {
         $mintime = $request->get('starttime');
         $maxtime = $request->get('endtime');
+        $type = $request->get('type')!=''?$request->get('type'):'rec';
+
         $uid = Auth::id();
+
         //if(isset($uid)){
-            $gifts = GiftList::where(function ($query) use ($uid) {
-                $query->where('rec_uid', $uid);
-            });
+            $gifts = GiftList::where($type.'_uid', $uid);
             if ($mintime && $maxtime) {
                 $gifts->where('created', '>=', $mintime)->where('created', '<=', $maxtime);
             }
 
-            $gifts = $gifts->orderBy('created', 'desc')->get();
-            $giftsall = array();
-            foreach ($gifts as $giftsval) {
-                $user = Users::find($giftsval['send_uid']);
-                $good = Goods::find($giftsval['gid']);
-                $O = (object) array();
+            if($type=='send'){
+                $giftsall = $gifts->orderBy('created', 'desc')->paginate(10)->appends(['mintime' => $mintime, 'maxtime' => $maxtime ]);
+            }else{
+                $gifts = $gifts->orderBy('created', 'desc')->get();
+                $giftsall = array();
+                foreach ($gifts as $giftsval) {
+                    $user = Users::find($giftsval['send_uid']);
+                    $good = Goods::find($giftsval['gid']);
+                    $O = (object) array();
 
-                $O->odd_number=(string) $giftsval['id'];
-                $O->good_name=(string) $good->name;
-                $O->good_number=(string) $giftsval['gnum'];
-                $O->diamond=(string) $giftsval['points'];
-                $O->time=(string) $giftsval['created'];
-                $O->sender=(string) $user->nickname;
-                $O->platform=(string) $giftsval['site_id'];
-                array_push($giftsall, $O);
+                    $O->odd_number=(string) $giftsval['id'];
+                    $O->good_name=(string) $good->name;
+                    $O->good_number=(string) $giftsval['gnum'];
+                    $O->diamond=(string) $giftsval['points'];
+                    $O->time=(string) $giftsval['created'];
+                    $O->sender=(string) $user->nickname;
+                    $O->platform=(string) $giftsval['site_id'];
+                    array_push($giftsall, $O);
+                }
             }
+
             return new JsonResponse(['status' => 1, 'data' => ['list' => $giftsall],'msg'=>'获取成功']);
         /*return new JsonResponse(['status' => 123]);*/
         /*}else{
