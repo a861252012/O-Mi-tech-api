@@ -434,6 +434,7 @@ class ChargeController extends Controller
             'amount' => $amount,
             'comment' => $comment,
             'bank_id' => $bank_id,
+            'del' => 0,
             'pay_type' => $pay_type,
             'usercard_num' => $usercard_num,
             'fee' => $fee,

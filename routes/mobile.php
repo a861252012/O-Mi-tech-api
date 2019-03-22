@@ -75,8 +75,6 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     //关注
     Route::any('follow', ['name' => 'm_follow', 'uses' => 'ApiController@follow']);
 
-
-
     Route::group(['prefix'=>'room'],function (){
         //预约列表 type=1 一对一，type=2 一对多
         Route::get('reservation/{type}',  'Mobile\RoomController@listReservation')->where('type',"[1,2,3]")->name('m_userroomreservation');
@@ -189,3 +187,6 @@ Route::any('other/homeonetomany', ['name' => 'm_homeonetomany', 'uses' => 'Other
 
 // 关键字屏蔽
 Route::get('/kw', ['name' => 'json_kw', 'uses' => 'ApiController@kw']);
+
+//官方聯繫
+Route::get('official', ['name' => 'm_follow', 'uses' => 'Mobile\MobileController@official']);

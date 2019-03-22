@@ -814,7 +814,7 @@ class MobileController extends Controller
     }
 
     /**
-     * 系统消息列表页面
+     * 應用配置
      * @return JsonResponse
      */
     public function appMarket()
@@ -868,6 +868,20 @@ class MobileController extends Controller
         return JsonResponse::create([
             'status' => 1,
             'data' => $market,
+            'msg' => '成功'
+        ]);
+    }
+
+    /**
+     * 官方聯繫方式
+     * @return JsonResponse
+     */
+    public function official()
+    {
+        $official = Redis::hget('hsite_config:' . SiteSer::siteId(),'mobile_official');
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => $official,
             'msg' => '成功'
         ]);
     }
