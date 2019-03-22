@@ -127,6 +127,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::post('password', 'MemberController@password')->name('password')->middleware('mobile.session');
     //转帐明细查询
     Route::get('transferlist', 'MemberController@transferList')->name('member_transfer_list');
+    //礼物收入礼物送出纪录
     Route::get('giftlist', 'MemberController@giftList')->name('member_gift_list');
 
 
@@ -135,10 +136,14 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
 
     // 用户中心 充值记录
     Route::get('charge', 'MemberController@charge')->name('member_charge');
-
+    // 用户中心 消费记录
+    Route::get('consume', 'MemberController@consume')->name('member_consume');
     // 用户中心 取得live的充值小妹contact
     Route::get('contact', 'MemberController@contact')->name('contact');
-
+    // 用户中心 vip 贵族体系
+    Route::get('vip', ['name' => 'member_vip', 'uses' => 'MemberController@vip']);
+    // 用户中心 viplist 贵族体系
+    Route::get('/member/viplist', ['name' => 'member_viplist', 'uses' => 'MemberController@vip_list']);
 });
 /** 进房间 */
 Route::any('get_room/{rid}', 'Mobile\RoomController@getRoom')->where('rid','[0-9]{5,15}')->name('m_get_room');
