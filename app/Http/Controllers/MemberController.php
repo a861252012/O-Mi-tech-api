@@ -399,7 +399,9 @@ class MemberController extends Controller
                 $query->where('by_uid', $uid)->orWhere('to_uid', $uid);
             });
             if ($mintime && $maxtime) {
-                $transfers->where('datetime', '>=', $mintime)->where('datetime', '<=', $maxtime);
+                $v['mintime'] = date('Y-m-d 00:00:00', strtotime($mintime));
+                $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
+                $transfers->where('datetime', '>=', $v['mintime'])->where('datetime', '<=', $v['maxtime']);
             }
 
             $transfers = $transfers->orderBy('datetime', 'desc')->get();
@@ -1920,7 +1922,9 @@ class MemberController extends Controller
         //if(isset($uid)){
             $gifts = GiftList::where($type.'_uid', $uid);
             if ($mintime && $maxtime) {
-                $gifts->where('created', '>=', $mintime)->where('created', '<=', $maxtime);
+                $v['mintime'] = date('Y-m-d 00:00:00', strtotime($mintime));
+                $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
+                $gifts->where('created', '>=', $v['mintime'])->where('created', '<=', $v['maxtime']);
             }
 
             if($type=='send'){
@@ -1942,6 +1946,7 @@ class MemberController extends Controller
                     $O->platform=(string) $giftsval['site_id'];
                     array_push($giftsall, $O);
                 }
+
             }
 
             return new JsonResponse(['status' => 1, 'data' => ['list' => $giftsall],'msg'=>'获取成功']);
