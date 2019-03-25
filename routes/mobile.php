@@ -128,7 +128,9 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     //礼物收入礼物送出纪录
     Route::get('giftlist', 'MemberController@giftList')->name('member_gift_list');
 
-
+    //上传头像
+    Route::post('upload', 'MemberController@avatarUpload')->name('avatar_upload');
+    
     // 用户中心修改基本信息
     Route::post('edituserinfo', 'MemberController@editUserInfo')->name('member_edituserinfo');
 
