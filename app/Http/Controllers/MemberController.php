@@ -29,7 +29,6 @@ use App\Models\UserCommission;
 use App\Models\UserGroup;
 use App\Models\Users;
 use App\Models\Usersall;
-use App\Models\HostInfo;
 use App\Models\WithDrawalList;
 use App\Services\Message\MessageService;
 use App\Services\Room\RoomService;
@@ -2978,18 +2977,13 @@ class MemberController extends Controller
 
             foreach($J_list['rooms'] as $O_list){
                 if($O_list['live_status']>0){//find out who is live now
-                    $qrcode_image = Usersall::where('uid',$O_list['uid'])->pluck('qrcode_image');
-
-                    if(!empty($qrcode_image)){//find out who has QR image
-                        //array_push($data,$qrcode_image);
-                        $userex = HostInfo::select('uid','nick')->where('agents',1)->where('dml_flag','<>',3)->find($O_list['uid']);
+                        $userex = Usersall::select('uid','nickname as nick','qrcode_image')->where('transfer',1)->whereNotNull('qrcode_image')->find($O_list['uid']);
                         if(!empty($userex)){
-                            $userex['qrcode_image'] = $qrcode_image;
                             if(!in_array($userex, $data)){
                                 array_push($data,$userex);
                             }
                         }
-                    }
+                    //}
                 }
             }
         }
