@@ -2941,7 +2941,7 @@ class MemberController extends Controller
 
             foreach($J_list['rooms'] as $O_list){
                 if($O_list['live_status']>0){//find out who is live now
-                    $userex = Usersall::select('uid','nickname as nick','qrcode_image')->where('transfer',1)->whereNotNull('qrcode_image')->find($O_list['uid']);
+                    $userex = Usersall::select('uid','nickname as nick','qrcode_image')->where('transfer',1)->where('qrcode_image','<>','')->find($O_list['uid']);
                     if(!empty($userex)){
                         if(!in_array($userex, $data)){
                             array_push($data,$userex);
