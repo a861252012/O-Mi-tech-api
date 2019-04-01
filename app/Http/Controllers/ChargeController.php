@@ -718,6 +718,8 @@ class ChargeController extends Controller
     {
         //修复注入漏洞
         $orderId = $request->input('orderId')??'';
+        //去除％和0x攻击
+        $orderId = preg_replace('/%|0x/', ' ', $orderId);
         if (!$orderId) {
             return new JsonResponse(array('status' => 1, 'msg' => '该订单号不存在！'));
         }
