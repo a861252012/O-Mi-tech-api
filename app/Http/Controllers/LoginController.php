@@ -183,13 +183,13 @@ class LoginController extends Controller
 
         $open_pwd_change = SiteSer::config('pwd_change') ?: false;
 
-        $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
         $uid = UserSer::getUidByUsername($username);
         if(!$uid){
             $uid = UserSer::getUidByNickname($username);
         }
         if($member = Users::find($uid)){
             if ($member->status==2) {
+                $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
                 return [
                     'status' => 0,
                     'msg' => '您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq

@@ -346,9 +346,12 @@ class MobileController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => '用户名密码不能为空']);
         }
 
-        $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
         $uid = UserSer::getUidByUsername($username);
+        if(!$uid){
+            $uid = UserSer::getUidByNickname($username);
+        }
         if($member = Users::find($uid)){
+            $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
             if ($member->status==2) {
                 return JsonResponse::create(['status' => 0, 'msg' => '您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq]);
             }
