@@ -185,6 +185,9 @@ class LoginController extends Controller
 
         $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
         $uid = UserSer::getUidByUsername($username);
+        if(!$uid){
+            $uid = UserSer::getUidByNickname($username);
+        }
         if($member = Users::find($uid)){
             if ($member->status==2) {
                 return [
