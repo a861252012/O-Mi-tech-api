@@ -10,6 +10,7 @@ use App\Models\Conf;
 use App\Models\Domain;
 use App\Models\GiftCategory;
 use App\Models\Goods;
+use App\Models\Keywords;
 use App\Models\LevelRich;
 use App\Models\Messages;
 use App\Models\Pack;
@@ -141,6 +142,26 @@ class ApiController extends Controller
                 "status" => 0,
                 "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-11位的昵称)",
             ]);
+        }
+
+        /**
+         * 关键字过滤
+         *
+         * @author dc
+         * @var array
+         */
+        $query = Keywords::where('btype', 2)->where('status', 0)->groupby('keyword')->get(['keyword'])->toArray();
+
+        if (is_array($query)) {
+            foreach ($query as $v) {
+                $v['keyword'] = addcslashes($v['keyword'], '.^$*+?()[]{}|\\');
+                if (preg_match("/{$v['keyword']}/i", $nickname)) {
+                    return JsonResponse::create([
+                        "status" => 0,
+                        "msg" => "昵称中含有非法字符，请修改后再提交!",
+                    ]);
+                }
+            }
         }
 
         if ($request->get('password1') != $request->get('password2')) {

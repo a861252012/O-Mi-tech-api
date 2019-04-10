@@ -98,13 +98,15 @@ class ChargeController extends Controller
 
         //判断下这条记录是不是这个用户的
         if (!$chargeObj) {
-            return new ErrorResponse('这条记录不是你的');
+            //return new ErrorResponse('这条记录不是你的');
+            return JsonResponse::create(['status' => 0, 'msg' => '这条记录不是你的']);
         }
         //执行删除操作
         $chargeObj->del = 1;
         $chargeObj->save();
 
-        return new SuccessResponse('删除成功');
+        //return new SuccessResponse('删除成功');
+        return JsonResponse::create(['status' => 1, 'msg' => '删除成功']);
     }
 
     /**
@@ -432,6 +434,7 @@ class ChargeController extends Controller
             'amount' => $amount,
             'comment' => $comment,
             'bank_id' => $bank_id,
+            'del' => 0,
             'pay_type' => $pay_type,
             'usercard_num' => $usercard_num,
             'fee' => $fee,

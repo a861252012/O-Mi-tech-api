@@ -405,7 +405,9 @@ class MemberController extends Controller
 
             $transfers = $transfers->orderBy('datetime', 'desc')->get();
             $transfersall = array();
+            $total_amount=0;
             foreach ($transfers as $transfersval) {
+                $total_amount += $transfersval['points'];
                 $O = (object) array();
                 $O->odd_number=(string) $transfersval['auto_id'];
                 $O->time=(string) $transfersval['datetime'];
@@ -415,7 +417,7 @@ class MemberController extends Controller
                 $O->marks=(string) $transfersval['content'];
                 array_push($transfersall, $O);
             }
-            return new JsonResponse(['status' => 1, 'data' => ['list' => $transfersall],'msg'=>'获取成功']);
+            return new JsonResponse(['status' => 1, 'data' => ['list' => $transfersall,'total_amount'=>$total_amount],'msg'=>'获取成功']);
         /*return new JsonResponse(['status' => 123]);*/
         /*}else{
             return new JsonResponse(['status' => 1, 'data' => [],'msg'=>'未登录']);
@@ -806,8 +808,12 @@ class MemberController extends Controller
      * @author cannyco<cannyco@weststarinc.co>
      * @update 2015.01.30
      */
-    public function charge()
+    public function charge(Request $request)
     {
+        $mintime = $request->get('mintime');
+        $maxtime = $request->get('maxtime');
+
+        $status = $request->get('status');
         //获取用户ID
         $uid = Auth::id();
         //获取下用户信息
@@ -1049,6 +1055,22 @@ class MemberController extends Controller
 
         $data['uid'] = Auth::guard()->id();
         //  var_dump($data);exit;
+
+        /*检查是否已开启一对多*/
+        $flashVersion = SiteSer::config('publish_version');
+        $oneManyRooms = Redis::get('home_one_many_' . $flashVersion . ':' . SiteSer::siteId());
+        $oneManyRooms = str_replace(['cb(', ');'], ['', ''], $oneManyRooms);
+        $oneManyRooms = json_decode($oneManyRooms, true);
+        $S_check = 0;
+        foreach ($oneManyRooms['rooms'] as $S_room) {
+            if($S_room['uid']==$data['uid']){
+                $S_check++;
+            }
+        }
+        if($S_check>0){
+            return new JsonResponse(['status' => 0, 'msg' => '开启一对多房间时，无法设定']);
+        }
+
         $roomservice = resolve(RoomService::class);
         $result = $roomservice->addOnetomore($data);
         return new JsonResponse($result);
@@ -1785,9 +1807,17 @@ class MemberController extends Controller
             }
         }
 
-        $all_data = MallList::query()->leftJoin('video_goods', function ($leftJoin) {
+        $all_data = MallList::select(
+            'video_user.nickname AS nickname',
+            'video_goods.*',
+            'video_mall_list.*'
+        )
+        ->leftJoin('video_goods', function ($leftJoin) {
             $leftJoin->on('video_goods.gid', '=', 'video_mall_list.gid');
         })
+            ->leftJoin('video_user', function ($query) {
+                $query->on('video_user.uid', '=', 'video_mall_list.send_uid');
+            })
             ->where($selectTypeName, $uid)
             ->where('video_mall_list.created', '>', $mintime)
             ->where('video_mall_list.created', '<', $maxtime)
@@ -1797,7 +1827,6 @@ class MemberController extends Controller
             ->orderBy('video_mall_list.created', 'desc')
             ->allSites()
             ->paginate();
-
 
         $sum_gift_num = MallList::query()->leftJoin('video_goods', function ($leftJoin) {
             $leftJoin->on('video_goods.gid', '=', 'video_mall_list.gid');
@@ -1885,33 +1914,40 @@ class MemberController extends Controller
     {
         $mintime = $request->get('starttime');
         $maxtime = $request->get('endtime');
+        $type = $request->get('type')!=''?$request->get('type'):'rec';
+
         $uid = Auth::id();
+
         //if(isset($uid)){
-            $gifts = GiftList::where(function ($query) use ($uid) {
-                $query->where('rec_uid', $uid);
-            });
+            $gifts = GiftList::where($type.'_uid', $uid);
             if ($mintime && $maxtime) {
                 $v['mintime'] = date('Y-m-d 00:00:00', strtotime($mintime));
                 $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
                 $gifts->where('created', '>=', $v['mintime'])->where('created', '<=', $v['maxtime']);
             }
 
-            $gifts = $gifts->orderBy('created', 'desc')->get();
-            $giftsall = array();
-            foreach ($gifts as $giftsval) {
-                $user = Usersall::find($giftsval['send_uid']);
-                $good = Goods::find($giftsval['gid']);
-                $O = (object) array();
+            if($type=='send'){
+                $giftsall = $gifts->orderBy('created', 'desc')->paginate(10)->appends(['mintime' => $mintime, 'maxtime' => $maxtime ]);
+            }else{
+                $gifts = $gifts->orderBy('created', 'desc')->get();
+                $giftsall = array();
+                foreach ($gifts as $giftsval) {
+                    $user = Users::find($giftsval['send_uid']);
+                    $good = Goods::find($giftsval['gid']);
+                    $O = (object) array();
 
-                $O->odd_number=(string) $giftsval['id'];
-                $O->good_name=(string) $good->name;
-                $O->good_number=(string) $giftsval['gnum'];
-                $O->diamond=(string) $giftsval['points'];
-                $O->time=(string) $giftsval['created'];
-                $O->sender=(string) $user->nickname;
-                $O->platform=(string) $giftsval['site_id'];
-                array_push($giftsall, $O);
+                    $O->odd_number=(string) $giftsval['id'];
+                    $O->good_name=(string) $good->name;
+                    $O->good_number=(string) $giftsval['gnum'];
+                    $O->diamond=(string) $giftsval['points'];
+                    $O->time=(string) $giftsval['created'];
+                    $O->sender=(string) $user->nickname;
+                    $O->platform=(string) $giftsval['site_id'];
+                    array_push($giftsall, $O);
+                }
+
             }
+
             return new JsonResponse(['status' => 1, 'data' => ['list' => $giftsall],'msg'=>'获取成功']);
         /*return new JsonResponse(['status' => 123]);*/
         /*}else{

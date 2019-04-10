@@ -182,7 +182,22 @@ class LoginController extends Controller
         }
 
         $open_pwd_change = SiteSer::config('pwd_change') ?: false;
+
         $uid = UserSer::getUidByUsername($username);
+        if(!$uid){
+            $uid = UserSer::getUidByNickname($username);
+        }
+        if($member = Users::find($uid)){
+            if ($member->status==2) {
+                $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
+                return [
+                    'status' => 0,
+                    'msg' => '您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq
+                ];
+            }
+        }
+
+
         if($open_pwd_change && (!$this->checkPwdChanged($uid))){
             return array(
                 'status'=>101,
@@ -202,7 +217,6 @@ class LoginController extends Controller
             ];
         };
 
-
         return [
             'status' => 1,
             'msg' => '登录成功',
@@ -210,6 +224,7 @@ class LoginController extends Controller
                Session::getName() => Session::getId(),
             ]
         ];
+        
     }
 
     private function checkPwdChanged($uid){

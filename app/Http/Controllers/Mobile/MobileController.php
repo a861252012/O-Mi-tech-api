@@ -16,6 +16,7 @@ use App\Models\Pack;
 use App\Models\Users;
 use App\Models\Messages;
 use App\Models\AppMarket;
+use App\Models\UserModNickName;
 use App\Services\Site\SiteService;
 use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
@@ -139,6 +140,14 @@ class MobileController extends Controller
         $userfollow = $this->userFollowings();
         $hashtable = 'zuser_byattens:' . $uid;
         $by_atttennums = $this->make('redis')->zSize($hashtable);
+
+        // 普通用户修改的权限 只允许一次
+        $nickcount = 1;
+        $uMod = UserModNickName::where('uid', $uid)->first();
+        if ($uMod && $uMod->exists) {
+            $nickcount = 0;
+        }
+        
         return JsonResponse::create([
             'status' => 1,
             'data' => [
@@ -160,7 +169,11 @@ class MobileController extends Controller
                 'follows' => $userfollow,
                 'fansCount' => $by_atttennums,
                 'system_tip_count' => Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status', 0)->count(),
-                'transfer' => $userinfo->transfer
+                'transfer' => $userinfo->transfer,
+                'birthday' => $userinfo->birthday,
+                'city' => $userinfo->city,
+                'nickcount' => $nickcount,
+                'age' => date('Y') - explode('-',$userinfo->birthday)[0]
             ],
         ]);
     }
@@ -332,6 +345,18 @@ class MobileController extends Controller
         if (!$username || !$password) {
             return JsonResponse::create(['status' => 0, 'msg' => '用户名密码不能为空']);
         }
+
+        $uid = UserSer::getUidByUsername($username);
+        if(!$uid){
+            $uid = UserSer::getUidByNickname($username);
+        }
+        if($member = Users::find($uid)){
+            $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
+            if ($member->status==2) {
+                return JsonResponse::create(['status' => 0, 'msg' => '您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq]);
+            }
+        }
+
         $user = null;
         $jwt = Auth::guard('mobile');
 
@@ -339,6 +364,7 @@ class MobileController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => '用户名密码错误']);
         }
         $user = $jwt->user();
+
         //添加是否写入sid判断
         $token = (string)$jwt->getToken();
         $huser_sid = (int)resolve('redis')->hget('huser_sid', $user->uid);
@@ -791,7 +817,7 @@ class MobileController extends Controller
     }
 
     /**
-     * 系统消息列表页面
+     * 應用配置
      * @return JsonResponse
      */
     public function appMarket()
@@ -845,6 +871,20 @@ class MobileController extends Controller
         return JsonResponse::create([
             'status' => 1,
             'data' => $market,
+            'msg' => '成功'
+        ]);
+    }
+
+    /**
+     * 官方聯繫方式
+     * @return JsonResponse
+     */
+    public function official()
+    {
+        $official = Redis::hget('hsite_config:' . SiteSer::siteId(),'mobile_official');
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => $official,
             'msg' => '成功'
         ]);
     }
