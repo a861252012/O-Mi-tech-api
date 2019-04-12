@@ -828,17 +828,23 @@ class MemberController extends Controller
         if ($status) {
             $chargelist->where('pay_status', $status);
         }
-
+        //统计钻石
         $chargelistall = $chargelist->orderBy('created', 'desc')->pluck('points');
         $total_amount=0;
         foreach ($chargelistall as $chargelistallval) {
            $total_amount += $chargelistallval;
         }
+        //统计金额
+        $chargelistall2 = $chargelist->orderBy('created', 'desc')->pluck('paymoney');
+        $total_money=0;
+        foreach ($chargelistall2 as $chargelistallval2) {
+           $total_money += $chargelistallval2;
+        }
 
         $chargelists = $chargelist->orderBy('id', 'DESC')->paginate(10)
             ->appends(['mintime' => $mintime, 'maxtime' => $maxtime]);
         
-        return JsonResponse::create(['status' => 1, 'data' => ['list' => $chargelists,'total_amount'=>$total_amount]]);
+        return JsonResponse::create(['status' => 1, 'data' => ['list' => $chargelists,'total_amount'=>$total_amount,'total_money'=>$total_money]]);
     }
 
     /**
@@ -1056,7 +1062,7 @@ class MemberController extends Controller
         $data['uid'] = Auth::guard()->id();
         //  var_dump($data);exit;
 
-        /*检查是否已开启一对多*/
+        /*检查是否已开启一对多
         $flashVersion = SiteSer::config('publish_version');
         $oneManyRooms = Redis::get('home_one_many_' . $flashVersion . ':' . SiteSer::siteId());
         $oneManyRooms = str_replace(['cb(', ');'], ['', ''], $oneManyRooms);
@@ -1069,6 +1075,12 @@ class MemberController extends Controller
         }
         if($S_check>0){
             return new JsonResponse(['status' => 0, 'msg' => '开启一对多房间时，无法设定']);
+        }*/
+
+        $A_rotm = RoomOneToMore::where('uid', Auth::id())->where('endtime', '>',date("Y-m-d H:i:s"))->pluck('live_status');
+
+        if(count($A_rotm)>0){
+            return new JsonResponse(['status' => 0, 'msg' => '尚有未结束的一对多房间时，无法设定']);
         }
 
         $roomservice = resolve(RoomService::class);
