@@ -1077,7 +1077,7 @@ class MemberController extends Controller
             return new JsonResponse(['status' => 0, 'msg' => '开启一对多房间时，无法设定']);
         }*/
 
-        $A_rotm = RoomOneToMore::where('uid', Auth::id())->where('endtime', '>',date("Y-m-d H:i:s"))->pluck('live_status');
+        $A_rotm = RoomOneToMore::where('uid', Auth::id())->where('endtime', '>',date("Y-m-d H:i:s"))->where('status', 0)->pluck('live_status');
 
         if(count($A_rotm)>0){
             return new JsonResponse(['status' => 0, 'msg' => '尚有未结束的一对多房间时，无法设定']);
