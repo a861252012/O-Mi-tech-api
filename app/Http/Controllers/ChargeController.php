@@ -184,7 +184,7 @@ class ChargeController extends Controller
                 'points' => ceil($amount * 10) + $fee,
                 'order_id' => resolve('charge')->getMessageNo(),
                 'postdata' => $postdata,
-                'nickname' => Auth::user()['username'],
+                'nickname' => Auth::user()['nickname'],
                 'channel' => $channel,
                 'mode_type' => $mode_type,
                 'origin' => $origin
