@@ -1938,27 +1938,36 @@ class MemberController extends Controller
                 $gifts->where('created', '>=', $v['mintime'])->where('created', '<=', $v['maxtime']);
             }
 
-            if($type=='send'){
+            /*if($type=='send'){
                 $giftsall = $gifts->orderBy('created', 'desc')->paginate(10)->appends(['mintime' => $mintime, 'maxtime' => $maxtime ]);
-            }else{
+            }else{*/
                 $gifts = $gifts->orderBy('created', 'desc')->get();
                 $giftsall = array();
                 foreach ($gifts as $giftsval) {
-                    $user = Users::find($giftsval['send_uid']);
                     $good = Goods::find($giftsval['gid']);
                     $O = (object) array();
 
                     $O->odd_number=(string) $giftsval['id'];
                     $O->good_name=(string) $good->name;
                     $O->good_number=(string) $giftsval['gnum'];
+                    $O->good_id=(string) $giftsval['gid'];
                     $O->diamond=(string) $giftsval['points'];
                     $O->time=(string) $giftsval['created'];
-                    $O->sender=(string) $user->nickname;
+                    if($type=='send'){
+                        //谁收到
+                        $user = Users::find($giftsval['rec_uid']);
+                        $O->receiver=(string) $user->nickname;
+                    }else{
+                        //谁送的
+                        $user = Users::find($giftsval['send_uid']);
+                        $O->sender=(string) $user->nickname;
+                    }
+                    $O->room_id=(string) $giftsval['rid'];
                     $O->platform=(string) $giftsval['site_id'];
                     array_push($giftsall, $O);
                 }
 
-            }
+            //}
 
             return new JsonResponse(['status' => 1, 'data' => ['list' => $giftsall],'msg'=>'获取成功']);
         /*return new JsonResponse(['status' => 123]);*/
