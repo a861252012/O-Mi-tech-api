@@ -504,6 +504,7 @@ class UserService extends Service
                 $items->push([
                     'headimg' => $user->headimg,
                     'rid' => $user->uid,
+                    'username' => $user->username,
                     'nickname' => $user->nickname,
                     'roled' => $user->roled,
                     'lv_exp' => $user->lv_exp,
