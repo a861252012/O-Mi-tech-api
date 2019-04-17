@@ -483,6 +483,23 @@ class UserService extends Service
         foreach ($uids as $uid) {
             $user = UserSer::getUserByUid($uid);
             if ($user) {
+
+                $flashVer = SiteSer::config('publish_version');
+                !$flashVer && $flashVer = 'v201504092044';
+                $A_keys = Redis::keys('home_all_' . $flashVer. ':?');
+                $data = [];
+                foreach ($A_keys as $S_keys) {
+                    $list = Redis::get($S_keys);
+                    $list = str_replace(['cb(', ');'], ['', ''], $list);
+                    $J_list = json_decode($list, true);
+
+                    foreach($J_list['rooms'] as $O_list){
+                        if($O_list['rid']==$uid){
+                            $live_status = $O_list['live_status'];
+                        }
+                    }
+                }
+
                 $items->push([
                     'headimg' => $user->headimg,
                     'rid' => $user->uid,
@@ -492,6 +509,7 @@ class UserService extends Service
                     'lv_rich' => $user->lv_rich,
                     'cover' => $user->cover ? $user->cover : '',
                     'fid' => $uid,
+                    'live_status' => $live_status
                 ]);
             }
         }
