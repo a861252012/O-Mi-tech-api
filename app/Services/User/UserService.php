@@ -496,6 +496,7 @@ class UserService extends Service
                     foreach($J_list['rooms'] as $O_list){
                         if($O_list['rid']==$uid){
                             $live_status = $O_list['live_status'];
+                            $attens = $O_list['attens'];
                         }
                     }
                 }
@@ -509,7 +510,8 @@ class UserService extends Service
                     'lv_rich' => $user->lv_rich,
                     'cover' => $user->cover ? $user->cover : '',
                     'fid' => $uid,
-                    'live_status' => $live_status
+                    'live_status' => $live_status,
+                    'attens' => $attens,
                 ]);
             }
         }
