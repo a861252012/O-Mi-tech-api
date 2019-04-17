@@ -171,6 +171,7 @@ class MobileController extends Controller
                 'system_tip_count' => Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status', 0)->count(),
                 'transfer' => $userinfo->transfer,
                 'birthday' => $userinfo->birthday,
+                'province' => $userinfo->province,
                 'city' => $userinfo->city,
                 'nickcount' => $nickcount,
                 'age' => date('Y') - explode('-',$userinfo->birthday)[0]
