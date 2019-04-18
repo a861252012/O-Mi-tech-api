@@ -33,6 +33,7 @@ class SiteConfig extends Command
         '1'=>['database','redis','mail','workman','debug','template','obs','redis_ip','redis_port','redis_password','page-size','database_password'],
         //二站
         '2'=>['database','redis','mail','workman','debug','template','obs','redis_ip','redis_port','redis_password','page-size','database_password'],
+        '3'=>['database','redis','m ai l','workman' ,'debug' ,'templ ate','obs' ,'redis_ ip','redis_ port', 'redis_pass word','page-s ize','database_pa ssword'],
     ];
     public $actions = [
         'flush',
@@ -95,22 +96,25 @@ class SiteConfig extends Command
         }
     }
 
-    public function insert(Site $site){
+    public function insert(Site $site)
+    {
         $site_id = $site->id;
         $insertData = [];
         $siteConfig = $this->getConfig($site_id);
         $bar = $this->output->createProgressBar(count($siteConfig));
 
         $hasConfig = $site->config()->get();
-        $hasKeyValues =   array_combine($hasConfig->pluck('k')->toArray(),$hasConfig->pluck('v')->toArray());
+        $hasKeyValues =   array_combine($hasConfig->pluck('k')->toArray(), $hasConfig->pluck('v')->toArray());
 
-        foreach ($siteConfig as $key =>$value){
-            if(in_array($key,$this->filter[$site_id])) continue;
-            if(array_key_exists($key,$hasKeyValues)){
-                Storage::disk('local')->append($this->getRepeatFile(),"\n站点：$site_id \nconfig file $key : ".$this->conversion($value)."\ndb $key : ".$this->conversion($hasKeyValues[$key]));
+        foreach ($siteConfig as $key =>$value) {
+            if (in_array($key, $this->filter[$site_id])) {
                 continue;
             }
-            if($value===""){
+            if (array_key_exists($key, $hasKeyValues)) {
+                Storage::disk('local')->append($this->getRepeatFile(), "\n站点：$site_id \nconfig file $key : ".$this->conversion($value)."\ndb $key : ".$this->conversion($hasKeyValues[$key]));
+                continue;
+            }
+            if ($value==="") {
                 $this->info("site $site_id $key");
                 continue;
             }
@@ -122,7 +126,7 @@ class SiteConfig extends Command
                 'client'=>0b1,
                 'created'=>Carbon::now(),
             ];
-            array_push($insertData,$config);
+            array_push($insertData, $config);
             $bar->advance();
         }
         //dd($insertData);
@@ -131,14 +135,17 @@ class SiteConfig extends Command
 
         $this->info('finish '.count($insertData));
     }
-    public function conversion($value){
+    public function conversion($value)
+    {
         return is_array($value) ? json_encode($value) : $value;
     }
-    public function getType($value){
+    public function getType($value)
+    {
         return is_array($value) ? 'json' : (is_int($value) ? 'int' : (is_bool($value) ? 'bool' : 'string'));
     }
 
-    public function getConfig($site_id):array {
+    public function getConfig($site_id):array
+    {
         $configArr = $this->specifyConfigs($site_id);
         return $configArr;
     }
@@ -148,44 +155,49 @@ class SiteConfig extends Command
      * @param $site_id
      * @return array|mixed
      */
-    public function specifyConfigs($site_id){
+    public function specifyConfigs($site_id)
+    {
         $admin = [];
         $front = [];
-        switch ($site_id){
-            case '1' :
-                define('__ROOT_DIR__','');
+        switch ($site_id) {
+            case '1':
+                define('__ROOT_DIR__', '');
                 $front = include storage_path('app/config').DIRECTORY_SEPARATOR."php-conf-cache.php";
                 include storage_path('app/config').DIRECTORY_SEPARATOR."ParamConf.php";
                 $admin = @$config;
                 break;
-            case '2' :
-                define('BASEDIR','');
+            case '2':
+                define('BASEDIR', '');
                 $_SERVER['HTTP_HOST'] = '';
                 $front1 = include storage_path('app/config').DIRECTORY_SEPARATOR."v2_config.php";
                 $front2 = include storage_path('app/config').DIRECTORY_SEPARATOR."config.php";
                 $admin1 = include storage_path('app/config').DIRECTORY_SEPARATOR."v2a_config.php";
                 $admin2 = include storage_path('app/config').DIRECTORY_SEPARATOR."v2_admin.php";        //重命名
-                $front = array_merge($front2,$front1);
-                $admin = array_merge($admin2,$admin1);
+                $front = array_merge($front2, $front1);
+                $admin = array_merge($admin2, $admin1);
                 break;
             default:;
         }
-        $admin = array_change_key_case($admin,CASE_LOWER);
-        $front = array_change_key_case($front,CASE_LOWER);
-        $this->checkRepeat($front,$admin,$site_id);
-        $temp = array_merge($admin,$front);
+        $admin = array_change_key_case($admin, CASE_LOWER);
+        $front = array_change_key_case($front, CASE_LOWER);
+        $this->checkRepeat($front, $admin, $site_id);
+        $temp = array_merge($admin, $front);
         return $temp;
     }
-    public function checkRepeat($front,$admin,$site_id){
-        foreach ($front as $key => $value){
-            if(in_array($key,$this->filter[$site_id])) continue;
-            if(array_key_exists($key,$admin)){
-                Storage::disk('local')->append($this->getRepeatFile(),"\n站点：$site_id \nfront $key : ".$this->conversion($value)."\nadmin $key : ".$this->conversion($admin[$key]));
+    public function checkRepeat($front, $admin, $site_id)
+    {
+        foreach ($front as $key => $value) {
+            if (in_array($key, $this->filter[$site_id])) {
+                continue;
+            }
+            if (array_key_exists($key, $admin)) {
+                Storage::disk('local')->append($this->getRepeatFile(), "\n站点：$site_id \nfront $key : ".$this->conversion($value)."\nadmin $key : ".$this->conversion($admin[$key]));
                 $this->error("前后台存在重复键名 $key");
             }
         }
     }
-    public function getRepeatFile(){
+    public function getRepeatFile()
+    {
         return 'repeat.txt';
     }
 
