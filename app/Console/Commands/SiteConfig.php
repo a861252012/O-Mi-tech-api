@@ -33,7 +33,6 @@ class SiteConfig extends Command
         '1'=>['database','redis','mail','workman','debug','template','obs','redis_ip','redis_port','redis_password','page-size','database_password'],
         //二站
         '2'=>['database','redis','mail','workman','debug','template','obs','redis_ip','redis_port','redis_password','page-size','database_password'],
-        '3'=>['database','redis','m ai l','workman' ,'debug' ,'templ ate','obs' ,'redis_ ip','redis_ port', 'redis_pass word','page-s ize','database_pa ssword'],
     ];
     public $actions = [
         'flush',
