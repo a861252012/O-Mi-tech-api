@@ -313,6 +313,7 @@ class MemberController extends Controller
                 'paymoney' => round($points / 10, 2),
                 'created' => date('Y-m-d H:i:s'),
                 'order_id' => 'transfer_' . $uid . '_to_' . $userTo['uid'] . '_' . uniqid(),
+                'del' => 0,//190418stanly添加
                 'pay_type' => 7,
                 'pay_status' => 2,
                 'nickname' => $userTo['nickname'],
@@ -822,7 +823,7 @@ class MemberController extends Controller
         if ($mintime && $maxtime) {
             $v['mintime'] = date('Y-m-d 00:00:00', strtotime($mintime));
             $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
-            $chargelist->where('created', '>=', $mintime)->where('created', '<=', $maxtime);
+            $chargelist->where('created', '>=', $v['mintime'])->where('created', '<=', $v['maxtime']);
         }
 
         if ($status) {
