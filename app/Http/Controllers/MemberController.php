@@ -822,7 +822,7 @@ class MemberController extends Controller
         if ($mintime && $maxtime) {
             $v['mintime'] = date('Y-m-d 00:00:00', strtotime($mintime));
             $v['maxtime'] = date('Y-m-d 23:59:59', strtotime($maxtime));
-            $chargelist->where('created', '>=', $mintime)->where('created', '<=', $maxtime);
+            $chargelist->where('created', '>=', $v['mintime'])->where('created', '<=', $v['maxtime']);
         }
 
         if ($status) {
