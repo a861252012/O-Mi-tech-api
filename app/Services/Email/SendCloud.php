@@ -5,6 +5,7 @@ namespace App\Services\Email;
 require_once 'Config.php';
 use App\Services\Email\HttpClient;
 use phpDocumentor\Reflection\DocBlock\Tags\Var_;
+use Illuminate\Support\Facades\Log;
 
 class SendCloud {
 	private $host_v1 = 'http://sendcloud.sohu.com';
