@@ -22,6 +22,7 @@ use App\Models\UserBuyGroup;
 use App\Models\UserGroup;
 use App\Models\UserModNickName;
 use App\Models\Users;
+use App\Models\Usersall;
 use App\Models\VideoMail;
 use App\Models\WithDrawalList;
 use App\Models\WithDrawalRules;
@@ -1425,7 +1426,6 @@ class Controller extends BaseController
         // 获取购买记录
         $log = UserBuyGroup::where('uid', $user['uid'])->where('gid', $userGid)->orderBy('end_time', 'desc')->first();
         // 获取充值详细 时间为有效期往前推一个月
-
         //$startTime = strtotime($log->end_time) - 30 * 24 * 60 * 60;
 
         //dc修改空数据下 判断
@@ -1445,7 +1445,6 @@ class Controller extends BaseController
             return true; // 未充值直接返回
         }
 
-
         $system = unserialize($group->system);
         if ($pays >= $system['keep_level']) {
             // 更改有效期
@@ -1456,14 +1455,14 @@ class Controller extends BaseController
                 $log->end_time = date('Y-m-d H:i:s', $newTime);
                 $log->save();
 
-                $userObj = Users::find($user['uid']);
+                $userObj = Usersall::find($user['uid']);
                 $userObj->vip_end = date('Y-m-d H:i:s', $newTime);
                 $userObj->save();
 
                 DB::commit();
                 // 更新完刷新redis
                 Redis::hset('huser_info:' . $user['uid'], 'vip_end', date('Y-m-d H:i:s', $newTime));
-
+/*
                 //发送私信给用户
                 VideoMail::create([
                     'send_uid' => 0,
@@ -1473,6 +1472,7 @@ class Controller extends BaseController
                     'status' => 0,
                     'created' => date('Y-m-d H:i:s'),
                 ]);
+*/
             } catch (\Exception $e) {
 //                $testPath = BASEDIR . '/app/logs/test_' . date('Y-m-d') . '.log';
                 $testInfo = "保级异常：getmypid " . getmypid() . "checkUserVipStatus 更新数据成功  \n";
