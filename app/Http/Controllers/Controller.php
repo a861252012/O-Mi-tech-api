@@ -1424,7 +1424,7 @@ class Controller extends BaseController
         $userGid = $group->gid;
 
         // 获取购买记录
-        $log = UserBuyGroup::where('uid', $user['uid'])->where('gid', $userGid)->orderBy('end_time', 'desc')->first();
+        $log = UserBuyGroup::withoutGlobalScopes()->where('uid', $user['uid'])->where('gid', $userGid)->orderBy('end_time', 'desc')->first();
         // 获取充值详细 时间为有效期往前推一个月
         //$startTime = strtotime($log->end_time) - 30 * 24 * 60 * 60;
 
@@ -1437,7 +1437,7 @@ class Controller extends BaseController
 
 
         // 兼容后台充值的策略的
-        $pays = Recharge::where('uid', $user['uid'])->where('pay_status', 2)->where(function ($query) {
+        $pays = Recharge::withoutGlobalScopes()->where('uid', $user['uid'])->where('pay_status', 2)->where(function ($query) {
             $query->orWhere('pay_type', 1)->orWhere('pay_type', 4)->orWhere('pay_type', 7);
         })->where('created', '>=', date('Y-m-d H:i:s', $startTime))
             ->sum('points');

@@ -14,7 +14,7 @@ class UserBuyGroup extends \Illuminate\Database\Eloquent\Model
      * 表名 消息表
      * @var string
      */
-    //use  SiteSpecific;
+    use  SiteSpecific;
     protected  $table='video_user_buy_group';
     protected $primaryKey = 'auto_id';
 
