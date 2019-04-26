@@ -5,6 +5,7 @@ namespace App\Services\Email;
 require_once 'Config.php';
 use App\Services\Email\HttpClient;
 use phpDocumentor\Reflection\DocBlock\Tags\Var_;
+use Illuminate\Support\Facades\Log;
 
 class SendCloud {
 	private $host_v1 = 'http://sendcloud.sohu.com';
@@ -409,10 +410,12 @@ class SendCloud {
 			$bodyData = $this->wrapBody ( $mail );
 			$resonse = $this->client->mutilpost ( 'POST', $config [$this->version] ['sendTemplate'], $bodyData ['body'], $bodyData ['header'] );
 			//echo $resonse->body ();
+			Log::info("sendTemplate：" . $resonse->body ());
 		} else {
 			$param = $this->wrapParam ( $mail );
 			$resonse = $this->client->post ( $method, $config [$this->version] ['sendTemplate'], '', $param );
 		//	echo $resonse->body ();
+			Log::info("sendTemplate：" . $resonse->body ());
 		}
 	}
 }
