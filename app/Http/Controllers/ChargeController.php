@@ -201,6 +201,66 @@ class ChargeController extends Controller
         return new JsonResponse(array('status' => 0, 'data' => $rtn));
     }
 
+    public function exchange(Request $request)
+    {
+        //修复注入漏洞
+        $status = $request->input('status')??'';
+        $orderid = $request->input('orderid')??'';
+        //去除％和0x攻击
+        $orderid = preg_replace('/%|0x|SELECT|FROM/', ' ', $orderid);
+        if (!$orderid) {
+            return new JsonResponse(array('status' => 1, 'msg' => '没有订单号！'));
+        }
+
+        //强制查询主库
+        $ret = Recharge::where('order_id', $orderid)->where('pay_status', 4)->first();
+
+        if (!$ret) {
+            return new JsonResponse(array('status' => 1, 'msg' => '该订单号不存在！'));
+        }
+        if(empty($status)){
+            return new JsonResponse(array('status' => 1, 'msg' => '状态不正确！'));
+        }
+
+        /*
+        进入交易
+        点数充值
+        更改订单状态
+        送出交易
+        更新redis点数
+        */
+        $loginfo = "";
+        //开启事务
+        try {
+            DB::beginTransaction();
+            //刷新redis钻石
+            $rs = DB::table('video_user')->where('uid', $ret->uid)->increment('points', $ret->points);
+            $userObj = DB::table('video_user')->where('uid', $ret->uid)->first();//Users::find($stmt['uid']);
+            $loginfo .= '增加的钻石: points:' . $ret->points . ' 最终的钻石:' . $userObj->points;
+            $this->make('redis')->hincrby('huser_info:' . $ret->uid, 'points', $ret->points);
+            
+
+            $ret->pay_status=$status;
+            $ret->save();
+
+            DB::commit();
+            //Log::channel('charge')->info($rtn);
+            return new JsonResponse(array('status' => 0, 'msg' => '兑换成功！'));
+        } catch (\Exception $e) {
+            Log::channel('charge')->info("订单号：" . $tradeno . " 事务结果：" . $e->getMessage() . "\n");
+            DB::rollback();
+            return new JsonResponse(array('status' => 1, 'msg' => '程序内部异常'));
+        }
+        /*$tradeno = $orderid;
+        $paytradeno = null;
+        $money = $ret->points;
+        $loginfo = null;
+        $chargeResult = $status;
+        $complateTime = date('Y-m-d H:i:s', time());
+        $channel = '';
+        return $this->orderHandler($tradeno, $paytradeno, $loginfo, $logPath = "", $money, $chargeResult, $channel, $complateTime);*/
+    }
+
     private function getClient()
     {
         $client = $this->request()->headers->get('client', 12);
