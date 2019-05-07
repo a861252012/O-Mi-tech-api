@@ -221,7 +221,11 @@ class ChargeController extends Controller
         if(empty($status)){
             return new JsonResponse(array('status' => 1, 'msg' => '状态不正确！'));
         }
-
+        if($status!=2){
+            $ret->pay_status=3;
+            $ret->save();
+            return new JsonResponse(array('status' => 1, 'msg' => '兑换失败！'));
+        }
         /*
         进入交易
         点数充值
@@ -233,21 +237,35 @@ class ChargeController extends Controller
         //开启事务
         try {
             DB::beginTransaction();
-            //刷新redis钻石
+            //订单状态改变
+            $ret->pay_status=2;
+            $ret->save();
+            //第一步，写日志
+            $loginfo .= "订单号：" . $orderid . " 收到，并且准备兑换钻石：\n";
+
             $rs = DB::table('video_user')->where('uid', $ret->uid)->increment('points', $ret->points);
             $userObj = DB::table('video_user')->where('uid', $ret->uid)->first();//Users::find($stmt['uid']);
-            $loginfo .= '增加的钻石: points:' . $ret->points . ' 最终的钻石:' . $userObj->points;
-            $this->make('redis')->hincrby('huser_info:' . $ret->uid, 'points', $ret->points);
-            
+            $platform_find = DB::table('video_platforms')->where('origin',$ret->origin)->first();
 
-            $ret->pay_status=$status;
-            $ret->save();
+            $order = array(
+                'uid'=>$ret->uid,
+                'points'=>$ret->points,
+                'score'=>$ret->points*$platform_find->rate,
+                'platform_id'=>$platform_find->platform_id,
+                'origin'=>$ret->origin
+            );
+            //兌換紀錄
+            DB::table('video_platform_exchange')->insert($order);
+
+            $loginfo .= '会员编号:'.$userObj->uid.' 增加的钻石: points:' . $ret->points . ' 最终的钻石:' . $userObj->points;
+            //刷新redis钻石
+            $this->make('redis')->hincrby('huser_info:' . $ret->uid, 'points', $ret->points);
 
             DB::commit();
-            //Log::channel('charge')->info($rtn);
+            Log::channel('charge')->info($loginfo);
             return new JsonResponse(array('status' => 0, 'msg' => '兑换成功！'));
         } catch (\Exception $e) {
-            Log::channel('charge')->info("订单号：" . $tradeno . " 事务结果：" . $e->getMessage() . "\n");
+            Log::channel('charge')->info("订单号：" . $orderid . " 事务结果：" . $e->getMessage() . "\n");
             DB::rollback();
             return new JsonResponse(array('status' => 1, 'msg' => '程序内部异常'));
         }
