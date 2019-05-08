@@ -245,7 +245,8 @@ class ChargeController extends Controller
 
             $rs = DB::table('video_user')->where('uid', $ret->uid)->increment('points', $ret->points);
             $userObj = DB::table('video_user')->where('uid', $ret->uid)->first();//Users::find($stmt['uid']);
-            $platform_find = DB::table('video_platforms')->where('origin',$ret->origin)->first();
+            //$platform_find = DB::table('video_platforms')->where('origin',$ret->origin)->first();
+            $platform_find = $this->make('redis')->get('hplatform:'.$ret->origin);
 
             $order = array(
                 'uid'=>$ret->uid,
