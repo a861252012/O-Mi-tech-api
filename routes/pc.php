@@ -380,3 +380,6 @@ Route::post('gd_test', 'ChargeController@testNoticeGD')->name('gd_test');
 
 //app探索页
 Route::get('appMarket', ['name' => 'm_appmarket', 'uses' => 'Mobile\MobileController@appMarket']);
+
+//杏吧兑换exchange
+Route::get('exchange', ['name' => 'm_exchange', 'uses' => 'ChargeController@exchange']);

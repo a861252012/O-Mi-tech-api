@@ -82,8 +82,15 @@ class AnchorList extends Command
                 $data = str_replace(['cb(', ');'], ['', ''], $data);
                 //torage::disk('public')->put($this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json', $data);
             }
-            $tmp = "/tmp".  '/videolist' . $item[1] . '.json';;
-            $file = storage_path('app/public').DIRECTORY_SEPARATOR.$this->siteService->getPublicPath() . '/videolist' . $item[1] . '.json';
+            $tmp = "/tmp".  '/videolist' . $item[1] . '.json';
+
+            $S_dir = storage_path('app/public').DIRECTORY_SEPARATOR.$this->siteService->getPublicPath();
+            if(!file_exists($S_dir.'/')){
+                mkdir($S_dir.'/',0777);
+                chmod($S_dir.'/',0777);
+            }
+
+            $file = $S_dir . '/videolist' . $item[1] . '.json';
             file_put_contents($tmp,$data);
 
             rename($tmp,$file);

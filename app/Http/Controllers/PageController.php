@@ -127,6 +127,14 @@ class PageController extends Controller
             $qrcode_url = $data['QRCODE'];
         }
 
+        if($this->request()->input('origin')!=''){
+            $download2 = $redis->hGet("hsite_config:".SiteSer::siteId(), "origin_url");
+            $data2 = json_decode($download2, true);
+            if(isset($data2[$this->request()->input('origin')])){
+                $qrcode_url = $data2[$this->request()->input('origin')];
+            }
+        }
+
         $img = QrCode::format('png')->size(200)->generate($qrcode_url);
         $img = gzencode($img);
         return Response::create($img)->header('Content-Type', 'image/png')

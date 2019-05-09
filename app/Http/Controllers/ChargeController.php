@@ -201,6 +201,85 @@ class ChargeController extends Controller
         return new JsonResponse(array('status' => 0, 'data' => $rtn));
     }
 
+    public function exchange(Request $request)
+    {
+        //修复注入漏洞
+        $status = $request->input('status')??'';
+        $orderid = $request->input('orderid')??'';
+        //去除％和0x攻击
+        $orderid = preg_replace('/%|0x|SELECT|FROM/', ' ', $orderid);
+        if (!$orderid) {
+            return new JsonResponse(array('status' => 1, 'msg' => '没有订单号！'));
+        }
+
+        //强制查询主库
+        $ret = Recharge::where('order_id', $orderid)->where('pay_status', 4)->first();
+
+        if (!$ret) {
+            return new JsonResponse(array('status' => 1, 'msg' => '该订单号不存在！'));
+        }
+        if(empty($status)){
+            return new JsonResponse(array('status' => 1, 'msg' => '状态不正确！'));
+        }
+        if($status!=2){
+            $ret->pay_status=3;
+            $ret->save();
+            return new JsonResponse(array('status' => 1, 'msg' => '兑换失败！'));
+        }
+        /*
+        进入交易
+        点数充值
+        更改订单状态
+        送出交易
+        更新redis点数
+        */
+        $loginfo = "";
+        //开启事务
+        try {
+            DB::beginTransaction();
+            //订单状态改变
+            $ret->pay_status=2;
+            $ret->save();
+            //第一步，写日志
+            $loginfo .= "订单号：" . $orderid . " 收到，并且准备兑换钻石：\n";
+
+            $rs = DB::table('video_user')->where('uid', $ret->uid)->increment('points', $ret->points);
+            $userObj = DB::table('video_user')->where('uid', $ret->uid)->first();//Users::find($stmt['uid']);
+            //$platform_find = DB::table('video_platforms')->where('origin',$ret->origin)->first();
+            $platform_find = $this->make('redis')->get('hplatform:'.$ret->origin);
+
+            $order = array(
+                'uid'=>$ret->uid,
+                'points'=>$ret->points,
+                'score'=>$ret->points*$platform_find->rate,
+                'platform_id'=>$platform_find->platform_id,
+                'origin'=>$ret->origin
+            );
+            //兌換紀錄
+            DB::table('video_platform_exchange')->insert($order);
+
+            $loginfo .= '会员编号:'.$userObj->uid.' 增加的钻石: points:' . $ret->points . ' 最终的钻石:' . $userObj->points;
+            //刷新redis钻石
+            $this->make('redis')->hincrby('huser_info:' . $ret->uid, 'points', $ret->points);
+
+            DB::commit();
+            Log::channel('charge')->info($loginfo);
+            return new JsonResponse(array('status' => 0, 'msg' => '兑换成功！'));
+        } catch (\Exception $e) {
+            Log::channel('charge')->info("订单号：" . $orderid . " 事务结果：" . $e->getMessage() . "\n");
+            DB::rollback();
+            return new JsonResponse(array('status' => 1, 'msg' => '程序内部异常'));
+        }
+        /*$tradeno = $orderid;
+        $paytradeno = null;
+        $money = $ret->points;
+        $loginfo = null;
+        $chargeResult = $status;
+        $complateTime = date('Y-m-d H:i:s', time());
+        $channel = '';
+        return $this->orderHandler($tradeno, $paytradeno, $loginfo, $logPath = "", $money, $chargeResult, $channel, $complateTime);*/
+    }
+
     private function getClient()
     {
         $client = $this->request()->headers->get('client', 12);
