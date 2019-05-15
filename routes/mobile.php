@@ -25,6 +25,8 @@ Route::get('pre_conf',['name'=>'m_pre_conf', 'uses'=>'ApiController@getPreConf']
 Route::get('room/conf',['name'=>'m_room_conf', 'uses'=>'Mobile\RoomController@getRoomConf']);
 // 首页房间数据json
 Route::get('/videoList', ['as' => 'index_videoList', 'uses' => 'IndexController@videoList']);
+//排行榜接口
+Route::get('/rank_data', ['name' => 'rank_data', 'uses' => 'RankController@rankData']);
 
 Route::get('ping', ['as' => 'ping', 'uses' => 'ApiController@ping']);
 
@@ -144,6 +146,8 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('vip', ['name' => 'member_vip', 'uses' => 'MemberController@vip']);
     // 用户中心 viplist 贵族体系
     Route::get('/member/viplist', ['name' => 'member_viplist', 'uses' => 'MemberController@vip_list']);
+    // 开通贵族
+    Route::post('/openvip', ['name' => 'shop_openvip', 'uses' => 'MemberController@buyVip']);
 });
 /** 进房间 */
 Route::any('get_room/{rid}', 'Mobile\RoomController@getRoom')->where('rid','[0-9]{5,15}')->name('m_get_room');
