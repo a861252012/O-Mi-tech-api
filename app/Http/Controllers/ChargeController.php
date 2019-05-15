@@ -209,17 +209,17 @@ class ChargeController extends Controller
         //去除％和0x攻击
         $orderid = preg_replace('/%|0x|SELECT|FROM/', ' ', $orderid);
         if (!$orderid) {
-            return new JsonResponse(array('status' => 1, 'msg' => '没有订单号！'));
+            return new JsonResponse(array('status' => 2, 'msg' => '没有订单号！'));
         }
 
         //强制查询主库
         $ret = Recharge::where('order_id', $orderid)->where('pay_status', 4)->first();
 
         if (!$ret) {
-            return new JsonResponse(array('status' => 1, 'msg' => '该订单号不存在！'));
+            return new JsonResponse(array('status' => 3, 'msg' => '该订单号不存在！'));
         }
         if(empty($status)){
-            return new JsonResponse(array('status' => 1, 'msg' => '状态不正确！'));
+            return new JsonResponse(array('status' => 2, 'msg' => '状态不正确！'));
         }
         if($status!=2){
             $ret->pay_status=3;
