@@ -330,8 +330,20 @@ class ApiController extends Controller
             usleep(100);
         }
         $hplat_user = $redis->exists("hplat_user:$uid") ? $redis->hgetall("hplat_user:" . $uid) : [];
-        if (isset($hplat_user['exchange']) && $hplat_user['exchange'] == 1) return JsonResponse::create(['status' => 1, 'msg' => '兑换成功']);
-        return JsonResponse::create(['status' => 0, 'msg' => '兑换失败'.json_encode($hplat_user)]);
+        if (isset($hplat_user['exchange'])){
+            if($hplat_user['exchange'] == 1){
+                return JsonResponse::create(['status' => 1, 'msg' => '兑换成功']);
+            }elseif($hplat_user['exchange'] == 2){
+                return JsonResponse::create(['status' => 0, 'msg' => '已送出，请耐心等待审核']);
+            }elseif($hplat_user['exchange'] == 3){
+                return JsonResponse::create(['status' => 0, 'msg' => '已存在审核中的订单']);
+            }else{
+                return JsonResponse::create(['status' => 0, 'msg' => '兑换失败']);
+            }
+        }else{
+            return JsonResponse::create(['status' => 0, 'msg' => '兑换失败']);
+        }
+        
     }
 
     /**
