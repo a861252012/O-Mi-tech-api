@@ -7,6 +7,8 @@ use RedisCluster;
 use Illuminate\Support\Arr;
 use Illuminate\Redis\Connections\PhpRedisConnection;
 use Illuminate\Redis\Connections\PhpRedisClusterConnection;
+use GuzzleHttp\Exception\TooManyRedirectsException;
+use Illuminate\Support\Facades\Log;
 
 class PhpRedisConnector
 {
@@ -20,7 +22,9 @@ class PhpRedisConnector
     public function connect(array $config, array $options)
     {
         return new PhpRedisConnection($this->createClient(array_merge(
-            $config, $options, Arr::pull($config, 'options', [])
+            $config,
+            $options,
+            Arr::pull($config, 'options', [])
         )));
     }
 
@@ -37,7 +41,8 @@ class PhpRedisConnector
         $options = array_merge($options, $clusterOptions, Arr::pull($config, 'options', []));
 
         return new PhpRedisClusterConnection($this->createRedisClusterInstance(
-            array_map([$this, 'buildClusterConnectionString'], $config), $options
+            array_map([$this, 'buildClusterConnectionString'], $config),
+            $options
         ));
     }
 
@@ -92,9 +97,29 @@ class PhpRedisConnector
      */
     protected function establishConnection($client, array $config)
     {
-        $client->{($config['persistent'] ?? false) === true ? 'pconnect' : 'connect'}(
-            $config['host'], $config['port'], Arr::get($config, 'timeout', 0)
-        );
+        try {
+            $result = $client->{($config['persistent'] ?? false) === true ? 'pconnect' : 'connect'}(
+                $config['host'],
+                $config['port'],
+                Arr::get($config, 'timeout', 0)
+            );
+            $client->ping();
+            throw new \Exception('xxx');
+        } catch (\RedisException $e) {
+            Log::channel('single')->debug('Redis连线丢失，尝试重新建立连线');
+            $client->close();
+            $result = $client->{($config['persistent'] ?? false) === true ? 'pconnect' : 'connect'}(
+                $config['host'],
+                $config['port'],
+                Arr::get($config, 'timeout', 0)
+            );
+        } catch (\Exception $e) {
+            Log::channel('single')->debug('Redis建立连线发生异常错误');
+        }
+
+        if (!$result) {
+            Log::channel('single')->debug('Redis连线失败');
+        }
     }
 
     /**
