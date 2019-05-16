@@ -104,7 +104,6 @@ class PhpRedisConnector
                 Arr::get($config, 'timeout', 0)
             );
             $client->ping();
-            throw new \Exception('xxx');
         } catch (\RedisException $e) {
             Log::channel('single')->debug('Redis连线丢失，尝试重新建立连线');
             $client->close();
