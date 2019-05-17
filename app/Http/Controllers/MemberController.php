@@ -2985,25 +2985,17 @@ class MemberController extends Controller
 
         $flashVer = SiteSer::config('publish_version');
         !$flashVer && $flashVer = 'v201504092044';
-
-        //初始化$list数据
-        $list = [
-            'rooms' => [],
-        ];
-        $A_keys = Redis::keys('home_all_' . $flashVer. ':?');
         $data = [];
-        foreach ($A_keys as $S_keys) {
-            $list = Redis::get($S_keys);
-            $list = str_replace(['cb(', ');'], ['', ''], $list);
-            $J_list = json_decode($list, true);
+        $list = Redis::get('home_all_' . $flashVer. ':'.SiteSer::siteId());
+        $list = str_replace(['cb(', ');'], ['', ''], $list);
+        $J_list = json_decode($list, true);
 
-            foreach($J_list['rooms'] as $O_list){
-                if($O_list['live_status']>0){//find out who is live now
-                    $userex = Usersall::select('uid','nickname as nick','headimg','qrcode_image')->where('transfer',1)->where('qrcode_image','<>','')->find($O_list['uid']);
-                    if(!empty($userex)){
-                        if(!in_array($userex, $data)){
-                            array_push($data,$userex);
-                        }
+        foreach($J_list['rooms'] as $O_list){
+            if($O_list['live_status']>0){//find out who is live now
+                $userex = Usersall::select('uid','nickname as nick','headimg','qrcode_image')->where('transfer',1)->where('qrcode_image','<>','')->find($O_list['uid']);
+                if(!empty($userex)){
+                    if(!in_array($userex, $data)){
+                        array_push($data,$userex);
                     }
                 }
             }
