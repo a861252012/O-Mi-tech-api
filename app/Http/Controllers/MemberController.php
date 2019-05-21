@@ -2986,6 +2986,9 @@ class MemberController extends Controller
         $flashVer = SiteSer::config('publish_version');
         !$flashVer && $flashVer = 'v201504092044';
         $data = [];
+
+        $A_block = json_decode(Redis::get('sBarCodeRechargeSuspendUids'));
+
         $list = Redis::get('home_all_' . $flashVer. ':'.SiteSer::siteId());
         $list = str_replace(['cb(', ');'], ['', ''], $list);
         $J_list = json_decode($list, true);
@@ -2995,7 +2998,9 @@ class MemberController extends Controller
                 $userex = Usersall::select('uid','nickname as nick','headimg','qrcode_image')->where('transfer',1)->where('qrcode_image','<>','')->find($O_list['uid']);
                 if(!empty($userex)){
                     if(!in_array($userex, $data)){
-                        array_push($data,$userex);
+                        if(!in_array($userex['uid'], $A_block)){
+                            array_push($data,$userex);
+                        }
                     }
                 }
             }
