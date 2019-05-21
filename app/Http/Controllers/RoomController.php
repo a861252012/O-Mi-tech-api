@@ -259,6 +259,7 @@ class RoomController extends Controller
             'uid' => Auth::id(),
             'nickname' => $userinfo['nickname'],
             'channel_id' => $channel_id,
+            'chat_fly_limit' => SiteSer::config('chat_fly_limit') ?: 0,
         ];
         $data['chat_server_addr'] = $chat_server_addr;
         if ($h5 === 'h5hls') {
