@@ -148,6 +148,8 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('/member/viplist', ['name' => 'member_viplist', 'uses' => 'MemberController@vip_list']);
     // 开通贵族
     Route::post('/openvip', ['name' => 'shop_openvip', 'uses' => 'MemberController@buyVip']);
+    //昵称修改次数
+    Route::get('/member/index', 'MemberController@index')->name('member_index');
 });
 /** 进房间 */
 Route::any('get_room/{rid}', 'Mobile\RoomController@getRoom')->where('rid','[0-9]{5,15}')->name('m_get_room');

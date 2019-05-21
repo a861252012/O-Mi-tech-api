@@ -483,10 +483,10 @@ class UserService extends Service
         foreach ($uids as $uid) {
             $user = UserSer::getUserByUid($uid);
             if ($user) {
-
+                /*
                 $flashVer = SiteSer::config('publish_version');
                 !$flashVer && $flashVer = 'v201504092044';
-                
+
                 $list = Redis::get('home_all_' . $flashVer. ':'.SiteSer::siteId());
                 $list = str_replace(['cb(', ');'], ['', ''], $list);
                 $J_list = json_decode($list, true);
@@ -497,6 +497,10 @@ class UserService extends Service
                         $attens = $O_list['attens'];
                     }
                 }
+                */
+                $live_status = Redis::hGet('hvediosKtv:' . $user->uid,'status')-0;
+
+                $attens = $this->getUserAttensCount($user->uid,false);
 
                 $items->push([
                     'headimg' => $user->headimg,
