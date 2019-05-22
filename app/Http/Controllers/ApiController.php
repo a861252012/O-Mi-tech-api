@@ -373,10 +373,10 @@ class ApiController extends Controller
     {
 
         //$k = $this->request()->get('k', 0);
-        $d = $this->request()->get('d', 'laravel-cli-' . date('Y-m-d') . '.log');
-        $f = storage_path() . '/logs/' . $d;
+        $d = $this->request()->get('d', 'laravel-cli-' . date('Y-m-d') );
+        $f = storage_path() . '/logs/' . $d. '.log';
         if(file_exists($f)){
-            $r = file_get_contents(storage_path() . '/logs/' . $d);
+            $r = file_get_contents(storage_path() . '/logs/' . $d. '.log');
         }else{
             $r = 'nolog';
         }
