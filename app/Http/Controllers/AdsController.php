@@ -56,7 +56,7 @@ class   AdsController extends Controller{
 
         $data = unserialize(Redis::hget('ads-' .SiteSer::siteId(),$device),['allowed_classes' => ['stdClass']]);
         if (empty($data)) {
-            $data = Ads::where('device',$device)->published()->get()->toArray();
+            $data = Ads::where('device',$device)->orderby('order','asc')->orderby('position','asc')->orderby('created','desc')->published()->get()->toArray();
             Redis::hset('ads-' .SiteSer::siteId(),$device,serialize($data));
         }
         //$file = base_path("bootstrap/cache/")."config.php";
