@@ -1821,16 +1821,20 @@ class MemberController extends Controller
         }
 
         $all_data = MallList::select(
-            'video_user.nickname AS nickname',
+            'u1.nickname AS nickname',
+            'u2.nickname AS rnickname',
             'video_goods.*',
             'video_mall_list.*'
         )
         ->leftJoin('video_goods', function ($leftJoin) {
             $leftJoin->on('video_goods.gid', '=', 'video_mall_list.gid');
         })
-            ->leftJoin('video_user', function ($query) {
-                $query->on('video_user.uid', '=', 'video_mall_list.send_uid');
-            })
+        ->leftJoin('video_user as u1', function ($query) {
+            $query->on('u1.uid', '=', 'video_mall_list.send_uid');
+        })
+        ->leftJoin('video_user as u2', function ($query) {
+            $query->on('u2.uid', '=', 'video_mall_list.rec_uid');
+        })
             ->where($selectTypeName, $uid)
             ->where('video_mall_list.created', '>', $mintime)
             ->where('video_mall_list.created', '<', $maxtime)
