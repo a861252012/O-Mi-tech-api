@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Redis;
 class   AnnouncementController extends Controller{
     public function loginmsg(){
         $device = Input::get('device',1);
+        
         $data = json_decode(Redis::hget('hloginmsg:' .SiteSer::siteId(),'list'));
 
         if(isset($data)){
@@ -28,21 +29,37 @@ class   AnnouncementController extends Controller{
             $A_data = array();
             foreach($data as $key => $val){
                 $O = (object)array();
-                if($val->device==$device){
-                    $O->id = count($A_data)+1;
-                    $O->type = $val->type;
-                    $O->interval = $val->between;
-                    $O->title = $val->title;
-                    $O->content = $val->content;
-                    $O->img = $val->image;
-                    $O->url = $val->link;
-                    $O->create_time = $key;
-                    array_push($A_data,$O);
-                }
+                if($key>strtotime('-3 month 00:00:00')){
+                    if($val->device==$device){
+                        if(isset($_GET['blank'])){
+                            if($val->blank==$_GET['blank']){
+                                $O->id = count($A_data)+1;
+                                $O->type = $val->type;
+                                $O->interval = $val->between;
+                                $O->title = $val->title;
+                                $O->content = $val->content;
+                                $O->img = $val->image;
+                                $O->url = $val->link;
+                                $O->blank = $val->blank;
+                                $O->create_time = $key;
+                                array_push($A_data,$O);
+                            }
+                        }else{
+                            $O->id = count($A_data)+1;
+                            $O->type = $val->type;
+                            $O->interval = $val->between;
+                            $O->title = $val->title;
+                            $O->content = $val->content;
+                            $O->img = $val->image;
+                            $O->url = $val->link;
+                            $O->blank = $val->blank;
+                            $O->create_time = $key;
+                            array_push($A_data,$O);
+                        }
+                    }
+                }//取三个月内
             }
-
         }
-
         return SuccessResponse::create($A_data);
     }
 }
