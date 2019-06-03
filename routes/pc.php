@@ -383,3 +383,6 @@ Route::get('appMarket', ['name' => 'm_appmarket', 'uses' => 'Mobile\MobileContro
 
 //杏吧兑换exchange
 Route::get('exchange', ['name' => 'm_exchange', 'uses' => 'ChargeController@exchange']);
+
+//官方聯繫
+Route::get('loginmsg', ['name' => 'loginmsg', 'uses' => 'AnnouncementController@loginmsg']);
