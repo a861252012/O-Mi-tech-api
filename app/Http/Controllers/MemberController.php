@@ -2991,6 +2991,13 @@ class MemberController extends Controller
         !$flashVer && $flashVer = 'v201504092044';
         $data = [];
 
+        $device = Input::get('device',1);
+        if($device==2||$device==4){
+            $msg_contact = Redis::hGet('hsite_config:' . SiteSer::siteId(), 'mobile_contact');
+        }else{
+            $msg_contact = Redis::hGet('hsite_config:' . SiteSer::siteId(), 'pc_contact');
+        }
+
         $A_block = json_decode(Redis::get('sBarCodeRechargeSuspendUids'));
 
         $list = Redis::get('home_all_' . $flashVer. ':'.SiteSer::siteId());
@@ -3010,7 +3017,7 @@ class MemberController extends Controller
             }
         }
 
-        return new JsonResponse(['msg' => 0, 'data' => ['live'=>$data]]);
+        return new JsonResponse(['msg' => 0, 'data' => ['live'=>$data,'info'=>$msg_contact]]);
     }
 }
 
