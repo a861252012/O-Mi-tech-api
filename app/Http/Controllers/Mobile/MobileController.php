@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Mews\Captcha\Facades\Captcha;
 use App\Services\Auth\JWTGuard;
+use Illuminate\Support\Facades\Input;
 
 class MobileController extends Controller
 {
@@ -886,6 +887,33 @@ class MobileController extends Controller
         return JsonResponse::create([
             'status' => 1,
             'data' => $official,
+            'msg' => '成功'
+        ]);
+    }
+
+    /**
+     * 官方聯繫方式
+     * @return JsonResponse
+     */
+    public function marquee()
+    {
+        $device = Input::get('device',2);
+        $list = json_decode(Redis::hget('hmarquee:' . SiteSer::siteId(),'list'));
+        $show = array();
+        $O = (object)array();
+        foreach($list as $val){
+            if($val->device==$device&&$val->status>0){
+                $O->id = $val->id;
+                $O->sorted = $val->order;
+                $O->content = $val->content;
+                $O->url = $val->url;
+                $O->creat_time = $val->id;
+                array_push($show,$O);
+            }
+        }
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => $show,
             'msg' => '成功'
         ]);
     }
