@@ -930,20 +930,7 @@ class MobileController extends Controller
                 $O = (object)array();
                 if($key>strtotime('-3 month 00:00:00')){
                     if($val->device==$device){
-                        if(isset($_GET['blank'])){
-                            if($val->blank==$_GET['blank']){
-                                $O->id = count($A_data)+1;
-                                $O->type = $val->type;
-                                $O->interval = $val->between;
-                                $O->title = $val->title;
-                                $O->content = $val->content;
-                                $O->img = $val->image;
-                                $O->url = $val->link;
-                                $O->blank = $val->blank;
-                                $O->create_time = $key;
-                                array_push($A_data,$O);
-                            }
-                        }else{
+                        if(isset($_GET['blank'])&&($val->blank==$_GET['blank'])||!isset($_GET['blank'])){
                             $O->id = count($A_data)+1;
                             $O->type = $val->type;
                             $O->interval = $val->between;
