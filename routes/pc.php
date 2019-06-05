@@ -385,4 +385,4 @@ Route::get('appMarket', ['name' => 'm_appmarket', 'uses' => 'Mobile\MobileContro
 Route::get('exchange', ['name' => 'm_exchange', 'uses' => 'ChargeController@exchange']);
 
 //登入公告
-Route::get('loginmsg', ['name' => 'loginmsg', 'uses' => 'AnnouncementController@loginmsg']);
+Route::get('loginmsg', ['name' => 'loginmsg', 'uses' => 'Mobile\MobileController@loginmsg']);

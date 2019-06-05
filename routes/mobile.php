@@ -200,7 +200,7 @@ Route::get('/kw', ['name' => 'json_kw', 'uses' => 'ApiController@kw']);
 Route::get('official', ['name' => 'm_follow', 'uses' => 'Mobile\MobileController@official']);
 
 //登入公告
-Route::get('loginmsg', ['name' => 'loginmsg', 'uses' => 'AnnouncementController@loginmsg']);
+Route::get('loginmsg', ['name' => 'm_loginmsg', 'uses' => 'Mobile\MobileController@loginmsg']);
 
 //首頁輪播
 Route::get('marquee', ['name' => 'm_marquee', 'uses' => 'Mobile\MobileController@marquee']);
