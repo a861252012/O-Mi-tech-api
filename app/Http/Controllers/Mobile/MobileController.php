@@ -900,8 +900,9 @@ class MobileController extends Controller
         $device = Input::get('device',2);
         $list = json_decode(Redis::hget('hmarquee:' . SiteSer::siteId(),'list'));
         $show = array();
-        $O = (object)array();
+        
         foreach($list as $val){
+            $O = (object)array();
             if($val->device==$device&&$val->status>0){
                 $O->id = $val->id;
                 $O->sorted = $val->order;
