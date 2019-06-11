@@ -610,69 +610,81 @@ class ApiController extends Controller
         $uid = Auth::id();
         //获取被关注用户uid
         $pid = $request->get('pid');
-        if (!$pid) {
-            return JsonResponse::create([
-                'status' => 0,
-                'msg' => '参数错误',
-            ]);
-        };
-        if (!in_array($ret, [0, 1, 2]) || !$pid) {
-            return JsonResponse::create([
-                'status' => 0,
-                'msg' => '请求参数错误1',
-            ]);
-        };
-        //不能关注自己
-        if (($ret != 0) && ($uid == $pid)) {
-            return JsonResponse::create([
-                'status' => 0,
-                'msg' => '请勿关注自己',
-            ]);
-        }
-        $userService = resolve(UserService::class);
-        $userInfo = $userService->getUserByUid($pid);
+        if(strpos($pid,',')){
 
-        if (!$userInfo) {
-            return JsonResponse::create([
-                'status' => 0,
-                'msg' => '用户不存在',
-            ]);
-        }
-
-        //查询关注操作
-        if ($ret == 0) {
-            if ($userService->checkFollow($uid, $pid)) {
-                return new JsonResponse(['status' => 1, 'msg' => '已关注']);
-            } else {
-                return new JsonResponse(['status' => 0, 'msg' => '未关注']);
+            $A_pid = explode(',',$pid);
+            $userService = resolve(UserService::class);
+            $A_data = array();
+            foreach($A_pid as $S_pid){
+                $O = (object)array();
+                $O -> uid = $uid;
+                $O -> status = $userService->checkFollow($uid, $pid)-0;
+                array_push($A_data,$O);
             }
-        }
+            return new JsonResponse(['status' => 1, 'data' => $A_data, 'msg' => '关注查詢']);
+        }else{
+            if (!$pid) {
+                return JsonResponse::create([
+                    'status' => 0,
+                    'msg' => '参数错误',
+                ]);
+            };
+            if (!in_array($ret, [0, 1, 2]) || !$pid) {
+                return JsonResponse::create([
+                    'status' => 0,
+                    'msg' => '请求参数错误1',
+                ]);
+            };
+            //不能关注自己
+            if (($ret != 0) && ($uid == $pid)) {
+                return JsonResponse::create([
+                    'status' => 0,
+                    'msg' => '请勿关注自己',
+                ]);
+            }
+            $userService = resolve(UserService::class);
+            $userInfo = $userService->getUserByUid($pid);
 
-
-        //添加关注操作
-        if ($ret == 1) {
-            $follows = intval($this->getUserAttensCount($uid));
-            if ($follows >= 1000) {
-                return new JsonResponse(['status' => 3, 'msg' => '您已经关注了1000人了，已达上限，请清理一下后再关注其他人吧']);
+            if (!$userInfo) {
+                return JsonResponse::create([
+                    'status' => 0,
+                    'msg' => '用户不存在',
+                ]);
             }
 
-            if ($userService->setFollow($uid, $pid)) {
-                return new JsonResponse(['status' => 1, 'msg' => '关注成功']);
-            } else {
-                return new JsonResponse(['status' => 0, 'msg' => '请勿重复关注']);
+            //查询关注操作
+            if ($ret == 0) {
+                if ($userService->checkFollow($uid, $pid)) {
+                    return new JsonResponse(['status' => 1, 'msg' => '已关注']);
+                } else {
+                    return new JsonResponse(['status' => 0, 'msg' => '未关注']);
+                }
+            }
+
+
+            //添加关注操作
+            if ($ret == 1) {
+                $follows = intval($this->getUserAttensCount($uid));
+                if ($follows >= 1000) {
+                    return new JsonResponse(['status' => 3, 'msg' => '您已经关注了1000人了，已达上限，请清理一下后再关注其他人吧']);
+                }
+
+                if ($userService->setFollow($uid, $pid)) {
+                    return new JsonResponse(['status' => 1, 'msg' => '关注成功']);
+                } else {
+                    return new JsonResponse(['status' => 0, 'msg' => '请勿重复关注']);
+                }
+            }
+
+            //取消关注操作
+            if ($ret == 2) {
+                if ($userService->delFollow($uid, $pid)) {
+                    return new JsonResponse(['status' => 1, 'msg' => '取消关注成功']);
+                } else {
+                    return new JsonResponse(['status' => 0, 'msg' => '取消关注失败']);
+                }
             }
         }
-
-        //取消关注操作
-        if ($ret == 2) {
-            if ($userService->delFollow($uid, $pid)) {
-                return new JsonResponse(['status' => 1, 'msg' => '取消关注成功']);
-            } else {
-                return new JsonResponse(['status' => 0, 'msg' => '取消关注失败']);
-            }
-        }
-
-
     }
 
 
