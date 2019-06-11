@@ -617,8 +617,8 @@ class ApiController extends Controller
             $A_data = array();
             foreach($A_pid as $S_pid){
                 $O = (object)array();
-                $O -> uid = $uid;
-                $O -> status = $userService->checkFollow($uid, $pid)-0;
+                $O -> uid = $S_pid;
+                $O -> status = $userService->checkFollow($uid, $S_pid)-0;
                 array_push($A_data,$O);
             }
             return new JsonResponse(['status' => 1, 'data' => $A_data, 'msg' => '关注查詢']);
