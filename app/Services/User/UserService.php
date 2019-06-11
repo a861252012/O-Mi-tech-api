@@ -193,15 +193,20 @@ class UserService extends Service
         $hashtable = static::KEY_USER_INFO . $uid;
 
         if ($this->redis->Hexists($hashtable, 'uid')) {
+            //Log::error('#190606#User存在於Redis:Yes');
             $arr = $this->redis->hgetall($hashtable);
+            //Log::error('#190606#Redis取出:'.json_encode($arr));
             //这里因为用户uid唯一并且涉及主播信息获取不再区分站点
 //            $userArr = $arr['site_id'] == SiteSer::siteId() ? $arr : [];
             $user = (new Users())->setRawAttributes($arr, true);
             $user->exists = true;
         } else {
+            //Log::error('#190606#User存在於Redis:No');
             $user = Users::allSites()->find($uid);
+            //Log::error('#190606#資料庫取出:'.json_encode($user));
             if ($user && $user->exists) {
-                $this->redis->hmset($hashtable, $user->toArray());
+                $checkin = $this->redis->hmset($hashtable, $user->toArray());
+                //Log::error('#190606#回存Redis:'.json_encode($checkin));
             }
         }
         return $this->user = $user;
