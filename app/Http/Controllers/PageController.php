@@ -143,6 +143,17 @@ class PageController extends Controller
             ->header('Content-Encoding', 'gzip');
     }
 
+    public function contactQR()
+    {
+        $qrcode_url = $this->request()->input('url');
+        $img = QrCode::format('png')->size(200)->generate($qrcode_url);
+        $img = gzencode($img);
+        return Response::create($img)->header('Content-Type', 'image/png')
+            ->setMaxAge(300)
+            ->setSharedMaxAge(300)
+            ->header('Content-Encoding', 'gzip');
+    }
+
     /**
      * 主播招募
      * @author Young
