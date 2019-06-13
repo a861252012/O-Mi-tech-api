@@ -2994,8 +2994,10 @@ class MemberController extends Controller
         $device = Input::get('device',1);
         if($device==2||$device==4){
             $msg_contact = Redis::hGet('hsite_config:' . SiteSer::siteId(), 'mobile_contact');
+            $qr_path = '/api/m/';
         }else{
             $msg_contact = Redis::hGet('hsite_config:' . SiteSer::siteId(), 'pc_contact');
+            $qr_path = '/api/';
         }
 
         $A_block = json_decode(Redis::get('sBarCodeRechargeSuspendUids'));
@@ -3010,6 +3012,17 @@ class MemberController extends Controller
                 if(!empty($userex)){
                     if(!in_array($userex, $data)){
                         if(!in_array($userex['uid'], $A_block)){
+                            if(strpos($userex['qrcode_image'],'.png')>0){
+
+                            }else{
+                                $A_qr = explode('#',$userex['qrcode_image']);
+                                if($A_qr[1]==1){
+                                    $userex['url']=$A_qr[0];
+                                    unset($userex['qrcode_image']);
+                                }else{
+                                    $userex['qrcode_image'] = $qr_path.'contact/qr.png?url='.$A_qr[0];
+                                }
+                            }
                             array_push($data,$userex);
                         }
                     }

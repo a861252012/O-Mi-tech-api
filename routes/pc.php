@@ -114,6 +114,7 @@ Route::post('/live/checked', ['name' => 'recvSskey', 'uses' => 'ApiController@pl
 //APP下载
 Route::get('/download', ['name' => 'download', 'uses' => 'PageController@download']);
 Route::get('/download/qr.png', ['name' => 'downloadQR', 'uses' => 'PageController@downloadQR']);
+Route::get('/contact/qr.png', ['name' => 'contactQR', 'uses' => 'PageController@contactQR']);
 
 // 首页房间数据json
 Route::get('/videoList', ['name' => 'index_videoList', 'uses' => 'IndexController@videoList']);
