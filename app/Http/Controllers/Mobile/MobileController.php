@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Mews\Captcha\Facades\Captcha;
 use App\Services\Auth\JWTGuard;
+use Illuminate\Support\Facades\Input;
 
 class MobileController extends Controller
 {
@@ -886,6 +887,69 @@ class MobileController extends Controller
         return JsonResponse::create([
             'status' => 1,
             'data' => $official,
+            'msg' => '成功'
+        ]);
+    }
+
+    /**
+     * 官方聯繫方式
+     * @return JsonResponse
+     */
+    public function marquee()
+    {
+        $device = Input::get('device',2);
+        $list = json_decode(Redis::hget('hmarquee:' . SiteSer::siteId(),'list'));
+        $show = array();
+        
+        foreach($list as $val){
+            $O = (object)array();
+            if($val->device==$device&&$val->status>0){
+                $O->id = $val->id;
+                $O->sorted = $val->order;
+                $O->content = $val->content;
+                $O->url = $val->url;
+                $O->creat_time = $val->id;
+                array_push($show,$O);
+            }
+        }
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => $show,
+            'msg' => '成功'
+        ]);
+    }
+
+    public function loginmsg(){
+        $device = Input::get('device',1);
+        
+        $data = json_decode(Redis::hget('hloginmsg:' .SiteSer::siteId(),'list'));
+
+        if(isset($data)){
+
+            $A_data = array();
+            foreach($data as $key => $val){
+                $O = (object)array();
+                if($key>strtotime('-3 month 00:00:00')){
+                    if($val->device==$device){
+                        if(isset($_GET['blank'])&&($val->blank==$_GET['blank'])||!isset($_GET['blank'])){
+                            $O->id = count($A_data)+1;
+                            $O->type = $val->type;
+                            $O->interval = $val->between;
+                            $O->title = $val->title;
+                            $O->content = $val->content;
+                            $O->img = $val->image;
+                            $O->url = $val->link;
+                            $O->blank = $val->blank;
+                            $O->create_time = $key;
+                            array_push($A_data,$O);
+                        }
+                    }
+                }//取三个月内
+            }
+        }
+        return JsonResponse::create([
+            'status' => 1,
+            'data' => $A_data,
             'msg' => '成功'
         ]);
     }

@@ -198,3 +198,11 @@ Route::get('/kw', ['name' => 'json_kw', 'uses' => 'ApiController@kw']);
 
 //官方聯繫
 Route::get('official', ['name' => 'm_follow', 'uses' => 'Mobile\MobileController@official']);
+
+//登入公告
+Route::get('loginmsg', ['name' => 'm_loginmsg', 'uses' => 'Mobile\MobileController@loginmsg']);
+
+//首頁輪播
+Route::get('marquee', ['name' => 'm_marquee', 'uses' => 'Mobile\MobileController@marquee']);
+
+Route::get('/contact/qr.png', ['name' => 'contactQR', 'uses' => 'PageController@contactQR']);
