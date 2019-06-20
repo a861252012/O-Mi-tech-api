@@ -143,7 +143,7 @@ class MemberController extends Controller
         [
             'role' => 0,
             'action' => 'message',
-            'name' => '资料夹',
+            'name' => '收件夹',
         ],
         [
             'role' => 0,
