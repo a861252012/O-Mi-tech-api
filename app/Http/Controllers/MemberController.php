@@ -3013,7 +3013,8 @@ class MemberController extends Controller
                     if(!in_array($userex, $data)){
                         if(!in_array($userex['uid'], $A_block)){
                             if(strpos($userex['qrcode_image'],'.png')>0){
-
+                                $A_qr = explode('#',$userex['qrcode_image']);
+                                $userex['qrcode_image'] = $A_qr[0];
                             }else{
                                 $A_qr = explode('#',$userex['qrcode_image']);
                                 if($A_qr[1]==1){
