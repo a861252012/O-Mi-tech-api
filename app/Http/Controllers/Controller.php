@@ -1281,6 +1281,7 @@ class Controller extends BaseController
             if (!$packEntity) {
                 $criteria['expires'] = $_SERVER['REQUEST_TIME'] + $expireTime;
                 $criteria['num'] = 1;
+                $criteria['site_id'] = SiteSer::siteId();
                 Pack::create($criteria);
                 $gidExpireTime = $criteria['expires'];
             } else {
@@ -1291,7 +1292,7 @@ class Controller extends BaseController
                 } else {
                     $gidExpireTime += $expireTime;
                 }
-                Pack::where($criteria)->update(['expires' => $gidExpireTime]);
+                Pack::where($criteria)->update(['expires' => $gidExpireTime,'site_id' => SiteSer::siteId()]);
             }
             $upUser = ['points' => $userinfo['points'] - $total_price, 'rich' => $userinfo['rich'] + $total_price];
             $flag = Users::where('uid', Auth::id())->update($upUser);
