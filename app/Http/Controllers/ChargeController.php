@@ -66,7 +66,23 @@ class ChargeController extends Controller
         $var['active'] = GiftActivity::where('type', 2)->get();
 
         //充值方式数组
-        $var['recharge_type'] = resolve('chargeGroup')->channel($uid);
+        //$var['recharge_type'] = resolve('chargeGroup')->channel($uid);
+        $A_pay_channel = resolve('chargeGroup')->channel($uid);
+        $A_pay_channel2 = array();
+        foreach($A_pay_channel as $S_pay_channel){
+            $S_check=0;
+            if(strpos($S_pay_channel['name'],'银行卡')!==false){
+                $bankCard = PayAccount::whereNull('deleted_at')->withTrashed()->get()->toArray();
+                if(empty($bankCard)){
+                    $S_check++;
+                }
+            }
+            if($S_check==0){
+                array_push($A_pay_channel2,$S_pay_channel);
+            }
+        }
+        $var['recharge_type'] = $A_pay_channel2;
+        //银行卡
 
         //检查用户登录权限
         $var['user_login_asset'] = true;

@@ -1135,6 +1135,7 @@ class Controller extends BaseController
         //维护redis中的hnickname_to_id 用于注册时验证是否重名
         if (isset($postData['nickname']) && ($postData['nickname'] != $from_nickname)) {
             Redis::hset('hnickname_to_id:' . SiteSer::siteId(), $postData['nickname'], $user['uid']);
+            Redis::hdel('hnickname_to_id:' . SiteSer::siteId(), $from_nickname);//删除旧昵称登入权限
             // 修改昵称成功后 就记录日志
             $modNameLog = [
                 'uid' => $user['uid'],
@@ -1280,6 +1281,7 @@ class Controller extends BaseController
             if (!$packEntity) {
                 $criteria['expires'] = $_SERVER['REQUEST_TIME'] + $expireTime;
                 $criteria['num'] = 1;
+                $criteria['site_id'] = SiteSer::siteId();
                 Pack::create($criteria);
                 $gidExpireTime = $criteria['expires'];
             } else {
@@ -1290,7 +1292,7 @@ class Controller extends BaseController
                 } else {
                     $gidExpireTime += $expireTime;
                 }
-                Pack::where($criteria)->update(['expires' => $gidExpireTime]);
+                Pack::where($criteria)->update(['expires' => $gidExpireTime,'site_id' => SiteSer::siteId()]);
             }
             $upUser = ['points' => $userinfo['points'] - $total_price, 'rich' => $userinfo['rich'] + $total_price];
             $flag = Users::where('uid', Auth::id())->update($upUser);

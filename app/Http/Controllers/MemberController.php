@@ -143,7 +143,7 @@ class MemberController extends Controller
         [
             'role' => 0,
             'action' => 'message',
-            'name' => '资料夹',
+            'name' => '收件夹',
         ],
         [
             'role' => 0,
@@ -293,6 +293,9 @@ class MemberController extends Controller
             DB::table((new Users)->getTable())->where('uid', $userTo['uid'])->increment('points', $points);
             //update(array('points' => $user['points'] + $points));
 
+            //本次紀錄時間
+            $S_update_time = date('Y-m-d H:i:s');
+
             //记录转帐
             DB::table((new Transfer)->getTable())->insert([
                 'by_uid' => $uid,
@@ -301,7 +304,7 @@ class MemberController extends Controller
                 'to_nickname' => $userTo['nickname'],
                 'points' => $points,
                 'content' => $content,
-                'datetime' => date('Y-m-d H:i:s'),
+                'datetime' => $S_update_time,
                 'status' => 1,
                 'site_id' => SiteSer::siteId()
             ]);
@@ -311,13 +314,17 @@ class MemberController extends Controller
                 'uid' => $userTo['uid'],
                 'points' => $points,
                 'paymoney' => round($points / 10, 2),
-                'created' => date('Y-m-d H:i:s'),
+                'created' => $S_update_time,
                 'order_id' => 'transfer_' . $uid . '_to_' . $userTo['uid'] . '_' . uniqid(),
                 'del' => 0,//190418stanly添加
                 'pay_type' => 7,
                 'pay_status' => 2,
                 'nickname' => $userTo['nickname'],
                 'site_id' => $userTo['site_id']
+            ]);
+
+            DB::table((new Users)->getTable())->where('uid', $userTo['uid'])->whereNull('first_charge_time')->update([
+                'first_charge_time' => $S_update_time
             ]);
 
 
@@ -3013,7 +3020,8 @@ class MemberController extends Controller
                     if(!in_array($userex, $data)){
                         if(!in_array($userex['uid'], $A_block)){
                             if(strpos($userex['qrcode_image'],'.png')>0){
-
+                                $A_qr = explode('#',$userex['qrcode_image']);
+                                $userex['qrcode_image'] = $A_qr[0];
                             }else{
                                 $A_qr = explode('#',$userex['qrcode_image']);
                                 if($A_qr[1]==1){
