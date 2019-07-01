@@ -1278,10 +1278,11 @@ class Controller extends BaseController
             //开启事务
             DB::begintransaction();
             //处理用户与道具的关联信息
+            $site_id = SiteSer::siteId()<1?1:SiteSer::siteId();
             if (!$packEntity) {
                 $criteria['expires'] = $_SERVER['REQUEST_TIME'] + $expireTime;
                 $criteria['num'] = 1;
-                $criteria['site_id'] = SiteSer::siteId();
+                $criteria['site_id'] = $site_id;
                 Pack::create($criteria);
                 $gidExpireTime = $criteria['expires'];
             } else {
@@ -1292,7 +1293,7 @@ class Controller extends BaseController
                 } else {
                     $gidExpireTime += $expireTime;
                 }
-                Pack::where($criteria)->update(['expires' => $gidExpireTime,'site_id' => SiteSer::siteId()]);
+                Pack::where($criteria)->update(['expires' => $gidExpireTime,'site_id' => $site_id]);
             }
             $upUser = ['points' => $userinfo['points'] - $total_price, 'rich' => $userinfo['rich'] + $total_price];
             $flag = Users::where('uid', Auth::id())->update($upUser);
