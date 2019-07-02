@@ -3,6 +3,7 @@
 namespace App\Services\Room;
 
 use App\Services\Service;
+use Illuminate\Support\Facades\Log;
 
 /**
  *
@@ -33,26 +34,28 @@ class SocketService extends Service
      * @return mixed
      * @throws NoSocketChannelException
      */
-    public function getNextServerAvailable()
+    public function getNextServerAvailable($user)
     {
         $redis = resolve('redis');
         $channels_update = collect($redis->hgetall('channel_update'));
-        $minLoadChannel = null;
+        $roled = $user['roled']-0;
+        $minLoadChannel = null;Log::info("user：" . json_encode($user['roled']));
 //        $channelIDs = collect();//可用的channel id
-        $channels_update->keys()->map(function ($channelID) use (&$channels_update, &$redis, &$minLoadChannel, &$channelIDs) {
+        $channels_update->keys()->map(function ($channelID) use (&$channels_update, &$redis, &$minLoadChannel, &$channelIDs,&$roled) {
             if (!self::socketExpired($channels_update[$channelID])) {
-//                $channelIDs->push($channelID);
-                $channelInfo = $redis->hgetall('channel_info:' . $channelID);
-                //Log::info("channel：" . json_encode($channelInfo));
-                if ($this->lessLoad($channelInfo, $minLoadChannel)) {
-                    $minLoadChannel = $channelInfo;
-                    $chanhost = explode('|',$channelInfo['host']);
-                    if(!empty($chanhost[0])){
-                        $minLoadChannel['host'] = $chanhost[0];
-                    }else{
-                        $minLoadChannel['host'] = $chanhost[1];
+                if($roled==3&&$channelID-0==999||$roled!=3&&$channelID-0!=999){
+//                   $channelIDs->push($channelID);
+                    $channelInfo = $redis->hgetall('channel_info:' . $channelID);
+                    Log::info("channel：" . json_encode($channelID));
+                    if ($this->lessLoad($channelInfo, $minLoadChannel)) {
+                        $minLoadChannel = $channelInfo;
+                        $chanhost = explode('|',$channelInfo['host']);
+                        if(!empty($chanhost[0])){
+                            $minLoadChannel['host'] = $chanhost[0];
+                        }else{
+                            $minLoadChannel['host'] = $chanhost[1];
+                        }
                     }
-
                 }
             }
         });
@@ -72,19 +75,22 @@ class SocketService extends Service
      * pc端接口维持原先用法
      * @throws NoSocketChannelException
      */
-    public function getNextServerAvailablepc()
+    public function getNextServerAvailablepc($user)
     {
         $redis = resolve('redis');
         $channels_update = collect($redis->hgetall('channel_update'));
-        $minLoadChannel = null;
+        $roled = $user['roled']-0;
+        $minLoadChannel = null;Log::info("user：" . json_encode($user['roled']));
 //        $channelIDs = collect();//可用的channel id
-        $channels_update->keys()->map(function ($channelID) use (&$channels_update, &$redis, &$minLoadChannel, &$channelIDs) {
+        $channels_update->keys()->map(function ($channelID) use (&$channels_update, &$redis, &$minLoadChannel, &$channelIDs,&$roled) {
             if (!self::socketExpired($channels_update[$channelID])) {
-//                $channelIDs->push($channelID);
-                $channelInfo = $redis->hgetall('channel_info:' . $channelID);
-                //Log::info("channelPC：" . json_encode($channelInfo));
-                if ($this->lessLoad($channelInfo, $minLoadChannel)) {
-                    $minLoadChannel = $channelInfo;
+                if($roled==3&&$channelID-0==999||$roled!=3&&$channelID-0!=999){
+//                  $channelIDs->push($channelID);
+                    $channelInfo = $redis->hgetall('channel_info:' . $channelID);
+                    Log::info("channel：" . json_encode($channelID));
+                    if ($this->lessLoad($channelInfo, $minLoadChannel)) {
+                        $minLoadChannel = $channelInfo;
+                    }
                 }
             }
         });

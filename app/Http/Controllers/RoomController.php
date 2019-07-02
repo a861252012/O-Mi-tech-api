@@ -65,7 +65,7 @@ class RoomController extends Controller
             }
         }
         try {
-            $chatServer = $socketService->getNextServerAvailablepc();
+            $chatServer = $socketService->getNextServerAvailablepc($user);
         } catch (NoSocketChannelException $e) {
             return JsonResponse::create(['status' => 0, 'msg' => $e->getMessage()]);
         }
