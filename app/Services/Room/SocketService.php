@@ -43,6 +43,7 @@ class SocketService extends Service
             if (!self::socketExpired($channels_update[$channelID])) {
 //                $channelIDs->push($channelID);
                 $channelInfo = $redis->hgetall('channel_info:' . $channelID);
+                //Log::info("channel：" . json_encode($channelInfo));
                 if ($this->lessLoad($channelInfo, $minLoadChannel)) {
                     $minLoadChannel = $channelInfo;
                     $chanhost = explode('|',$channelInfo['host']);
@@ -81,6 +82,7 @@ class SocketService extends Service
             if (!self::socketExpired($channels_update[$channelID])) {
 //                $channelIDs->push($channelID);
                 $channelInfo = $redis->hgetall('channel_info:' . $channelID);
+                //Log::info("channelPC：" . json_encode($channelInfo));
                 if ($this->lessLoad($channelInfo, $minLoadChannel)) {
                     $minLoadChannel = $channelInfo;
                 }
