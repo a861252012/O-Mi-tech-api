@@ -191,6 +191,7 @@ class IndexController extends Controller
         $notice = $this->make('redis')->hgetAll('system_notices:' . SiteSer::siteId());
 
         $qq_url = Redis::hget('hsite_config:' . SiteSer::siteId(), 'qq_url');
+        $qq_side = Redis::hget('hsite_config:' . SiteSer::siteId(), 'qq_side');
         $email_url = Redis::hget('hsite_config:' . SiteSer::siteId(), 'email_url');
 
 
@@ -292,6 +293,7 @@ class IndexController extends Controller
             'myticket' => $myticket,
             'notice' => $notice,
             'qqurl' => is_null($qq_url) ? '' : $qq_url,
+            'qqside' => is_null($qq_side) ? '' : $qq_side,
             'emailurl' => is_null($email_url) ? '' : $email_url,
 
         ];
