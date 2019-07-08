@@ -3008,6 +3008,7 @@ class MemberController extends Controller
         }
 
         $A_block = json_decode(Redis::get('sBarCodeRechargeSuspendUids'));
+        $A_agentorder = (Redis::get('sagentorder:' . SiteSer::siteId())) ? json_decode(Redis::get('sagentorder:' . SiteSer::siteId())) : [];
 
         $list = Redis::get('home_all_' . $flashVer. ':'.SiteSer::siteId());
         $list = str_replace(['cb(', ');'], ['', ''], $list);
@@ -3031,13 +3032,37 @@ class MemberController extends Controller
                                     $userex['qrcode_image'] = $qr_path.'contact/qr.png?url='.$A_qr[0];
                                 }
                             }
-                            array_push($data,$userex);
+                            //$i=1;
+
+                            if(count($A_agentorder)>0){
+                                sort($A_agentorder);
+                                $S_check = 0;
+                                foreach ($A_agentorder as $value) {
+                                    $A_v = explode('_',$value);
+                                    if($A_v[1]==$userex['uid']){
+                                        //$userex['order'] = $A_v[0];
+                                        //$data[$A_v[0]] = $userex;
+                                        array_push($data,$userex);
+                                        $S_check++;
+                                    }
+                                }
+                                if($S_check<1){
+                                    array_push($data,$userex);
+                                }
+                            }else{
+
+                                //$userex['order'] = $i;
+                                //$data[$i] = $userex;
+                                array_push($data,$userex);
+                                //$i++;
+                            }
+                            //array_push($data,$userex);
                         }
                     }
                 }
             }
         }
-
+        
         return new JsonResponse(['msg' => 0, 'data' => ['live'=>$data,'info'=>$msg_contact]]);
     }
 }

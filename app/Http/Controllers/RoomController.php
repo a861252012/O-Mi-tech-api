@@ -237,6 +237,7 @@ class RoomController extends Controller
         $channel_id = $chatServer['id'];
         $logger->info('in:' . $rid . ":" . Auth::id() . ':' . $channel_id);
         $userinfo = $redis->hgetall("huser_info:" . $rid);
+        $qq_sideroom = $redis->hGet('hsite_config:' . SiteSer::siteId(), 'qq_sideroom');
 
         $plat_backurl = $roomService->getPlatUrl($origin);
         //$httphost = $roomService->getPlatHost();
@@ -260,6 +261,7 @@ class RoomController extends Controller
             'nickname' => $userinfo['nickname'],
             'channel_id' => $channel_id,
             'chat_fly_limit' => SiteSer::config('chat_fly_limit') ?: 0,
+            'qq_sideroom' => $qq_sideroom,
         ];
         $data['chat_server_addr'] = $chat_server_addr;
         if ($h5 === 'h5hls') {
