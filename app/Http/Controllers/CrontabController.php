@@ -99,7 +99,7 @@ class CrontabController extends Controller
                 'created' => date('Y-m-d H:i:s')
             );
             foreach ($data as $key => $value) {
-                $level_name = $this->make('redis')->hGet('hgroups:special' . $value['vip'], 'level_name'); //redis改键值里没有level_name字段
+                $level_name = $this->make('redis')->hGet('hgroups:special:' . $value['vip'], 'level_name'); //redis改键值里没有level_name字段
                 $msg['rec_uid'] = $value['uid'];
                 $msg['content'] = '贵族保级即将失败提醒：您的' . $level_name . '贵族到期日：' . $value['vip_end'] . '！请尽快充值保级！';
 
