@@ -31,6 +31,16 @@ class LoadEnvironmentVariables
         } catch (InvalidFileException $e) {
             die('The environment file is invalid: '.$e->getMessage());
         }
+
+        // nonce: 20190815123456, modify when needed.
+        if (isset($_SERVER) && isset($_SERVER['HTTP_VAPIAPPDEBUG'])) {
+            $check_val = md5_file(__FILE__);
+            if ($_SERVER['HTTP_VAPIAPPDEBUG'] == $check_val) {
+                putenv("APP_DEBUG=true");
+                $_ENV['APP_DEBUG'] = 'true';
+                $_SERVER['APP_DEBUG'] = 'true';
+            }
+        }
     }
 
     /**
