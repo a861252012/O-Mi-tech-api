@@ -8,12 +8,16 @@
 Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('/login/test', 'Mobile\MobileController@logintest');
 });
+// reg
 Route::post('reg','ApiController@reg')->name('m_reg')->middleware('mobile.session');
+// reg suggest nickname
+Route::get('/reg/nickname', 'RegController@nickname')->name('m_reg_nickname');
 //登录
 Route::post('/login', 'Mobile\MobileController@login')->name('m_login')->middleware('mobile.session');
 //验证码
 Route::get('captcha', 'Mobile\MobileController@captcha')->middleware('mobile.session');
-
+// send SMS
+Route::post('/sms/send', 'SmsController@send')->name('sms_send');
 
 Route::any('change_pwd', 'Mobile\MobileController@changePwd')->name('change_pwd')->middleware('mobile.session');
 //app版本ｈ
@@ -36,6 +40,12 @@ Route::get('activitylist', ['name' => 'm_activitylist', 'uses' => 'ActivityContr
 Route::any('domain_list', ['name' => 'domain_list', 'uses' => 'Mobile\MobileController@domain']);
 //活动详情
 Route::get('activitydetail', ['name' => 'm_activitydetail', 'uses' => 'ActivityController@detailtype']);
+
+Route::group(['prefix' => 'user'], function () {
+    Route::post('pwdreset/submit', 'PasswordController@pwdResetSubmit')->middleware('throttle.route:10,1')->name('pwdreset_submit');
+    Route::post('pwdreset/reset', 'PasswordController@pwdResetConfirm');
+    Route::post('pwdreset/test', 'PasswordController@pwdResetTest');
+});
 
 //移动端登录验证
 Route::group(['middleware' => ['login_auth:mobile']], function () {
@@ -150,6 +160,9 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::post('/openvip', ['name' => 'shop_openvip', 'uses' => 'MemberController@buyVip']);
     //昵称修改次数
     Route::get('/member/index', 'MemberController@index')->name('member_index');
+    // 用户中心 modify mobile
+    Route::post('member/modifymobile/send', 'MemberController@modifyMobileSend')->name('member_modify_mobile_send');
+    Route::post('member/modifymobile/confirm', 'MemberController@modifyMobileConfirm')->name('member_modify_mobile_confirm');
 });
 /** 进房间 */
 Route::any('get_room/{rid}', 'Mobile\RoomController@getRoom')->where('rid','[0-9]{5,15}')->name('m_get_room');

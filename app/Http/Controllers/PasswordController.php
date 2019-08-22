@@ -317,4 +317,9 @@ class PasswordController extends Controller
         return JsonResponse::create(['status' => 1, 'msg' => '密码修改成功']);
     }
 
+    public function pwdResetTest()
+    {
+        echo 'not implement yet!';
+    }
+
 }

@@ -6,7 +6,8 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'phpDocumentor\\Reflection\\' => array($vendorDir . '/phpdocumentor/reflection-common/src', $vendorDir . '/phpdocumentor/type-resolver/src', $vendorDir . '/phpdocumentor/reflection-docblock/src'),
+    'phpDocumentor\\Reflection\\' => array($vendorDir . '/phpdocumentor/reflection-common/src', $vendorDir . '/phpdocumentor/reflection-docblock/src', $vendorDir . '/phpdocumentor/type-resolver/src'),
+    'Zend\\Diactoros\\' => array($vendorDir . '/zendframework/zend-diactoros/src'),
     'XdgBaseDir\\' => array($vendorDir . '/dnoegel/php-xdg-base-dir/src'),
     'Whoops\\' => array($vendorDir . '/filp/whoops/src/Whoops'),
     'Webmozart\\Assert\\' => array($vendorDir . '/webmozart/assert/src'),
@@ -30,10 +31,11 @@ return array(
     'Psy\\' => array($vendorDir . '/psy/psysh/src/Psy'),
     'Psr\\SimpleCache\\' => array($vendorDir . '/psr/simple-cache/src'),
     'Psr\\Log\\' => array($vendorDir . '/psr/log/Psr/Log'),
-    'Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-message/src'),
+    'Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-factory/src', $vendorDir . '/psr/http-message/src'),
     'Psr\\Container\\' => array($vendorDir . '/psr/container/src'),
     'PhpParser\\' => array($vendorDir . '/nikic/php-parser/lib/PhpParser'),
     'NunoMaduro\\Collision\\' => array($vendorDir . '/nunomaduro/collision/src'),
+    'Nexmo\\' => array($vendorDir . '/nexmo/client/src'),
     'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
     'Mews\\Captcha\\' => array($vendorDir . '/mews/captcha/src'),
     'League\\Flysystem\\' => array($vendorDir . '/league/flysystem/src'),
@@ -41,6 +43,9 @@ return array(
     'Laravel\\Tinker\\' => array($vendorDir . '/laravel/tinker/src'),
     'Intervention\\Image\\' => array($vendorDir . '/intervention/image/src/Intervention/Image'),
     'Illuminate\\' => array($vendorDir . '/laravel/framework/src/Illuminate'),
+    'Http\\Promise\\' => array($vendorDir . '/php-http/promise/src'),
+    'Http\\Client\\' => array($vendorDir . '/php-http/httplug/src'),
+    'Http\\Adapter\\Guzzle6\\' => array($vendorDir . '/php-http/guzzle6-adapter/src'),
     'Hashids\\' => array($vendorDir . '/hashids/hashids/src'),
     'GuzzleHttp\\Psr7\\' => array($vendorDir . '/guzzlehttp/psr7/src'),
     'GuzzleHttp\\Promise\\' => array($vendorDir . '/guzzlehttp/promises/src'),

@@ -1508,4 +1508,14 @@ class Controller extends BaseController
         return $res;
 
     }
+
+    protected function msg($msg, $status = 0)
+    {
+        return JsonResponse::create(
+            [
+                "status" => $status,
+                "msg" => $msg,
+            ]
+        );
+    }
 }

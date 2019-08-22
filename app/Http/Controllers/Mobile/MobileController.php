@@ -148,7 +148,7 @@ class MobileController extends Controller
         if ($uMod && $uMod->exists) {
             $nickcount = 0;
         }
-        
+
         return JsonResponse::create([
             'status' => 1,
             'data' => [
@@ -846,7 +846,7 @@ class MobileController extends Controller
             $one->android_url = $S_list['android_url'];
             $one->ios_url = $S_list['ios_url'];
             $one->position = (string)$S_list['position'];
-            
+
             if(!empty($S_list['image'])){
                 //图片实际连结存在时 不导入cdn路径
                 $one->pic = strpos($S_list['image'],'://')?$S_list['image']:$cdn.$S_list['image'];
@@ -900,7 +900,7 @@ class MobileController extends Controller
         $device = Input::get('device',2);
         $list = json_decode(Redis::hget('hmarquee:' . SiteSer::siteId(),'list'));
         $show = array();
-        
+
         foreach($list as $val){
             $O = (object)array();
             if($val->device==$device&&$val->status>0){
@@ -921,12 +921,12 @@ class MobileController extends Controller
 
     public function loginmsg(){
         $device = Input::get('device',1);
-        
+
         $data = json_decode(Redis::hget('hloginmsg:' .SiteSer::siteId(),'list'));
 
+        $A_data = array();
         if(isset($data)){
 
-            $A_data = array();
             foreach($data as $key => $val){
                 $O = (object)array();
                 if($key>strtotime('-3 month 00:00:00')){

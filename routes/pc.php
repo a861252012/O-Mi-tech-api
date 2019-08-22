@@ -9,6 +9,10 @@ Route::get('/captcha', 'LoginController@captcha');
 //Route::get('test_recharge', function(){
 //    return view('test.recharge');
 //});
+
+// send SMS
+Route::post('/sms/send', 'SmsController@send')->name('sms_send');
+
 // 任务列表
 Route::get('/task', 'TaskController@index')->name('task_index');
 //贵族列表
@@ -46,6 +50,11 @@ Route::group(['prefix' => 'member'], function () {
     Route::group(['middleware' => 'login_auth'], function () {
         Route::get('menu', 'MemberController@getMenu');
         Route::get('index', 'MemberController@index')->name('member_index');
+
+        // modify mobile
+        Route::post('modifymobile/send', 'MemberController@modifyMobileSend')->name('member_modify_mobile_send');
+        Route::post('modifymobile/confirm', 'MemberController@modifyMobileConfirm')->name('member_modify_mobile_confirm');
+
         Route::post('mail/verify/send', 'PasswordController@sendVerifyMail')->middleware('throttle.route:1,1')->name('mail_verify_send');
         // 用户中心消息  type 是可有可无的 必须放到最后
         Route::get('message/{type?}', 'MemberController@msglist')->where('type', '[0-9]+')->name('member_msglist');
@@ -170,7 +179,10 @@ Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@c
 // 开放平台
 Route::get('/api/downrtmp', 'ApiController@getDownRtmp')->name('downrtmp');
 
+// reg
 Route::post('/reg', 'ApiController@reg')->name('api_reg');
+// reg suggest nickname
+Route::get('/reg/nickname', 'RegController@nickname')->name('reg_nickname');
 // PageController
 Route::get('/search', ['name' => 'search', 'uses' => 'PageController@search']);
 

@@ -14,6 +14,7 @@ use App\Models\UserModNickName;
 use App\Models\Users;
 use App\Services\Service;
 use App\Services\UserGroup\UserGroupService;
+use App\Services\User\RegService;
 use DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Redis\RedisManager;
@@ -56,10 +57,11 @@ class UserService extends Service
      */
     public function register(array $user, $gift = [], $agent = 0, $invite_code = 0)
     {
-        $newUser = Arr::only($user, ['did', 'username', 'password', 'nickname', 'roled', 'exp', 'pop', 'created', 'status', 'province', 'city', 'county', 'video_status', 'rich', 'lv_exp', 'lv_rich', 'pic_total_size', 'pic_used_size', 'lv_type', 'icon_id', 'uuid', 'xtoken', 'origin', 'sex', 'site_id']);
+        $site_id = SiteSer::siteId();
+        $newUser = Arr::only($user, ['did', 'username', 'password', 'nickname', 'cc_mobile', 'roled', 'exp', 'pop', 'created', 'status', 'province', 'city', 'county', 'video_status', 'rich', 'lv_exp', 'lv_rich', 'pic_total_size', 'pic_used_size', 'lv_type', 'icon_id', 'uuid', 'xtoken', 'origin', 'sex', 'site_id']);
         $newUser['created'] = date('Y-m-d H:i:s');
         $newUser['logined'] = date('Y-m-d H:i:s');
-        $newUser['site_id'] = SiteSer::siteId();
+        $newUser['site_id'] = $site_id;
         if (strlen($newUser['password']) != 32) {
             $newUser['password'] = md5($newUser['password']);
         }
@@ -81,8 +83,15 @@ class UserService extends Service
             DB::commit();
             //更新redis关联
             $redis = $this->make('redis');
-            $redis->hset('husername_to_id:' . SiteSer::siteId(), $user['username'], $uid);
-            $redis->hset('hnickname_to_id:' . SiteSer::siteId(), $user['nickname'], $uid);
+            $redis->hset('husername_to_id:' . $site_id, $user['username'], $uid);
+            $redis->hset('hnickname_to_id:' . $site_id, $user['nickname'], $uid);
+            if (!empty($user['cc_mobile'])) {
+                $redis->hset('hcc_mobile_to_id:' . $site_id, $user['cc_mobile'], $uid);
+            }
+
+            // cnt + 1
+            $regService = resolve(RegService::class);
+            $cnt = $regService->incr();
 
             //赠送钻石
             if ($points = Arr::get($gift, 'points')) {

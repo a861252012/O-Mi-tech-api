@@ -21,7 +21,9 @@ use App\Services\Auth\JWTGuard;
 use App\Services\Message\MessageService;
 use App\Services\Safe\SafeService;
 use App\Services\Site\Config;
+use App\Services\Sms\SmsService;
 use App\Services\System\SystemService;
+use App\Services\User\RegService;
 use App\Services\User\UserService;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
@@ -117,22 +119,60 @@ class ApiController extends Controller
      */
     public function reg(Request $request)
     {
-        $skipCaptcha = SiteSer::config('skip_captcha_reg');
+        $regService = resolve(RegService::class);
+        $useMobile = $request->post('use_mobile', 0) == '1';
 
-        if (!$skipCaptcha && !Captcha::check($request->get('captcha'))) {
+        $status = $regService->status();
+        if ($status == RegService::STATUS_BLOCK) {
+            return $this->msg('来自您当前 IP 的注册数量过多，已暂停注册功能，请联系客服处理。');
+        }
+
+        $site_id = SiteSer::siteId();
+        $redis = resolve('redis');
+        $cc_mobile = '';
+        if ($useMobile) {
+            $cc = $request->post('cc', '');
+            $mobile = $request->post('mobile', '');
+            $code = $request->post('code', '');
+            if (empty($cc) || empty($mobile) || empty($code)) {
+                return $this->msg('Invalid request');
+            }
+
+            $cc_mobile = $cc.$mobile;
+            if ($redis->hExists('hcc_mobile_to_id:' . $site_id, $cc_mobile)) {
+                return $this->msg('对不起, 该手机号已被使用!');
+            }
+
+            $result = SmsService::verify(SmsService::ACT_REG, $cc, $mobile, $code);
+            if ($result !== true) {
+                return $this->msg($result);
+            }
+        }
+
+        $skipCaptcha = SiteSer::config('skip_captcha_reg');
+        $needCaptcha = !$skipCaptcha && $status == RegService::STATUS_NEED_CAPTCHA;
+        if (!$useMobile && $needCaptcha && !Captcha::check($request->get('captcha'))) {
             return JsonResponse::create([
                 "status" => 0,
                 "msg" => "验证码错误!",
             ]);
         }
+
         $username = $request->get('username');
-        if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $username) || strlen($username) < 5 || strlen($username) > 30) {
+        if (empty($username)) {
+            $username = $regService->randomEmail();;
+        } else if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $username) || strlen($username) < 5 || strlen($username) > 30) {
             return JsonResponse::create([
                 "status" => 0,
                 "msg" => "注册邮箱不符合格式！(5-30位的邮箱)",
             ]);
         }
+
         $nickname = $request->get('nickname');
+        if ($useMobile && empty($nickname)) {
+            $nickname = $regService->randomNickname();
+        }
+
         $agent = $request->get('agent');
         $len = sizeof(preg_split("//u", $nickname, -1, PREG_SPLIT_NO_EMPTY));
 
@@ -144,14 +184,8 @@ class ApiController extends Controller
             ]);
         }
 
-        /**
-         * 关键字过滤
-         *
-         * @author dc
-         * @var array
-         */
+        // 关键字过滤
         $query = Keywords::where('btype', 2)->where('status', 0)->groupby('keyword')->get(['keyword'])->toArray();
-
         if (is_array($query)) {
             foreach ($query as $v) {
                 $v['keyword'] = addcslashes($v['keyword'], '.^$*+?()[]{}|\\');
@@ -164,23 +198,28 @@ class ApiController extends Controller
             }
         }
 
-        if ($request->get('password1') != $request->get('password2')) {
+        $password2 = $request->get('password2');
+        if (!empty($password2) && $request->get('password1') != $password2) {
             return JsonResponse::create([
                 "status" => 0,
                 "msg" => "两次密码输入不一致!",
             ]);
         }
 
-        $password = $this->decode($request->get('password1'));
-//        $password = $request->get('password1');
-        if (strlen($password) < 6 || strlen($password) > 22 || preg_match('/^\d{6,22}$/', $password)) {
+        $password1 = $request->get('password1');
+        if ($useMobile && empty($password1)) {
+            $password = substr(md5($nickname . mt_rand(100, 999)), 0, 10);
+        } else {
+            $password = $this->decode();
+        }
+        $passlen = strlen($password);
+        if ($passlen < 6 || $passlen > 22 || preg_match('/^\d{6,22}$/', $password)) {
             return JsonResponse::create([
                 "status" => 0,
                 "msg" => "注册密码不符合格式!",
             ]);
         }
 
-        $redis = resolve('redis');
         if ($redis->hExists('husername_to_id:' . SiteSer::siteId(), $username)) {
             return JsonResponse::create([
                 "status" => 0,
@@ -197,6 +236,7 @@ class ApiController extends Controller
         $newUser = [
             'username' => $username,
             'nickname' => $nickname,
+            'cc_mobile' => $cc_mobile,
             'password' => md5($password),
             'pic_total_size' => 524288000,
             'pic_used_size' => 0,
@@ -343,7 +383,7 @@ class ApiController extends Controller
         }else{
             return JsonResponse::create(['status' => 0, 'msg' => '兑换失败']);
         }
-        
+
     }
 
     /**
