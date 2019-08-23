@@ -80,16 +80,21 @@ class RedisUserProvider implements UserProvider
                 array_key_exists('password', $credentials))) {
             return;
         }
-        $username = $credentials['username'];
-        if (filter_var($username,FILTER_VALIDATE_EMAIL)){
-            $user = UserSer::getUserByUsername($username);
-        }else{
-            $user = UserSer::getUserByNickname($username);
-            if (is_null($user)) {
-                $user = UserSer::getUserByUsername($username);
-            }
 
+        if (isset($credentials['cc_mobile'])) {
+            $user = UserSer::getUserByCCMobile($credentials['cc_mobile']);
+        } else {
+            $username = $credentials['username'];
+            if (filter_var($username, FILTER_VALIDATE_EMAIL)) {
+                $user = UserSer::getUserByUsername($username);
+            } else {
+                $user = UserSer::getUserByNickname($username);
+                if (is_null($user)) {
+                    $user = UserSer::getUserByUsername($username);
+                }
+            }
         }
+
         if ($user && $user->banned()) {
             throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '您的账号已经被禁止登录，请联系客服！']));
         }
@@ -105,6 +110,10 @@ class RedisUserProvider implements UserProvider
      */
     public function validateCredentials(Authenticatable $user, array $credentials)
     {
+        if (isset($credentials['cc_mobile']) && isset($credentials['mobile_logined']) === true) {
+            return true;
+        }
+
         $plain = $credentials['password'];
         return $user->getAuthPassword() === hash('md5', $plain);
     }

@@ -29,6 +29,7 @@ class UserService extends Service
 
     const KEY_USERNAME_TO_ID = 'husername_to_id';
     const KEY_NICKNAME_TO_ID = 'hnickname_to_id';
+    const KEY_CC_MOBILE_TO_ID = 'hcc_mobile_to_id';
     const KEY_USER_INFO = 'huser_info:';
     const KEY_USER_SID = 'huser_sid';
     public $user;
@@ -86,7 +87,7 @@ class UserService extends Service
             $redis->hset('husername_to_id:' . $site_id, $user['username'], $uid);
             $redis->hset('hnickname_to_id:' . $site_id, $user['nickname'], $uid);
             if (!empty($user['cc_mobile'])) {
-                $redis->hset('hcc_mobile_to_id:' . $site_id, $user['cc_mobile'], $uid);
+                $redis->hset(self::KEY_CC_MOBILE_TO_ID .':'. $site_id, $user['cc_mobile'], $uid);
             }
 
             // cnt + 1
@@ -437,6 +438,15 @@ class UserService extends Service
         return $this->getUserByUid($uid);
     }
 
+    public function getUserByCCMobile($cc_mobile)
+    {
+        if (empty($cc_mobile)) {
+            return null;
+        }
+        $uid = $this->getUidByCCMobile($cc_mobile);
+        return $this->getUserByUid($uid);
+    }
+
     public function getUidByUsername($username)
     {
         $uid = $this->redis->hget(static::KEY_USERNAME_TO_ID . ':' . SiteSer::siteId(), $username);
@@ -460,6 +470,20 @@ class UserService extends Service
             if (!$uid) return null;
             $uid = $this->redis->hset(static::KEY_NICKNAME_TO_ID . ':' . SiteSer::siteId(), $nickname, $uid);
 
+        }
+        return $uid;
+    }
+    public function getUidByCCMobile($cc_mobile)
+    {
+        $site_id = SiteSer::siteId();
+        $uid = $this->redis->hget(static::KEY_CC_MOBILE_TO_ID .':'. $site_id, $cc_mobile);
+
+        if (!$uid) {
+            $user = Users::query()->where('cc_mobile', $cc_mobile)->first();
+            if ($user && !empty($user['uid'])) {
+                $uid = $user['uid'];
+                $this->redis->hset(static::KEY_CC_MOBILE_TO_ID .':'. $site_id, $cc_mobile, $uid);
+            }
         }
         return $uid;
     }

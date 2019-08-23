@@ -210,7 +210,7 @@ class ApiController extends Controller
         if ($useMobile && empty($password1)) {
             $password = substr(md5($nickname . mt_rand(100, 999)), 0, 10);
         } else {
-            $password = $this->decode();
+            $password = $this->decode($password1);
         }
         $passlen = strlen($password);
         if ($passlen < 6 || $passlen > 22 || preg_match('/^\d{6,22}$/', $password)) {

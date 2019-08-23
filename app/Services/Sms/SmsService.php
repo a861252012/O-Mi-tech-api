@@ -15,11 +15,11 @@ class SmsService
     const ACT_PWD_RESET = 3;
     const ACT_MODIFY_MOBILE = 4;
 
-    // TODO: error messages
-    const ERR_INVALID_FORMAT = 'INVALID_FORMAT';
-    const ERR_ALREADY_SEND = 'ALREADY_SEND';
-    const ERR_SEND_FAILED = 'SEND_FAILED';
-    const ERR_VERIFY_FAILED = 'VERIFY_FAILED';
+    // error messages
+    const ERR_INVALID_FORMAT = '手机号格式错误';
+    const ERR_ALREADY_SEND = '刚刚已发送过，请稍后再试';
+    const ERR_SEND_FAILED = '发送失败，请稍后再试';
+    const ERR_VERIFY_FAILED = '验证号码错误';
 
     static function send($act, $cc, $mobile)
     {
@@ -122,7 +122,8 @@ class SmsService
     static function log($act, $cc, $mobile, $code)
     {
         $log_file = '/data/iev4code/smslog/sms_log.txt';
-        if (getenv('APP_DEBUG') !== 'true' || !file_exists($log_file)) {
+        // TODO: check env
+        if (!file_exists($log_file)) {
             return;
         }
         $len = strlen($mobile);

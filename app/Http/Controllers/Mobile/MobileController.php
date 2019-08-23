@@ -18,6 +18,7 @@ use App\Models\Messages;
 use App\Models\AppMarket;
 use App\Models\UserModNickName;
 use App\Services\Site\SiteService;
+use App\Services\Sms\SmsService;
 use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -333,26 +334,56 @@ class MobileController extends Controller
      */
     public function login(Request $request)
     {
-        $username = $request->get('username');
-        $password = $this->decode($request->get('password'));
-        $captcha = $request->get('captcha');
-        if (!app(SiteService::class)->config('skip_captcha_login')) {
-            if (empty($captcha)) {
-                return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
+        $credentials = [];
+        $useMobile = $request->post('use_mobile', 0) == '1';
+        $site_id = SiteSer::siteId();
+        $redis = resolve('redis');
+        $cc_mobile = '';
+        $uid = -1;
+
+        if ($useMobile) {
+            $cc = $request->post('cc', '');
+            $mobile = $request->post('mobile', '');
+            $code = $request->post('code', '');
+            if (empty($cc) || empty($mobile) || empty($code)) {
+                return $this->msg('Invalid request');
             }
-            if (!Captcha::check($captcha)) {
-                return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
+
+            $result = SmsService::verify(SmsService::ACT_LOGIN, $cc, $mobile, $code);
+            if ($result !== true) {
+                return $this->msg($result);
             }
-        }
-        if (!$username || !$password) {
-            return JsonResponse::create(['status' => 0, 'msg' => '用户名密码不能为空']);
+
+            $cc_mobile = $cc.$mobile;
+            $credentials['cc_mobile'] = $cc_mobile;
+            $credentials['mobile_logined'] = true;
+            $uid = UserSer::getUidByCCMobile($cc_mobile);
+        } else {
+            $username = $request->get('username');
+            $password = $this->decode($request->get('password'));
+            $captcha = $request->get('captcha');
+            if (!app(SiteService::class)->config('skip_captcha_login')) {
+                if (empty($captcha)) {
+                    return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
+                }
+                if (!Captcha::check($captcha)) {
+                    return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
+                }
+            }
+            if (!$username || !$password) {
+                return JsonResponse::create(['status' => 0, 'msg' => '用户名密码不能为空']);
+            }
+
+            $credentials['username'] = $username;
+            $credentials['password'] = $password;
+            $uid = UserSer::getUidByUsername($username);
+            if (!$uid) {
+                $uid = UserSer::getUidByNickname($username);
+            }
         }
 
-        $uid = UserSer::getUidByUsername($username);
-        if(!$uid){
-            $uid = UserSer::getUidByNickname($username);
-        }
-        if($member = Users::find($uid)){
+        // freeze check
+        if ($member = Users::find($uid)) {
             $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
             if ($member->status==2) {
                 return JsonResponse::create(['status' => 0, 'msg' => '您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq]);
@@ -361,8 +392,7 @@ class MobileController extends Controller
 
         $user = null;
         $jwt = Auth::guard('mobile');
-
-        if (!$jwt->attempt(['username' => $username, 'password' => $password])) {
+        if (!$jwt->attempt($credentials)) {
             return JsonResponse::create(['status' => 0, 'msg' => '用户名密码错误']);
         }
         $user = $jwt->user();

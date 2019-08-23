@@ -7,6 +7,7 @@ use App\Facades\UserSer;
 use App\Models\UserLoginLog;
 use App\Models\Users;
 use App\Services\Site\SiteService;
+use App\Services\Sms\SmsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,6 +34,10 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
+        $useMobile = $request->post('use_mobile', 0) == '1';
+        if ($useMobile) {
+            return $this->solveMobileLogin($request);
+        }
 
         //获取值
         $username = $request->get('username') ?: '';
@@ -224,7 +229,60 @@ class LoginController extends Controller
                Session::getName() => Session::getId(),
             ]
         ];
-        
+
+    }
+
+    private function solveMobileLogin(Request $request)
+    {
+        $site_id = SiteSer::siteId();
+        $redis = resolve('redis');
+        $cc_mobile = '';
+        $uid = -1;
+
+        $cc = $request->post('cc', '');
+        $mobile = $request->post('mobile', '');
+        $code = $request->post('code', '');
+        if (empty($cc) || empty($mobile) || empty($code)) {
+            return $this->msg('Invalid request');
+        }
+
+        $result = SmsService::verify(SmsService::ACT_LOGIN, $cc, $mobile, $code);
+        if ($result !== true) {
+            return $this->msg($result);
+        }
+
+        $cc_mobile = $cc.$mobile;
+        $credentials['cc_mobile'] = $cc_mobile;
+        $credentials['mobile_logined'] = true;
+        $uid = UserSer::getUidByCCMobile($cc_mobile);
+
+        $open_pwd_change = SiteSer::config('pwd_change') ?: false;
+
+        // freeze check
+        if ($member = Users::find($uid)) {
+            $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
+            if ($member->status==2) {
+                return $this->msg('您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq);
+            }
+        }
+
+        $open_pwd_change = SiteSer::config('pwd_change') ?: false;
+        if ($open_pwd_change && (!$this->checkPwdChanged($uid))) {
+            return $this->msg('密码修改', 101);
+        }
+
+        //取uid
+        $auth = Auth::guard();
+        $auth->attempt($credentials, request('remember'));
+
+        $resp = [
+            'status' => 1,
+            'msg' => '登录成功',
+            'data'=> [
+               Session::getName() => Session::getId(),
+            ]
+        ];
+        return JsonResponse::create($resp);
     }
 
     private function checkPwdChanged($uid){
