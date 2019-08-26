@@ -296,8 +296,8 @@ class PasswordController extends Controller
         return JsonResponse::create(['status' => 1]);
     }
 
-    // 由手機發送重置密碼請求，流程過於簡單，建議重新規劃
-    public function pwdResetFromMobile(Request $request)
+    // 手機發送重置密碼請求 - Step1
+    public function pwdResetSendFromMobile(Request $request)
     {
         $sCode = $this->make('request')->get('captcha');
         if (!Captcha::check($sCode)) {
@@ -316,6 +316,61 @@ class PasswordController extends Controller
             return $this->msg('该邮箱没有通过安全邮箱验证, 验证安全邮箱才能使用此功能。');
         }
 
+        // email code
+        $code = strtolower(Str::random(4));
+        Redis::setex('pwdreset.mtoken:' . md5($mail), 30 * 60, $code);
+
+        // email
+        $content = file_get_contents('../resources/views/emails/pwdreset-m-send.blade.php');
+        $sendclound = SiteSer::config('sendclound');
+        $sendfrom = SiteSer::config('sendfrom');
+        $sendclound = json_decode($sendclound, true);
+
+        $sendcloud = new SendCloud($sendclound['name'], $sendclound['pass'], 'v2');
+        $mail = resolve(AttachmentService::class);
+        $mail->setFrom($sendfrom);
+
+        $content = str_replace('{{$siteName}}', $siteName, $content);
+        $content = str_replace('{{$code}}', $code, $content);
+        $content = str_replace('{{$date}}', date("Y-m-d H:i:s"), $content);
+        $content = str_replace('{{$username}}', $user->nickname, $content);
+        $mail->setXsmtpApi(json_encode(array(
+            'to' => array($user->safemail),
+            'sub' => array(
+                '%title%' => array('邮箱找回密码'),
+                '%content%' => array($content),
+            )
+        )));
+        $mail->setRespEmailId(true);
+        $templateContent=resolve(TemplateContentService::class);
+        $templateContent->setTemplateInvokeName("test_template");
+
+        $mail->setTemplateContent($templateContent);
+        $sendcloud->sendTemplate($mail);
+        return JsonResponse::create(['status' => 1, 'msg' => '邮箱验证码发送成功']);
+    }
+
+    // 手機發送重置密碼請求 - Step2
+    public function pwdResetConfirmFromMobile(Request $request)
+    {
+        $mail = $request->get('email');
+        if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
+            ThrottleRoutes::clear($request);
+            return $this->msg('邮箱格式不正确');
+        }
+
+        $userCode = $request->post('code');
+        $code = Redis::get('pwdreset.mtoken:' . md5($mail));
+        if (empty($userCode) || $userCode != $code) {
+            return $this->msg('邮箱验证码错误');
+        }
+
+        $user = Users::where('safemail', $mail)->first();
+        if (!$user) {
+            ThrottleRoutes::clear($request);
+            return $this->msg('该邮箱没有通过安全邮箱验证, 验证安全邮箱才能使用此功能。');
+        }
+
         // update password
         $uid = $user->uid;
         $pwd = strtolower(Str::random(6));
@@ -324,7 +379,7 @@ class PasswordController extends Controller
         Redis::hset('huser_info:' . $uid, 'password', $hash);
 
         // email
-        $content = file_get_contents('../resources/views/emails/pwdreset-direct.blade.php');
+        $content = file_get_contents('../resources/views/emails/pwdreset-m-confirm.blade.php');
         $sendclound = SiteSer::config('sendclound');
         $sendfrom = SiteSer::config('sendfrom');
         $sendclound = json_decode($sendclound, true);
@@ -350,7 +405,7 @@ class PasswordController extends Controller
 
         $mail->setTemplateContent($templateContent);
         $sendcloud->sendTemplate($mail);
-        return JsonResponse::create(['status' => 1, 'msg' => '邮件发送成功']); // TODO: add more message
+        return JsonResponse::create(['status' => 1, 'msg' => '邮件发送成功']);
     }
 
     /**

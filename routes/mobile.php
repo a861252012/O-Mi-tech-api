@@ -43,7 +43,8 @@ Route::get('activitydetail', ['name' => 'm_activitydetail', 'uses' => 'ActivityC
 
 Route::group(['prefix' => 'user'], function () {
     Route::post('pwdreset/by_mobile', 'PasswordController@pwdResetByMobile')->middleware('throttle.route:10,1')->name('m_pwdreset_by_mobile');
-    Route::post('pwdreset/reset', 'PasswordController@pwdResetFromMobile')->middleware('mobile.session')->middleware('throttle.route:10,1')->name('m_pwdreset');
+    Route::post('pwdreset/send', 'PasswordController@pwdResetSendFromMobile')->middleware('mobile.session')->middleware('throttle.route:10,1')->name('m_pwdreset');
+    Route::post('pwdreset/confirm', 'PasswordController@pwdResetConfirmFromMobile')->middleware('throttle.route:10,1')->name('m_pwdreset');
     Route::post('pwdreset/test', 'PasswordController@pwdResetTest');
 });
 
