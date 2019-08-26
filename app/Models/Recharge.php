@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\SiteSpecific;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 送钱记录对应的模型
@@ -26,4 +27,18 @@ class Recharge extends Model
     protected $primaryKey = 'id';
     protected $guarded = ['id'];
 
+    public function getSummaryPaymoney($aid, $mintime, $maxtime)
+    {
+        $sql = <<<SQL
+            SELECT sum(r.paymoney) paymoney
+              FROM video_recharge r INNER JOIN
+                   video_agent_relationship a ON a.uid=r.uid
+             WHERE a.aid={$aid}
+               AND r.created BETWEEN '{$mintime}' AND '{$maxtime}'
+               AND r.pay_status=2
+               AND r.pay_type IN (1, 4, 7)
+SQL;
+        $q = DB::select($sql)[0];
+        return $q->paymoney;
+    }
 }

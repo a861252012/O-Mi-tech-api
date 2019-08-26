@@ -449,19 +449,15 @@ class MemberController extends Controller
             // return new RedirectResponse('/');
             return new JsonResponse(['status' => 0, 'msg' => '']);
         }
-        $agentsRelationship = AgentsRelationship::where('aid', $agentsPriv->aid)->get()->toArray();
-        $uidArray = array_column($agentsRelationship, 'uid');
 
         $mintimeDate = $this->request()->get('mintimeDate') ?: date('Y-m-d', strtotime('-1 month'));
         $maxtimeDate = $this->request()->get('maxtimeDate') ?: date('Y-m-d');
         $mintime = date('Y-m-d H:i:s', strtotime($mintimeDate));
         $maxtime = date('Y-m-d H:i:s', strtotime($maxtimeDate . '23:59:59'));
         //查询充值成功的记录，而不是处理中的记录
-        $recharge_points = Recharge::whereIn('uid', $uidArray)->whereBetween('created', [$mintime, $maxtime])
-            ->where('pay_status', 2)
-            ->whereIn('pay_type', [1, 4, 7])
-            ->sum('paymoney');
-        $recharge_points = $recharge_points * 10;
+        $recharge = resolve(Recharge::class);
+        $paymoney = $recharge->getSummaryPaymoney($agentsPriv->aid, $mintime, $maxtime);
+        $recharge_points = $paymoney * 10;
         $rebate_points = ($recharge_points * $agentsPriv->agents->rebate) / 100;
 
         $agent_members = AgentsRelationship::where('aid', $agentsPriv->aid)
