@@ -42,8 +42,8 @@ Route::any('domain_list', ['name' => 'domain_list', 'uses' => 'Mobile\MobileCont
 Route::get('activitydetail', ['name' => 'm_activitydetail', 'uses' => 'ActivityController@detailtype']);
 
 Route::group(['prefix' => 'user'], function () {
-    Route::post('pwdreset/submit', 'PasswordController@pwdResetSubmit')->middleware('throttle.route:10,1')->name('pwdreset_submit');
-    Route::post('pwdreset/reset', 'PasswordController@pwdResetConfirm');
+    Route::post('pwdreset/by_mobile', 'PasswordController@pwdResetByMobile')->middleware('throttle.route:10,1')->name('m_pwdreset_by_mobile');
+    Route::post('pwdreset/reset', 'PasswordController@pwdResetFromMobile')->middleware('mobile.session')->middleware('throttle.route:10,1')->name('m_pwdreset');
     Route::post('pwdreset/test', 'PasswordController@pwdResetTest');
 });
 
@@ -142,7 +142,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
 
     //上传头像
     Route::post('upload', 'MemberController@avatarUpload')->name('avatar_upload');
-    
+
     // 用户中心修改基本信息
     Route::post('edituserinfo', 'MemberController@editUserInfo')->name('member_edituserinfo');
 

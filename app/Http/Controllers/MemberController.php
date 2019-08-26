@@ -32,6 +32,7 @@ use App\Models\Usersall;
 use App\Models\WithDrawalList;
 use App\Services\Message\MessageService;
 use App\Services\Room\RoomService;
+use App\Services\Sms\SmsService;
 use App\Services\System\SystemService;
 use App\Services\User\UserService;
 use App\Services\UserGroup\UserGroupService;
@@ -430,7 +431,7 @@ class MemberController extends Controller
         /*}else{
             return new JsonResponse(['status' => 1, 'data' => [],'msg'=>'未登录']);
         }*/
-        
+
     }
 
     /**
@@ -851,7 +852,7 @@ class MemberController extends Controller
 
         $chargelists = $chargelist->orderBy('id', 'DESC')->paginate(10)
             ->appends(['mintime' => $mintime, 'maxtime' => $maxtime]);
-        
+
         return JsonResponse::create(['status' => 1, 'data' => ['list' => $chargelists,'total_amount'=>$total_amount,'total_money'=>$total_money]]);
     }
 
@@ -1986,7 +1987,7 @@ class MemberController extends Controller
         /*}else{
             return new JsonResponse(['status' => 1, 'data' => [],'msg'=>'未登录']);
         }*/
-        
+
     }
 
     /**
@@ -3044,7 +3045,7 @@ class MemberController extends Controller
             }
         }
         usort($data, [$this, '_compareSAgent']);
-        
+
         return new JsonResponse(['msg' => 0, 'data' => ['live'=>$data,'info'=>$msg_contact]]);
     }
 
@@ -3064,6 +3065,52 @@ class MemberController extends Controller
     private function _compareSAgent($a1, $a2)
     {
         return $a1['order'] < $a2['order'] ? -1 : 1;
+    }
+
+    public function modifyMobileSend(Request $req)
+    {
+        $cc = $req->post('cc');
+        $mobile = $req->post('mobile');
+
+        // input validation
+        if (empty($cc) || empty($mobile)) {
+            return $this->msg('Invalid request');
+        }
+
+        // check reg mobile exists
+        $cc_mobile = $cc.$mobile;
+        $site_id = SiteSer::siteId();
+        $redis = resolve('redis');
+        $exists = $redis->hExists('hcc_mobile_to_id:' . $site_id, $cc_mobile);
+        if ($exists) {
+            return $this->msg('对不起, 该手机号已被使用!');
+        }
+
+        $act = SmsService::ACT_MODIFY_MOBILE;
+        $result = SmsService::send($act, $cc, $mobile);
+        if ($result !== true) {
+            return $this->msg($result);
+        }
+        return $this->msg('成功发送', 1);
+    }
+
+    public function modifyMobileConfirm(Request $req)
+    {
+        $cc = $req->post('cc');
+        $mobile = $req->post('mobile');
+        $code = $req->post('code', '');
+        if (empty($cc) || empty($mobile) || empty($code)) {
+            return $this->msg('Invalid request');
+        }
+
+        $result = SmsService::verify(SmsService::ACT_MODIFY_MOBILE, $cc, $mobile, $code);
+        if ($result !== true) {
+            return $this->msg($result);
+        }
+
+        $userService = resolve(UserService::class);
+        $userService->modifyMobile(Auth::user(), $cc.$mobile);
+        return $this->msg('修改成功', 1);
     }
 
 }

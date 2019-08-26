@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 
 use App\Facades\SiteSer;
+use App\Facades\UserSer;
 use App\Http\Middleware\ThrottleRoutes;
 use App\Mail\PwdReset;
 use App\Mail\SafeMailVerify;
 use App\Models\Users;
 use App\Services\Service;
 use App\Services\Site\SiteService;
+use App\Services\Sms\SmsService;
 use App\Services\User\UserService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -21,6 +23,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\MessageBag;
+use Illuminate\Support\Str;
 use Mews\Captcha\Facades\Captcha;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use App\Services\Email\HttpClient;
@@ -259,6 +262,95 @@ class PasswordController extends Controller
             return new RedirectResponse('/');
         }
         return $this->render('Password/getpwd');
+    }
+
+    // 用手機號重置密碼
+    public function pwdResetByMobile(Request $request)
+    {
+        $cc = $request->post('cc', '');
+        $mobile = $request->post('mobile', '');
+        $code = $request->post('code', '');
+        if (empty($cc) || empty($mobile) || empty($code)) {
+            return $this->msg('Invalid request');
+        }
+
+        $result = SmsService::verify(SmsService::ACT_PWD_RESET, $cc, $mobile, $code);
+        if ($result !== true) {
+            return $this->msg($result);
+        }
+        ThrottleRoutes::clear($request);
+
+        $cc_mobile = $cc.$mobile;
+        $uid = UserSer::getUidByCCMobile($cc_mobile);
+
+        $pwd = strtolower(Str::random(6));  // 長度不能隨意改變， SMS 模板是需要先審核過的
+        $hash = md5($pwd);
+        Users::where('uid', $uid)->update(['password' => $hash]);
+        Redis::hset('huser_info:' . $uid, 'password', $hash);
+
+        $result = SmsService::resetPwd($cc, $mobile, $pwd);
+        if ($result !== true) {
+            return $this->msg($result);
+        }
+
+        return JsonResponse::create(['status' => 1]);
+    }
+
+    // 由手機發送重置密碼請求，流程過於簡單，建議重新規劃
+    public function pwdResetFromMobile(Request $request)
+    {
+        $sCode = $this->make('request')->get('captcha');
+        if (!Captcha::check($sCode)) {
+            return $this->msg('验证码错误');
+        }
+
+        $mail = $request->get('email');
+        if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
+            ThrottleRoutes::clear($request);
+            return $this->msg('邮箱格式不正确');
+        }
+
+        $user = Users::where('safemail', $mail)->first();
+        if (!$user) {
+            ThrottleRoutes::clear($request);
+            return $this->msg('该邮箱没有通过安全邮箱验证, 验证安全邮箱才能使用此功能。');
+        }
+
+        // update password
+        $uid = $user->uid;
+        $pwd = strtolower(Str::random(6));
+        $hash = md5($pwd);
+        Users::where('uid', $uid)->update(['password' => $hash]);
+        Redis::hset('huser_info:' . $uid, 'password', $hash);
+
+        // email
+        $content = file_get_contents('../resources/views/emails/pwdreset-direct.blade.php');
+        $sendclound = SiteSer::config('sendclound');
+        $sendfrom = SiteSer::config('sendfrom');
+        $sendclound = json_decode($sendclound, true);
+
+        $sendcloud = new SendCloud($sendclound['name'], $sendclound['pass'], 'v2');
+        $mail = resolve(AttachmentService::class);
+        $mail->setFrom($sendfrom);
+
+        $content = str_replace('{{$siteName}}', $siteName, $content);
+        $content = str_replace('{{$password}}', $pwd, $content);
+        $content = str_replace('{{$date}}', date("Y-m-d H:i:s"), $content);
+        $content = str_replace('{{$username}}', $user->nickname, $content);
+        $mail->setXsmtpApi(json_encode(array(
+            'to' => array($user->safemail),
+            'sub' => array(
+                '%title%' => array('邮箱找回密码'),
+                '%content%' => array($content),
+            )
+        )));
+        $mail->setRespEmailId(true);
+        $templateContent=resolve(TemplateContentService::class);
+        $templateContent->setTemplateInvokeName("test_template");
+
+        $mail->setTemplateContent($templateContent);
+        $sendcloud->sendTemplate($mail);
+        return JsonResponse::create(['status' => 1, 'msg' => '邮件发送成功']); // TODO: add more message
     }
 
     /**

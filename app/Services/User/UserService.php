@@ -1093,4 +1093,19 @@ class UserService extends Service
         return $arr;
 
     }
+
+    public function modifyMobile($user, $cc_mobile)
+    {
+        $uid = $user->uid;
+        $old_cc_mobile = $user->cc_mobile;
+        $site_id = SiteSer::siteId();
+
+        // remove old mobile
+        Redis::hdel(self::KEY_CC_MOBILE_TO_ID .':'. $site_id, $old_cc_mobile);
+
+        // update/add
+        Users::where('uid', $uid)->update(['cc_mobile' => $cc_mobile]);
+        Redis::hset('huser_info:' . $uid, 'cc_mobile', $cc_mobile);
+        Redis::hset(self::KEY_CC_MOBILE_TO_ID .':'. $site_id, $cc_mobile, $uid);
+    }
 }

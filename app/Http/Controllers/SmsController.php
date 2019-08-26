@@ -22,13 +22,17 @@ class SmsController extends Controller
         }
 
         // check reg mobile exists
-        if ($act == SmsService::ACT_REG) {
-            $site_id = SiteSer::siteId();
-            $redis = resolve('redis');
-            $cc_mobile = $cc.$mobile;
-            if ($redis->hExists('hcc_mobile_to_id:' . $site_id, $cc_mobile)) {
-                return $this->msg('对不起, 该手机号已被使用!');
-            }
+        $cc_mobile = $cc.$mobile;
+        $site_id = SiteSer::siteId();
+        $redis = resolve('redis');
+        $exists = $redis->hExists('hcc_mobile_to_id:' . $site_id, $cc_mobile);
+
+        if ($act == SmsService::ACT_REG && $exists) {
+            return $this->msg('对不起, 该手机号已被使用!');
+        } else if ($act == SmsService::ACT_LOGIN && !$exists) {
+            return $this->msg('手机号尚未注册!');
+        } else if ($act == SmsService::ACT_PWD_RESET && !$exists) {
+            return $this->msg('手机号尚未注册!');
         }
 
         $result = SmsService::send($act, $cc, $mobile);

@@ -13,7 +13,8 @@ class SmsService
     const ACT_REG = 1;
     const ACT_LOGIN = 2;
     const ACT_PWD_RESET = 3;
-    const ACT_MODIFY_MOBILE = 4;
+    const ACT_PWD_RESET_SEND = 4;
+    const ACT_MODIFY_MOBILE = 5;
 
     // error messages
     const ERR_INVALID_FORMAT = '手机号格式错误';
@@ -21,9 +22,28 @@ class SmsService
     const ERR_SEND_FAILED = '发送失败，请稍后再试';
     const ERR_VERIFY_FAILED = '验证号码错误';
 
-    static function send($act, $cc, $mobile)
+    static function resetPwd($cc, $mobile, $pwd)
     {
+        $act = self::ACT_PWD_RESET_SEND;
         if (!self::checkFormat($cc, $mobile)) {
+            return self::ERR_INVALID_FORMAT;
+        }
+        if (self::exists($act, $cc, $mobile)) {
+            return self::ERR_ALREADY_SEND;
+        }
+
+        // send
+        // TODO
+
+        // log
+        self::log($act, $cc, $mobile, $pwd);
+
+        return true;
+    }
+
+    static function send($act, $cc, $mobile, $checkFormat = true)
+    {
+        if ($checkFormat && !self::checkFormat($cc, $mobile)) {
             return self::ERR_INVALID_FORMAT;
         }
         if (self::exists($act, $cc, $mobile)) {
@@ -45,9 +65,9 @@ class SmsService
         return true;
     }
 
-    static function verify($act, $cc, $mobile, $code)
+    static function verify($act, $cc, $mobile, $code, $checkFormat = true)
     {
-        if (!self::checkFormat($cc, $mobile)) {
+        if ($checkFormat && !self::checkFormat($cc, $mobile)) {
             return self::ERR_INVALID_FORMAT;
         }
 
