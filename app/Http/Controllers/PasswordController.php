@@ -373,7 +373,7 @@ class PasswordController extends Controller
 
         // update password
         $uid = $user->uid;
-        $pwd = strtolower(Str::random(6));
+        $pwd = strtolower(Str::random(8)); // 8~16 chars
         $hash = md5($pwd);
         Users::where('uid', $uid)->update(['password' => $hash]);
         Redis::hset('huser_info:' . $uid, 'password', $hash);
