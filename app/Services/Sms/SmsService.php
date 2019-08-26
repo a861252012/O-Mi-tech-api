@@ -93,7 +93,8 @@ class SmsService
 
         // taiwan
         if ($cc == '886'
-            && (strlen($mobile) != 10 || substr($mobile, 0, 2) !== '09')
+            && !((strlen($mobile) == 10 && substr($mobile, 0, 2) === '09')
+                || (strlen($mobile) == 9 && substr($mobile, 0, 1) === '9'))
         ) {
             return false;
         }
