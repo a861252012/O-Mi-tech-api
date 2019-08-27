@@ -51,7 +51,7 @@ class SmsService
 
         // send
         if ($cc != '999') {
-            $msg = str_replace('{{pwd}}', $pwd , self::TPL_PWD_RESET_SEND);
+            $msg = str_replace('{{pwd}}', $pwd, self::TPL_PWD_RESET_SEND);
             if ($cc == '86') {
                 $result = self::sendToCN($mobile, $msg);
             } else {
