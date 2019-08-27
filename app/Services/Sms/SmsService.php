@@ -92,7 +92,6 @@ class SmsService
                     $msg = str_replace('{{code}}', $code , self::TPL_MODIFY_MOBILE);
                 break;
             }
-            echo $msg, "\n";
             if ($cc == '86') {
                 $result = self::sendToCN($mobile, $msg);
             } else {
