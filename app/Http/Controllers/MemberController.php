@@ -30,6 +30,7 @@ use App\Models\UserGroup;
 use App\Models\Users;
 use App\Models\Usersall;
 use App\Models\WithDrawalList;
+use App\Services\I18n\PhoneNumber;
 use App\Services\Message\MessageService;
 use App\Services\Room\RoomService;
 use App\Services\Sms\SmsService;
@@ -3072,6 +3073,7 @@ class MemberController extends Controller
         if (empty($cc) || empty($mobile)) {
             return $this->msg('Invalid request');
         }
+        $mobile = PhoneNumber::formatMobile($cc, $mobile);
 
         // check reg mobile exists
         $cc_mobile = $cc.$mobile;
@@ -3098,6 +3100,7 @@ class MemberController extends Controller
         if (empty($cc) || empty($mobile) || empty($code)) {
             return $this->msg('Invalid request');
         }
+        $mobile = PhoneNumber::formatMobile($cc, $mobile);
 
         $result = SmsService::verify(SmsService::ACT_MODIFY_MOBILE, $cc, $mobile, $code);
         if ($result !== true) {

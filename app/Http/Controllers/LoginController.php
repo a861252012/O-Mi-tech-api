@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Facades\UserSer;
 use App\Models\UserLoginLog;
 use App\Models\Users;
+use App\Services\I18n\PhoneNumber;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
 use Illuminate\Http\JsonResponse;
@@ -245,6 +246,7 @@ class LoginController extends Controller
         if (empty($cc) || empty($mobile) || empty($code)) {
             return $this->msg('Invalid request');
         }
+        $mobile = PhoneNumber::formatMobile($cc, $mobile);
 
         $result = SmsService::verify(SmsService::ACT_LOGIN, $cc, $mobile, $code);
         if ($result !== true) {

@@ -3,6 +3,7 @@
 namespace App\Services\Sms;
 
 use App\Facades\SiteSer;
+use App\Services\I18n\PhoneNumber;
 use Illuminate\Support\Facades\Redis;
 
 class SmsService
@@ -41,7 +42,7 @@ class SmsService
     static function resetPwd($cc, $mobile, $pwd)
     {
         $act = self::ACT_PWD_RESET_SEND;
-        if (!self::checkFormat($cc, $mobile)) {
+        if (!PhoneNumber::checkFormat($cc, $mobile)) {
             return self::ERR_INVALID_FORMAT;
         }
         if (self::exists($act, $cc, $mobile)) {
@@ -66,7 +67,7 @@ class SmsService
 
     static function send($act, $cc, $mobile, $checkFormat = true)
     {
-        if ($checkFormat && !self::checkFormat($cc, $mobile)) {
+        if ($checkFormat && !PhoneNumber::checkFormat($cc, $mobile)) {
             return self::ERR_INVALID_FORMAT;
         }
         if (self::exists($act, $cc, $mobile)) {
@@ -112,7 +113,7 @@ class SmsService
 
     static function verify($act, $cc, $mobile, $code, $checkFormat = true)
     {
-        if ($checkFormat && !self::checkFormat($cc, $mobile)) {
+        if ($checkFormat && !PhoneNumber::checkFormat($cc, $mobile)) {
             return self::ERR_INVALID_FORMAT;
         }
 
@@ -121,27 +122,6 @@ class SmsService
 
         if (empty($send_code) || $send_code != $code) {
             return self::ERR_VERIFY_FAILED;
-        }
-
-        return true;
-    }
-
-
-    static function checkFormat($cc, $mobile)
-    {
-        // see: https://github.com/giggsey/libphonenumber-for-php
-
-        // china
-        if ($cc == '86' && strlen($mobile) !== 11) {
-            return false;
-        }
-
-        // taiwan
-        if ($cc == '886'
-            && !((strlen($mobile) == 10 && substr($mobile, 0, 2) === '09')
-                || (strlen($mobile) == 9 && substr($mobile, 0, 1) === '9'))
-        ) {
-            return false;
         }
 
         return true;

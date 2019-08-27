@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Facades\SiteSer;
+use App\Services\I18n\PhoneNumber;
 use App\Services\Sms\SmsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ class SmsController extends Controller
         if (empty($cc) || empty($mobile) || empty($act)) {
             return $this->msg('Invalid request');
         }
+        $mobile = PhoneNumber::formatMobile($cc, $mobile);
 
         // check reg mobile exists
         $cc_mobile = $cc.$mobile;

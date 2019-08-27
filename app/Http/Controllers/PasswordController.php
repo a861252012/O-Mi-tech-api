@@ -10,6 +10,7 @@ use App\Mail\PwdReset;
 use App\Mail\SafeMailVerify;
 use App\Models\Users;
 use App\Services\Service;
+use App\Services\I18n\PhoneNumber;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
 use App\Services\User\UserService;
@@ -273,6 +274,7 @@ class PasswordController extends Controller
         if (empty($cc) || empty($mobile) || empty($code)) {
             return $this->msg('Invalid request');
         }
+        $mobile = PhoneNumber::formatMobile($cc, $mobile);
 
         $result = SmsService::verify(SmsService::ACT_PWD_RESET, $cc, $mobile, $code);
         if ($result !== true) {

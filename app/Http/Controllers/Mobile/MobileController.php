@@ -17,6 +17,7 @@ use App\Models\Users;
 use App\Models\Messages;
 use App\Models\AppMarket;
 use App\Models\UserModNickName;
+use App\Services\I18n\PhoneNumber;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
 use App\Services\User\UserService;
@@ -348,6 +349,7 @@ class MobileController extends Controller
             if (empty($cc) || empty($mobile) || empty($code)) {
                 return $this->msg('Invalid request');
             }
+            $mobile = PhoneNumber::formatMobile($cc, $mobile);
 
             $result = SmsService::verify(SmsService::ACT_LOGIN, $cc, $mobile, $code);
             if ($result !== true) {

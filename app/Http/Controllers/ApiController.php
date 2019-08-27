@@ -18,6 +18,7 @@ use App\Models\SiteConfig;
 use App\Models\UserGroup;
 use App\Models\Users;
 use App\Services\Auth\JWTGuard;
+use App\Services\I18n\PhoneNumber;
 use App\Services\Message\MessageService;
 use App\Services\Safe\SafeService;
 use App\Services\Site\Config;
@@ -137,6 +138,7 @@ class ApiController extends Controller
             if (empty($cc) || empty($mobile) || empty($code)) {
                 return $this->msg('Invalid request');
             }
+            $mobile = PhoneNumber::formatMobile($cc, $mobile);
 
             $cc_mobile = $cc.$mobile;
             if ($redis->hExists('hcc_mobile_to_id:' . $site_id, $cc_mobile)) {
