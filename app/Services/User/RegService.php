@@ -79,9 +79,11 @@ class RegService
             $cnt = intval($cnt);
         }
 
-        if ($cnt >= self::BLOCK_CNTS) {
-            return self::STATUS_BLOCK;
-        } else if ($cnt >= self::NO_CAPTCHA_QUOTA) {
+        // TODO: log to see if client_ips from reverse proxy are correct
+        // if ($cnt >= self::BLOCK_CNTS) {
+        //     return self::STATUS_BLOCK;
+        // }
+        if ($cnt >= self::NO_CAPTCHA_QUOTA) {
             return self::STATUS_NEED_CAPTCHA;
         }
         return self::STATUS_OK;
