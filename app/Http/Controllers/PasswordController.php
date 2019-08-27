@@ -283,7 +283,7 @@ class PasswordController extends Controller
         $cc_mobile = $cc.$mobile;
         $uid = UserSer::getUidByCCMobile($cc_mobile);
 
-        $pwd = strtolower(Str::random(6));  // 長度不能隨意改變， SMS 模板是需要先審核過的
+        $pwd = strtolower(Str::random(8));  // 長度不能隨意改變， SMS 模板是需要先審核過的
         $hash = md5($pwd);
         Users::where('uid', $uid)->update(['password' => $hash]);
         Redis::hset('huser_info:' . $uid, 'password', $hash);
