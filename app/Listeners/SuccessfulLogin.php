@@ -35,7 +35,7 @@ class SuccessfulLogin
     {
         //
         $user = $event->user;
-        $login_ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        $login_ip = $this->request->ip();
         $uid = $user->getAuthIdentifier();
 
         $user = Users::query()->where('uid',$uid)->update([
