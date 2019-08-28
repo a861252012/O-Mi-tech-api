@@ -187,15 +187,17 @@ class ApiController extends Controller
         }
 
         // 关键字过滤
-        $query = Keywords::where('btype', 2)->where('status', 0)->groupby('keyword')->get(['keyword'])->toArray();
-        if (is_array($query)) {
-            foreach ($query as $v) {
-                $v['keyword'] = addcslashes($v['keyword'], '.^$*+?()[]{}|\\');
-                if (preg_match("/{$v['keyword']}/i", $nickname)) {
-                    return JsonResponse::create([
-                        "status" => 0,
-                        "msg" => "昵称中含有非法字符，请修改后再提交!",
-                    ]);
+        if (!$regService->isWhitelist($nickname)) {
+            $query = Keywords::where('btype', 2)->where('status', 0)->groupby('keyword')->get(['keyword'])->toArray();
+            if (is_array($query)) {
+                foreach ($query as $v) {
+                    $v['keyword'] = addcslashes($v['keyword'], '.^$*+?()[]{}|\\');
+                    if (preg_match("/{$v['keyword']}/i", $nickname)) {
+                        return JsonResponse::create([
+                            "status" => 0,
+                            "msg" => "昵称中含有非法字符，请修改后再提交!",
+                        ]);
+                    }
                 }
             }
         }

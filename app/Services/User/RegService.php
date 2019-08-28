@@ -53,6 +53,16 @@ class RegService
         return $prefix . $rand_num;
     }
 
+    public function isWhitelist($nickname)
+    {
+        preg_match('/^[a-zA-Z]+/', $nickname, $matches);
+        if (isset($matches[0])) {
+            $restPart = substr($nickname, strlen($matches[0]));
+            return is_numeric($restPart);
+        }
+        return false;
+    }
+
     public function incr()
     {
         $req = resolve(Request::class);
