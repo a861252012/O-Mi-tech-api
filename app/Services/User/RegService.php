@@ -57,6 +57,9 @@ class RegService
     {
         preg_match('/^[a-zA-Z]+/', $nickname, $matches);
         if (isset($matches[0])) {
+            if (!in_array($matches[0], self::PREFIXES)) {
+                return false;
+            }
             $restPart = substr($nickname, strlen($matches[0]));
             return is_numeric($restPart);
         }
