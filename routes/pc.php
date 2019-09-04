@@ -94,9 +94,11 @@ Route::group(['prefix' => 'member'], function () {
         Route::get('live', 'MemberController@live')->name('member_live');
         // 用户中心修改基本信息
         Route::post('edituserinfo', 'MemberController@editUserInfo')->name('member_edituserinfo');
+        // 红包明细
+        Route::get('redEnvelopeGet', 'MemberController@redEnvelopeGet');
+        Route::get('redEnvelopeSend', 'MemberController@redEnvelopeSend');
     });
 });
-
 
 Route::group(['prefix' => 'user'], function () {
     Route::post('pwdreset/by_mobile', 'PasswordController@pwdResetByMobile')->middleware('throttle.route:10,1')->name('pwdreset_by_mobile');

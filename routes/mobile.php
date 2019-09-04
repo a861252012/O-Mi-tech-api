@@ -164,6 +164,9 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     // 用户中心 modify mobile
     Route::post('member/modifymobile/send', 'MemberController@modifyMobileSend')->name('member_modify_mobile_send');
     Route::post('member/modifymobile/confirm', 'MemberController@modifyMobileConfirm')->name('member_modify_mobile_confirm');
+    // 红包明细
+    Route::get('member/redEnvelopeGet', 'MemberController@redEnvelopeGet');
+    Route::get('member/redEnvelopeSend', 'MemberController@redEnvelopeSend');
 });
 /** 进房间 */
 Route::any('get_room/{rid}', 'Mobile\RoomController@getRoom')->where('rid','[0-9]{5,15}')->name('m_get_room');

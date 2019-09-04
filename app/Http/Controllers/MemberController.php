@@ -17,6 +17,8 @@ use App\Models\GiftList;
 use App\Models\Messages;
 use App\Models\Pack;
 use App\Models\Recharge;
+use App\Models\RedEnvelopeGet;
+use App\Models\RedEnvelopeSend;
 use App\Models\RoomAdmin;
 use App\Models\RoomDuration;
 use App\Models\RoomOneToMore;
@@ -91,6 +93,11 @@ class MemberController extends Controller
             'role' => 2,
             'action' => 'income',
             'name' => '收入统计',
+        ],
+        [
+            'role' => 0,
+            'action' => 'redEnvelope',
+            'name' => '红包明细',
         ],
         [
             'role' => 0,
@@ -3110,6 +3117,116 @@ class MemberController extends Controller
         $userService = resolve(UserService::class);
         $userService->modifyMobile(Auth::user(), $cc.$mobile);
         return $this->msg('修改成功', 1);
+    }
+
+    public function redEnvelopeGet(Request $req)
+    {
+        $uid = Auth::id();
+        if (!$uid) {
+            throw new NotFoundHttpException();
+        }
+        // DEBUG only
+        if ($req->get('dummy') !== null) {
+            $uid = 9492054;
+        }
+
+        $mint = $req->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
+        $maxt = $req->get('maxtime') ?: date('Y-m-d');
+        $mintime = date('Y-m-d H:i:s', strtotime($mint));
+        $maxtime = date('Y-m-d H:i:s', strtotime($maxt . ' 23:59:59'));
+
+        $uriParammeters = $req->query->all();
+        $var['uri'] = [];
+        foreach ($uriParammeters as $p => $v) {
+            if (strstr($p, '?')) {
+                continue;
+            }
+            if (!empty($v)) {
+                $var['uri'][$p] = $v;
+            }
+        }
+
+        $all_data = RedEnvelopeGet::select(
+            'video_get_red_envelope_record.create_date',
+            'u2.nickname AS snickname',
+            'u1.nickname AS rnickname',
+            'video_get_red_envelope_record.point'
+        )
+        ->leftJoin('video_user as u1', function ($query) {
+            $query->on('u1.uid', '=', 'video_get_red_envelope_record.room_id');
+        })
+        ->leftJoin('video_user as u2', function ($query) {
+            $query->on('u2.uid', '=', 'video_get_red_envelope_record.send_id');
+        })
+        ->where('user_id', $uid)
+        ->where('video_get_red_envelope_record.create_date', '>=', $mintime)
+        ->where('video_get_red_envelope_record.create_date', '<=', $maxtime)
+        ->orderBy('video_get_red_envelope_record.create_date', 'desc')
+        ->allSites()
+        ->paginate();
+
+        $all_data->appends(['mintime' => $mint, 'maxtime' => $maxt]);
+        $var['list'] = $all_data;
+        $var['mintime'] = $mint;
+        $var['maxtime'] = $maxt;
+
+        $var = $this->format_jsoncode($var);
+        return new JsonResponse($var);
+    }
+
+    public function redEnvelopeSend(Request $req)
+    {
+        $uid = Auth::id();
+        if (!$uid) {
+            throw new NotFoundHttpException();
+        }
+        // DEBUG only
+        if ($req->get('dummy') !== null) {
+            $uid = 9492054;
+        }
+
+        $mint = $req->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
+        $maxt = $req->get('maxtime') ?: date('Y-m-d');
+        $mintime = date('Y-m-d H:i:s', strtotime($mint));
+        $maxtime = date('Y-m-d H:i:s', strtotime($maxt . ' 23:59:59'));
+
+        $uriParammeters = $req->query->all();
+        $var['uri'] = [];
+        foreach ($uriParammeters as $p => $v) {
+            if (strstr($p, '?')) {
+                continue;
+            }
+            if (!empty($v)) {
+                $var['uri'][$p] = $v;
+            }
+        }
+
+        $all_data = RedEnvelopeSend::select(
+            'video_send_red_envelope_record.create_date',
+            'u1.nickname AS rnickname',
+            'total_point',
+            'tax_point',
+            'return_point',
+            DB::raw('total_point + tax_point - return_point as point'),
+            'video_send_red_envelope_record.status'
+        )
+        ->leftJoin('video_user as u1', function ($query) {
+            $query->on('u1.uid', '=', 'video_send_red_envelope_record.room_id');
+        })
+        ->where('send_id', $uid)
+        ->where('video_send_red_envelope_record.create_date', '>=', $mintime)
+        ->where('video_send_red_envelope_record.create_date', '<=', $maxtime)
+        ->orderBy('video_send_red_envelope_record.create_date', 'desc')
+        ->allSites()
+        ->paginate();
+
+        $all_data->appends(['mintime' => $mint, 'maxtime' => $maxt]);
+        $var['list'] = $all_data;
+        $var['mintime'] = $mint;
+        $var['maxtime'] = $maxt;
+
+        $var = $this->format_jsoncode($var);
+        return new JsonResponse($var);
     }
 
 }
