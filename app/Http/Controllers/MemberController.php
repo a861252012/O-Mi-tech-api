@@ -3119,6 +3119,65 @@ class MemberController extends Controller
         return $this->msg('修改成功', 1);
     }
 
+    /**
+     * @api {get} /api/m/member/redEnvelopeGet 紅包明細 - 收入 (Mobile)
+     * @apiGroup Member
+     * @apiName m_redEnvelopeGet
+     * @apiVersion 1.2.6
+     */
+    /**
+     * @api {get} /api/member/redEnvelopeGet 紅包明細 - 收入
+     * @apiGroup Member
+     * @apiName redEnvelopeGet
+     * @apiVersion 1.2.6
+     *
+     * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
+     * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
+     *
+     * @apiParam {String} mindate 起日
+     * @apiParam {String} maxdate 迄日
+     * @apiParam {int} page 第幾頁
+     *
+     * @apiSuccess {Object} data
+     * @apiSuccess {Object[]} data.data
+     * @apiSuccess {String} data.data.create_date 時間
+     * @apiSuccess {String} data.data.snickname 發放者暱稱
+     * @apiSuccess {String} data.data.rnickname 直播间
+     * @apiSuccess {String} data.data.point 获得钻石
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *    {
+     *        "status": 1,
+     *        "data": {
+     *            "uri": [],
+     *            "list": {
+     *            "current_page": 1,
+     *            "data": [
+     *                {
+     *                  "create_date": "2019-09-04 03:00:00",
+     *                  "snickname": "Black331169",
+     *                  "rnickname": "hunw",
+     *                  "point": 32
+     *                }
+     *            ],
+     *            "first_page_url": "http://localhost:8002/api/redEnvelopeGet?page=1",
+     *            "from": 1,
+     *            "last_page": 2,
+     *            "last_page_url": "http://localhost:8002/api/redEnvelopeGet?page=2",
+     *            "next_page_url": "http://localhost:8002/api/redEnvelopeGet?page=2",
+     *            "path": "http://localhost:8002/api/redEnvelopeGet",
+     *            "per_page": 15,
+     *            "prev_page_url": null,
+     *            "to": 15,
+     *            "total": 28
+     *            },
+     *            "mintime": "2019-09-03",
+     *            "maxtime": "2019-09-04"
+     *        },
+     *        "msg": "获取成功"
+     *    }
+     */
     public function redEnvelopeGet(Request $req)
     {
         $uid = Auth::id();
@@ -3174,6 +3233,71 @@ class MemberController extends Controller
         return new JsonResponse($var);
     }
 
+    /**
+     * @api {get} /api/m/member/redEnvelopeSend 紅包明細 - 支出 (Mobile)
+     * @apiGroup Member
+     * @apiName m_redEnvelopeSend
+     * @apiVersion 1.2.6
+     */
+    /**
+     * @api {get} /api/member/redEnvelopeSend 紅包明細 - 支出
+     * @apiGroup Member
+     * @apiName redEnvelopeSend
+     * @apiVersion 1.2.6
+     *
+     * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
+     * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
+     *
+     * @apiParam {String} mindate 起日
+     * @apiParam {String} maxdate 迄日
+     * @apiParam {int} page 第幾頁
+     *
+     * @apiSuccess {Object} data
+     * @apiSuccess {Object[]} data.data
+     * @apiSuccess {String} data.data.create_date 時間
+     * @apiSuccess {String} data.data.rnickname 直播间
+     * @apiSuccess {int} data.data.total_point 發放總數
+     * @apiSuccess {int} data.data.tax_point 稅
+     * @apiSuccess {int} data.data.return_point 退钻
+     * @apiSuccess {int} data.data.point 總支出
+     * @apiSuccess {String} data.data.status 狀態
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *    {
+     *        "status": 1,
+     *        "data": {
+     *            "uri": [],
+     *            "list": {
+     *            "current_page": 1,
+     *            "data": [
+     *                {
+     *                  "create_date": "2019-09-04 00:55:49",
+     *                  "rnickname": "hunw",
+     *                  "total_point": 500,
+     *                  "tax_point": 25,
+     *                  "return_point": 150,
+     *                  "point": 375,
+     *                  "status": "已结束"
+     *                }
+     *            ],
+     *            "first_page_url": "http://localhost:8002/api/redEnvelopeSend?page=1",
+     *            "from": 1,
+     *            "last_page": 2,
+     *            "last_page_url": "http://localhost:8002/api/redEnvelopeSend?page=2",
+     *            "next_page_url": "http://localhost:8002/api/redEnvelopeSend?page=2",
+     *            "path": "http://localhost:8002/api/redEnvelopeSend",
+     *            "per_page": 15,
+     *            "prev_page_url": null,
+     *            "to": 15,
+     *            "total": 28
+     *            },
+     *            "mintime": "2019-09-03",
+     *            "maxtime": "2019-09-04"
+     *        },
+     *        "msg": "获取成功"
+     *    }
+     */
     public function redEnvelopeSend(Request $req)
     {
         $uid = Auth::id();
@@ -3208,7 +3332,7 @@ class MemberController extends Controller
             'tax_point',
             'return_point',
             DB::raw('total_point + tax_point - return_point as point'),
-            'video_send_red_envelope_record.status'
+            DB::raw("CASE video_send_red_envelope_record.status WHEN 0 THEN '延迟发送' WHEN 1 THEN '发送中' ELSE '已结束' END status")
         )
         ->leftJoin('video_user as u1', function ($query) {
             $query->on('u1.uid', '=', 'video_send_red_envelope_record.room_id');
@@ -3230,4 +3354,3 @@ class MemberController extends Controller
     }
 
 }
-
