@@ -3143,7 +3143,7 @@ class MemberController extends Controller
      * @apiSuccess {String} data.data.create_date 時間
      * @apiSuccess {String} data.data.snickname 發放者暱稱
      * @apiSuccess {String} data.data.rnickname 直播间
-     * @apiSuccess {String} data.data.point 获得钻石
+     * @apiSuccess {String} data.data.points 获得钻石
      *
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 200 OK
@@ -3158,7 +3158,7 @@ class MemberController extends Controller
      *                  "create_date": "2019-09-04 03:00:00",
      *                  "snickname": "Black331169",
      *                  "rnickname": "hunw",
-     *                  "point": 32
+     *                  "points": 32
      *                }
      *            ],
      *            "first_page_url": "http://localhost:8002/api/redEnvelopeGet?page=1",
@@ -3186,7 +3186,7 @@ class MemberController extends Controller
         }
         // DEBUG only
         if ($req->get('dummy') !== null) {
-            $uid = 9492054;
+            $uid = 9491878;
         }
 
         $mint = $req->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
@@ -3209,7 +3209,7 @@ class MemberController extends Controller
             'video_get_red_envelope_record.create_date',
             'u2.nickname AS snickname',
             'u1.nickname AS rnickname',
-            'video_get_red_envelope_record.point'
+            'video_get_red_envelope_record.points'
         )
         ->leftJoin('video_user as u1', function ($query) {
             $query->on('u1.uid', '=', 'video_get_red_envelope_record.room_id');
@@ -3306,7 +3306,7 @@ class MemberController extends Controller
         }
         // DEBUG only
         if ($req->get('dummy') !== null) {
-            $uid = 9492054;
+            $uid = 9491953;
         }
 
         $mint = $req->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
