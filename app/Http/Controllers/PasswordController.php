@@ -13,6 +13,7 @@ use App\Services\Service;
 use App\Services\I18n\PhoneNumber;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
+use App\Services\User\RegService;
 use App\Services\User\UserService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -285,7 +286,8 @@ class PasswordController extends Controller
         $cc_mobile = $cc.$mobile;
         $uid = UserSer::getUidByCCMobile($cc_mobile);
 
-        $pwd = strtolower(Str::random(8));  // 長度不能隨意改變， SMS 模板是需要先審核過的
+        $regService = resolve(RegService::class);
+        $pwd = strtolower($regService->randomPassword());  // 長度不能隨意改變， SMS 模板是需要先審核過的
         $hash = md5($pwd);
         Users::where('uid', $uid)->update(['password' => $hash]);
         Redis::hset('huser_info:' . $uid, 'password', $hash);
@@ -375,7 +377,8 @@ class PasswordController extends Controller
 
         // update password
         $uid = $user->uid;
-        $pwd = strtolower(Str::random(8)); // 8~16 chars
+        $regService = resolve(RegService::class);
+        $pwd = strtolower($regService->randomPassword());
         $hash = md5($pwd);
         Users::where('uid', $uid)->update(['password' => $hash]);
         Redis::hset('huser_info:' . $uid, 'password', $hash);

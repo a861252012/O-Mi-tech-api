@@ -5,6 +5,7 @@ namespace App\Services\User;
 use App\Facades\SiteSer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
 
 class RegService
 {
@@ -106,4 +107,21 @@ class RegService
     {
         return 'rand'. mt_rand(1000000000, 9999999999) .'@x.com';
     }
+
+    public function randomPassword()
+    {
+        $passwd = '';
+        $cnt = 0;
+        while (1) {
+            $passwd = Str::random(8);   // 長度不能隨意改變， SMS 模板是需要先審核過的
+            if (!preg_match('/^\d{6,22}$/', $passwd)) {
+                break;
+            }
+            if ($cnt > 10) {
+                return 'c2d3A0b1';
+            }
+        }
+        return $passwd;
+    }
+
 }
