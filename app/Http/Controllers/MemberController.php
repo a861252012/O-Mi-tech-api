@@ -3134,8 +3134,8 @@ class MemberController extends Controller
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
      * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
      *
-     * @apiParam {String} mindate 起日
-     * @apiParam {String} maxdate 迄日
+     * @apiParam {String} mintime 起日
+     * @apiParam {String} maxtime 迄日
      * @apiParam {int} page 第幾頁
      *
      * @apiSuccess {Object} data
@@ -3248,8 +3248,8 @@ class MemberController extends Controller
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
      * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
      *
-     * @apiParam {String} mindate 起日
-     * @apiParam {String} maxdate 迄日
+     * @apiParam {String} mintime 起日
+     * @apiParam {String} maxtime 迄日
      * @apiParam {int} page 第幾頁
      *
      * @apiSuccess {Object} data
