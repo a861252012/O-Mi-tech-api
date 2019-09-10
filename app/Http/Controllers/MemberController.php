@@ -3184,10 +3184,6 @@ class MemberController extends Controller
         if (!$uid) {
             throw new NotFoundHttpException();
         }
-        // DEBUG only
-        if ($req->get('dummy') !== null) {
-            $uid = 9491878;
-        }
 
         $mint = $req->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
         $maxt = $req->get('maxtime') ?: date('Y-m-d');
@@ -3303,10 +3299,6 @@ class MemberController extends Controller
         $uid = Auth::id();
         if (!$uid) {
             throw new NotFoundHttpException();
-        }
-        // DEBUG only
-        if ($req->get('dummy') !== null) {
-            $uid = 9491953;
         }
 
         $mint = $req->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
