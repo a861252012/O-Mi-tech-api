@@ -3,7 +3,7 @@
         <td style="padding:10px 64px 10px;font-size:14px">你好，{{$username}}</td>
     </tr>
     <tr>
-        <td style="padding:0px 64px;font-size:14px">您在蜜桃儿进行了找回密码的操作，您的账号名为：{{$username}}<br/>请点击链接重置密码：<h4
+        <td style="padding:0px 64px;font-size:14px">您在{{$siteName}}进行了找回密码的操作，您的账号名为：{{$username}}<br/>请点击链接重置密码：<h4
                     style="color:#ff0000"><a href="{{$url}}">{{$url}}</a></h4>请登录{{$siteName}}官网，并及时在个人中心修改您的新密码。
         </td>
     </tr>
