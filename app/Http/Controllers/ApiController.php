@@ -59,7 +59,27 @@ class ApiController extends Controller
      */
     public function ping()
     {
-        return ['status'=>1,'data'=>['code'=>time()],'msg'=>''];
+        $data = [
+            'status' => 1,
+            'data' => [
+                'code' => time()
+            ],
+            'msg'=>''
+        ];
+
+        if (isset($_GET['h'])) {
+            $headers = [];
+            foreach ($_SERVER as $name => $value)
+            {
+                if (substr($name, 0, 5) == 'HTTP_')
+                {
+                    $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+                }
+            }
+            $data['headers'] = $headers;
+        }
+
+        return $data;
     }
 
 
