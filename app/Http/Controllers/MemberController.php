@@ -3323,8 +3323,11 @@ class MemberController extends Controller
             'total_point',
             'tax_point',
             'return_point',
+            'delay_time',
+            'valid_time',
+            DB::raw('UNIX_TIMESTAMP(create_date) as create_time'),
             DB::raw('total_point + tax_point - return_point as point'),
-            DB::raw("CASE video_send_red_envelope_record.status WHEN 0 THEN '延迟发送' WHEN 1 THEN '发送中' ELSE '已结束' END status")
+            'video_send_red_envelope_record.status'
         )
         ->leftJoin('video_user as u1', function ($query) {
             $query->on('u1.uid', '=', 'video_send_red_envelope_record.room_id');
@@ -3335,6 +3338,25 @@ class MemberController extends Controller
         ->orderBy('video_send_red_envelope_record.create_date', 'desc')
         ->allSites()
         ->paginate();
+
+        foreach ($all_data as &$row) {
+            switch ($row->status) {
+                case 0:
+                    $row->status = '延迟发送';
+                break;
+
+                case 1:
+                    $expired = (time() > ($row->create_time + $row->delay_time + $row->valid_time));
+                    $row->status = $expired ? '已结束待退钻' : '发送中';
+                break;
+
+                default:
+                    $row->status = '已结束';
+            }
+            unset($row->create_time);
+            unset($row->delay_time);
+            unset($row->valid_time);
+        }
 
         $all_data->appends(['mintime' => $mint, 'maxtime' => $maxt]);
         $var['list'] = $all_data;
