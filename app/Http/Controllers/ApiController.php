@@ -113,11 +113,25 @@ class ApiController extends Controller
      */
     public function getConf()
     {
-        $conf = collect((new Config(SiteSer::siteId()))->all())->forget([
-            'redis_cli_ip_port', 'des_encryt_key', 'mailer_transport', 'mailer_host', 'mailer_user', 'mailer_password', 'secret', 'des_encryt_key', 'pay_call_url',
-            'pay_privatekey', 'pay_call_url_m', 'web_secret_key', 'pay_privatekey', 'email', 'reflux_mail', 'pay_find_code', 'pay_verify_message', 'database_driver', 'database_host', 'ad', 'recharge_channel',
-            'hred_envelope_setting', 'xs_privitekey', 'PAY_GD_KEY', 'sendclound', 'vfphp_sign', 'recharge_passwd',
-        ]);
+        $conf = collect((new Config(SiteSer::siteId()))->all())->only([
+            'cdn_host',
+            'api_host',
+            'flash_version',
+            'img_host',
+            'in_limit_points',
+            'in_limit_safemail',
+            'publish_version',
+            'one_to_more_max_duration',
+            'one_to_more_max_point',
+            'one_to_more_min_duration',
+            'one_to_more_min_point',
+            'one_to_one_max_duration',
+            'one_to_one_max_point',
+            'one_to_one_min_duration',
+            'one_to_one_min_point',
+            'chat_fly_limit',
+            'customer_service_url',
+        ])->all();
         return JsonResponse::create(['data' => $conf]);
     }
 
