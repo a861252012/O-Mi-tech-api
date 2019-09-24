@@ -3003,50 +3003,61 @@ class MemberController extends Controller
         !$flashVer && $flashVer = 'v201504092044';
         $data = [];
 
-        $device = Input::get('device',1);
-        if($device==2||$device==4){
+        $device = Input::get('device', 1);
+        if ($device == 2 || $device == 4) {
             $msg_contact = Redis::hGet('hsite_config:' . SiteSer::siteId(), 'mobile_contact');
             $qr_path = '/api/m/';
-        }else{
+        } else {
             $msg_contact = Redis::hGet('hsite_config:' . SiteSer::siteId(), 'pc_contact');
             $qr_path = '/api/';
         }
 
-        $A_block = json_decode(Redis::get('sBarCodeRechargeSuspendUids'));
+        $blockList = json_decode(Redis::get('sBarCodeRechargeSuspendUids'));
         $orders = $this->_getOrders();
 
         $list = Redis::get('home_all_' . $flashVer. ':'.SiteSer::siteId());
         $list = str_replace(['cb(', ');'], ['', ''], $list);
         $J_list = json_decode($list, true);
 
-        foreach($J_list['rooms'] as $O_list){
-            if($O_list['live_status']>0){//find out who is live now
-                $userex = Usersall::select('uid','nickname as nick','headimg','qrcode_image')->where('transfer',1)->where('qrcode_image','<>','')->find($O_list['uid']);
-                if(!empty($userex)){
-                    if(!in_array($userex, $data)){
-                        if(!in_array($userex['uid'], $A_block)){
-                            if(strpos($userex['qrcode_image'],'.png')>0){
-                                $A_qr = explode('#',$userex['qrcode_image']);
-                                $userex['qrcode_image'] = $A_qr[0];
-                            }else{
-                                $A_qr = explode('#',$userex['qrcode_image']);
-                                if($A_qr[1]==1){
-                                    $userex['url']=$A_qr[0];
-                                    unset($userex['qrcode_image']);
-                                }else{
-                                    $userex['qrcode_image'] = $qr_path.'contact/qr.png?url='.$A_qr[0];
-                                }
-                            }
-                            if (isset($orders[$O_list['uid']])) {
-                                $userex['order'] = $orders[$O_list['uid']];
-                            } else {
-                                $userex['order'] = 9999;
-                            }
-                            array_push($data,$userex);
-                        }
-                    }
+        foreach ($J_list['rooms'] as $O_list) {
+            if ($O_list['live_status'] <= 0) {
+                continue;
+            }
+            // get user data
+            $userex = Usersall::select('uid', 'nickname as nick', 'headimg', 'headimg_sagent', 'qrcode_image')
+                ->where('transfer', 1)->where('qrcode_image', '<>', '')->find($O_list['uid']);
+
+            if (empty($userex) || in_array($userex['uid'], $blockList)) {
+                continue;
+            }
+
+            // headimg_sagent first
+            if (!empty($userex['headimg_sagent'])) {
+                $userex['headimg'] = $userex['headimg_sagent'];
+            }
+            unset($userex['headimg_sagent']);
+
+            // qrcode
+            if (strpos($userex['qrcode_image'], '.png') > 0) {
+                $A_qr = explode('#', $userex['qrcode_image']);
+                $userex['qrcode_image'] = $A_qr[0];
+            } else {
+                $A_qr = explode('#', $userex['qrcode_image']);
+                if ($A_qr[1] == 1) {
+                    $userex['url'] = $A_qr[0];
+                    unset($userex['qrcode_image']);
+                } else {
+                    $userex['qrcode_image'] = $qr_path.'contact/qr.png?url='.$A_qr[0];
                 }
             }
+
+            // order from redis
+            if (isset($orders[$O_list['uid']])) {
+                $userex['order'] = $orders[$O_list['uid']];
+            } else {
+                $userex['order'] = 9999;
+            }
+            array_push($data, $userex);
         }
         usort($data, [$this, '_compareSAgent']);
 
