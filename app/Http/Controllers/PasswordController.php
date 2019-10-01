@@ -289,8 +289,7 @@ class PasswordController extends Controller
         $regService = resolve(RegService::class);
         $pwd = strtolower($regService->randomPassword());  // 長度不能隨意改變， SMS 模板是需要先審核過的
         $hash = md5($pwd);
-        Users::where('uid', $uid)->update(['password' => $hash]);
-        Redis::hset('huser_info:' . $uid, 'password', $hash);
+        resolve(UserService::class)->updateUserInfo($uid, ['password' => $hash]);
 
         $result = SmsService::resetPwd($cc, $mobile, $pwd);
         if ($result !== true) {
@@ -380,8 +379,7 @@ class PasswordController extends Controller
         $regService = resolve(RegService::class);
         $pwd = strtolower($regService->randomPassword());
         $hash = md5($pwd);
-        Users::where('uid', $uid)->update(['password' => $hash]);
-        Redis::hset('huser_info:' . $uid, 'password', $hash);
+        resolve(UserService::class)->updateUserInfo($uid, ['password' => $hash]);
 
         // email
         $content = file_get_contents('../resources/views/emails/pwdreset-m-confirm.blade.php');
@@ -463,8 +461,7 @@ class PasswordController extends Controller
         }
         $pwd = $this->decode($pwd);
         $hash = md5($pwd);
-        Users::where('uid', $uid)->update(['password' => $hash]);
-        Redis::hset('huser_info:' . $uid, 'password', $hash);
+        resolve(UserService::class)->updateUserInfo($uid, ['password' => $hash]);
         Redis::del('pwdreset.token:' . $token);
         return JsonResponse::create(['status' => 1, 'msg' => '密码修改成功']);
     }

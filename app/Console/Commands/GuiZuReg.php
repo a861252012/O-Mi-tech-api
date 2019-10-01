@@ -125,9 +125,6 @@ class GuiZuReg extends Command
                 ]);
             }
 
-
-            Redis::hmset('huser_info:' . $newUser->uid, $newUser->toArray());
-
             Redis::hset('husername_to_id:'.SiteSer::siteId(), $username, $newUser->uid);
             Redis::hset('hnickname_to_id:'.SiteSer::siteId(), $nickname, $newUser->uid);
 

@@ -105,11 +105,8 @@ class UserSalaryTotal extends Command
         }//for merge
 
         foreach ($lives_total as $live) {
-            $lv_type = $redis->hGet('huser_info:' . $live['uid'], 'lv_type');
-
             $user = Users::query()->where('uid',$live['uid'])->first();
-
-            $lv_type = $lv_type ?: $user['lv_type'];
+            $lv_type = $user['lv_type'];
 
             $live['points'] = MallList::query()->where('rec_uid',$live['uid'])->where('gid','<>',4)->whereBetween('created',[$totalTime,$limitTime])->sum('points');
             foreach ($rules as $rule) {

@@ -607,10 +607,7 @@ class ApiController extends Controller
             'logined' => $time,
         ]);
         $this->userInfo['logined'] = $time;
-        Redis::hmset('huser_info:' . $this->userInfo['uid'], [
-            'logined' => $time,
-            'xtoken' => $this->userInfo['xtoken'],
-        ]);
+        resolve(UserService::class)->getUserReset($this->userInfo['uid']);
 
         // 此时调用的是单实例登录的session 验证
         if (Auth::guest() || (Auth::check() && Auth::id()!=$this->userInfo['uid'])) {
@@ -1084,9 +1081,7 @@ EOT;
         } else {
             $fileName = $uid . '_' . time() . '.jpg';
             if (Storage::put('uploads/s88888/anchor/' . $fileName, $imageContent)) {
-                Users::where('uid', $uid)->update(['cover' => $fileName]);
-                $redis = $this->make('redis');
-                $redis->hSet('huser_info:' . $uid, 'cover', $fileName);
+                resolve(UserService::class)->updateUserInfo($uid, ['cover' => $fileName]);
                 return JsonResponse::create(['msg' => '上传成功']);
             } else {
                 return JsonResponse::create(['msg' => '上传失败']);
@@ -1452,7 +1447,7 @@ EOT;
         if (!$uid) {
             return new JsonResponse($data);
         }
-        $headimg = $this->make('redis')->hget('huser_info:' . $uid, 'headimg');
+        $headimg = resolve(UserService::class)->getUserInfo($uid, 'headimg');
         $headimg = $this->getHeadimg($headimg);
         $data['status'] = 1;
         $data['data']['headimg'] = $headimg;

@@ -236,8 +236,6 @@ function genRegUsers(array $arr,&$_redisInstance,&$oneday,&$created,&$logined,&$
 
         $usr_info = findOneBy(array('column'=>'nickname','value'=>$nickname));
         //将查询出来的用户数据同步到redis
-        $_redisInstance->hmset('huser_info:'.$insertId, $usr_info);
-
         $_redisInstance->hset('husername_to_id', $username, $insertId);
         $_redisInstance->hset('hnickname_to_id', $nickname, $insertId);
 

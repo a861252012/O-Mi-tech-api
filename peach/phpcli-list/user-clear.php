@@ -68,7 +68,7 @@ while (true) {
     $_redisIsConnected = $_redisIsConnected && $_redisInstance->auth($redis_password);
     $pipe = $_redisInstance->multi(Redis::PIPELINE);
     foreach ($data as $k => &$v) {
-        $pipe->del('huser_info:' . $v['uid'])
+        $pipe
             ->hDel('husername_to_id', $v['username'])
             ->hDel('hnickname_to_id', $v['nickname']);
         //为保持数据完整，避免脏数据，用户主播都尝试清理主播redis

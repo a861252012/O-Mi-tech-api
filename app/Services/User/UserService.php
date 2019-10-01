@@ -32,6 +32,7 @@ class UserService extends Service
     const KEY_CC_MOBILE_TO_ID = 'hcc_mobile_to_id';
     const KEY_USER_INFO = 'huser_info:';
     const KEY_USER_SID = 'huser_sid';
+    const TTL_USER_INFO = 600; //1728000;
     public $user;
     protected $redis;
 
@@ -203,20 +204,14 @@ class UserService extends Service
         $hashtable = static::KEY_USER_INFO . $uid;
 
         if ($this->redis->Hexists($hashtable, 'uid')) {
-            //Log::error('#190606#User存在於Redis:Yes');
             $arr = $this->redis->hgetall($hashtable);
-            //Log::error('#190606#Redis取出:'.json_encode($arr));
-            //这里因为用户uid唯一并且涉及主播信息获取不再区分站点
-//            $userArr = $arr['site_id'] == SiteSer::siteId() ? $arr : [];
             $user = (new Users())->setRawAttributes($arr, true);
             $user->exists = true;
         } else {
-            //Log::error('#190606#User存在於Redis:No');
             $user = Users::allSites()->find($uid);
-            //Log::error('#190606#資料庫取出:'.json_encode($user));
             if ($user && $user->exists) {
                 $checkin = $this->redis->hmset($hashtable, $user->toArray());
-                //Log::error('#190606#回存Redis:'.json_encode($checkin));
+                $this->redis->expire($hashtable, self::TTL_USER_INFO);
             }
         }
         return $this->user = $user;
@@ -237,6 +232,7 @@ class UserService extends Service
             $user = Users::query()->where('uid', $uid)->allSites()->first();
             if ($user && $user->exists) {
                 $this->redis->hmset($hashtable, $user->toArray());
+                $this->redis->expire($hashtable, self::TTL_USER_INFO);
             }
         }
         return $this->user = $user;
@@ -267,8 +263,9 @@ class UserService extends Service
         $user = $user->toArray();
 
         //更新redis;
-        $hashtable = 'huser_info:' . $uid;
+        $hashtable = static::KEY_USER_INFO . $uid;
         $this->redis->hmset($hashtable, $user);
+        $this->redis->expire($hashtable, self::TTL_USER_INFO);
         return $user;
     }
 
@@ -336,7 +333,6 @@ class UserService extends Service
             Users::where('uid', $uid)->update($vip_data);
 
         }
-        //$this->make('redis')->del('huser_info:'.$uid);
         if (!$this->getUserReset($uid)) {
             throw new Exception('updateUserOfVip getUserReset function for update user cache to redis was error');
         }
@@ -382,15 +378,18 @@ class UserService extends Service
 
     public function cancelVip($uid = 0)
     {
-        $user['uid'] = $uid;
-        Users::query()->where('uid', $user['uid'])->update(array('vip' => 0, 'vip_end' => '', 'hidden' => 0));
-        Redis::hmset('huser_info:' . $user['uid'], [
-            'vip' => '0',
-            'hidden' => '0',
+        if (!$uid) {
+            return;
+        }
+        $data = [
+            'vip' => 0,
             'vip_end' => '',
-        ]);
-        $pack = VideoPack::query()->where('uid', $user['uid'])->whereBetween('gid', [120101, 120107])->delete();
-        Redis::del('user_car:' . $user['uid']);
+            'hidden' => 0,
+        ];
+        $this->updateUserInfo($uid, $data);
+
+        $pack = VideoPack::query()->where('uid', $uid)->whereBetween('gid', [120101, 120107])->delete();
+        Redis::del('user_car:' . $uid);
         return true;
     }
 
@@ -1104,8 +1103,51 @@ class UserService extends Service
         Redis::hdel(self::KEY_CC_MOBILE_TO_ID .':'. $site_id, $old_cc_mobile);
 
         // update/add
-        Users::where('uid', $uid)->update(['cc_mobile' => $cc_mobile]);
-        Redis::hset('huser_info:' . $uid, 'cc_mobile', $cc_mobile);
+        $data = [
+            'cc_mobile' => $cc_mobile,
+        ];
+        $this->updateUserInfo($uid, $data);
+
         Redis::hset(self::KEY_CC_MOBILE_TO_ID .':'. $site_id, $cc_mobile, $uid);
+    }
+
+    public function getUserInfo($uid, $field = null)
+    {
+        $userModel = $this->getUserByUid($uid);
+        $user = $userModel->toArray();
+        if ($field) {
+            return $user[$field];
+        }
+        return $user;
+    }
+
+    public function updateUserInfo($uid, array $user)
+    {
+        if (Users::where('uid', $uid)->update($user) === false) {
+            return false;
+        };
+        return $this->cacheUserInfo($uid, $user);
+    }
+
+    public function cacheUserInfo($uid, array $user = null)
+    {
+        $userCacheKey = self::KEY_USER_INFO . $uid;
+
+        if ($user === null) {
+            return $this->redis->del($userCacheKey);
+        }
+
+        if (!$this->redis->exists($userCacheKey)) {
+            $userModel = Users::allSites()->find($uid);
+            if (!$userModel) {
+                return false;
+            }
+            $user = $userModel->toArray();
+        }
+        $result = $this->redis->hMset($userCacheKey, $user);
+        if ($result) {
+            $this->redis->expire($userCacheKey, self::TTL_USER_INFO);
+        }
+        return $result;
     }
 }

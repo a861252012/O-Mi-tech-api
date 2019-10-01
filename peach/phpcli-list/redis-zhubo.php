@@ -26,15 +26,6 @@ function  findBy($field = '*', $tablename = 'video_user', $start, $limit)
 
 $time1 = microtime(true);
 echo 'sync start mysql:video_user->' . $time1 . PHP_EOL;
-/*$_redisInstance = new \Redis();
-$_redis_ip_port = explode(':',$_W['REDIS_CLI_IP_PORT']);//保留下面要用
-$_redisIsConnected = $_redisInstance->connect($_redis_ip_port[0],$_redis_ip_port[1]);
-$keys = (array)$_redisInstance->keys('huser_info:*');
-if( count($keys) > 0 ){
-    foreach( $keys as $item ){
-        $_redisInstance->del($item);
-    }
-}*/
 
 $i = 0;
 $step = 1000;
@@ -56,7 +47,6 @@ while (true) {
         break;
     }
     foreach ($zhuBoArr as $item) {
-        $pipe->hMset('huser_info:' . $item['uid'], $item);
         $pipe->hset('hnickname_to_id', $item['nickname'], $item['uid']);
         $userArr = array();
         $userArr = explode("@", $item['username']);

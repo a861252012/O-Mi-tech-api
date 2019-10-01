@@ -360,18 +360,10 @@ class MemberController extends Controller
             //检查收款人用户VIP保级状态 一定要在事务之后进行验证
             $this->checkUserVipStatus($userTo);
 
-
-            $redis = $this->make('redis');
-            $redis->hIncrBy('huser_info:' . $uid, 'points', -$points);
-            $redis->hIncrBy('huser_info:' . $userTo['uid'], 'points', $points);
-
-
-            //更新转帐人用户redis信息
-            /* resolve(UserService::class)->getUserReset($uid);
-
-             //更新收款人用户redis信息
-             resolve(UserService::class)->getUserReset($userTo['uid']);*/
-
+            // remove cache
+            $userService = resolve(UserService::class);
+            $userService->cacheUserInfo($uid, null);
+            $userService->cacheUserInfo($userTo['uid'], null);
 
             return new JsonResponse(['status' => 1, 'msg' => '您成功转出' . $points . '钻石']);
         } catch (\Exception $e) {
@@ -912,7 +904,7 @@ class MemberController extends Controller
             return JsonResponse::create(['status' => 0, 'msg' => '新密码两次输入不一致!']);
         }
 
-        $old_password = Redis::hget('huser_info:' . $uid, 'password');
+        $old_password = resolve(UserService::class)->getUserInfo($uid, 'password');
         $new_password = md5($post['password2']);
         if (md5($post['password']) != $old_password) {
             return JsonResponse::create(['status' => 0, 'msg' => '原始密码错误!']);
@@ -1430,7 +1422,7 @@ class MemberController extends Controller
                 $room = json_decode($item, true);
                 if ($room['status'] == 0 && $room['reuid'] == 0 && $room['uid'] != $uid && strtotime($room['starttime']) > time()) {
                     $room['rid'] = $room['uid'];
-                    $users = Redis::hGetAll('huser_info:' . $room['uid']);
+                    $users = resolve(UserService::class)->getUserInfo($room['uid']);
                     $room['headimg'] = $users['headimg'];
                     $room['nickname'] = $users['nickname'];
                     $room['lv_exp'] = $users['lv_exp'];
@@ -1721,9 +1713,9 @@ class MemberController extends Controller
         switch ($type) {
             case 'del':
                 //将用户剩余图片空间同步更新数据库及redis
-                Users::find(Auth::id())->update(['pic_used_size' => $pic_used_size]);
-                $user = Users::find(Auth::id());
-                $this->make('redis')->hMset('huser_info:' . Auth::id(), $user ? $user->toArray() : []);
+                $uid = Auth::id();
+                $data = ['pic_used_size' => $pic_used_size];
+                resolve(UserService::class)->updateUserInfo($uid, $data);
                 Anchor::find($id)->delete();
                 break;
 
@@ -2295,7 +2287,7 @@ class MemberController extends Controller
             $isBuyThisGroup = DB::select('SELECT * FROM video_user_buy_group WHERE gid=?  AND uid=? AND  site_id=? LIMIT 1',
                 [$gid, Auth::id(), SiteSer::siteId()]);
 
-            $userServer = resolve(UserService::class)->setUser(Users::find(Auth::id())); // 初始化用户服务
+            $userService = resolve(UserService::class)->setUser(Users::find(Auth::id())); // 初始化用户服务
             $u['vip'] = $userGroup['level_id'];
             $exp = date('Y-m-d H:i:s', time() + $day * 24 * 60 * 60);
             // 用户的钻石 减去开通的价格
@@ -2365,7 +2357,7 @@ class MemberController extends Controller
 
             // 赠送爵位
             if ($userGroup['system']['gift_level']) {
-                $userServer->modLvRich($userGroup['system']['gift_level']);
+                $userService->modLvRich($userGroup['system']['gift_level']);
             }
 
             // 开通成功后 发送给用户通知消息
@@ -2402,11 +2394,12 @@ class MemberController extends Controller
                 DB::table('video_user_commission')->insertGetId($commission);
                 $casheback = $userGroup['system']['host_money'];
             }
-            $userinfo = DB::select('SELECT * FROM video_user WHERE uid=? LIMIT 1', [Auth::id()]);
+
+            // 更新用户redis中的信息
+            $userService->getUserReset(Auth::id());
+
             //赠送完坐骑立即装备
             $redis = $this->make('redis');
-            // 更新用户redis中的信息
-            $redis->hMset('huser_info:' . Auth::id(), (array)$userinfo[0]);
             $redis->del('user_car:' . Auth::id());
             $redis->hset('user_car:' . Auth::id(), $userGroup['mount'], strtotime($exp));
 
@@ -2753,7 +2746,7 @@ class MemberController extends Controller
         }
         /** 扣钱给资格 */
         if (Users::where('uid', $uid)->where('points', '>=', $price)->decrement('points', $price)) {
-            Redis::hIncrBy('huser_info:' . $uid, 'points', $price * -1);
+            resolve(UserService::class)->cacheUserInfo($uid, null);
             Redis::hIncrBy('modify.nickname', $uid, 1);
             return JsonResponse::create(['status' => 1, 'msg' => '购买成功']);
         } else {
@@ -2956,7 +2949,7 @@ class MemberController extends Controller
                 return new JsonResponse(array('status' => 303, 'msg' => '新密码两次输入不一致!'));
             }
 
-            $old_password = $this->make('redis')->hget('huser_info:' . $uid, 'password');
+            $old_password = resolve(UserService::class)->getUserInfo($uid, 'password');
             $new_password = md5($post['password2']);
             if (md5($post['password']) != $old_password) {
                 return new JsonResponse(array('status' => status, 'msg' => '原始密码错误'));

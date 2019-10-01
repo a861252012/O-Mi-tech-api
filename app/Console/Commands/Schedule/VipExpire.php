@@ -5,6 +5,7 @@ namespace App\Console\Commands\Schedule;
 use App\Models\Users;
 use App\Models\VideoMail;
 use App\Models\VideoPack;
+use App\Services\User\UserService;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Redis;
@@ -85,12 +86,13 @@ class VipExpire extends Command
         $data= Users::query()->where('vip','!=',0)->where('vip_end','<',date('Y-m-d H:i:s'))->get();
         $pack = VideoPack::query();
         foreach($data as $user){
-            Users::query()->where('uid',$user['uid'])->update(array('vip'=>0,'vip_end'=>'','hidden'=>0));
-            $_redisInstance->hmset('huser_info:'.$user['uid'],[
-                'vip'=>'0',
-                'hidden'=>'0',
-                'vip_end'=>'',
-            ]);
+            $updateData = [
+                'vip' => '0',
+                'hidden' => '0',
+                'vip_end' => '',
+            ];
+            resolve(UserService::class)->updateUserInfo($user['uid'], $updateData);
+
             $pack->where('uid',$user['uid'])->whereBetween('gid',[120101,120107])->delete();
             $_redisInstance->del('user_car:'.$user['uid']);
         }

@@ -3,6 +3,7 @@
 namespace App\Services\Task\GiftScript;
 
 use App\Models\Users;
+use App\Services\User\UserService;
 
 class Points extends GiftBase implements GiftInterface
 {
@@ -16,17 +17,13 @@ class Points extends GiftBase implements GiftInterface
      */
     public function present($gift, $uid)
     {
-        $redis = $this->getredis();
-        $userinfo = $redis->hGetAll('huser_info:' . $uid);
+        $userService = resolve(UserService::class);
+        $userinfo = $userService->getUserInfo($uid);
 
-        $points = $userinfo['points'] + $gift;
-        $result = Users::where('uid',$uid)->update(array('points' => $points));
+        $points = $userinfo['points'] + (int)$gift;
+        $result = $userService->updateUserInfo($uid, ['points' => $points]);
 
-        if ($result !== false) {
-            $redis->hset('huser_info:' . $uid, 'points', $points);
-            return true;
-        }
-        return false;
+        return $result;
     }
 
 }

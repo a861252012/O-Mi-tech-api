@@ -153,7 +153,7 @@ class BusinessController extends Controller
             $ret = str_replace(':443','',str_replace(':80','',$ret));
             //20190123 fixed https to http problem
             $ret='//'.rtrim(preg_replace('/^http:\/\//','',$ret,1),'/');
-            
+
 
             Domain::whereId($did)->normal()->increment('click');
             return $ret;
@@ -292,7 +292,7 @@ class BusinessController extends Controller
         {
             $updated = Users::where('uid','=',$uid)->update($criteria);
 
-            $this->make('redis')->hMSet('huser_info:'.$uid,$criteria);
+            resolve(UserService::class)->getUserReset($uid);
             if( $nickname ){
                 $this->make('redis')->hSet('hnickname_to_id:'.SiteSer::siteId(),$nickname,$uid);
             }
@@ -305,24 +305,6 @@ class BusinessController extends Controller
         }); // suspend auto-commit
 
 
-//        try {
-//            $stmt = $this->_doctrine_em->getConnection()->prepare($sql);
-//            $stmt->execute();
-//            $this->_doctrine_em->getConnection()->commit();
-//
-//            $this->make('redis')->hMSet('huser_info:'.$uid,$criteria);
-//            //$this->_redis_instace->hMSet('huser_info:'.$uid,$criteria);
-//            if( $nickname ){
-//                $this->make('redis')->hSet('hnickname_to_id',$nickname,$uid);
-//            //    $this->_redisInstance->hSet('hnickname_to_id',$nickname,$uid);
-//            }
-//            return true;
-//        } catch (\Exception $e) {
-//            $this->_doctrine_em->getConnection()->rollback();
-//            $this->_doctrine_em->close();
-//            //throw $e;
-//            return false;
-//        }
     }
 
 }

@@ -3,6 +3,8 @@
 namespace App\Services\Task\GiftScript;
 
 use App\Models\Users;
+use App\Services\User\UserService;
+
 class Icon extends GiftBase implements GiftInterface
 {
     /**
@@ -11,18 +13,14 @@ class Icon extends GiftBase implements GiftInterface
      * @param $gifts
      * @param $uid
      */
-    public function present($gifts,$uid)
+    public function present($gifts, $uid)
     {
         $gift = $gifts[0];
-        $data = array(
-            'icon_id'=> $gift['id']
-        );
-        $result = Users::where('uid',$uid)->update($data);
-        if($result !== false){
-            $redis = $this->getredis();
-            $redis->hset('huser_info:'.$uid,'icon_id',$gift['id']);
-            return true;
-        }
-        return false;
+        $data = [
+            'icon_id' => $gift['id'],
+        ];
+        $result = resolve(UserService::class)->updateUserInfo($uid, $data);
+
+        return $result;
     }
 }

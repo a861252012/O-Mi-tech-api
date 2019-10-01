@@ -276,7 +276,7 @@ class ChargeController extends Controller
 
             $loginfo .= '会员编号:'.$userObj->uid.' 增加的钻石: points:' . $ret->points . ' 最终的钻石:' . $userObj->points;
             //刷新redis钻石
-            $this->make('redis')->hincrby('huser_info:' . $ret->uid, 'points', $ret->points);
+            resolve(UserService::class)->getUserReset($ret->uid);
 
             DB::commit();
             Log::channel('charge')->info($loginfo);
@@ -613,7 +613,7 @@ class ChargeController extends Controller
             if ($chargeStatus) {
                 $userObj = DB::table('video_user')->where('uid', $stmt['uid'])->first();//Users::find($stmt['uid']);
                 $loginfo .= '增加的钱数: paymoney ' . $money . ' points:' . $points . ' 最终的钱数:' . $userObj->points;
-                $this->make('redis')->hincrby('huser_info:' . $stmt['uid'], 'points', $points);
+                resolve(UserService::class)->getUserReset($stmt['uid']);
             }
 
             // 充钱成功后 检测用户的贵族状态

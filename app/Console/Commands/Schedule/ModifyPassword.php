@@ -4,6 +4,7 @@ namespace App\Console\Commands\Schedule;
 
 use App\Models\Users;
 use App\Services\Site\SiteService;
+use App\Services\User\UserService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Redis;
 
@@ -74,7 +75,7 @@ class ModifyPassword extends Command
             $num = $where_user->whereIn('uid', $uidArray)->update($update_data);
 
             foreach ($uidArray as $uid) {
-                Redis::exists("huser_info:" . $uid) && Redis::hmset("huser_info:" . $uid, $update_data);
+                resolve(UserService::class)->cacheUserInfo($uid, null);
             }
             //Log::channel('crontab')->info("");
             echo '更新数据：' . $num . '用户ID' . implode(',', $uidArray) . PHP_EOL;

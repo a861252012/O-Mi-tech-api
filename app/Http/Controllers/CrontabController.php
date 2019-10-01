@@ -10,6 +10,7 @@ namespace App\Http\Controllers;
 use App\Models\Users;
 use App\Models\Messages;
 use App\Models\VideoPack;
+use App\Services\User\UserService;
 use DB;
 
 class CrontabController extends Controller
@@ -140,14 +141,13 @@ class CrontabController extends Controller
             //开启事务
             try {
                 DB::beginTransaction(); //DB::commit(); DB::rollback;
-                Users::where('uid', $msg['uid'])->update(array(
+                $updateData = [
                     'vip' => 0,
                     'vip_end' => null,
-                    'hidden'=>0
-                ));
-                $this->make('redis')->hSet('huser_info:' . $msg['uid'], 'vip', 0);
-                $this->make('redis')->hSet('huser_info:' . $msg['uid'], 'vip_end', '');
-                $this->make('redis')->hSet('huser_info:' . $msg['uid'], 'hidden', 0);
+                    'hidden' => 0,
+                ];
+                Users::where('uid', $msg['uid'])->update($updateData);
+                resolve(UserService::class)->cacheUserInfo($uid, $updateData);
                 VideoPack::where('uid', $msg['uid'])->where('gid', '>=', 120101)->where('gid', '<=', 120107)->delete();
                 $this->make('redis')->del('user_car:' . $msg['uid']);
                 DB::commit();

@@ -236,7 +236,6 @@ class RoomController extends Controller
         }
         $channel_id = $chatServer['id'];
         $logger->info('in:' . $rid . ":" . Auth::id() . ':' . $channel_id);
-        $userinfo = $redis->hgetall("huser_info:" . $rid);
         $qq_sideroom = $redis->hGet('hsite_config:' . SiteSer::siteId(), 'qq_sideroom');
 
         $plat_backurl = $roomService->getPlatUrl($origin);
@@ -258,7 +257,7 @@ class RoomController extends Controller
             'certificate' => $certificate,
             Session::getName() => Session::getId(),
             'uid' => Auth::id(),
-            'nickname' => $userinfo['nickname'],
+            'nickname' => resolve(UserService::class)->getUserInfo($rid, 'nickname'),
             'channel_id' => $channel_id,
             'chat_fly_limit' => SiteSer::config('chat_fly_limit') ?: 0,
             'qq_sideroom' => $qq_sideroom,
@@ -286,6 +285,7 @@ class RoomController extends Controller
         if (!$roomid || !$rid) {
             return JsonResponse::create(['status' => 0, 'msg' => '参数错误']);
         }
+        $hostinfo = resolve(UserService::class)->getUserInfo($roomid);
         switch ($rid) {
             //密码房
             case 2:
@@ -310,8 +310,6 @@ class RoomController extends Controller
                 if (!$id) {
                     return JsonResponse::create(['status' => 0, 'msg' => '一对一缺少场次id信息']);
                 }
-                $redis = resolve('redis');
-                $hostinfo = $redis->hgetall("huser_info:" . $roomid);
                 $one2one = resolve(One2OneRoomService::class);
                 $one2one->set($roomid);
                 $room = $one2one->getDataBykey($id);
@@ -355,8 +353,6 @@ class RoomController extends Controller
                 if (!$id) {
                     return JsonResponse::create(['status' => 0, 'msg' => '一对多缺少场次id信息']);
                 }
-                $redis = resolve('redis');
-                $hostinfo = $redis->hgetall("huser_info:" . $roomid);
                 $one2more = resolve(One2MoreRoomService::class);
                 $one2more->set($roomid);
                 $rooms = $one2more->getData();
@@ -584,7 +580,7 @@ class RoomController extends Controller
 
     /**
      * 获取房间的rtmp上播地址
-     * 如果开启，取用户自己的RTMP（huser_info） 反之取共用的srtmp_server
+     * 如果开启，取用户自己的RTMP 反之取共用的srtmp_server
      * @param $rid
      * @return array
      */
@@ -680,6 +676,6 @@ class RoomController extends Controller
 
     private function getRid($uid = null)
     {
-        return $this->make('redis')->hget('huser_info:' . $uid ?: Auth::id(), 'rid');
+        return resolve(UserService::class)->getUserInfo($uid ?: Auth::id(), 'rid');
     }
 }

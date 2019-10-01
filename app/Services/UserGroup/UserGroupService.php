@@ -11,6 +11,7 @@ use App\Models\Users;
 use App\Models\VideoMail;
 use App\Models\VideoPack;
 use App\Services\Service;
+use App\Services\User\UserService;
 use DB;
 use Illuminate\Support\Facades\Redis;
 
@@ -140,7 +141,7 @@ class UserGroupService extends Service
                 ));
                 DB::commit();
                 // 更新完刷新redis
-                $this->make('redis')->hset('huser_info:' . $user['uid'], 'vip_end', date('Y-m-d H:i:s', $newTime));
+                resolve(UserService::class)->cacheUserInfo($user['uid'], ['vip_end' => date('Y-m-d H:i:s', $newTime)]);
             }catch(\Exception $e){
                 \Log::info("保级异常：getmypid ".getmypid()."checkUserVipStatus 更新数据成功  \n");
                 DB::rollBack();//事务回滚
@@ -169,16 +170,19 @@ class UserGroupService extends Service
     }
 
 
-    public function cancelVip($uid=0){
-        $user['uid'] = $uid;
-        Users::query()->where('uid',$user['uid'])->update(array('vip'=>0,'vip_end'=>'','hidden'=>0));
-        Redis::hmset('huser_info:'.$user['uid'],[
-            'vip'=>'0',
-            'hidden'=>'0',
-            'vip_end'=>'',
-        ]);
-        $pack = VideoPack::query()->where('uid',$user['uid'])->whereBetween('gid',[120101,120107])->delete();
-        Redis::del('user_car:'.$user['uid']);
+    public function cancelVip($uid = 0)
+    {
+        if ($uid == 0) {
+            return false;
+        }
+        $data = [
+            'vip' => '0',
+            'hidden' => '0',
+            'vip_end' => '',
+        ];
+        resolve(UserService::class)->updateUserInfo($uid, $data);
+        $pack = VideoPack::query()->where('uid', $uid)->whereBetween('gid', [120101, 120107])->delete();
+        Redis::del('user_car:'. $uid);
         return true;
     }
     public function checkVip($uid=0){

@@ -197,22 +197,24 @@ class MobileController extends Controller
             'hidden' => $allowStealth && $user->hidden,//当前隐身状态
 
         ];
+        $return['vip'] = $user->vip;
+        $return['vip_end'] = $user->vip_end;
+
         // 是贵族才验证 下掉贵族状态
         if ($user->vip && ($user->vip_end < date('Y-m-d H:i:s'))) {
-            $user->update([
+            $return['vip'] = 0;
+            $return['vip_end'] = null;
+            $data = [
                 'vip' => 0,
                 'vip_end' => null,
-            ]);
+            ];
+            resolve(UserService::class)->updateUserInfo($uid, $data);
 
             // 删除坐骑
             Pack::where('uid', $uid)->where('gid', '<=', 120107)
                 ->where('gid', '>=', 120101)->delete();
-            $this->make('redis')->hSet('huser_info:' . $uid, 'vip', 0);
-            $this->make('redis')->hSet('huser_info:' . $uid, 'vip_end', '');
             $this->make('redis')->del('user_car:' . $uid);
         }
-        $return['vip'] = $user->vip;
-        $return['vip_end'] = $user->vip_end;
 
         return JsonResponse::create($return);
     }
@@ -811,7 +813,7 @@ class MobileController extends Controller
             return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '新密码两次输入不一致!']);
         }
 
-        $old_password = Redis::hget('huser_info:' . $uid, 'password');
+        $old_password = resolve(UserService::class)->getUserInfo($uid, 'password');
         $new_password = md5($post['re_new_password']);
         if (md5($post['original_password']) != $old_password) {
             return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '原始密码错误!']);

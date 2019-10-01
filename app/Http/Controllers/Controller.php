@@ -1300,7 +1300,7 @@ class Controller extends BaseController
 
             if (!$flag) {
                 DB::rollback();
-                Redis::del('huser_info:' . Auth::id());
+                resolve(UserService::class)->cacheUserInfo(Auth::id(), null);
                 return false;
             }
             MallList::create([
@@ -1319,11 +1319,11 @@ class Controller extends BaseController
                 Redis::hset('user_car:' . Auth::id(), $gid, $gidExpireTime);
             }
             // 更新redis
-            Redis::del('huser_info:' . Auth::id());
+            resolve(UserService::class)->cacheUserInfo(Auth::id(), null);
             return true;
         } catch (\Exception $e) {
             DB::rollback();
-            Redis::del('huser_info:' . Auth::id());
+            resolve(UserService::class)->cacheUserInfo(Auth::id(), null);
             return false;
         }
     }
@@ -1464,7 +1464,7 @@ class Controller extends BaseController
 
                 DB::commit();
                 // 更新完刷新redis
-                Redis::hset('huser_info:' . $user['uid'], 'vip_end', date('Y-m-d H:i:s', $newTime));
+                resolve(UserService::class)->cacheUserInfo($user['uid'], ['vip_end' => date('Y-m-d H:i:s', $newTime)]);
 /*
                 //发送私信给用户
                 VideoMail::create([

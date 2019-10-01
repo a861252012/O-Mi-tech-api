@@ -14,6 +14,7 @@ use App\Models\Users;
 use App\Services\Auth\JWTGuard;
 use App\Services\Service;
 use App\Services\Site\SiteService;
+use App\Services\User\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -234,8 +235,11 @@ class ChargeService extends Service
 
     public function chargeAfter($uid): void
     {
-        $rs = Users::query()->whereRaw('uid='.$uid.'  and first_charge_time is NULL')->update(array('first_charge_time' => date('Y-m-d H:i:s')));
-        $rs && $this->make('redis')->hset('huser_info:' . $uid, 'first_charge_time', date('Y-m-d H:i:s', time()));
+        $data = [
+            'first_charge_time' => date('Y-m-d H:i:s'),
+        ];
+        $rs = Users::query()->whereRaw('uid='.$uid.'  and first_charge_time is NULL')->update($data);
+        $rs && resolve(UserService::class)->cacheUserInfo($uid, $data);
     }
 
     public function checkSign($postResult)
