@@ -94,7 +94,7 @@ class RoomService extends Service
             6 => $redis->hgetall("hroom_status:$rid:6"),
         ];
         $timecost = isset($room['room_status'][6]['timecost']) ? $room['room_status'][6]['timecost'] : 0;
-        $discount = $redis->hget('hgroups:special:' . $user['vip'], 'discount') ?: 10;
+        $discount = $redis->hget('hgroups:special:' . $user->vip, 'discount') ?: 10;
         $room['discount'] = [
             'discount' => $discount,
             'discountValue' => ceil($timecost * $discount / 10),
