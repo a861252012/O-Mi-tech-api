@@ -453,7 +453,7 @@ class MemberController extends Controller
         $mintimeDate = $this->request()->get('mintimeDate') ?: date('Y-m-d', strtotime('-1 month'));
         $maxtimeDate = $this->request()->get('maxtimeDate') ?: date('Y-m-d');
         $mintime = date('Y-m-d H:i:s', strtotime($mintimeDate));
-        $maxtime = date('Y-m-d H:i:s', strtotime($maxtimeDate . '23:59:59'));
+        $maxtime = date('Y-m-d H:i:s', strtotime($maxtimeDate . ' 23:59:59'));
         //查询充值成功的记录，而不是处理中的记录
         $recharge = resolve(Recharge::class);
         $paymoney = $recharge->getSummaryPaymoney($agentsPriv->aid, $mintime, $maxtime);
@@ -610,7 +610,7 @@ class MemberController extends Controller
         $mintimeDate = $request->get('mintime') ?: date('Y-m-d', strtotime('-1 year'));
         $maxtimeDate = $request->get('maxtime') ?: date('Y-m-d');
         $mintime = date('Y-m-d H:i:s', strtotime($mintimeDate));
-        $maxtime = date('Y-m-d H:i:s', strtotime($maxtimeDate . '23:59:59'));
+        $maxtime = date('Y-m-d H:i:s', strtotime($maxtimeDate . ' 23:59:59'));
 
         $all_data = UserCommission::where('uid', $uid)
             ->allSites()
@@ -1810,7 +1810,7 @@ class MemberController extends Controller
         $maxt = $this->make('request')->get('maxtime') ?: date('Y-m-d');
 
         $mintime = date('Y-m-d H:i:s', strtotime($mint));
-        $maxtime = date('Y-m-d H:i:s', strtotime($maxt . '23:59:59'));
+        $maxtime = date('Y-m-d H:i:s', strtotime($maxt . ' 23:59:59'));
 
         $selectTypeName = $type == 'send' ? 'send_uid' : 'rec_uid';
         $uriParammeters = $this->make('request')->query->all();
@@ -2765,7 +2765,7 @@ class MemberController extends Controller
         $maxt = $this->make('request')->get('maxtime') ?: date('Y-m-d');
 
         $mintime = date('Y-m-d H:i:s', strtotime($mint));
-        $maxtime = date('Y-m-d H:i:s', strtotime($maxt . '23:59:59'));
+        $maxtime = date('Y-m-d H:i:s', strtotime($maxt . ' 23:59:59'));
 
         $selectTypeName = $type == 'send' ? 'send_uid' : 'rec_uid';
         $uriParammeters = $this->make('request')->query->all();
