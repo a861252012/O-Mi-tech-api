@@ -286,7 +286,9 @@ class ApiController extends Controller
         $newUser['aid'] = 0;
         if ($agent) {
             $domaid = Domain::where('url', $agent)->where('type', 0)->where('status', 0)->with("agent")->first();
-            $newUser['aid'] = $domaid->agent->id;
+            if ($domaid->agent->id) {
+                $newUser['aid'] = $domaid->agent->id;
+            }
         }
         $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
         if (!$uid) {
@@ -341,6 +343,9 @@ class ApiController extends Controller
             if(!empty($aid)){
                 // $did = Domain::where('url', $aid)->first();
                 $agentid = Agents::where('id',$aid)->first();
+                if (!isset($agentid['id'])) {
+                    return;
+                }
                 $agent = array(
                     'aid'=>$agentid['id'],
                     'uid'=>$uid
