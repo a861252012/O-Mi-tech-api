@@ -33,13 +33,16 @@ class SocketService extends Service
      * @return mixed
      * @throws NoSocketChannelException
      */
-    public function getNextServerAvailable()
+    public function getNextServerAvailable($isHost = 0)
     {
         $redis = resolve('redis');
         $channels_update = collect($redis->hgetall('channel_update'));
         $minLoadChannel = null;
 //        $channelIDs = collect();//可用的channel id
         $channels_update->keys()->map(function ($channelID) use (&$channels_update, &$redis, &$minLoadChannel, &$channelIDs) {
+            if ($channelID >= 900 && !$isHost) {
+                return;
+            }
             if (!self::socketExpired($channels_update[$channelID])) {
 //                $channelIDs->push($channelID);
                 $channelInfo = $redis->hgetall('channel_info:' . $channelID);
@@ -72,13 +75,16 @@ class SocketService extends Service
      * pc端接口维持原先用法
      * @throws NoSocketChannelException
      */
-    public function getNextServerAvailablepc()
+    public function getNextServerAvailablepc($isHost = 0)
     {
         $redis = resolve('redis');
         $channels_update = collect($redis->hgetall('channel_update'));
         $minLoadChannel = null;
 //        $channelIDs = collect();//可用的channel id
         $channels_update->keys()->map(function ($channelID) use (&$channels_update, &$redis, &$minLoadChannel, &$channelIDs) {
+            if ($channelID >= 900 && !$isHost) {
+                return;
+            }
             if (!self::socketExpired($channels_update[$channelID])) {
 //                $channelIDs->push($channelID);
                 $channelInfo = $redis->hgetall('channel_info:' . $channelID);

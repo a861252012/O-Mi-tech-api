@@ -384,7 +384,7 @@ class RoomController extends Controller
             $socketService = resolve(SocketService::class);
             $chatServer = [];
             $msg = "";
-            $chatServer = $socketService->getNextServerAvailable();
+            $chatServer = $socketService->getNextServerAvailable($this->isHost($rid));
             $socket['host'] =  $chatServer['host'];
             $socket['ip'] =  $chatServer['ip'];
             $socket['port'] =  $chatServer['port'];
@@ -468,7 +468,7 @@ class RoomController extends Controller
             $socketService = resolve(SocketService::class);
             $chatServer = [];
             $msg = "";
-            $chatServer = $socketService->getNextServerAvailable();
+            $chatServer = $socketService->getNextServerAvailable($this->isHost($rid));
             $socket['host'] =  $chatServer['host'];
             $socket['ip'] =  $chatServer['ip'];
             $socket['port'] =  $chatServer['port'];
@@ -522,7 +522,7 @@ class RoomController extends Controller
             }
         }
         try {
-            $chatServer = $socketService->getNextServerAvailable();
+            $chatServer = $socketService->getNextServerAvailable($this->isHost($rid));
         } catch (NoSocketChannelException $e) {
             return JsonResponse::create(['status' => 0, 'msg' => $e->getMessage()]);
         }
