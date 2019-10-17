@@ -3127,13 +3127,13 @@ class MemberController extends Controller
      * @api {get} /api/m/member/redEnvelopeGet 紅包明細 - 收入 (Mobile)
      * @apiGroup Member
      * @apiName m_redEnvelopeGet
-     * @apiVersion 1.2.6
+     * @apiVersion 1.3.0
      */
     /**
      * @api {get} /api/member/redEnvelopeGet 紅包明細 - 收入
      * @apiGroup Member
      * @apiName redEnvelopeGet
-     * @apiVersion 1.2.6
+     * @apiVersion 1.3.0
      *
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
      * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
@@ -3148,6 +3148,7 @@ class MemberController extends Controller
      * @apiSuccess {String} data.data.snickname 發放者暱稱
      * @apiSuccess {String} data.data.rnickname 直播间
      * @apiSuccess {String} data.data.points 获得钻石
+     * @apiSuccess {String} data.total_points 總共鑽石數
      *
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 200 OK
@@ -3177,7 +3178,8 @@ class MemberController extends Controller
      *            "total": 28
      *            },
      *            "mintime": "2019-09-03",
-     *            "maxtime": "2019-09-04"
+     *            "maxtime": "2019-09-04",
+     *            "total_points" : 32
      *        },
      *        "msg": "获取成功"
      *    }
@@ -3229,6 +3231,9 @@ class MemberController extends Controller
         $var['mintime'] = $mint;
         $var['maxtime'] = $maxt;
 
+        /* 計算總共鑽石數 */
+        $var['total_points'] = $all_data->sum('points');
+
         $var = $this->format_jsoncode($var);
         return new JsonResponse($var);
     }
@@ -3237,13 +3242,13 @@ class MemberController extends Controller
      * @api {get} /api/m/member/redEnvelopeSend 紅包明細 - 支出 (Mobile)
      * @apiGroup Member
      * @apiName m_redEnvelopeSend
-     * @apiVersion 1.2.6
+     * @apiVersion 1.3.0
      */
     /**
      * @api {get} /api/member/redEnvelopeSend 紅包明細 - 支出
      * @apiGroup Member
      * @apiName redEnvelopeSend
-     * @apiVersion 1.2.6
+     * @apiVersion 1.3.0
      *
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
      * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
@@ -3261,6 +3266,7 @@ class MemberController extends Controller
      * @apiSuccess {int} data.data.return_point 退钻
      * @apiSuccess {int} data.data.point 總支出
      * @apiSuccess {String} data.data.status 狀態
+     * @apiSuccess {Int} data.total_points 總共鑽石數
      *
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 200 OK
@@ -3293,7 +3299,8 @@ class MemberController extends Controller
      *            "total": 28
      *            },
      *            "mintime": "2019-09-03",
-     *            "maxtime": "2019-09-04"
+     *            "maxtime": "2019-09-04",
+     *            "total_point": 375
      *        },
      *        "msg": "获取成功"
      *    }
@@ -3366,6 +3373,9 @@ class MemberController extends Controller
         $var['list'] = $all_data;
         $var['mintime'] = $mint;
         $var['maxtime'] = $maxt;
+
+        /* 計算總共鑽石數 */
+        $var['total_points'] = $all_data->sum('point');
 
         $var = $this->format_jsoncode($var);
         return new JsonResponse($var);
