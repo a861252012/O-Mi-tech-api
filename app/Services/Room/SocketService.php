@@ -39,7 +39,7 @@ class SocketService extends Service
         $channels_update = collect($redis->hgetall('channel_update'));
         $minLoadChannel = null;
 //        $channelIDs = collect();//可用的channel id
-        $channels_update->keys()->map(function ($channelID) use (&$channels_update, &$redis, &$minLoadChannel, &$channelIDs) {
+        $channels_update->keys()->map(function ($channelID) use (&$channels_update, &$redis, &$minLoadChannel, &$channelIDs, &$isHost) {
             if ($channelID >= 900 && !$isHost) {
                 return;
             }
@@ -81,7 +81,7 @@ class SocketService extends Service
         $channels_update = collect($redis->hgetall('channel_update'));
         $minLoadChannel = null;
 //        $channelIDs = collect();//可用的channel id
-        $channels_update->keys()->map(function ($channelID) use (&$channels_update, &$redis, &$minLoadChannel, &$channelIDs) {
+        $channels_update->keys()->map(function ($channelID) use (&$channels_update, &$redis, &$minLoadChannel, &$channelIDs, &$isHost) {
             if ($channelID >= 900 && !$isHost) {
                 return;
             }
