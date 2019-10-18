@@ -30,6 +30,7 @@ use App\Models\UserBuyOneToMore;
 use App\Models\UserCommission;
 use App\Models\UserGroup;
 use App\Models\Users;
+use App\Models\UserSignin;
 use App\Models\Usersall;
 use App\Models\WithDrawalList;
 use App\Services\I18n\PhoneNumber;
@@ -38,9 +39,10 @@ use App\Services\Room\RoomService;
 use App\Services\Sms\SmsService;
 use App\Services\System\SystemService;
 use App\Services\User\UserService;
+use App\Services\User\SigninService;
 use App\Services\UserGroup\UserGroupService;
-use Core\Exceptions\NotFoundHttpException;
 use DB;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -1803,7 +1805,7 @@ class MemberController extends Controller
     {
         $uid = Auth::id();
         if (!$uid) {
-            throw new NotFoundHttpException();
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '未登录！']));
         }
         $type = $this->make('request')->get('type') ?: 'receive';
         $mint = $this->make('request')->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
@@ -2758,7 +2760,7 @@ class MemberController extends Controller
     {
         $uid = Auth::id();
         if (!$uid) {
-            throw new NotFoundHttpException();
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '未登录！']));
         }
         $type = $this->make('request')->get('type') ?: 'receive';
         $mint = $this->make('request')->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
@@ -3188,7 +3190,7 @@ class MemberController extends Controller
     {
         $uid = Auth::id();
         if (!$uid) {
-            throw new NotFoundHttpException();
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '未登录！']));
         }
 
         $mint = $req->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
@@ -3309,7 +3311,7 @@ class MemberController extends Controller
     {
         $uid = Auth::id();
         if (!$uid) {
-            throw new NotFoundHttpException();
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '未登录！']));
         }
 
         $mint = $req->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
@@ -3381,4 +3383,120 @@ class MemberController extends Controller
         return new JsonResponse($var);
     }
 
+    /**
+     * @api {get} /api/m/member/signin 用戶簽到資訊 (Mobile)
+     * @apiGroup Member
+     * @apiName m_signin
+     * @apiVersion 2.5.0
+     */
+    /**
+     * @api {get} /api/member/signin 用戶簽到資訊 (PC)
+     * @apiGroup Member
+     * @apiName signin
+     * @apiVersion 2.5.0
+     *
+     * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
+     * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
+     *
+     * @apiParam {String} clientDate 客戶端日期，範例:<code>2019-10-01</code>
+     *
+     * @apiSuccess {int} status 狀態<br>
+     *                   <code>0</code>: 錯誤<br>
+     *                   <code>1</code>: 正常
+     * @apiSuccess {Object} data
+     * @apiSuccess {int} data.days 連續簽到天數
+     * @apiSuccess {int} data.today 當天是否已簽到<br>
+     *                              <code>0</code>: 未簽到<br>
+     *                              <code>1</code>: 已簽到
+     * @apiSuccess {String} msg 錯誤訊息
+     *
+     * @apiSuccessExample 正常回應
+     * {
+     *     "status": 1,
+     *     "data": {
+     *         "days": 0,
+     *         "today": 0
+     *     }
+     * }
+     * @apiSuccessExample 沒開放
+     * {
+     *     "status": 0,
+     *     "msg": "签到功能已关闭"
+     * }
+     *
+     */
+
+    /**
+     * @api {post} /api/m/member/signin 執行用戶簽到 (Mobile)
+     * @apiGroup Member
+     * @apiName post_m_signin
+     * @apiVersion 2.5.0
+     */
+    /**
+     * @api {post} /api/member/signin 執行用戶簽到 (PC)
+     * @apiGroup Member
+     * @apiName post_signin
+     * @apiVersion 2.5.0
+     *
+     * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
+     * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
+     *
+     * @apiParam {String} clientDate 客戶端日期，範例:<code>2019-10-01</code>
+     *
+     * @apiSuccess {int} status 狀態<br>
+     *                   <code>0</code>: 錯誤<br>
+     *                   <code>1</code>: 正常
+     * @apiSuccess {Object} data
+     * @apiSuccess {int} data.points 取得點數
+     * @apiSuccess {String} msg 錯誤訊息
+     *
+     * @apiSuccessExample 正常回應
+     * {
+     *     "status": 1,
+     *     "data": {
+     *         "points": 1
+     *     }
+     * }
+     * @apiSuccessExample 沒開放
+     * {
+     *     "status": 0,
+     *     "msg": "签到功能已关闭"
+     * }
+     * @apiSuccessExample 已簽到
+     * {
+     *     "status": 0,
+     *     "msg": "今日已签到"
+     * }
+     * @apiSuccessExample 日期錯誤
+     * {
+     *     "status": 0,
+     *     "msg": "日期错误，请检查您的系统日期"
+     * }
+     *
+     */
+    public function signin(Request $req)
+    {
+        $uid = Auth::id();
+        if (!$uid) {
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '未登录！']));
+        }
+        // $uid = 9432054;
+
+        $signinService = resolve(SigninService::class);
+        $clientDate = $req->get('clientDate');
+        if (empty($clientDate)) {
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => 'clientDate']));
+        }
+        $clientDate = date('Y-m-d', strtotime($clientDate));
+
+        if ($req->isMethod('post') || $req->get('postsign')) {
+            $rtn = $signinService->sign($uid, $clientDate);
+        } else {
+            $rtn = $signinService->get($uid, $clientDate);
+        }
+        if ($rtn['status'] === 0) {
+            throw new HttpResponseException(JsonResponse::create($rtn));
+        }
+        return new JsonResponse($rtn);
+    }
 }

@@ -97,6 +97,8 @@ Route::group(['prefix' => 'member'], function () {
         // 红包明细
         Route::get('redEnvelopeGet', 'MemberController@redEnvelopeGet');
         Route::get('redEnvelopeSend', 'MemberController@redEnvelopeSend');
+        // 红包明细
+        Route::any('signin', 'MemberController@signin');
     });
 });
 
