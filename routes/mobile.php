@@ -168,7 +168,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('member/redEnvelopeGet', 'MemberController@redEnvelopeGet');
     Route::get('member/redEnvelopeSend', 'MemberController@redEnvelopeSend');
     // 红包明细
-    Route::any('signin', 'MemberController@signin');
+    Route::any('member/signin', 'MemberController@signin');
 });
 
 /** 进房间 */
