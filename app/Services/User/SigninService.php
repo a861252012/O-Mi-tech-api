@@ -20,7 +20,7 @@ class SigninService extends Service
     {
         $this->redis = $redis;
         $this->info = json_decode(SiteSer::config('signin_info'), true);
-        $this->enabled = isset($this->info['enabled']) ?: false;
+        $this->enabled = isset($this->info['enabled']) ? $this->info['enabled'] : false;
 
         $skipCheck = SiteSer::config('skip_signin_check');
         if ($skipCheck === '1') {
