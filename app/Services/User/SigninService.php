@@ -32,7 +32,7 @@ class SigninService extends Service
     {
         if (!$this->enabled) {
             $resp = [
-                'status' => 0,
+                'status' => -1,
                 'msg' => '签到功能已关闭',
             ];
             return $resp;

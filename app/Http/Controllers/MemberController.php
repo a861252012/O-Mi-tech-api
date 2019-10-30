@@ -3459,7 +3459,7 @@ class MemberController extends Controller
      * }
      * @apiSuccessExample 沒開放
      * {
-     *     "status": 0,
+     *     "status": -1,
      *     "msg": "签到功能已关闭"
      * }
      * @apiSuccessExample 已簽到
@@ -3480,7 +3480,6 @@ class MemberController extends Controller
         if (!$uid) {
             throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '未登录！']));
         }
-        // $uid = 9432054;
 
         $signinService = resolve(SigninService::class);
         $clientDate = $req->get('clientDate');
@@ -3494,7 +3493,7 @@ class MemberController extends Controller
         } else {
             $rtn = $signinService->get($uid, $clientDate);
         }
-        if ($rtn['status'] === 0) {
+        if ($rtn['status'] <= 0) {
             throw new HttpResponseException(JsonResponse::create($rtn));
         }
         return new JsonResponse($rtn);
