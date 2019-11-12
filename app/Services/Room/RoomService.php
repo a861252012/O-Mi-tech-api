@@ -81,6 +81,9 @@ class RoomService extends Service
         $this->rid = $rid;
         $room = $redis->hgetAll($key);
         $uid = $redis->hget($roomids, $rid);
+        if (!$uid) {
+            $uid = $rid;
+        }
         $user = resolve(UserService::class)->getUserByUid($uid);
         $user->password = '446d7f90ac03e025c741983cef31325c';
         $user->trade_password = '446d7f90ac03e025c741983cef31325c';
