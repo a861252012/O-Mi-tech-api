@@ -3209,7 +3209,7 @@ class MemberController extends Controller
             }
         }
 
-        $all_data = RedEnvelopeGet::select(
+		$query = RedEnvelopeGet::select(
             'video_get_red_envelope_record.create_date',
             'u2.nickname AS snickname',
             'u1.nickname AS rnickname',
@@ -3225,16 +3225,17 @@ class MemberController extends Controller
         ->where('video_get_red_envelope_record.create_date', '>=', $mintime)
         ->where('video_get_red_envelope_record.create_date', '<=', $maxtime)
         ->orderBy('video_get_red_envelope_record.create_date', 'desc')
-        ->allSites()
-        ->paginate();
+        ->allSites();
+
+		/* 計算總共鑽石數 */
+		$var['total_points'] = $query->sum('video_get_red_envelope_record.points');
+
+        $all_data = $query->paginate();
 
         $all_data->appends(['mintime' => $mint, 'maxtime' => $maxt]);
         $var['list'] = $all_data;
         $var['mintime'] = $mint;
         $var['maxtime'] = $maxt;
-
-        /* 計算總共鑽石數 */
-        $var['total_points'] = $all_data->sum('points');
 
         $var = $this->format_jsoncode($var);
         return new JsonResponse($var);
@@ -3330,7 +3331,7 @@ class MemberController extends Controller
             }
         }
 
-        $all_data = RedEnvelopeSend::select(
+		$query = RedEnvelopeSend::select(
             'video_send_red_envelope_record.create_date',
             'u1.nickname AS rnickname',
             'total_point',
@@ -3349,8 +3350,12 @@ class MemberController extends Controller
         ->where('video_send_red_envelope_record.create_date', '>=', $mintime)
         ->where('video_send_red_envelope_record.create_date', '<=', $maxtime)
         ->orderBy('video_send_red_envelope_record.create_date', 'desc')
-        ->allSites()
-        ->paginate();
+        ->allSites();
+
+		/* 計算總共鑽石數 */
+		$var['total_points'] = $query->sum(DB::raw('total_point + tax_point - return_point'));
+
+        $all_data = $query->paginate();
 
         foreach ($all_data as &$row) {
             switch ($row->status) {
@@ -3375,9 +3380,6 @@ class MemberController extends Controller
         $var['list'] = $all_data;
         $var['mintime'] = $mint;
         $var['maxtime'] = $maxt;
-
-        /* 計算總共鑽石數 */
-        $var['total_points'] = $all_data->sum('point');
 
         $var = $this->format_jsoncode($var);
         return new JsonResponse($var);
