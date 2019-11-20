@@ -404,3 +404,9 @@ Route::get('exchange', ['name' => 'm_exchange', 'uses' => 'ChargeController@exch
 
 //登入公告
 Route::get('loginmsg', ['name' => 'loginmsg', 'uses' => 'Mobile\MobileController@loginmsg']);
+
+// 遊戲中心
+Route::prefix('game')->middleware(['login_auth'])->group(function () {
+	Route::get('entry','GameController@entry');
+	Route::post('deposit','GameController@deposit');
+});
