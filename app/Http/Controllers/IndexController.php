@@ -288,6 +288,7 @@ class IndexController extends Controller
 
         $data = [
             'status' => 1,
+            'uid' => $uid,
             'myfav' => $myfav,
             'myres' => $myres,
             'myticket' => $myticket,

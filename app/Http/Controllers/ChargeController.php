@@ -9,6 +9,7 @@ use App\Models\GiftActivity;
 use App\Models\PayAccount;
 use App\Models\PayGD;
 use App\Models\Recharge;
+use App\Models\RechargeMoney;
 use App\Models\Users;
 use App\Services\User\UserService;
 use DB;
@@ -91,7 +92,7 @@ class ChargeController extends Controller
         $var['user_money_min'] = config('const.user_points_min') / 10;
 
         //充值金额删选数组
-        $recharge_money = $this->make('redis')->get('recharge_money') ? json_decode($this->make('redis')->get('recharge_money')) : [];
+        $recharge_money = $this->getRechargeMoney();
         $temp = [];
         foreach ($recharge_money as $k => $value) {
             if (isset($value->client) && $value->client == $client) {
@@ -102,6 +103,23 @@ class ChargeController extends Controller
         $var['token'] = $token;
         $var['pay'] = 1;
         return SuccessResponse::create($var);
+    }
+
+    private function getRechargeMoney()
+    {
+        $redis = $this->make('redis');
+        $data = $redis->get('recharge_money');
+        $json = [];
+        if (!$data) {
+            $data = RechargeMoney::all(['recharge_min','recharge_max','recharge_type','client']);
+            if ($data) {
+                $json = $data->toJson();
+                $redis->set('recharge_money', $json);
+                $data = $redis->get('recharge_money');
+            }
+        }
+        $json = json_decode($data);
+        return $json;
     }
 
     /**

@@ -30,6 +30,7 @@ use App\Models\UserBuyOneToMore;
 use App\Models\UserCommission;
 use App\Models\UserGroup;
 use App\Models\Users;
+use App\Models\UserSignin;
 use App\Models\Usersall;
 use App\Models\WithDrawalList;
 use App\Services\I18n\PhoneNumber;
@@ -38,9 +39,10 @@ use App\Services\Room\RoomService;
 use App\Services\Sms\SmsService;
 use App\Services\System\SystemService;
 use App\Services\User\UserService;
+use App\Services\User\SigninService;
 use App\Services\UserGroup\UserGroupService;
-use Core\Exceptions\NotFoundHttpException;
 use DB;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -1803,7 +1805,7 @@ class MemberController extends Controller
     {
         $uid = Auth::id();
         if (!$uid) {
-            throw new NotFoundHttpException();
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '未登录！']));
         }
         $type = $this->make('request')->get('type') ?: 'receive';
         $mint = $this->make('request')->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
@@ -2758,7 +2760,7 @@ class MemberController extends Controller
     {
         $uid = Auth::id();
         if (!$uid) {
-            throw new NotFoundHttpException();
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '未登录！']));
         }
         $type = $this->make('request')->get('type') ?: 'receive';
         $mint = $this->make('request')->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
@@ -3127,13 +3129,13 @@ class MemberController extends Controller
      * @api {get} /api/m/member/redEnvelopeGet 紅包明細 - 收入 (Mobile)
      * @apiGroup Member
      * @apiName m_redEnvelopeGet
-     * @apiVersion 1.2.6
+     * @apiVersion 1.3.0
      */
     /**
      * @api {get} /api/member/redEnvelopeGet 紅包明細 - 收入
      * @apiGroup Member
      * @apiName redEnvelopeGet
-     * @apiVersion 1.2.6
+     * @apiVersion 1.3.0
      *
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
      * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
@@ -3148,6 +3150,7 @@ class MemberController extends Controller
      * @apiSuccess {String} data.data.snickname 發放者暱稱
      * @apiSuccess {String} data.data.rnickname 直播间
      * @apiSuccess {String} data.data.points 获得钻石
+     * @apiSuccess {String} data.total_points 總共鑽石數
      *
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 200 OK
@@ -3177,7 +3180,8 @@ class MemberController extends Controller
      *            "total": 28
      *            },
      *            "mintime": "2019-09-03",
-     *            "maxtime": "2019-09-04"
+     *            "maxtime": "2019-09-04",
+     *            "total_points" : 32
      *        },
      *        "msg": "获取成功"
      *    }
@@ -3186,7 +3190,7 @@ class MemberController extends Controller
     {
         $uid = Auth::id();
         if (!$uid) {
-            throw new NotFoundHttpException();
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '未登录！']));
         }
 
         $mint = $req->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
@@ -3205,7 +3209,7 @@ class MemberController extends Controller
             }
         }
 
-        $all_data = RedEnvelopeGet::select(
+		$query = RedEnvelopeGet::select(
             'video_get_red_envelope_record.create_date',
             'u2.nickname AS snickname',
             'u1.nickname AS rnickname',
@@ -3221,8 +3225,12 @@ class MemberController extends Controller
         ->where('video_get_red_envelope_record.create_date', '>=', $mintime)
         ->where('video_get_red_envelope_record.create_date', '<=', $maxtime)
         ->orderBy('video_get_red_envelope_record.create_date', 'desc')
-        ->allSites()
-        ->paginate();
+        ->allSites();
+
+		/* 計算總共鑽石數 */
+		$var['total_points'] = $query->sum('video_get_red_envelope_record.points');
+
+        $all_data = $query->paginate();
 
         $all_data->appends(['mintime' => $mint, 'maxtime' => $maxt]);
         $var['list'] = $all_data;
@@ -3237,13 +3245,13 @@ class MemberController extends Controller
      * @api {get} /api/m/member/redEnvelopeSend 紅包明細 - 支出 (Mobile)
      * @apiGroup Member
      * @apiName m_redEnvelopeSend
-     * @apiVersion 1.2.6
+     * @apiVersion 1.3.0
      */
     /**
      * @api {get} /api/member/redEnvelopeSend 紅包明細 - 支出
      * @apiGroup Member
      * @apiName redEnvelopeSend
-     * @apiVersion 1.2.6
+     * @apiVersion 1.3.0
      *
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
      * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
@@ -3261,6 +3269,7 @@ class MemberController extends Controller
      * @apiSuccess {int} data.data.return_point 退钻
      * @apiSuccess {int} data.data.point 總支出
      * @apiSuccess {String} data.data.status 狀態
+     * @apiSuccess {Int} data.total_points 總共鑽石數
      *
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 200 OK
@@ -3293,7 +3302,8 @@ class MemberController extends Controller
      *            "total": 28
      *            },
      *            "mintime": "2019-09-03",
-     *            "maxtime": "2019-09-04"
+     *            "maxtime": "2019-09-04",
+     *            "total_point": 375
      *        },
      *        "msg": "获取成功"
      *    }
@@ -3302,7 +3312,7 @@ class MemberController extends Controller
     {
         $uid = Auth::id();
         if (!$uid) {
-            throw new NotFoundHttpException();
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '未登录！']));
         }
 
         $mint = $req->get('mintime') ?: date('Y-m-d', strtotime('-1 day'));
@@ -3321,7 +3331,7 @@ class MemberController extends Controller
             }
         }
 
-        $all_data = RedEnvelopeSend::select(
+		$query = RedEnvelopeSend::select(
             'video_send_red_envelope_record.create_date',
             'u1.nickname AS rnickname',
             'total_point',
@@ -3340,8 +3350,12 @@ class MemberController extends Controller
         ->where('video_send_red_envelope_record.create_date', '>=', $mintime)
         ->where('video_send_red_envelope_record.create_date', '<=', $maxtime)
         ->orderBy('video_send_red_envelope_record.create_date', 'desc')
-        ->allSites()
-        ->paginate();
+        ->allSites();
+
+		/* 計算總共鑽石數 */
+		$var['total_points'] = $query->sum(DB::raw('total_point + tax_point - return_point'));
+
+        $all_data = $query->paginate();
 
         foreach ($all_data as &$row) {
             switch ($row->status) {
@@ -3371,4 +3385,119 @@ class MemberController extends Controller
         return new JsonResponse($var);
     }
 
+    /**
+     * @api {get} /api/m/member/signin 用戶簽到資訊 (Mobile)
+     * @apiGroup Member
+     * @apiName m_signin
+     * @apiVersion 2.5.0
+     */
+    /**
+     * @api {get} /api/member/signin 用戶簽到資訊 (PC)
+     * @apiGroup Member
+     * @apiName signin
+     * @apiVersion 2.5.0
+     *
+     * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
+     * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
+     *
+     * @apiParam {String} clientDate 客戶端日期，範例:<code>2019-10-01</code>
+     *
+     * @apiSuccess {int} status 狀態<br>
+     *                   <code>0</code>: 錯誤<br>
+     *                   <code>1</code>: 正常
+     * @apiSuccess {Object} data
+     * @apiSuccess {int} data.days 連續簽到天數
+     * @apiSuccess {int} data.today 當天是否已簽到<br>
+     *                              <code>0</code>: 未簽到<br>
+     *                              <code>1</code>: 已簽到
+     * @apiSuccess {String} msg 錯誤訊息
+     *
+     * @apiSuccessExample 正常回應
+     * {
+     *     "status": 1,
+     *     "data": {
+     *         "days": 0,
+     *         "today": 0
+     *     }
+     * }
+     * @apiSuccessExample 沒開放
+     * {
+     *     "status": 0,
+     *     "msg": "签到功能已关闭"
+     * }
+     *
+     */
+
+    /**
+     * @api {post} /api/m/member/signin 執行用戶簽到 (Mobile)
+     * @apiGroup Member
+     * @apiName post_m_signin
+     * @apiVersion 2.5.0
+     */
+    /**
+     * @api {post} /api/member/signin 執行用戶簽到 (PC)
+     * @apiGroup Member
+     * @apiName post_signin
+     * @apiVersion 2.5.0
+     *
+     * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
+     * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
+     *
+     * @apiParam {String} clientDate 客戶端日期，範例:<code>2019-10-01</code>
+     *
+     * @apiSuccess {int} status 狀態<br>
+     *                   <code>0</code>: 錯誤<br>
+     *                   <code>1</code>: 正常
+     * @apiSuccess {Object} data
+     * @apiSuccess {int} data.points 取得點數
+     * @apiSuccess {String} msg 錯誤訊息
+     *
+     * @apiSuccessExample 正常回應
+     * {
+     *     "status": 1,
+     *     "data": {
+     *         "points": 1
+     *     }
+     * }
+     * @apiSuccessExample 沒開放
+     * {
+     *     "status": -1,
+     *     "msg": "签到功能已关闭"
+     * }
+     * @apiSuccessExample 已簽到
+     * {
+     *     "status": 0,
+     *     "msg": "今日已签到"
+     * }
+     * @apiSuccessExample 日期錯誤
+     * {
+     *     "status": 0,
+     *     "msg": "日期错误，请检查您的系统日期"
+     * }
+     *
+     */
+    public function signin(Request $req)
+    {
+        $uid = Auth::id();
+        if (!$uid) {
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '未登录！']));
+        }
+
+        $signinService = resolve(SigninService::class);
+        $clientDate = $req->get('clientDate');
+        if (empty($clientDate)) {
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => 'clientDate']));
+        }
+        $clientDate = date('Y-m-d', strtotime($clientDate));
+
+        if ($req->isMethod('post') || $req->get('postsign')) {
+            $rtn = $signinService->sign($uid, $clientDate);
+        } else {
+            $rtn = $signinService->get($uid, $clientDate);
+        }
+        if ($rtn['status'] <= 0) {
+            throw new HttpResponseException(JsonResponse::create($rtn));
+        }
+        return new JsonResponse($rtn);
+    }
 }

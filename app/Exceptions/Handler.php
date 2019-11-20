@@ -62,6 +62,10 @@ class Handler extends ExceptionHandler
      */
     public function report(Exception $exception)
     {
+        if(parent::shouldntReport($exception)) {
+            return;
+        }
+
         try {
             $format = "#%datetime% > %level_name% > %message% \n%context% \n%extra%\n%request%\n\n\n";
 
@@ -104,9 +108,11 @@ class Handler extends ExceptionHandler
             }
             return JsonResponse::create($return);
         }
+
         if ($exception instanceof ValidationException) {
             return JsonResponse::create(['status' => 0, 'msg' => '参数错误', 'errors' => $exception->errors()]);
         }
+
         if ((int)Redis::get('log') === 1) {
             try {
                 $format = "%request%\n\n\n#%datetime% > %level_name% > %message% \n%context% \n\n%extra%";
@@ -120,6 +126,7 @@ class Handler extends ExceptionHandler
             }
 
         }
+
         return parent::render($request, $exception);
     }
 
