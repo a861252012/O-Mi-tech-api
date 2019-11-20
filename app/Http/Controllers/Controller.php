@@ -27,6 +27,7 @@ use App\Models\VideoMail;
 use App\Models\WithDrawalList;
 use App\Models\WithDrawalRules;
 use App\Services\User\UserService;
+use App\Traits\ApiOutput;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -45,7 +46,7 @@ use App\Services\Site\SiteService;
 
 class Controller extends BaseController
 {
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests, ApiOutput;
 
     const CLIENT_ENCRY_FIELD = 'v_remember_encrypt';
     //const DOMAIN_A = 'domain_a';

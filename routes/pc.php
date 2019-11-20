@@ -97,6 +97,8 @@ Route::group(['prefix' => 'member'], function () {
         // 红包明细
         Route::get('redEnvelopeGet', 'MemberController@redEnvelopeGet');
         Route::get('redEnvelopeSend', 'MemberController@redEnvelopeSend');
+        // 红包明细
+        Route::any('signin', 'MemberController@signin');
     });
 });
 
@@ -402,3 +404,9 @@ Route::get('exchange', ['name' => 'm_exchange', 'uses' => 'ChargeController@exch
 
 //登入公告
 Route::get('loginmsg', ['name' => 'loginmsg', 'uses' => 'Mobile\MobileController@loginmsg']);
+
+// 遊戲中心
+Route::prefix('game')->middleware(['login_auth'])->group(function () {
+	Route::get('entry','GameController@entry');
+	Route::post('deposit','GameController@deposit');
+});

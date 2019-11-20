@@ -167,7 +167,10 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     // 红包明细
     Route::get('member/redEnvelopeGet', 'MemberController@redEnvelopeGet');
     Route::get('member/redEnvelopeSend', 'MemberController@redEnvelopeSend');
+    // 红包明细
+    Route::any('member/signin', 'MemberController@signin');
 });
+
 /** 进房间 */
 Route::any('get_room/{rid}', 'Mobile\RoomController@getRoom')->where('rid','[0-9]{5,15}')->name('m_get_room');
 /** 一对一table进房间 */
@@ -226,3 +229,8 @@ Route::get('/contact/qr.png', ['name' => 'contactQR', 'uses' => 'PageController@
 
 //贵族列表
 Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopController@getGroupAll']);
+
+// 遊戲中心
+Route::prefix('game')->middleware(['login_auth:mobile'])->group(function () {
+	Route::get('entry','GameController@entry');
+});
