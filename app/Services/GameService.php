@@ -92,6 +92,9 @@ class GameService
 
 		$r = json_decode($r, true);
 
+		/* 更新log時間 */
+		$this->userAccRepository->updateAcc(['uid' => auth()->id(), 'platform' => 'HQT'],['response' => $r['errcode']]);
+
 		if(empty($r)
 			|| !is_array($r)
 			|| !Arr::has($r, 'errcode')
@@ -231,9 +234,6 @@ class GameService
 			return false;
 		}
 
-		/* 更新log時間 */
-		$this->userAccRepository->updateAcc(['uid' => auth()->id(), 'platform' => 'HQT'],['response' => $apiResponse['errcode']]);
-
 		return $apiResponse;
 	}
 
@@ -286,9 +286,6 @@ class GameService
 			Log::error("儲值失敗 - API回應缺少參數 'balance' ");
 			return false;
 		}
-
-		/* 更新log時間 */
-		$this->userAccRepository->updateAcc(['uid' => auth()->id(), 'platform' => 'HQT'],['response' => $apiResponse['errcode']]);
 
 		return $apiResponse;
 	}
