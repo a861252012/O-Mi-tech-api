@@ -117,7 +117,7 @@ class GameService
 			Redis::del('hqt_game_setting');
 
 			$config = $this->siteConfigsRepository->getSettingByHQT();
-			if($config->isEmpty()) {
+			if(empty($config)) {
 				Log::error("資料庫無法取得設定");
 				return false;
 			}
