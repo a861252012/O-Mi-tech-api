@@ -9,6 +9,7 @@ namespace App\Repositories;
 
 
 use App\Entities\SiteConfigs;
+use App\Facades\SiteSer;
 
 class SiteConfigsRepository
 {
@@ -19,13 +20,19 @@ class SiteConfigsRepository
 		$this->siteConfigs = $siteConfigs;
 	}
 
-	public function all()
-	{
-		return $this->siteConfigs->all();
-	}
-
 	public function getByCondition($where)
 	{
 		return $this->siteConfigs->where($where)->first();
+	}
+
+	public function getSettingByHQT()
+	{
+		return $this->siteConfigs->where('site_id', SiteSer::siteId())
+					->whereIn('k', ['hqt_game_status', 'hqt_marquee', 'hqt_game_setting'])
+					->get()
+					->mapWithKeys(function($item) {
+						return [$item['k'] => $item['v']];
+					})
+					->all();
 	}
 }
