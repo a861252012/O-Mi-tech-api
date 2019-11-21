@@ -109,15 +109,17 @@ class GameService
 	/* 檢查設定 */
 	public function checkSetting()
 	{
+		$siteId = SiteSer::siteId();
 		/* 先在redis取得設定 */
-		$status = Redis::get('hqt_game_status');
-		$settings = json_decode(Redis::get('hqt_game_setting'));
+		$status = Redis::get('sc:hqt_game_status:' . $siteId);
+		$settings = json_decode(Redis::get('sc:hqt_game_setting:' . $siteId));
 
 		/* 如取不到，則到資料庫取得 */
 		if(is_null($status) || !is_bool($status) || empty($settings)) {
 			/* 刪除原有key */
-			Redis::del('hqt_game_status');
-			Redis::del('hqt_game_setting');
+			Redis::del('sc:hqt_game_status:' . $siteId);
+			Redis::del('sc:hqt_marquee:' . $siteId);
+			Redis::del('sc:hqt_game_setting:' . $siteId);
 
 			$config = $this->siteConfigsRepository->getSettingByHQT();
 			if(empty($config)) {
@@ -130,8 +132,9 @@ class GameService
 			});
 
 			/* 建立redis設定 */
-			Redis::set('hqt_game_status', $config['hqt_game_status']);
-			Redis::set('hqt_game_setting', $config['hqt_game_setting']);
+			Redis::set('sc:hqt_game_status:' . $siteId, $config['hqt_game_status']);
+			Redis::set('sc:hqt_marquee:' . $siteId, $config['hqt_marquee']);
+			Redis::set('sc:hqt_game_setting:' . $siteId, $config['hqt_game_setting']);
 
 			$status = $config['hqt_game_status'];
 		}
