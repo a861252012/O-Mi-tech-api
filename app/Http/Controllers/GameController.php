@@ -37,8 +37,8 @@ class GameController extends Controller
 	 * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
 	 * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
 	 *
-	 * @apiError (Error Status) 101 設置狀態為關閉
 	 * @apiError (Error Status) 102 執行遊戲失敗
+	 * @apiError (Error Status) 103 設置狀態為關閉
 	 * @apiError (Error Status) 999 API執行錯誤
 	 *
 	 * @apiSuccess {String} game_url 遊戲網址
@@ -56,7 +56,7 @@ class GameController extends Controller
 	{
 		try {
 			if(!$this->gameService->checkSetting()) {
-				$this->setStatus(101, '設置狀態為關閉');
+				$this->setStatus(103, '設置狀態為關閉');
 				return $this->jsonOutput();
 			}
 
@@ -89,9 +89,9 @@ class GameController extends Controller
 	 * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
 	 * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
 	 *
-	 * @apiError (Error Status) 101 設置狀態為關閉
-	 * @apiError (Error Status) 102 無儲值金額
-	 * @apiError (Error Status) 103 執行遊戲失敗
+	 * @apiError (Error Status) 102 執行遊戲失敗
+	 * @apiError (Error Status) 103 設置狀態為關閉
+	 * @apiError (Error Status) 104 無儲值金額
 	 * @apiError (Error Status) 999 API執行錯誤
 	 *
 	 * @apiSuccessExample 成功回應
@@ -105,18 +105,18 @@ class GameController extends Controller
 	{
 		try {
 			if(!$this->gameService->checkSetting()) {
-				$this->setStatus(101, '設置狀態為關閉');
+				$this->setStatus(103, '設置狀態為關閉');
 				return $this->jsonOutput();
 			}
 
 			if(!$request->get('amount')) {
-				$this->setStatus(102, '無儲值金額');
+				$this->setStatus(104, '無儲值金額');
 				return $this->jsonOutput();
 			}
 
 			$result = $this->gameService->deposit($request->amount);
 			if(empty($result)) {
-				$this->setStatus(103, '儲值失敗');
+				$this->setStatus(102, '儲值失敗');
 				return $this->jsonOutput();
 			}
 
