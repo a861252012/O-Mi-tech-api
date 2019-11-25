@@ -7,6 +7,7 @@
 
 namespace App\Services;
 
+use App\Facades\SiteSer;
 use App\Repositories\SiteConfigsRepository;
 use App\Repositories\UserAccRepository;
 use App\Traits\CurlAdapter;
@@ -19,16 +20,17 @@ class GameService
 {
 	use CurlAdapter;
 
-	const HQT_HOST = 'http://10.1.101.120:9999/eas/api/rest';
+	// HQT HOST
+	private $host;
 
 	// HQT渠道id
-	const HQT_CHANNEL = 50046;
+	private $channelId;
 
 	// HQT私有key
-	const HQT_PRIVATEKEY = '500461573624188dbo136';
+	private $privateKey;
 
 	// HQT帳號前綴
-	const HQT_PREFIX = 'f_';
+	private $gameAcctPrefix;
 
 	private $username;
 
@@ -49,7 +51,7 @@ class GameService
 	private function makeSign($data)
 	{
 		ksort($data);
-		$data['privatekey'] = self::HQT_PRIVATEKEY;
+		$data['privatekey'] = $this->privateKey;
 
 		$signArr = [];
 		foreach($data as $k => $v) {
@@ -65,7 +67,7 @@ class GameService
 	private function genAccount()
 	{
 		$tempAcc = Str::random(4) . explode(' ',microtime())[1];
-		return self::HQT_PREFIX . $tempAcc;
+		return $this->gameAcctPrefix . $tempAcc;
 	}
 
 	/* 產生密碼 */
@@ -90,6 +92,9 @@ class GameService
 
 		$r = json_decode($r, true);
 
+		/* 更新log時間 */
+		$this->userAccRepository->updateAcc(['uid' => auth()->id(), 'platform' => 'HQT'],['response' => $r['errcode']]);
+
 		if(empty($r)
 			|| !is_array($r)
 			|| !Arr::has($r, 'errcode')
@@ -104,14 +109,37 @@ class GameService
 	/* 檢查設定 */
 	public function checkSetting()
 	{
-		$hqtSetting = Redis::get('hqt_game_status');
-		if(empty($hqtSetting) || !is_bool($hqtSetting)) {
-			$config = $this->siteConfigsRepository->getByCondition(['site_id' => 1, 'k' => 'hqt_game_status']);
-			$hqtSetting = $config->v;
-			Redis::set('hqt_game_status', $hqtSetting);
+		$siteId = SiteSer::siteId();
+		/* 先在redis取得設定 */
+		$status = Redis::get('sc:hqt_game_status:' . $siteId);
+		$settings = json_decode(Redis::get('sc:hqt_game_setting:' . $siteId));
+
+		/* 如取不到，則到資料庫取得 */
+		if(is_null($status) || !is_bool($status) || empty($settings)) {
+			/* 刪除原有key */
+			Redis::del('sc:hqt_game_status:' . $siteId);
+			Redis::del('sc:hqt_marquee:' . $siteId);
+			Redis::del('sc:hqt_game_setting:' . $siteId);
+
+			$config = $this->siteConfigsRepository->getSettingByHQT();
+			if(empty($config)) {
+				Log::error("資料庫無法取得設定");
+				return false;
+			}
+
+			collect(json_decode($config['hqt_game_setting']))->map(function($item, $key) {
+				return $this->{camel_case($key)} = $item;
+			});
+
+			/* 建立redis設定 */
+			Redis::set('sc:hqt_game_status:' . $siteId, $config['hqt_game_status']);
+			Redis::set('sc:hqt_marquee:' . $siteId, $config['hqt_marquee']);
+			Redis::set('sc:hqt_game_setting:' . $siteId, $config['hqt_game_setting']);
+
+			$status = $config['hqt_game_status'];
 		}
 
-		return (boolean) ($hqtSetting ?? false);
+		return (boolean) ($status ?? false);
 	}
 
 	/* 創建遊戲帳號 */
@@ -120,7 +148,7 @@ class GameService
 		info("創建遊戲帳號");
 		$param = [
 			'action' => 'createuser',
-			'channel' => self::HQT_CHANNEL,
+			'channel' => $this->channelId,
 			'password' => $this->genPassword(),
 			'username' => $this->genAccount(),
 		];
@@ -129,7 +157,7 @@ class GameService
 		$sign = $this->makeSign($param);
 		$param['sign'] = $sign;
 
-		$apiUrl = self::HQT_HOST . "?" . http_build_query($param);
+		$apiUrl = $this->host . "?" . http_build_query($param);
 		info("URL: " . $apiUrl);
 
 		$apiResponse = $this->decRes($this->get($apiUrl)->getBody()->getContents());
@@ -182,7 +210,7 @@ class GameService
 		info("登錄遊戲");
 		$param = [
 			'action' 	=> 'login',
-			'channel' 	=> self::HQT_CHANNEL,
+			'channel' 	=> $this->channelId,
 			'gamecode' 	=> '',
 			'loadbg' 	=> '',
 			'password' 	=> $this->password,
@@ -194,7 +222,7 @@ class GameService
 		$sign = $this->makeSign($param);
 		$param['sign'] = $sign;
 
-		$apiUrl = self::HQT_HOST . "?" . http_build_query($param);
+		$apiUrl = $this->host . "?" . http_build_query($param);
 		info("URL: " . $apiUrl);
 
 		$apiResponse = $this->decRes($this->get($apiUrl)->getBody()->getContents());
@@ -208,9 +236,6 @@ class GameService
 			Log::error("登錄遊戲失敗 - API回應缺少參數 'result' ");
 			return false;
 		}
-
-		/* 更新log時間 */
-		$this->userAccRepository->updateAcc(['uid' => auth()->id(), 'platform' => 'HQT'],['response' => $apiResponse['errcode']]);
 
 		return $apiResponse;
 	}
@@ -239,7 +264,7 @@ class GameService
 		info("儲值");
 		$param = [
 			'action' 	=> 'deposit',
-			'channel' 	=> self::HQT_CHANNEL,
+			'channel' 	=> $this->channelId,
 			'password' 	=> $this->password,
 			'username' 	=> $this->username,
 			'amount'	=> $amount,
@@ -250,7 +275,7 @@ class GameService
 		$sign = $this->makeSign($param);
 		$param['sign'] = $sign;
 
-		$apiUrl = self::HQT_HOST . "?" . http_build_query($param);
+		$apiUrl = $this->host . "?" . http_build_query($param);
 		info("URL: " . $apiUrl);
 
 		$apiResponse = $this->decRes($this->get($apiUrl)->getBody()->getContents());
@@ -264,9 +289,6 @@ class GameService
 			Log::error("儲值失敗 - API回應缺少參數 'balance' ");
 			return false;
 		}
-
-		/* 更新log時間 */
-		$this->userAccRepository->updateAcc(['uid' => auth()->id(), 'platform' => 'HQT'],['response' => $apiResponse['errcode']]);
 
 		return $apiResponse;
 	}

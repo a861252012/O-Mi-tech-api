@@ -9,5 +9,5 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 /.vscode
-.env*
-/config/database.php*
+.env.local
+/config/database.php.local
