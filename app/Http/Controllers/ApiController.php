@@ -131,6 +131,8 @@ class ApiController extends Controller
             'one_to_one_min_point',
             'chat_fly_limit',
             'customer_service_url',
+			'hqt_game_status',
+			'hqt_marquee',
         ])->all();
         return JsonResponse::create(['data' => $conf]);
     }

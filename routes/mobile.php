@@ -229,3 +229,9 @@ Route::get('/contact/qr.png', ['name' => 'contactQR', 'uses' => 'PageController@
 
 //贵族列表
 Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopController@getGroupAll']);
+
+// 遊戲中心
+Route::prefix('game')->middleware(['login_auth:mobile'])->group(function () {
+	Route::get('entry','GameController@entry');
+	Route::post('deposit','GameController@deposit');
+});
