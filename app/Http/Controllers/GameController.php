@@ -56,13 +56,15 @@ class GameController extends Controller
 	{
 		try {
 			if(!$this->gameService->checkSetting()) {
-				$this->setStatus(103, '設置狀態為關閉');
+				info('設置狀態為關閉');
+				$this->setStatus(103, '服务器连接失败');
 				return $this->jsonOutput();
 			}
 
 			$result = $this->gameService->login();
 			if(empty($result)) {
-				$this->setStatus(102, '執行遊戲失敗');
+				Log::error('執行遊戲失敗');
+				$this->setStatus(102, '服务器连接失败');
 				return $this->jsonOutput();
 			}
 
@@ -72,7 +74,7 @@ class GameController extends Controller
 
 		} catch (\Exception $e) {
 			Log::error($e->getMessage());
-			$this->setStatus(999, 'API執行錯誤');
+			$this->setStatus(999, '服务器连接失败');
 			return $this->jsonOutput();
 		}
 	}
