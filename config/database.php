@@ -142,33 +142,55 @@ return [
 
     'redis' => [
         'client' => 'phpredis',
-        'default' => [
-            'host' => env('REDIS_HOST', '127.0.0.1'),
-            'password' => env('REDIS_PASSWORD', null),
-            'port' => env('REDIS_PORT', 6379),
-            'database' => 0,
-            'persistent' => true,
-        ],
-        'redis_cache' => [
-            'host' => env('REDIS_HOST', '127.0.0.1'),
-            'password' => env('REDIS_PASSWORD', null),
-            'port' => env('REDIS_PORT', 6379),
-            'database' => 1,
-        ],
-        'ceri' => [
-            'host' => env('REDIS_HOST', '127.0.0.1'),
-            'password' => env('REDIS_PASSWORD', null),
-            'port' => env('REDIS_PORT', 6379),
-            'database' => 0,
-        ],
-        'session' => [
-            'host' => env('REDIS_HOST', '127.0.0.1'),
-            'password' => env('REDIS_PASSWORD', null),
-            'port' => env('REDIS_PORT', 6379),
-            'database' => 0,
-            'persistent' => true,
-            'prefix' => 'PHPREDIS_SESSION:',
+
+        'clusters' => [
+            'options' => [
+                'timeout' =>  3,
+                'read_timeout' => 3,
+                'persistent' => true,
+                'password' => env('REDIS_PASSWORD', null),
+            ],
+            'default' => [
+                'servers' => [
+                    '10.2.121.240:7000',
+                    '10.2.121.173:7001',
+                    '10.2.121.7:7002',
+                    '10.2.121.240:7003',
+                    '10.2.121.173:7004',
+                    '10.2.121.7:7005',
+                ],
+            ],
+            'redis_cache' => [
+                'servers' => [
+                    '10.2.121.240:7000',
+                    '10.2.121.173:7001',
+                    '10.2.121.7:7002',
+                    '10.2.121.240:7003',
+                    '10.2.121.173:7004',
+                    '10.2.121.7:7005',
+                ],
+            ],
+            'ceri' => [
+                'servers' => [
+                    '10.2.121.240:7000',
+                    '10.2.121.173:7001',
+                    '10.2.121.7:7002',
+                    '10.2.121.240:7003',
+                    '10.2.121.173:7004',
+                    '10.2.121.7:7005',
+                ],
+            ],
+            'session' => [
+                'servers' => [
+                    '10.2.121.240:7000',
+                    '10.2.121.173:7001',
+                    '10.2.121.7:7002',
+                    '10.2.121.240:7003',
+                    '10.2.121.173:7004',
+                    '10.2.121.7:7005',
+                ],
+                'prefix' => 'PHPREDIS_SESSION:',
+            ],
         ],
     ],
-
 ];

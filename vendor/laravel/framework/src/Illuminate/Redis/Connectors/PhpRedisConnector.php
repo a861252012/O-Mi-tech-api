@@ -11,7 +11,7 @@ use Illuminate\Redis\Connections\PhpRedisClusterConnection;
 class PhpRedisConnector
 {
     /**
-     * Create a new clustered Predis connection.
+     * Create a new clustered PhpRedis connection.
      *
      * @param  array  $config
      * @param  array  $options
@@ -25,7 +25,7 @@ class PhpRedisConnector
     }
 
     /**
-     * Create a new clustered Predis connection.
+     * Create a new clustered PhpRedis connection.
      *
      * @param  array  $config
      * @param  array  $clusterOptions
@@ -37,7 +37,7 @@ class PhpRedisConnector
         $options = array_merge($options, $clusterOptions, Arr::pull($config, 'options', []));
 
         return new PhpRedisClusterConnection($this->createRedisClusterInstance(
-            array_map([$this, 'buildClusterConnectionString'], $config), $options
+            $config, $options,
         ));
     }
 
@@ -49,9 +49,7 @@ class PhpRedisConnector
      */
     protected function buildClusterConnectionString(array $server)
     {
-        return $server['host'].':'.$server['port'].'?'.http_build_query(Arr::only($server, [
-            'database', 'password', 'prefix', 'read_timeout',
-        ]));
+        return $server['host'].':'.$server['port'];
     }
 
     /**
@@ -92,9 +90,21 @@ class PhpRedisConnector
      */
     protected function establishConnection($client, array $config)
     {
-        $client->{($config['persistent'] ?? false) === true ? 'pconnect' : 'connect'}(
-            $config['host'], $config['port'], Arr::get($config, 'timeout', 0)
-        );
+        $persistent = $config['persistent'] ?? false;
+
+        $parameters = [
+            $config['host'],
+            $config['port'],
+            Arr::get($config, 'timeout', 0.0),
+            $persistent ? Arr::get($config, 'persistent_id', null) : null,
+            Arr::get($config, 'retry_interval', 0),
+        ];
+
+        if (version_compare(phpversion('redis'), '3.1.3', '>=')) {
+            $parameters[] = Arr::get($config, 'read_timeout', 0.0);
+        }
+
+        $client->{($persistent ? 'pconnect' : 'connect')}(...$parameters);
     }
 
     /**
@@ -104,14 +114,19 @@ class PhpRedisConnector
      * @param  array  $options
      * @return \RedisCluster
      */
-    protected function createRedisClusterInstance(array $servers, array $options)
+    protected function createRedisClusterInstance(array $config, array $options)
     {
-        return new RedisCluster(
+        $client = new RedisCluster(
             null,
-            array_values($servers),
+            $config['servers'],
             $options['timeout'] ?? 0,
             $options['read_timeout'] ?? 0,
-            isset($options['persistent']) && $options['persistent']
+            isset($options['persistent']) && $options['persistent'],
+            $options['password'] ?? null,
         );
+        if (! empty($config['prefix'])) {
+            $client->setOption(Redis::OPT_PREFIX, $config['prefix']);
+        }
+        return $client;
     }
 }
