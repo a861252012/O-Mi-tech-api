@@ -125,6 +125,7 @@ class ApiController extends Controller
             'one_to_more_max_point',
             'one_to_more_min_duration',
             'one_to_more_min_point',
+            'one_to_more_change_line',
             'one_to_one_max_duration',
             'one_to_one_max_point',
             'one_to_one_min_duration',
