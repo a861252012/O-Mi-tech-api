@@ -35,16 +35,6 @@ class AdsController extends Controller
 
         $cdn = '';
         $img_path = '';
-        $cdn_components = SiteSer::config('cdn_host') . "/storage/uploads/s" . SiteSer::siteId() . "/oort"; // 'http://s.tnmhl.com/public/oort';
-        $img_path_components = Ads::IMG_PATH;
-
-        foreach ($data as $k => $v) {
-            if ($v['ad_upload_type'] == '1') {
-                $data[$k]['image'] = $cdn_components . $img_path_components . $v['image'];
-            } else {
-                $data[$k]['image'] = $v['image'];
-            }
-        }
 
         return SuccessResponse::create(compact('cdn', 'img_path', 'data'));
     }
@@ -60,9 +50,19 @@ class AdsController extends Controller
                 ->orderby('position', 'asc')
                 ->orderby('created', 'desc')
                 ->where('published_at', '<=', date('Y-m-d H:i:s'))
-                ->published()
                 ->get()
                 ->toArray();
+
+            $cdn = SiteSer::config('cdn_host') . "/storage/uploads/s" . SiteSer::siteId() . "/oort"; // 'http://s.tnmhl.com/public/oort';
+            $img_path = Ads::IMG_PATH;
+
+            foreach ($data as $k => $v) {
+                if ($v['ad_upload_type'] == '1') {
+                    $data[$k]['image'] = $cdn . $img_path . $v['image'];
+                } else {
+                    $data[$k]['image'] = $v['image'];
+                }
+            }
 
             Redis::hset('ads-' . SiteSer::siteId(), $device, serialize($data));
         }
