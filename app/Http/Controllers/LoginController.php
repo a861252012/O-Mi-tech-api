@@ -41,8 +41,12 @@ class LoginController extends Controller
         }
 
         //获取值
-        $username = $request->get('username') ?: '';
-        $password = $request->get('password') ?: '';
+//        $username = $request->get('username') ?: '';
+//        $password = $request->get('password') ?: '';
+
+        $username = $request->username ?? '';
+        $password = $request->password ?? '';
+
         if (!isset($_REQUEST['_m'])) {
             $password = $this->decode($password); // 密码传递解密
         }
