@@ -37,7 +37,7 @@ class PhpRedisConnector
         $options = array_merge($options, $clusterOptions, Arr::pull($config, 'options', []));
 
         return new PhpRedisClusterConnection($this->createRedisClusterInstance(
-            $config, $options,
+            $config, $options
         ));
     }
 
@@ -122,7 +122,7 @@ class PhpRedisConnector
             $options['timeout'] ?? 0,
             $options['read_timeout'] ?? 0,
             isset($options['persistent']) && $options['persistent'],
-            $options['password'] ?? null,
+            $options['password'] ?? null
         );
         if (! empty($config['prefix'])) {
             $client->setOption(Redis::OPT_PREFIX, $config['prefix']);
