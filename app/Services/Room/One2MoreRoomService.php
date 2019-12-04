@@ -46,7 +46,7 @@ class One2MoreRoomService extends Service
         foreach ($data as $k => $ord) {
             $starttime = strtotime($ord['starttime']);
             $endtime = strtotime($ord['endtime']);
-            if (time() >= $starttime && time() <= $endtime)  return $ord;
+            if (time() >= ($starttime-3) && time() <= $endtime)  return $ord;
         }
         return [];
     }

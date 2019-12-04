@@ -32,7 +32,7 @@ class UserService extends Service
     const KEY_CC_MOBILE_TO_ID = 'hcc_mobile_to_id';
     const KEY_USER_INFO = 'huser_info:';
     const KEY_USER_SID = 'huser_sid';
-    const TTL_USER_INFO = 172800;
+    const TTL_USER_INFO = 216000;
     public $user;
     protected $redis;
 
