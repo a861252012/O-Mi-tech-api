@@ -142,7 +142,7 @@ class MobileController extends Controller
         }
         $userfollow = $this->userFollowings();
         $hashtable = 'zuser_byattens:' . $uid;
-        $by_atttennums = $this->make('redis')->zSize($hashtable);
+        $by_atttennums = $this->make('redis')->zCount($hashtable, '-inf', '+inf');
 
         // 普通用户修改的权限 只允许一次
         $nickcount = 1;
@@ -421,7 +421,7 @@ class MobileController extends Controller
         ]);
         $userfollow = $this->userFollowings();
         $hashtable = 'zuser_byattens:' . $user->uid;
-        $by_atttennums = $this->make('redis')->zSize($hashtable);
+        $by_atttennums = $this->make('redis')->zCount($hashtable, '-inf', '+inf');
         if ($user->pwd_change === null || $user->cpwd_time === null) {
             $user = (object)UserSer::getUserReset($user->uid);
         }
