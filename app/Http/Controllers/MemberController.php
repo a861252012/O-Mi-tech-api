@@ -2669,7 +2669,7 @@ class MemberController extends Controller
         }
         $redis = $this->make('redis');
         $redis->sRem('hroom_whitelist_key:' . $room->uid, $room->id);
-        $redis->delete('hroom_whitelist:' . $room->uid . ':' . $room->id);
+        $redis->del('hroom_whitelist:' . $room->uid . ':' . $room->id);
         $room->update(['status' => 1]);
         return JsonResponse::create(['status' => 1, 'msg' => '删除成功']);
     }
