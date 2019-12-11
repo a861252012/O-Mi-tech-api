@@ -63,9 +63,9 @@ class AnchorList extends Command
 //home_all_,home_rec_,home_ord_,home_gen_,home_vip_
         $conf_arr = [
             'home_all_' => ['所有主播', 'all'],
-            'home_rec_' => ['小编推荐', 'rec'],
+            // 'home_rec_' => ['小编推荐', 'rec'],
             'home_ord_' => ['一对一房间', 'ord'],
-            'home_gen_' => ['才艺主播', 'gen'],
+            // 'home_gen_' => ['才艺主播', 'gen'],
             //'home_vip_'=> array('会员专区','vip'),
             'home_mobile_' => ['手机直播', 'mobile'],
             'home_one_many_'=> ['一对多','ticket'],
