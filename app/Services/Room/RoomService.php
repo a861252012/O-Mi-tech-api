@@ -2,6 +2,7 @@
 
 namespace App\Services\Room;
 
+use App\Models\AnchorExt;
 use App\Models\RoomDuration;
 use App\Models\RoomOneToMore;
 use App\Models\UserBuyOneToMore;
@@ -21,7 +22,7 @@ use App\Facades\SiteSer;
  */
 class RoomService extends Service
 {
-
+    const ROOM_KEY = 'hvediosKtv:';
     const BE_KICK_OUT_TIME = 'beKickOutTime';
     public $tid = null;
     public $rid = null;
@@ -52,7 +53,7 @@ class RoomService extends Service
         $this->uid = $uid;
         $this->rid = $rid;
 
-        $hktvKey = "hvediosKtv:$rid";
+        $hktvKey = static::ROOM_KEY.$rid;
 
         $str = "===addRoom rid===" . $rid . "===uid===" . $uid;
         Log::channel('room')->info($str);
@@ -68,7 +69,7 @@ class RoomService extends Service
      */
     public function getRoom($rid, $view_uid)
     {
-        $key = "hvediosKtv:$rid";
+        $key = static::ROOM_KEY.$rid;
         $roomids = "hroom_ids";
         $this->cur_login_uid = $view_uid;
 
@@ -632,5 +633,57 @@ class RoomService extends Service
         fclose($fp);
     }
 
+    // 取得房间暱称
+    public function getInfo($rid)
+    {
+        $key = static::ROOM_KEY.$rid;
+        $redis = $this->make('redis');
 
+        // 目前仅读 redis，不读 DB
+        $roomInfo = $redis->hget($key, 'room_info');
+        if (!$roomInfo) {
+            $roomInfo = "";
+        }
+
+        $rtn = [
+            'status' => 1,
+            'data' => [
+                'room_info' => $roomInfo,
+            ],
+        ];
+        return $rtn;
+    }
+
+    // 设定房间暱称
+    public function setInfo($rid, $roomInfo)
+    {
+        $redis = $this->make('redis');
+
+        if (mb_strlen($roomInfo) > 10) {
+            $rtn = [
+                'status' => -1,
+                'msg' => '最多10个字',
+            ];
+            return $rtn;
+        }
+
+        // Redis
+        $key = static::ROOM_KEY.$rid;
+        $redis->hset($key, 'room_info', $roomInfo);
+
+        // DB
+        $anchorExt = AnchorExt::find($rid);
+        if (!$anchorExt) {
+            $anchorExt = new AnchorExt([
+                'uid' => $rid,
+            ]);
+        }
+        $anchorExt->room_info = $roomInfo;
+        $anchorExt->save();
+
+        $rtn = [
+            'status' => 1,
+        ];
+        return $rtn;
+    }
 }

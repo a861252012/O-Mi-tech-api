@@ -3500,4 +3500,91 @@ class MemberController extends Controller
         }
         return new JsonResponse($rtn);
     }
+
+    /**
+     * @api {get} /api/m/member/roomInfo 取得當前房間暱稱 (Mobile)
+     * @apiGroup Member
+     * @apiName m_roomInfo
+     * @apiVersion 2.8.0
+     */
+    /**
+     * @api {get} /api/member/roomInfo 取得當前房間暱稱 (PC)
+     * @apiGroup Member
+     * @apiName roomInfo
+     * @apiVersion 2.8.0
+     *
+     * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
+     * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
+     *
+     * @apiSuccess {int} status 狀態<br>
+     *                   <code>0</code>: 錯誤<br>
+     *                   <code>1</code>: 正常
+     * @apiSuccess {Object} data
+     * @apiSuccess {int} data.room_info 房間暱稱
+     * @apiSuccess {String} msg 錯誤訊息
+     *
+     * @apiSuccessExample 正常回應
+     * {
+     *     "status": 1,
+     *     "data": {
+     *         "room_info": "我的房間暱稱"
+     *     }
+     * }
+     *
+     */
+
+    /**
+     * @api {post} /api/m/member/roomInfo 修改當前房間暱稱 (Mobile)
+     * @apiGroup Member
+     * @apiName post_m_roomInfo
+     * @apiVersion 2.8.0
+     */
+    /**
+     * @api {post} /api/member/roomInfo 修改當前房間暱稱 (PC)
+     * @apiGroup Member
+     * @apiName post_roomInfo
+     * @apiVersion 2.8.0
+     *
+     * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
+     * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
+     *
+     * @apiParam {String} roomInfo 房間暱稱，範例: 我的房間暱稱
+     *
+     * @apiSuccess {int} status 狀態<br>
+     *                   <code>0</code>: 錯誤<br>
+     *                   <code>1</code>: 正常
+     * @apiSuccess {String} msg 錯誤訊息
+     *
+     * @apiSuccessExample 正常回應
+     * {
+     *     "status": 1
+     * }
+     * @apiSuccessExample 10个字
+     * {
+     *     "status": -1,
+     *     "msg": "最多10个字"
+     * }
+     *
+     */
+    public function roomInfo(Request $req)
+    {
+        $rid = Auth::id();
+        if (!$rid) {
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '未登录！']));
+        }
+
+        $user = Auth::user();
+        if ($user['roled'] != 3) {
+            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '限主播使用！']));
+        }
+
+        $roomService = resolve('roomService');
+        if ($req->isMethod('post') || $req->get('postRoomInfo')) {
+            $rtn = $roomService->setInfo($rid, $req->get('roomInfo'));
+        } else {
+            $rtn = $roomService->getInfo($rid);
+        }
+
+        return new JsonResponse($rtn);
+    }
 }

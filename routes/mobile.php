@@ -167,8 +167,10 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     // 红包明细
     Route::get('member/redEnvelopeGet', 'MemberController@redEnvelopeGet');
     Route::get('member/redEnvelopeSend', 'MemberController@redEnvelopeSend');
-    // 红包明细
+    // 签到
     Route::any('member/signin', 'MemberController@signin');
+    // 主播房间暱称
+    Route::any('member/roomInfo', 'MemberController@roomInfo');
 });
 
 /** 进房间 */
