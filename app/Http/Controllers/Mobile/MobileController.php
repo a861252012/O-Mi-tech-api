@@ -861,10 +861,8 @@ class MobileController extends Controller
     {
         $cdn = SiteSer::config('cdn_host')."/storage/uploads/s".SiteSer::siteId()."/oort/"; // 'http://s.tnmhl.com/public/oort';
 
-        $page_size = intval($this->request()->get('page_size'));
-        $page_size = $page_size ? $page_size : 15;
         $uid = Auth::id();
-        $list = AppMarket::where('status', 1)->where('site_id',SiteSer::siteId())->orderBy('order', 'asc')->paginate($page_size);
+        $list = AppMarket::where('status', 1)->where('site_id',SiteSer::siteId())->orderBy('order', 'asc')->get();
 
         $market = (object)array();
         $market->banner= array();
