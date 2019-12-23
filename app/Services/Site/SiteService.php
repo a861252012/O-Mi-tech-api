@@ -6,6 +6,7 @@ use App\Models\Site;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\View;
@@ -162,21 +163,35 @@ class SiteService
             $request->cookie(static::SITE_TOKEN_NAME);
     }
 
+    /* 取得站點設置資訊 */
     protected function loadDomainInfo(): void
     {
-        $siteDomain = Redis::hgetall(static::KEY_SITE_DOMAIN . $this->host);
+        /* 由本機快取取得，如為null，則從redis取得並建立本機快取 */
+        $siteDomain = Cache::get(static::KEY_SITE_DOMAIN . $this->host, function() {
+            $data = Redis::hgetall(static::KEY_SITE_DOMAIN . $this->host);
+            Cache::add(static::KEY_SITE_DOMAIN . $this->host, $data, 1);
+
+            if (empty($data)) {
+                info("Redis Key: [" . static::KEY_SITE_DOMAIN . $this->host . "] 為空");
+            }
+
+            return $data;
+        });
+
         $this->domain = collect($siteDomain);
         if ($this->checkDomainValidity($this->domain)) {
             $this->id = $siteDomain['site_id'];
         }
     }
 
+    /* 檢查是否有站點ID */
     public function checkDomainValidity(Collection $domain): bool
     {
         if (!$domain->has('site_id')) {
             $this->errors->add('domain', '域名配置错误，请联系客服！');
             return false;
         }
+
         return true;
     }
 
