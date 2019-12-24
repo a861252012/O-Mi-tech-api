@@ -26,6 +26,10 @@ class SiteService
     const KEY_SSITE_ID = 'ssite_id';
     const SITE_TOKEN_NAME = 'Site-Token';
     const SITE_TOKEN_LIFETIME_MINUTES = 5;
+
+    /* APCU快取存活時間 */
+    const APCU_TTL = 1;
+
     /**
      * 是否需要刷新site-token
      * @var bool
@@ -169,7 +173,7 @@ class SiteService
         /* 由本機快取取得，如為null，則從redis取得並建立本機快取 */
         $siteDomain = Cache::get(static::KEY_SITE_DOMAIN . $this->host, function() {
             $data = Redis::hgetall(static::KEY_SITE_DOMAIN . $this->host);
-            Cache::add(static::KEY_SITE_DOMAIN . $this->host, $data, 1);
+            Cache::add(static::KEY_SITE_DOMAIN . $this->host, $data, self::APCU_TTL);
 
             if (empty($data)) {
                 info("Redis Key: [" . static::KEY_SITE_DOMAIN . $this->host . "] 為空");
@@ -228,18 +232,20 @@ class SiteService
         if (is_null($this->config))
         {
             $this->loadConfig();
-            $apcuKeys->each(function($item) use($noCache) {
-                Cache::add("sc:{$item}:{$this->host}", $this->config->get($item, $noCache) ?? '', 1);
+            $apcuKeys->each(function($item) {
+                Cache::add("sc:{$item}:{$this->host}", $this->config->get($item) ?? '', self::APCU_TTL);
             });
         }
 
         if (!is_null($name)) {
             return Cache::get("sc:{$name}:{$this->host}", function() use($name, $noCache, $apcuKeys) {
+                $data = $this->config->get($name) ?? '';
+
                 if ($apcuKeys->contains($name)) {
-                    Cache::add("sc:{$name}:{$this->host}", $this->config->get($name) ?? '', 1);
+                    Cache::add("sc:{$name}:{$this->host}", $data, self::APCU_TTL);
                 }
 
-                return $this->config->get($name, $noCache);
+                return $data;
             });
         }
 
