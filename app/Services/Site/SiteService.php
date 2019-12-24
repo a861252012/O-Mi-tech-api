@@ -222,11 +222,26 @@ class SiteService
      */
     public function config($name = null, $noCache = true)
     {
+        /* 使用apcu快取的key */
+        $apcuKeys = collect(['cdn_host', 'api_host', 'img_host', 'publish_version', 'down_url']);
+
         if (is_null($this->config))
             $this->loadConfig();
         if (!is_null($name)) {
-            return $this->config->get($name, $noCache);
+
+            return Cache::get("sc:{$name}:{$this->host}", function() use($name, $noCache, $apcuKeys) {
+                if ($apcuKeys->has($name)) {
+                    return Cache::add("sc:{$name}:{$this->host}", $this->config->get($name));
+                }
+
+                return $this->config->get($name, $noCache);
+            });
         }
+
+        $apcuKeys->each(function($item) {
+            Cache::add("sc:{$item}:{$this->host}", $this->config->get($item), 1);
+        });
+
         return $this->config;
     }
 
