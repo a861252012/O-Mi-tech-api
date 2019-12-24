@@ -223,24 +223,25 @@ class SiteService
     public function config($name = null, $noCache = true)
     {
         /* 使用apcu快取的key */
-        $apcuKeys = collect(['cdn_host', 'api_host', 'img_host', 'publish_version', 'down_url']);
+        $apcuKeys = collect(['cdn_host', 'api_host', 'img_host', 'open_web', 'publish_version', 'down_url']);
 
         if (is_null($this->config))
+        {
             $this->loadConfig();
-        if (!is_null($name)) {
+            $apcuKeys->each(function($item) use($noCache) {
+                Cache::add("sc:{$item}:{$this->host}", $this->config->get($item, $noCache) ?? '', 1);
+            });
+        }
 
+        if (!is_null($name)) {
             return Cache::get("sc:{$name}:{$this->host}", function() use($name, $noCache, $apcuKeys) {
-                if ($apcuKeys->has($name)) {
-                    return Cache::add("sc:{$name}:{$this->host}", $this->config->get($name));
+                if ($apcuKeys->contains($name)) {
+                    Cache::add("sc:{$name}:{$this->host}", $this->config->get($name) ?? '', 1);
                 }
 
                 return $this->config->get($name, $noCache);
             });
         }
-
-        $apcuKeys->each(function($item) {
-            Cache::add("sc:{$item}:{$this->host}", $this->config->get($item), 1);
-        });
 
         return $this->config;
     }
@@ -264,14 +265,14 @@ class SiteService
     public function shareConfigWithViews()
     {
         View::share('site', $this);
-        View::share('cdn_host', $this->config()->get('cdn_host'));
-        View::share('img_host', $this->config()->get('img_host'));
-        View::share('open_web', $this->config()->get('open_web'));
-        View::share('publish_version', $this->config()->get('publish_version'));
+        View::share('cdn_host', $this->config('cdn_host'));
+        View::share('img_host', $this->config('img_host'));
+        View::share('open_web', $this->config('open_web'));
+        View::share('publish_version', $this->config('publish_version'));
         View::share('public_path', $this->getPublicPath());
 
         //下载地址（Young添加, 用于promo页面直接获取下载地址）
-        View::share('down_url', $this->config()->get('down_url'));
+        View::share('down_url', $this->config('down_url'));
     }
 
     public function getPublicPath()
