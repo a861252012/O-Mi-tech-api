@@ -24,6 +24,7 @@ use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Mews\Captcha\Facades\Captcha;
@@ -933,23 +934,33 @@ class MobileController extends Controller
     public function marquee()
     {
         $device = Input::get('device',2);
-        $list = json_decode(Redis::hget('hmarquee:' . SiteSer::siteId(),'list'));
-        $show = array();
 
-        foreach($list as $val){
-            $O = (object)array();
-            if($val->device==$device&&$val->status>0){
-                $O->id = $val->id;
-                $O->sorted = $val->order;
-                $O->content = $val->content;
-                $O->url = $val->url;
-                $O->creat_time = $val->id;
-                array_push($show,$O);
-            }
-        }
+        dd(Cache::get('hmarquee:' . SiteSer::siteId() . ':list:' . $device));
+
+        /* 快取機制 */
+        $list = Cache::get('hmarquee:' . SiteSer::siteId() . ':list:' . $device, function() use($device) {
+
+            /* 取得原redis資料 */
+            $redisData = collect(json_decode(Redis::hget('hmarquee:' . SiteSer::siteId(), 'list')));
+
+            /* 格式化資料 */
+            $data = $redisData->filter(function ($val, $key) use($device) {
+                return $val->device == $device && $val->status > 0;
+            })->map(function ($val, $key) {
+                $val = collect($val);
+                $val->put('sorted', $val->pull('order'));
+                $val->put('creat_time', $val->pull('id'));
+                return $val;
+            })->values();
+
+            Cache::add('hmarquee:' . SiteSer::siteId() . ':list:' . $device, $data, 1);
+
+            return $data;
+        });
+
         return JsonResponse::create([
             'status' => 1,
-            'data' => $show,
+            'data' => $list,
             'msg' => '成功'
         ]);
     }
