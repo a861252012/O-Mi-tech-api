@@ -935,8 +935,6 @@ class MobileController extends Controller
     {
         $device = Input::get('device',2);
 
-        dd(Cache::get('hmarquee:' . SiteSer::siteId() . ':list:' . $device));
-
         /* 快取機制 */
         $list = Cache::get('hmarquee:' . SiteSer::siteId() . ':list:' . $device, function() use($device) {
 
