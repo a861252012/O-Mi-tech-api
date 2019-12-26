@@ -24,6 +24,7 @@ use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Mews\Captcha\Facades\Captcha;
@@ -34,6 +35,9 @@ class MobileController extends Controller
 {
     const ACTIVITY_LIST_PAGE_SIZE = 15;
     const MOUNT_LIST_PAGE_SIZE = 0;
+
+    /* 本機快取存活時間 */
+    const APCU_TTL = 1;
 
     /**
      * 移动端首页
@@ -132,7 +136,10 @@ class MobileController extends Controller
     {
         $uid = Auth::id();
         $remote_js_url = SiteSer::config('remote_js_url');
-        $userinfo = UserSer::getUserByUid($uid);
+        $userinfo = Cache::remember("user_info:{$uid}", self::APCU_TTL, function() use($uid) {
+            return UserSer::getUserByUid($uid);
+        });
+
         if (!$userinfo) {
             return JsonResponse::create([
                 'status' => 0,
@@ -140,9 +147,12 @@ class MobileController extends Controller
                 'data' => $remote_js_url,
             ]);
         }
+
         $userfollow = $this->userFollowings();
         $hashtable = 'zuser_byattens:' . $uid;
-        $by_atttennums = $this->make('redis')->zCount($hashtable, '-inf', '+inf');
+        $by_atttennums = Cache::remember($hashtable, self::APCU_TTL, function() use($hashtable) {
+            return $this->make('redis')->zCount($hashtable, '-inf', '+inf');
+        });
 
         // 普通用户修改的权限 只允许一次
         $nickcount = 1;
@@ -931,23 +941,29 @@ class MobileController extends Controller
     public function marquee()
     {
         $device = Input::get('device',2);
-        $list = json_decode(Redis::hget('hmarquee:' . SiteSer::siteId(),'list'));
-        $show = array();
 
-        foreach($list as $val){
-            $O = (object)array();
-            if($val->device==$device&&$val->status>0){
-                $O->id = $val->id;
-                $O->sorted = $val->order;
-                $O->content = $val->content;
-                $O->url = $val->url;
-                $O->creat_time = $val->id;
-                array_push($show,$O);
-            }
-        }
+        /* 快取機制 */
+        $list = Cache::remember('hmarquee:' . SiteSer::siteId() . ':list:' . $device, self::APCU_TTL, function() use($device) {
+
+            /* 取得原redis資料 */
+            $redisData = collect(json_decode(Redis::hget('hmarquee:' . SiteSer::siteId(), 'list')));
+
+            /* 格式化資料 */
+            $data = $redisData->filter(function ($val, $key) use($device) {
+                return $val->device == $device && $val->status > 0;
+            })->map(function ($val, $key) {
+                $val = collect($val);
+                $val->put('sorted', $val->pull('order'));
+                $val->put('creat_time', $val->pull('id'));
+                return $val;
+            })->values();
+
+            return $data;
+        });
+
         return JsonResponse::create([
             'status' => 1,
-            'data' => $show,
+            'data' => $list,
             'msg' => '成功'
         ]);
     }
