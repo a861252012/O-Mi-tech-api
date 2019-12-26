@@ -36,6 +36,9 @@ class MobileController extends Controller
     const ACTIVITY_LIST_PAGE_SIZE = 15;
     const MOUNT_LIST_PAGE_SIZE = 0;
 
+    /* 本機快取存活時間 */
+    const APCU_TTL = 1;
+
     /**
      * 移动端首页
      * 美女主播x4   全部主播x4
@@ -133,7 +136,10 @@ class MobileController extends Controller
     {
         $uid = Auth::id();
         $remote_js_url = SiteSer::config('remote_js_url');
-        $userinfo = UserSer::getUserByUid($uid);
+        $userinfo = Cache::remember("user_info:{$uid}", self::APCU_TTL, function() use($uid) {
+            return UserSer::getUserByUid($uid);
+        });
+
         if (!$userinfo) {
             return JsonResponse::create([
                 'status' => 0,
@@ -141,9 +147,12 @@ class MobileController extends Controller
                 'data' => $remote_js_url,
             ]);
         }
+
         $userfollow = $this->userFollowings();
         $hashtable = 'zuser_byattens:' . $uid;
-        $by_atttennums = $this->make('redis')->zCount($hashtable, '-inf', '+inf');
+        $by_atttennums = Cache::remember($hashtable, self::APCU_TTL, function() use($hashtable) {
+            return $this->make('redis')->zCount($hashtable, '-inf', '+inf');
+        });
 
         // 普通用户修改的权限 只允许一次
         $nickcount = 1;
@@ -936,7 +945,7 @@ class MobileController extends Controller
         $device = Input::get('device',2);
 
         /* 快取機制 */
-        $list = Cache::get('hmarquee:' . SiteSer::siteId() . ':list:' . $device, function() use($device) {
+        $list = Cache::remember('hmarquee:' . SiteSer::siteId() . ':list:' . $device, self::APCU_TTL, function() use($device) {
 
             /* 取得原redis資料 */
             $redisData = collect(json_decode(Redis::hget('hmarquee:' . SiteSer::siteId(), 'list')));
@@ -950,8 +959,6 @@ class MobileController extends Controller
                 $val->put('creat_time', $val->pull('id'));
                 return $val;
             })->values();
-
-            Cache::add('hmarquee:' . SiteSer::siteId() . ':list:' . $device, $data, 1);
 
             return $data;
         });
