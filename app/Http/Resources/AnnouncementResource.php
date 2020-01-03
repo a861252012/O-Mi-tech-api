@@ -22,13 +22,13 @@ class AnnouncementResource extends JsonResource
             'id'          => $this->id,
             'device'      => $this->device,
             'type'        => $this->type,
-            'interval'    => $this->between,
+            'interval'    => (string) $this->between,
             'title'       => $this->title,
             'content'     => $this->content,
             'img'         => $this->image,
             'url'         => $this->link,
             'blank'       => $this->blank,
-            'create_time' => strtotime($this->created_at),
+            'create_time' => (string) strtotime($this->created_at),
         ];
     }
 }
