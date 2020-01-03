@@ -6,6 +6,7 @@ use App\Models\Site;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\View;
@@ -25,6 +26,10 @@ class SiteService
     const KEY_SSITE_ID = 'ssite_id';
     const SITE_TOKEN_NAME = 'Site-Token';
     const SITE_TOKEN_LIFETIME_MINUTES = 5;
+
+    /* APCU快取存活時間 */
+    const APCU_TTL = 1;
+
     /**
      * 是否需要刷新site-token
      * @var bool
@@ -162,21 +167,35 @@ class SiteService
             $request->cookie(static::SITE_TOKEN_NAME);
     }
 
+    /* 取得站點設置資訊 */
     protected function loadDomainInfo(): void
     {
-        $siteDomain = Redis::hgetall(static::KEY_SITE_DOMAIN . $this->host);
+        /* 由本機快取取得，如為null，則從redis取得並建立本機快取 */
+        $siteDomain = Cache::get(static::KEY_SITE_DOMAIN . $this->host, function() {
+            $data = Redis::hgetall(static::KEY_SITE_DOMAIN . $this->host);
+            Cache::add(static::KEY_SITE_DOMAIN . $this->host, $data, self::APCU_TTL);
+
+            if (empty($data)) {
+                info("Redis Key: [" . static::KEY_SITE_DOMAIN . $this->host . "] 為空");
+            }
+
+            return $data;
+        });
+
         $this->domain = collect($siteDomain);
         if ($this->checkDomainValidity($this->domain)) {
             $this->id = $siteDomain['site_id'];
         }
     }
 
+    /* 檢查是否有站點ID */
     public function checkDomainValidity(Collection $domain): bool
     {
         if (!$domain->has('site_id')) {
             $this->errors->add('domain', '域名配置错误，请联系客服！');
             return false;
         }
+
         return true;
     }
 
@@ -207,11 +226,29 @@ class SiteService
      */
     public function config($name = null, $noCache = true)
     {
+        /* 使用apcu快取的key */
+        $apcuKeys = collect(['cdn_host', 'api_host', 'img_host', 'open_web', 'publish_version', 'down_url']);
+
         if (is_null($this->config))
+        {
             $this->loadConfig();
-        if (!is_null($name)) {
-            return $this->config->get($name, $noCache);
+            $apcuKeys->each(function($item) {
+                Cache::add("sc:{$item}:{$this->host}", $this->config->get($item) ?? '', self::APCU_TTL);
+            });
         }
+
+        if (!is_null($name)) {
+            return Cache::get("sc:{$name}:{$this->host}", function() use($name, $noCache, $apcuKeys) {
+                $data = $this->config->get($name) ?? '';
+
+                if ($apcuKeys->contains($name)) {
+                    Cache::add("sc:{$name}:{$this->host}", $data, self::APCU_TTL);
+                }
+
+                return $data;
+            });
+        }
+
         return $this->config;
     }
 
@@ -234,14 +271,14 @@ class SiteService
     public function shareConfigWithViews()
     {
         View::share('site', $this);
-        View::share('cdn_host', $this->config()->get('cdn_host'));
-        View::share('img_host', $this->config()->get('img_host'));
-        View::share('open_web', $this->config()->get('open_web'));
-        View::share('publish_version', $this->config()->get('publish_version'));
+        View::share('cdn_host', $this->config('cdn_host'));
+        View::share('img_host', $this->config('img_host'));
+        View::share('open_web', $this->config('open_web'));
+        View::share('publish_version', $this->config('publish_version'));
         View::share('public_path', $this->getPublicPath());
 
         //下载地址（Young添加, 用于promo页面直接获取下载地址）
-        View::share('down_url', $this->config()->get('down_url'));
+        View::share('down_url', $this->config('down_url'));
     }
 
     public function getPublicPath()
