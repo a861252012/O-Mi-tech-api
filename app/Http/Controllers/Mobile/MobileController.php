@@ -136,9 +136,7 @@ class MobileController extends Controller
     {
         $uid = Auth::id();
         $remote_js_url = SiteSer::config('remote_js_url');
-        $userinfo = Cache::remember("user_info:{$uid}", self::APCU_TTL, function() use($uid) {
-            return UserSer::getUserByUid($uid);
-        });
+        $userinfo = UserSer::getUserByUid($uid);
 
         if (!$userinfo) {
             return JsonResponse::create([
@@ -150,9 +148,7 @@ class MobileController extends Controller
 
         $userfollow = $this->userFollowings();
         $hashtable = 'zuser_byattens:' . $uid;
-        $by_atttennums = Cache::remember($hashtable, self::APCU_TTL, function() use($hashtable) {
-            return $this->make('redis')->zCount($hashtable, '-inf', '+inf');
-        });
+        $by_atttennums = $this->make('redis')->zCount($hashtable, '-inf', '+inf');
 
         // 普通用户修改的权限 只允许一次
         $nickcount = 1;
