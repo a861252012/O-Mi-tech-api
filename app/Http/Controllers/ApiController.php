@@ -1362,15 +1362,15 @@ EOT;
             $good['isLuck'] = $this->isLuck($item['gid']);
 
             if ($site == 2 && $isPC && $item['gid'] >= 200000 && $item['gid'] < 300000) {
-                $jumpEggArray[$item['category']][] = $good;
+                $jumpEggArray[] = $good;
             } else {
                 $data[$item['category']]['items'][] = $good;
             }
         }
 
         if (!empty($jumpEggArray)) {
-            foreach ($jumpEggArray as $k => $v) {
-                $data[$k]['items'][] = $v;
+            foreach ($jumpEggArray as $v) {
+                $data[$v['category']]['items'][] = $v;
             }
         }
         /**
