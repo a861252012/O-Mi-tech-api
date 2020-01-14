@@ -304,8 +304,8 @@ class RoomService extends Service
             $platBackurl = json_decode($plat_backurl, true);
             if (!empty($platBackurl) && is_array($platBackurl)) {
 
-                if(empty(request()->get('httphost'))) {
-                    $hplatforms['access_host'] = '';
+                if(Session::has('httphost')) {
+                    $hplatforms['access_host'] = Session::get('httphost');
                 }
 
                 foreach ($platBackurl as &$vo) {
