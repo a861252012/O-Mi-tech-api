@@ -27,17 +27,29 @@ class SmsService
     const WW_API_SEND_URL = 'https://intapi.253.com/send/json';
     const WW_API_ACCOUNT = 'I5060113'; // 创蓝API账号
     const WW_API_PASSWORD = 'ecXFtYiQu4e5bf';// 创蓝API密码
+    const WW_API_ACCOUNT_2 = 'I6660467'; // 创蓝API账号
+    const WW_API_PASSWORD_2 = 'kPmEYeBJ348778';// 创蓝API密码
 
     // CN
     const CN_API_SEND_URL = 'https://smssh1.253.com/msg/send/json'; //创蓝发送短信接口URL
     const CN_API_ACCOUNT = 'N4461667'; // 创蓝API账号
     const CN_API_PASSWORD = 'LYZyT9Le';// 创蓝API密码
+    const CN_API_ACCOUNT_2 = 'YZM3344864'; // 创蓝API账号
+    const CN_API_PASSWORD_2 = '9dfbje8lC';// 创蓝API密码
 
     const TPL_REG = "【直播秀场】验证码：「{{code}}」，注册验证码，请您尽快完成注册。";  // 模板須審核，請勿隨意更動
     const TPL_LOGIN = "【直播秀场】验证码：「{{code}}」，您的登录验证码。";             // 模板須審核，請勿隨意更動
     const TPL_PWD_RESET = "【直播秀场】验证码：「{{code}}」，用于密码找回。";           // 模板須審核，請勿隨意更動
     const TPL_PWD_RESET_SEND = "【直播秀场】新密码：「{{pwd}}」。";                    // 模板須審核，請勿隨意更動
     const TPL_MODIFY_MOBILE = "【直播秀场】验证码：「{{code}}」，用于手机号变更。";     // 模板須審核，請勿隨意更動
+
+    // const TPL_REG_2 = "【优品】验证码：「{{code}}」，注册验证码，请您尽快完成注册。"; // 模板須審核，請勿隨意更動
+    const TPL_REG_2 = "【优品】验证码：「{{code}}」，3分钟内有效。";                  // 模板須審核，請勿隨意更動
+    const TPL_LOGIN_2 = "【优品】验证码：「{{code}}」，您的登录验证码。";             // 模板須審核，請勿隨意更動
+    const TPL_PWD_RESET_2 = "【优品】验证码：「{{code}}」，用于密码找回。";           // 模板須審核，請勿隨意更動
+    // const TPL_PWD_RESET_SEND_2 = "【优品】新密码：「{{pwd}}」。";                 // 模板須審核，請勿隨意更動
+    const TPL_PWD_RESET_SEND_2 = "【优品】验证码：「{{pwd}}」，3分钟内有效。";        // 模板須審核，請勿隨意更動
+    const TPL_MODIFY_MOBILE_2 = "【优品】验证码：「{{code}}」，用于手机号变更。";     // 模板須審核，請勿隨意更動
 
     public static function resetPwd($cc, $mobile, $pwd)
     {
@@ -51,7 +63,7 @@ class SmsService
 
         // send
         if ($cc != '999') {
-            $msg = str_replace('{{pwd}}', $pwd, self::TPL_PWD_RESET_SEND);
+            $msg = str_replace('{{pwd}}', $pwd, self::useNew() ? self::TPL_PWD_RESET_SEND_2 : self::TPL_PWD_RESET_SEND);
             if ($cc == '86') {
                 $result = self::sendToCN($mobile, $msg);
             } else {
@@ -79,21 +91,26 @@ class SmsService
 
         // send
         if ($cc != '999') {
+            $useNew = self::useNew();
             switch ($act) {
                 case self::ACT_REG:
-                    $msg = str_replace('{{code}}', $code, self::TPL_REG);
+                    $tpl = $useNew ? self::TPL_REG_2 : self::TPL_REG;
+                    $msg = str_replace('{{code}}', $code, $tpl);
                     break;
 
                 case self::ACT_LOGIN:
-                    $msg = str_replace('{{code}}', $code, self::TPL_LOGIN);
+                    $tpl = $useNew ? self::TPL_LOGIN_2 : self::TPL_LOGIN;
+                    $msg = str_replace('{{code}}', $code, $tpl);
                     break;
 
                 case self::ACT_PWD_RESET:
-                    $msg = str_replace('{{code}}', $code, self::TPL_PWD_RESET);
+                    $tpl = $useNew ? self::TPL_PWD_RESET_2 : self::TPL_PWD_RESET;
+                    $msg = str_replace('{{code}}', $code, $tpl);
                     break;
 
                 case self::ACT_MODIFY_MOBILE:
-                    $msg = str_replace('{{code}}', $code, self::TPL_MODIFY_MOBILE);
+                    $tpl = $useNew ? self::TPL_MODIFY_MOBILE_2 : self::TPL_MODIFY_MOBILE;
+                    $msg = str_replace('{{code}}', $code, $tpl);
                     break;
             }
             if ($cc == '86') {
@@ -192,9 +209,10 @@ class SmsService
 
     public static function sendToWW($mobile, $msg, $needstatus = 'true')
     {
+        $useNew = self::useNew();
         $postArr = array(
-            'account'  => self::WW_API_ACCOUNT,
-            'password' => self::WW_API_PASSWORD,
+            'account'  => $useNew ? self::WW_API_ACCOUNT_2 : self::WW_API_ACCOUNT,
+            'password' => $useNew ? self::WW_API_PASSWORD_2 : self::WW_API_PASSWORD,
             'msg' => $msg,
             'mobile' => $mobile,
             'report' => $needstatus,
@@ -205,9 +223,10 @@ class SmsService
 
     public static function sendToCN($mobile, $msg, $needstatus = 'true')
     {
+        $useNew = self::useNew();
         $postArr = array(
-            'account'  => self::CN_API_ACCOUNT,
-            'password' => self::CN_API_PASSWORD,
+            'account'  => $useNew ? self::CN_API_ACCOUNT_2 : self::CN_API_ACCOUNT,
+            'password' => $useNew ? self::CN_API_PASSWORD_2 : self::CN_API_PASSWORD,
             'msg' => $msg,
             'phone' => $mobile,
             'report' => $needstatus,
@@ -255,5 +274,14 @@ class SmsService
         }
         curl_close($ch);
         return $result;
+    }
+
+    public static function getAcct()
+    {
+        return SiteSer::config('sms_acct');
+    }
+    public static function useNew()
+    {
+        return self::getAcct() == "2";
     }
 }
