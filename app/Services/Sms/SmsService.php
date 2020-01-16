@@ -39,7 +39,7 @@ class SmsService
     const TPL_PWD_RESET_SEND = "【直播秀场】新密码：「{{pwd}}」。";                    // 模板須審核，請勿隨意更動
     const TPL_MODIFY_MOBILE = "【直播秀场】验证码：「{{code}}」，用于手机号变更。";     // 模板須審核，請勿隨意更動
 
-    static function resetPwd($cc, $mobile, $pwd)
+    public static function resetPwd($cc, $mobile, $pwd)
     {
         $act = self::ACT_PWD_RESET_SEND;
         if (!PhoneNumber::checkFormat($cc, $mobile)) {
@@ -65,7 +65,7 @@ class SmsService
         return true;
     }
 
-    static function send($act, $cc, $mobile, $checkFormat = true)
+    public static function send($act, $cc, $mobile, $checkFormat = true)
     {
         if ($checkFormat && !PhoneNumber::checkFormat($cc, $mobile)) {
             return self::ERR_INVALID_FORMAT;
@@ -81,17 +81,20 @@ class SmsService
         if ($cc != '999') {
             switch ($act) {
                 case self::ACT_REG:
-                    $msg = str_replace('{{code}}', $code , self::TPL_REG);
-                break;
+                    $msg = str_replace('{{code}}', $code, self::TPL_REG);
+                    break;
+
                 case self::ACT_LOGIN:
-                    $msg = str_replace('{{code}}', $code , self::TPL_LOGIN);
-                break;
+                    $msg = str_replace('{{code}}', $code, self::TPL_LOGIN);
+                    break;
+
                 case self::ACT_PWD_RESET:
-                    $msg = str_replace('{{code}}', $code , self::TPL_PWD_RESET);
-                break;
+                    $msg = str_replace('{{code}}', $code, self::TPL_PWD_RESET);
+                    break;
+
                 case self::ACT_MODIFY_MOBILE:
-                    $msg = str_replace('{{code}}', $code , self::TPL_MODIFY_MOBILE);
-                break;
+                    $msg = str_replace('{{code}}', $code, self::TPL_MODIFY_MOBILE);
+                    break;
             }
             if ($cc == '86') {
                 $result = self::sendToCN($mobile, $msg);
@@ -111,7 +114,7 @@ class SmsService
         return true;
     }
 
-    static function verify($act, $cc, $mobile, $code, $checkFormat = true)
+    public static function verify($act, $cc, $mobile, $code, $checkFormat = true)
     {
         if ($checkFormat && !PhoneNumber::checkFormat($cc, $mobile)) {
             return self::ERR_INVALID_FORMAT;
@@ -127,7 +130,7 @@ class SmsService
         return true;
     }
 
-    static function saveCode($act, $cc, $mobile, $code)
+    public static function saveCode($act, $cc, $mobile, $code)
     {
         $redisKey = self::KEY_PREFIX . $cc . $mobile .':'. $act;
         $data = [
@@ -137,7 +140,7 @@ class SmsService
         Redis::set($redisKey, json_encode($data), 'EX', self::KEY_EXPIRES);
     }
 
-    static function readCode($act, $cc, $mobile)
+    public static function readCode($act, $cc, $mobile)
     {
         $redisKey = self::KEY_PREFIX . $cc . $mobile .':'. $act;
         $dataStr = Redis::get($redisKey);
@@ -151,7 +154,7 @@ class SmsService
         return isset($data['c']) ? $data['c'] : '';
     }
 
-    static function exists($act, $cc, $mobile)
+    public static function exists($act, $cc, $mobile)
     {
         $redisKey = self::KEY_PREFIX . $cc . $mobile .':'. $act;
         $dataStr = Redis::get($redisKey);
@@ -165,7 +168,7 @@ class SmsService
         return false;
     }
 
-    static function log($act, $cc, $mobile, $code)
+    public static function log($act, $cc, $mobile, $code)
     {
         $log_file = '/data/iev4code/smslog/sms_log.txt';
         if (!file_exists($log_file)) {
@@ -176,7 +179,7 @@ class SmsService
         if ($len >= 8) {
             $mobile = substr($mobile, 0, 4) . str_pad('', $len - 7, '*')
                 . substr($mobile, -3);
-        } else if ($len >= 4) {
+        } elseif ($len >= 4) {
             $mobile = substr($mobile, 0, $len - 3) . str_pad('', 3, '*');
         }
         $log = date('Y-m-d H:i:s '). $act .' '. $cc . $mobile. ' '. $code. "\n";
@@ -187,7 +190,7 @@ class SmsService
         file_put_contents($log_file, join("\n", $logs));
     }
 
-    static function sendToWW($mobile, $msg, $needstatus = 'true')
+    public static function sendToWW($mobile, $msg, $needstatus = 'true')
     {
         $postArr = array(
             'account'  => self::WW_API_ACCOUNT,
@@ -200,7 +203,7 @@ class SmsService
         return $result;
     }
 
-    static function sendToCN($mobile, $msg, $needstatus = 'true')
+    public static function sendToCN($mobile, $msg, $needstatus = 'true')
     {
         $postArr = array(
             'account'  => self::CN_API_ACCOUNT,
@@ -220,7 +223,7 @@ class SmsService
      * @return mixed
      *
      */
-    static function curlPost($url, $postFields)
+    public static function curlPost($url, $postFields)
     {
         $postFields = json_encode($postFields);
         $ch = curl_init();
