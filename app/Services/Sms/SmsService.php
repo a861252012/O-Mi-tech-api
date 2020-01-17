@@ -34,8 +34,8 @@ class SmsService
     const CN_API_SEND_URL = 'https://smssh1.253.com/msg/send/json'; //创蓝发送短信接口URL
     const CN_API_ACCOUNT = 'N4461667'; // 创蓝API账号
     const CN_API_PASSWORD = 'LYZyT9Le';// 创蓝API密码
-    const CN_API_ACCOUNT_2 = 'YZM3344864'; // 创蓝API账号
-    const CN_API_PASSWORD_2 = '9dfbje8lC';// 创蓝API密码
+    const CN_API_ACCOUNT_2 = 'N8124476';   // 创蓝API账号
+    const CN_API_PASSWORD_2 = '6WjcgI06i'; // 创蓝API密码
 
     const TPL_REG = "【直播秀场】验证码：「{{code}}」，注册验证码，请您尽快完成注册。";  // 模板須審核，請勿隨意更動
     const TPL_LOGIN = "【直播秀场】验证码：「{{code}}」，您的登录验证码。";             // 模板須審核，請勿隨意更動
@@ -43,13 +43,11 @@ class SmsService
     const TPL_PWD_RESET_SEND = "【直播秀场】新密码：「{{pwd}}」。";                    // 模板須審核，請勿隨意更動
     const TPL_MODIFY_MOBILE = "【直播秀场】验证码：「{{code}}」，用于手机号变更。";     // 模板須審核，請勿隨意更動
 
-    // const TPL_REG_2 = "【优品】验证码：「{{code}}」，注册验证码，请您尽快完成注册。"; // 模板須審核，請勿隨意更動
-    const TPL_REG_2 = "【优品】验证码：「{{code}}」，3分钟内有效。";                  // 模板須審核，請勿隨意更動
-    const TPL_LOGIN_2 = "【优品】验证码：「{{code}}」，您的登录验证码。";             // 模板須審核，請勿隨意更動
-    const TPL_PWD_RESET_2 = "【优品】验证码：「{{code}}」，用于密码找回。";           // 模板須審核，請勿隨意更動
-    // const TPL_PWD_RESET_SEND_2 = "【优品】新密码：「{{pwd}}」。";                 // 模板須審核，請勿隨意更動
-    const TPL_PWD_RESET_SEND_2 = "【优品】验证码：「{{pwd}}」，3分钟内有效。";        // 模板須審核，請勿隨意更動
-    const TPL_MODIFY_MOBILE_2 = "【优品】验证码：「{{code}}」，用于手机号变更。";     // 模板須審核，請勿隨意更動
+    const TPL_REG_2 = "【YOU品】验证码：「{{code}}」，注册验证码，请您尽快完成注册。"; // 模板須審核，請勿隨意更動
+    const TPL_LOGIN_2 = "【YOU品】验证码：「{{code}}」，您的登录验证码。";             // 模板須審核，請勿隨意更動
+    const TPL_PWD_RESET_2 = "【YOU品】验证码：「{{code}}」，用于密码找回。";           // 模板須審核，請勿隨意更動
+    const TPL_PWD_RESET_SEND_2 = "【YOU品】新密码：「{{pwd}}」。";                     // 模板須審核，請勿隨意更動
+    const TPL_MODIFY_MOBILE_2 = "【YOU品】验证码：「{{code}}」，用于手机号变更。";     // 模板須審核，請勿隨意更動
 
     public static function resetPwd($cc, $mobile, $pwd)
     {
