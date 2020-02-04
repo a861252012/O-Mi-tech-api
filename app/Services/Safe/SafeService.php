@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Safe;
+use App\Facades\SocketCertificate;
 use App\Services\System\SystemService;
 use App\Services\Service;
 use DB;
@@ -66,7 +67,8 @@ class SafeService extends Service
     /**
      * @return string
      */
-    private function getSocketCertificate(){
+    private function getSocketCertificate()
+    {
         /**
          * @var $redis RedisServices
         */
@@ -75,10 +77,12 @@ class SafeService extends Service
         $hz = $redis->hExists('hsite_config'.SiteSer::siteId(),'certificate_hz') ? $redis->hget('hsite_config'.SiteSer::siteId(),'certificate_hz') :0;
 
         if(empty($hz)){
-            $lcertificate = $redis->rpop("lsocket_certi");
+            $lcertificate = SocketCertificate::generateCertification();
+//            $lcertificate = $redis->rpop("lsocket_certi");
             Log::channel('room')->info('lcertificate:' . $lcertificate);
             return $lcertificate;
         }
+
         $expire = SiteSer::config('hcertificate_start_expire');
 
         $ip = $this->make("request")->getClientIp();
@@ -92,7 +96,8 @@ class SafeService extends Service
         if( time()<=$hz+strtotime($start)) return $redis->hget("hcertificate_start:$ip",'certificate');
 
         //get
-        $data =  $redis->rpop("lsocket_certi");
+        $data = SocketCertificate::generateCertification();
+//        $data =  $redis->rpop("lsocket_certi");
         $redis->hmset("hcertificate_start:$ip",[
             'start_time'=>date('Y-m-d H:i:s'),
             'certificate'=>$data,
@@ -100,6 +105,7 @@ class SafeService extends Service
         $redis->expire("hcertificate_start:$ip",$expire);
         return $data;
     }
+
     /**
      * @return string
      */
@@ -136,6 +142,7 @@ class SafeService extends Service
         $redis->expire("hcertificate_start:$ip",$expire);
         return $data;
     }
+
     public function _encrypt($str){
         $iv = $this->rand_string(6);
         $private = "csoemi";
@@ -149,6 +156,7 @@ class SafeService extends Service
         }
         return $crytxt.'.'.$iv;
     }
+
     public function rand_string($pw_length){
         $randpwd = "";
         for ($i = 0; $i < $pw_length; $i++)
@@ -157,6 +165,7 @@ class SafeService extends Service
         }
         return $randpwd;
     }
+
     public function _decrypt($str){
         $key = "hello";
         $keylen = strlen($key);
