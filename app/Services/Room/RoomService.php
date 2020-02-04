@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use App\Facades\SiteSer;
+use Illuminate\Support\Facades\URL;
 
 /**
  * @desc 房间类
@@ -305,7 +306,12 @@ class RoomService extends Service
             if (!empty($platBackurl) && is_array($platBackurl)) {
 
                 if(Session::has('httphost')) {
-                    $hplatforms['access_host'] = Session::get('httphost');
+                    $httpHost = Session::get('httphost');
+                    if(!URL::isValidUrl($httpHost)) {
+                        $httpHost = '//' . $httpHost;
+                    }
+
+                    $hplatforms['access_host'] = $httpHost;
                 }
 
                 foreach ($platBackurl as &$vo) {
