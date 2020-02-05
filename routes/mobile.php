@@ -224,8 +224,12 @@ Route::get('official', ['name' => 'm_follow', 'uses' => 'Mobile\MobileController
 //登入公告
 Route::get('loginmsg', ['name' => 'm_loginmsg', 'uses' => 'Mobile\MobileController@loginmsg']);
 
+Route::group(['middleware' => 'cache.headers:public;max_age=60'], function() {
+    Route::get('marquee', ['name' => 'm_marquee', 'uses' => 'Mobile\MobileController@marquee']);
+});
+
 //首頁輪播
-Route::get('marquee', ['name' => 'm_marquee', 'uses' => 'Mobile\MobileController@marquee']);
+//Route::get('marquee', ['name' => 'm_marquee', 'uses' => 'Mobile\MobileController@marquee'])->middleware('cache.headers:public;max_age=60');
 
 Route::get('/contact/qr.png', ['name' => 'contactQR', 'uses' => 'PageController@contactQR']);
 
