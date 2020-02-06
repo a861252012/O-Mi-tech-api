@@ -19,8 +19,10 @@ class AnnouncementRepository
         $this->announcement = $announcement;
     }
 
-    public function getListForActive()
+    public function getListForActive($siteId)
     {
-        return $this->announcement->where('active', 1)->orderBy('id', 'desc')->get();
+        return $this->announcement->where('active', 1)
+                                    ->where('site_id', $siteId)
+                                    ->orderBy('id', 'desc')->get();
     }
 }

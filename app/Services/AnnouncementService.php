@@ -37,7 +37,7 @@ class AnnouncementService
 
             /* 如無資料則從DB取得，並建立Redis資料 */
             if(empty($data)) {
-                $data = AnnouncementResource::collection($this->announcementRepository->getListForActive())->jsonSerialize();
+                $data = AnnouncementResource::collection($this->announcementRepository->getListForActive(SiteSer::siteId()))->jsonSerialize();
                 Redis::hSet($loginmsgKey, 'list', json_encode($data));
             }
 
