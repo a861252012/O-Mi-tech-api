@@ -45,7 +45,9 @@ class AnnouncementService
         });
 
         /* 依裝置類型過濾 */
-        return collect($announcements)->where('device', $device)->map(function($item, $key) {
+        return collect($announcements)->where('device', $device)->when(request()->has('blank'), function ($item) {
+            return $item->where('blank', request()->get('blank'));
+        })->values()->map(function($item, $key) {
             return collect($item)->except(['device']);
         })->all();
     }
