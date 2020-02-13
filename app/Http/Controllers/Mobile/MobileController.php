@@ -17,6 +17,7 @@ use App\Models\Users;
 use App\Models\Messages;
 use App\Models\AppMarket;
 use App\Models\UserModNickName;
+use App\Services\AnnouncementService;
 use App\Services\I18n\PhoneNumber;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
@@ -38,6 +39,13 @@ class MobileController extends Controller
 
     /* 本機快取存活時間 */
     const APCU_TTL = 1;
+
+    protected $announcementService;
+
+    public function __construct(AnnouncementService $announcementService)
+    {
+        $this->announcementService = $announcementService;
+    }
 
     /**
      * 移动端首页
@@ -964,38 +972,59 @@ class MobileController extends Controller
         ]);
     }
 
+    /**
+     * 登入公告
+     * @param int device 裝置類型
+     * @return JsonResponse
+     */
     public function loginmsg(){
-        $device = Input::get('device',1);
+        try {
+            $device = Input::get('device',1);
 
-        $data = json_decode(Redis::hget('hloginmsg:' .SiteSer::siteId(),'list'));
+            $result = $this->announcementService->getLoginMsgByDevice($device);
 
-        $A_data = array();
-        if(isset($data)){
-
-            foreach($data as $key => $val){
-                $O = (object)array();
-                if($key>strtotime('-3 month 00:00:00')){
-                    if($val->device==$device){
-                        if(isset($_GET['blank'])&&($val->blank==$_GET['blank'])||!isset($_GET['blank'])){
-                            $O->id = count($A_data)+1;
-                            $O->type = $val->type;
-                            $O->interval = $val->between;
-                            $O->title = $val->title;
-                            $O->content = $val->content;
-                            $O->img = $val->image;
-                            $O->url = $val->link;
-                            $O->blank = $val->blank;
-                            $O->create_time = $key;
-                            array_push($A_data,$O);
-                        }
-                    }
-                }//取三个月内
+            if(empty($result)) {
+                $this->setStatus(0, '無資料');
+            } else {
+                $this->setStatus(1, '成功');
+                $this->setRootData('data', $result);
             }
+
+            return $this->jsonOutput();
+        } catch (\Exception $e) {
+            \Log::error($e->getMessage());
+            $this->setStatus(999, 'API執行錯誤');
+            return $this->jsonOutput();
         }
-        return JsonResponse::create([
-            'status' => 1,
-            'data' => $A_data,
-            'msg' => '成功'
-        ]);
+
+//        $data = json_decode(Redis::hget('hloginmsg:' .SiteSer::siteId(),'list'));
+//
+//        $A_data = array();
+//        if(isset($data)){
+//
+//            foreach($data as $key => $val){
+//                $O = (object)array();
+//                if($val->device==$device){
+//                    if(isset($_GET['blank'])&&($val->blank==$_GET['blank'])||!isset($_GET['blank'])){
+//                        $O->id = count($A_data)+1;
+//                        $O->type = $val->type;
+//                        $O->interval = $val->between;
+//                        $O->title = $val->title;
+//                        $O->content = $val->content;
+//                        $O->img = $val->image;
+//                        $O->url = $val->link;
+//                        $O->blank = $val->blank;
+//                        $O->create_time = $key;
+//                        array_push($A_data,$O);
+//                    }
+//                }
+//            }
+//        }
+//
+//        return response()->json([
+//            'status' => 1,
+//            'data' => $A_data,
+//            'msg' => '成功'
+//        ]);
     }
 }

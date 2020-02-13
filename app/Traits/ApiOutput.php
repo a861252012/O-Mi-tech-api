@@ -10,6 +10,8 @@ namespace App\Traits;
 
 trait ApiOutput
 {
+    private $response = ['status' => 999, 'msg' => ''];
+
 	private $_status;
 
 	private $_data = [];
@@ -27,16 +29,21 @@ trait ApiOutput
 		$this->_data = [$name => $data];
 	}
 
+	protected function setRootData($name, $data)
+    {
+        $this->response[$name] = $data;
+    }
+
 	protected function jsonOutput()
 	{
-		$response = [
-			'status' => $this->_status,
-			'msg' => $this->_msg,
-		];
+        $this->response['status'] = $this->_status;
+        $this->response['msg'] = $this->_msg;
 
-		$response['data'] = $this->_data ?? null;
+        if(!empty($this->_data)) {
+            $this->response['data'] = $this->_data ?? null;
+        }
 
-		return response()->json($response);
+		return response()->json($this->response);
 	}
 
 }
