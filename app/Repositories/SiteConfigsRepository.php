@@ -7,32 +7,31 @@
 
 namespace App\Repositories;
 
-
 use App\Entities\SiteConfigs;
 use App\Facades\SiteSer;
 
 class SiteConfigsRepository
 {
-	protected $siteConfigs;
+    protected $siteConfigs;
 
-	public function __construct(SiteConfigs $siteConfigs)
-	{
-		$this->siteConfigs = $siteConfigs;
-	}
+    public function __construct(SiteConfigs $siteConfigs)
+    {
+        $this->siteConfigs = $siteConfigs;
+    }
 
-	public function getByCondition($where)
-	{
-		return $this->siteConfigs->where($where)->first();
-	}
+    public function getByCondition($where)
+    {
+        return $this->siteConfigs->where($where)->first();
+    }
 
-	public function getSettingByHQT()
-	{
-		return $this->siteConfigs->where('site_id', SiteSer::siteId())
-					->whereIn('k', ['hqt_game_status', 'hqt_marquee', 'hqt_game_setting'])
-					->get()
-					->mapWithKeys(function($item) {
-						return [$item['k'] => $item['v']];
-					})
-					->all();
-	}
+    public function getSettingByHQT()
+    {
+        return $this->siteConfigs->where('site_id', SiteSer::siteId())
+                    ->whereIn('k', ['hqt_game_status', 'hqt_marquee', 'hqt_game_setting'])
+                    ->get()
+                    ->mapWithKeys(function ($item) {
+                        return [$item['k'] => $item['v']];
+                    })
+                    ->all();
+    }
 }
