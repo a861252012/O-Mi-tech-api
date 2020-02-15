@@ -3210,7 +3210,7 @@ class MemberController extends Controller
         }
 
 		$query = RedEnvelopeGet::select(
-            'video_get_red_envelope_record.create_date',
+		    DB::raw("DATE_FORMAT(video_get_red_envelope_record.create_date, '%Y-%m-%d %H:%i:%s') as create_date"),
             'u2.nickname AS snickname',
             'u1.nickname AS rnickname',
             'video_get_red_envelope_record.points'
@@ -3332,7 +3332,7 @@ class MemberController extends Controller
         }
 
 		$query = RedEnvelopeSend::select(
-            'video_send_red_envelope_record.create_date',
+            DB::raw("DATE_FORMAT(video_send_red_envelope_record.create_date, '%Y-%m-%d %H:%i:%s') as create_date"),
             'u1.nickname AS rnickname',
             'total_point',
             'tax_point',
