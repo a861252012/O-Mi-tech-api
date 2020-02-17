@@ -34,4 +34,15 @@ class SiteConfigsRepository
                     })
                     ->all();
     }
+
+    public function get($name, $site_id = null)
+    {
+        if ($site_id === null) {
+            $site_id = SiteSer::siteId();
+        }
+        return $this->siteConfigs
+            ->where('site_id', $site_id)
+            ->where('k', $name)
+            ->first();
+    }
 }

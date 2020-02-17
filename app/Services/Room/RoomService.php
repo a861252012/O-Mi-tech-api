@@ -407,9 +407,10 @@ class RoomService extends Service
                 }
             }
         }
-        /*   if (empty($uids)) {
-               return ['status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间'];
-           }*/
+        $enable_threshold = SiteSer::globalSiteConfig('enable_one2more_threshold') == "1";
+        if ($enable_threshold && empty($uids)) {
+            return ['status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间'];
+        }
 
 
         //$points = $room_config['timecost'];
