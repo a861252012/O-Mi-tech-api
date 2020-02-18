@@ -3,11 +3,13 @@
 namespace App\Services\Site;
 
 use App\Models\Site;
+use App\Repositories\SiteConfigsRepository;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\MessageBag;
@@ -250,6 +252,51 @@ class SiteService
         }
 
         return $this->config;
+    }
+
+    /**
+     * 获取不分站点的设置
+     * @param string $name
+     * @return String
+     */
+    public function globalSiteConfig($name)
+    {
+        return $this->siteConfig($name, $site_id = 0);
+    }
+
+    public function siteConfig($name, $site_id = null)
+    {
+        $redisKey = $this->siteConfigKey($name, $site_id);
+        $v = Redis::get($redisKey . $siteId);
+        if ($v !== null) {
+            return $v;
+        }
+
+        // read from db
+        $siteConfigsRepository = resolve(SiteConfigsRepository::class);
+        $v = $siteConfigsRepository->get($name, $site_id);
+        if ($v === null) {
+            Log::warn("資料庫無法取得設定, name: {$name}, site: {$site_id}");
+            return null;
+        }
+        // set cache
+        Redis::set($redisKey, $v->v);
+        return $v->v;
+    }
+
+    private function siteConfigKey($k, $site_id = null)
+    {
+        // 有區分站點的設定才加上 :{site_id}
+        // 預設不帶 site_id，以 session 内的站點来分
+        $key = 'sc:'. $k;
+        if ($site_id === null) {
+            $site_id = $this->id;
+        }
+        if ($site_id > 0) {
+            $key .= ':'. $site_id;
+        }
+
+        return $key;
     }
 
     public function fromID($id)
