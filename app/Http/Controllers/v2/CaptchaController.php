@@ -41,7 +41,6 @@ class CaptchaController extends Controller
     /* 驗證c key timestamp */
     private function vaildateTime($c)
     {
-//        dd(dechex(time()));
         if((time() - hexdec($c)) <= self::EXPIRE_TIME * 60) {
             return true;
         }
@@ -64,7 +63,6 @@ class CaptchaController extends Controller
     private function vaildateK()
     {
         $k = md5(self::PRESHARED_KEY . str_before(request()->getRequestUri(), '?'));
-//        dd($k);
         if($k === request('k')) {
             return true;
         }
@@ -77,6 +75,9 @@ class CaptchaController extends Controller
      * @apiGroup Captcha
      * @apiName 取得驗證圖片
      * @apiVersion 2.0.0
+     *
+     * @apiParam {String} cKey
+     * @apiParam {String} k
      */
     public function index($cKey = null)
     {
