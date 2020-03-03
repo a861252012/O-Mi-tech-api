@@ -16,6 +16,7 @@ use Mews\Captcha\Facades\Captcha;
 
 class CaptchaController extends Controller
 {
+
     /* 有效時間(分鐘) */
     const EXPIRE_TIME = 6;
 
@@ -33,7 +34,8 @@ class CaptchaController extends Controller
         ];
 
         $header = [
-            'Content-Type' => 'json'
+            'Content-Type' => 'json',
+            'Captcha-Message' => $msg['msg'],
         ];
 
         return Response::make($msg, $code, $header);
