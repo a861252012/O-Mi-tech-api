@@ -71,7 +71,7 @@ class CaptchaController extends Controller
     }
 
     /**
-     * @api {get} /captcha/:cKey?k= 取得驗證圖片
+     * @api {get} /v2/captcha/:cKey?k= 取得驗證圖片
      * @apiGroup Captcha
      * @apiName 取得驗證圖片
      * @apiVersion 2.0.0
