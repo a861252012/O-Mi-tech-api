@@ -5,6 +5,7 @@
  * @date 2020-03-03
  * @apiDefine Captcha
  */
+
 namespace App\Http\Controllers\v2;
 
 use Illuminate\Http\Request;
@@ -41,7 +42,7 @@ class CaptchaController extends Controller
     /* 驗證c key timestamp */
     private function vaildateTime($c)
     {
-        if((time() - hexdec($c)) <= self::EXPIRE_TIME * 60) {
+        if ((time() - hexdec($c)) <= self::EXPIRE_TIME * 60) {
             return true;
         }
 
@@ -52,7 +53,7 @@ class CaptchaController extends Controller
     private function vaildateClient($c)
     {
         $clientIdentificationCode = substr(md5(request()->ip()), 1, 6);
-        if($c === $clientIdentificationCode) {
+        if ($c === $clientIdentificationCode) {
             return true;
         }
 
@@ -63,7 +64,7 @@ class CaptchaController extends Controller
     private function vaildateK()
     {
         $k = md5(self::PRESHARED_KEY . str_before(request()->getRequestUri(), '?'));
-        if($k === request('k')) {
+        if ($k === request('k')) {
             return true;
         }
 
@@ -84,15 +85,15 @@ class CaptchaController extends Controller
         try {
             $c = explode('.', $cKey);
 
-            if(empty($this->vaildateTime($c[0]))) {
+            if (empty($this->vaildateTime($c[0]))) {
                 return $this->_httpError(410);
             }
 
-            if(empty($this->vaildateClient($c[1]))) {
+            if (empty($this->vaildateClient($c[1]))) {
                 return $this->_httpError(401);
             }
 
-            if(empty($this->vaildateK())) {
+            if (empty($this->vaildateK())) {
                 return $this->_httpError(403);
             }
 
