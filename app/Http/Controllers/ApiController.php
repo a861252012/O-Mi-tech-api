@@ -129,6 +129,9 @@ class ApiController extends Controller
      */
     public function getConf()
     {
+        /* captcha v2 驗證 */
+        $c = dechex(time()) . '.' . substr(md5(request()->ip()), 1, 6);
+
         $conf = collect((new Config(SiteSer::siteId()))->all())->only([
             'cdn_host',
             'api_host',
@@ -150,7 +153,8 @@ class ApiController extends Controller
             'customer_service_url',
             'hqt_game_status',
             'hqt_marquee',
-        ])->all();
+        ])->put('c', $c)->all();
+
         return JsonResponse::create(['data' => $conf]);
     }
 
