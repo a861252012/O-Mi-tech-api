@@ -42,7 +42,12 @@ class CaptchaController extends Controller
     /* 驗證c key timestamp */
     private function vaildateTime($c)
     {
-        if ((time() - hexdec($c)) <= self::EXPIRE_TIME * 60) {
+        $cTime = hexdec($c);
+        $now = time();
+        $vaildTime = strtotime("+" . self::EXPIRE_TIME . " minutes", $cTime);
+
+        /* 判斷現在時間是否超過有效期間 and c key時間不能超過現在時間 */
+        if ($now <= $vaildTime && strtotime("+1 minute", $now) >= $cTime) {
             return true;
         }
 
