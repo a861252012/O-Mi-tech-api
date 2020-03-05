@@ -412,3 +412,7 @@ Route::prefix('game')->middleware(['login_auth'])->group(function () {
 	Route::get('entry','GameController@entry');
 	Route::post('deposit','GameController@deposit');
 });
+
+Route::prefix('v2')->namespace('v2')->group(function () {
+    Route::get('captcha/{cKey?}', 'CaptchaController@index');
+});
