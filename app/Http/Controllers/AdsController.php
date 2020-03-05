@@ -45,7 +45,7 @@ class AdsController extends Controller
             return $ads;
         });
 
-        return SuccessResponse::create(compact('cdn', 'img_path', 'data'));
+        return SuccessResponse::create(compact('cdn', 'img_path', 'data'))->setMaxAge(60);
     }
 
 
