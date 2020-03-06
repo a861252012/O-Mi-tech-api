@@ -29,7 +29,7 @@ class AdsController extends Controller
     {
         $device = Input::get('device', 1);
 
-        $data = Cache::remember('oort2bunny:' . $device, self::APCU_TTL, function () use($device) {
+        $data = Cache::remember(SiteSer::siteId() . ':oort2bunny:' . $device, self::APCU_TTL, function () use($device) {
             $ads = $this->getAds($device);
             //针对ios和安卓进行广告数据优化
             if ($device == 2 || $device == 4) {
@@ -39,11 +39,11 @@ class AdsController extends Controller
                 }
             }
 
-            $cdn = '';
-            $img_path = '';
-
             return $ads;
         });
+
+        $cdn = '';
+        $img_path = '';
 
         return SuccessResponse::create(compact('cdn', 'img_path', 'data'))->setMaxAge(60);
     }
