@@ -7,6 +7,7 @@
  */
 namespace App\Http\Controllers;
 
+use App\Facades\SiteSer;
 use App\Services\SocketService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -30,12 +31,14 @@ class SocketController extends Controller
      *
      * @apiSuccess {String} name 線路名稱
      * @apiSuccess {String} host 主機位址
+     * @apiSuccess {String} socket_desc 直播間說明
      *
      * @apiSuccessExample {json} 成功回應
      *{
     "status": "1",
     "msg": "OK",
-    "data": [
+    "data": {
+    "channel_list": [
     {
     "name": "紅",
     "host": "192.168.0.1"
@@ -43,41 +46,21 @@ class SocketController extends Controller
     {
     "name": "橙",
     "host": "192.168.0.2"
-    },
-    {
-    "name": "黃",
-    "host": "192.168.0.3"
-    },
-    {
-    "name": "綠",
-    "host": "192.168.0.4"
-    },
-    {
-    "name": "藍",
-    "host": "192.168.0.5"
-    },
-    {
-    "name": "粉紅",
-    "host": "192.168.0.6"
-    },
-    {
-    "name": "紫",
-    "host": "192.168.0.7"
-    },
-    {
-    "name": "橘",
-    "host": "192.168.0.8"
     }
-    ]
+    ],
+    "socket_desc": "test"
+    }
     }
      */
     public function channelList()
     {
         try {
             $result = $this->socketService->channelList();
+            $socketDesc = SiteSer::globalSiteConfig('socket_desc');
 
             $this->setStatus('1', 'OK');
-            $this->setRootData('data', $result);
+            $this->setData('channel_list', $result);
+            $this->setData('socket_desc', $socketDesc);
             return $this->jsonOutput();
         } catch (\Exception $e) {
             report($e);
