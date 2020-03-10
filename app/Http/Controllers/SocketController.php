@@ -5,22 +5,26 @@
  * @date 2020-03-10
  * @apiDefine Socket socket
  */
-namespace App\Http\Controllers\v2;
+namespace App\Http\Controllers;
 
+use App\Services\SocketService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
 class SocketController extends Controller
 {
-    public function __construct()
+    protected $socketService;
+
+    public function __construct(SocketService $socketService)
     {
+        $this->socketService = $socketService;
     }
 
     /**
      * @api {get} /socket/channel_list 取得線路列表
      * @apiGroup Socket
      * @apiName channel_list
-     * @apiVersion 2.0.0
+     * @apiVersion 1.0.0
      *
      * @apiError (Error Status) 999 API執行錯誤
      *
@@ -70,19 +74,10 @@ class SocketController extends Controller
     public function channelList()
     {
         try {
-            $data = [
-                ['name' => '紅', 'host' => '192.168.0.1'],
-                ['name' => '橙', 'host' => '192.168.0.2'],
-                ['name' => '黃', 'host' => '192.168.0.3'],
-                ['name' => '綠', 'host' => '192.168.0.4'],
-                ['name' => '藍', 'host' => '192.168.0.5'],
-                ['name' => '粉紅', 'host' => '192.168.0.6'],
-                ['name' => '紫', 'host' => '192.168.0.7'],
-                ['name' => '橘', 'host' => '192.168.0.8'],
-            ];
+            $result = $this->socketService->channelList();
 
             $this->setStatus('1', 'OK');
-            $this->setRootData('data', $data);
+            $this->setRootData('data', $result);
             return $this->jsonOutput();
         } catch (\Exception $e) {
             report($e);

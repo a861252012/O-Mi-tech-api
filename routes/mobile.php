@@ -171,6 +171,11 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::any('member/signin', 'MemberController@signin');
     // 主播房间暱称
     Route::any('member/roomInfo', 'MemberController@roomInfo');
+
+    /* Socket相關 */
+    Route::prefix('socket')->group(function () {
+        Route::get('channel_list', 'SocketController@channelList');
+    });
 });
 
 /** 进房间 */
@@ -240,15 +245,4 @@ Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopControl
 Route::prefix('game')->middleware(['login_auth:mobile'])->group(function () {
 	Route::get('entry','GameController@entry');
 	Route::post('deposit','GameController@deposit');
-});
-
-/* V2版本 */
-Route::prefix('v2')->namespace('v2')->group(function () {
-
-    Route::middleware(['login_auth:mobile'])->group(function () {
-        /* Socket相關 */
-        Route::prefix('socket')->group(function () {
-            Route::get('channel_list', 'SocketController@channelList');
-        });
-    });
 });

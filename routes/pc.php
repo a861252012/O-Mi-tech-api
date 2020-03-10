@@ -415,11 +415,4 @@ Route::prefix('game')->middleware(['login_auth'])->group(function () {
 
 Route::prefix('v2')->namespace('v2')->group(function () {
     Route::get('captcha/{cKey?}', 'CaptchaController@index');
-
-    Route::middleware(['login_auth'])->group(function () {
-        /* Socket相關 */
-        Route::prefix('socket')->group(function () {
-            Route::get('channel_list', 'SocketController@channelList');
-        });
-    });
 });
