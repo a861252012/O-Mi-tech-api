@@ -22,15 +22,17 @@ class SocketController extends Controller
     }
 
     /**
-     * @api {get} /socket/channel_list 取得線路列表
+     * @api {get} /socket/proxy_list 取得線路列表
      * @apiGroup Socket
-     * @apiName channel_list
+     * @apiName proxy_list
      * @apiVersion 1.0.0
      *
      * @apiError (Error Status) 999 API執行錯誤
      *
+     * @apiSuccess {Array[]} proxy_list 線路列表
      * @apiSuccess {String} name 線路名稱
      * @apiSuccess {String} host 主機位址
+     *
      * @apiSuccess {String} socket_desc 直播間說明
      *
      * @apiSuccessExample {json} 成功回應
@@ -38,7 +40,7 @@ class SocketController extends Controller
     "status": "1",
     "msg": "OK",
     "data": {
-    "channel_list": [
+    "proxy_list": [
     {
     "name": "紅",
     "host": "192.168.0.1"
@@ -52,14 +54,14 @@ class SocketController extends Controller
     }
     }
      */
-    public function channelList()
+    public function proxyList()
     {
         try {
             $result = $this->socketService->channelList();
             $socketDesc = SiteSer::globalSiteConfig('socket_desc');
 
             $this->setStatus('1', 'OK');
-            $this->setData('channel_list', $result);
+            $this->setData('proxy_list', $result);
             $this->setData('socket_desc', $socketDesc);
             return $this->jsonOutput();
         } catch (\Exception $e) {

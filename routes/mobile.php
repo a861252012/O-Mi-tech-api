@@ -174,7 +174,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
 
     /* Socket相關 */
     Route::prefix('socket')->group(function () {
-        Route::get('channel_list', 'SocketController@channelList');
+        Route::get('proxy_list', 'SocketController@proxyList');
     });
 });
 

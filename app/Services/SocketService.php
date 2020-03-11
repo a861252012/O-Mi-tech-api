@@ -10,6 +10,7 @@ namespace App\Services;
 
 use App\Http\Resources\ChannelListResource;
 use App\Repositories\SocketRepository;
+use Illuminate\Support\Facades\Redis;
 
 class SocketService
 {
@@ -22,6 +23,12 @@ class SocketService
 
     public function channelList()
     {
-        return ChannelListResource::collection($this->socketRepository->getAll());
+        $list = json_decode(Redis::get('proxy_list'));
+        if (empty($list)) {
+            $list = ChannelListResource::collection($this->socketRepository->getAll());
+            Redis::set('proxy_list', json_encode($list, JSON_UNESCAPED_UNICODE));
+        }
+
+        return $list;
     }
 }
