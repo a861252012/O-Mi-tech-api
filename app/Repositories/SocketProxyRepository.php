@@ -10,7 +10,7 @@ namespace App\Repositories;
 
 use App\Entities\Socket;
 
-class SocketRepository
+class SocketProxyRepository
 {
     protected $socket;
 

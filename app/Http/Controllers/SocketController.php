@@ -8,17 +8,17 @@
 namespace App\Http\Controllers;
 
 use App\Facades\SiteSer;
-use App\Services\SocketService;
+use App\Services\SocketProxyService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
 class SocketController extends Controller
 {
-    protected $socketService;
+    protected $socketProxyService;
 
-    public function __construct(SocketService $socketService)
+    public function __construct(SocketProxyService $socketProxyService)
     {
-        $this->socketService = $socketService;
+        $this->socketProxyService = $socketProxyService;
     }
 
     /**
@@ -57,7 +57,7 @@ class SocketController extends Controller
     public function proxyList()
     {
         try {
-            $result = $this->socketService->channelList();
+            $result = $this->socketProxyService->proxyList();
             $socketDesc = SiteSer::globalSiteConfig('socket_desc');
 
             $this->setStatus('1', 'OK');

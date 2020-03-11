@@ -296,7 +296,6 @@ class RoomController extends Controller
      */
     public function getRoom($rid)
     {
-
         try {
             $roomService = resolve('roomService');
             $room = $roomService->getRoom($rid, Auth::id());

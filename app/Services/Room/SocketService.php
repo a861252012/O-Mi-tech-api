@@ -3,6 +3,7 @@
 namespace App\Services\Room;
 
 use App\Services\Service;
+use App\Services\SocketProxyService;
 
 /**
  *
@@ -10,6 +11,13 @@ use App\Services\Service;
 class SocketService extends Service
 {
     const CHANNEL_TIME_MILLS = 60000;
+
+    protected $socketProxyService;
+
+    public function __construct(SocketProxyService $socketProxyService)
+    {
+        $this->socketProxyService = $socketProxyService;
+    }
 
     public function getServer($channelID)
     {
@@ -35,9 +43,10 @@ class SocketService extends Service
      */
     public function getNextServerAvailable($isHost = 0)
     {
+//        echo ceil(microtime(true)*1000);exit;
         $redis = resolve('redis');
         $channels_update = collect($redis->hgetall('channel_update'));
-        $minLoadChannel = null;
+
 //        $channelIDs = collect();//可用的channel id
         $channels_update->keys()->map(function ($channelID) use (&$channels_update, &$redis, &$minLoadChannel, &$channelIDs, &$isHost) {
             if ($channelID >= 900 && !$isHost) {
@@ -52,13 +61,10 @@ class SocketService extends Service
                 //Log::info("channel：" . json_encode($channelInfo));
                 if ($this->lessLoad($channelInfo, $minLoadChannel)) {
                     $minLoadChannel = $channelInfo;
-                    $chanhost = explode('|',$channelInfo['host']);
-                    if(!empty($chanhost[0])){
-                        $minLoadChannel['host'] = $chanhost[0];
-                    }else{
-                        $minLoadChannel['host'] = $chanhost[1];
-                    }
 
+                    /* 取得socket proxy 列表 */
+                    $list = $this->socketProxyService->proxyList();
+                    $minLoadChannel['host'] = collect($list)->implode('host', ',');
                 }
             }
         });
@@ -71,6 +77,7 @@ class SocketService extends Service
         if (empty($minLoadChannel)) {
             throw new NoSocketChannelException('获取Socket Channel失败');
         }
+
         return $minLoadChannel;
     }
     /**
