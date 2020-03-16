@@ -279,7 +279,7 @@ class GuardianController extends Controller
     }
      */
 
-    public function buyGuardian()
+    public function buy()
     {
         $uid = Auth::id();
         $user = Auth::user();
@@ -500,15 +500,13 @@ class GuardianController extends Controller
         $currentYM  = $now->copy()->format('Ym');
         $currentYMD = $now->copy()->format('Ymd');
 
-        if ($payType != 1 && ($guardId > $userGuardId)) {
-
+        if ($guardId > $userGuardId && $payType == 1) {
             Redis::del('sguardian_chat_interval:' . $uid);
-            Redis::del('sguardian_rename_??????:' . $uid);
-            Redis::del('sguardian_feiping_??????:' . $uid);
-            Redis::del('sguardian_forbid_????????:' . $uid);
-            Redis::del('sguardian_kick_????????:' . $uid);
+            Redis::del('sguardian_rename_' . $currentYM . ':' . $uid);
+            Redis::del('sguardian_feiping_' . $currentYM . ':' . $uid);
+            Redis::del('sguardian_forbid_' . $currentYMD . ':' . $uid);
+            Redis::del('sguardian_kick_' . $currentYMD . ':' . $uid);
         }
-
         //5. 更新個人排行榜資訊
         Redis::zIncrBy('zrank_rich_day:' . $siteId, $finalPrice, $uid);
         Redis::zIncrBy('zrank_rich_week:' . $siteId, $finalPrice, $uid);

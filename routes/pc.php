@@ -440,7 +440,7 @@ Route::prefix('guardian')->group(function () {
         Route::get('history', 'GuardianController@history');
 
         /*开通守护*/
-        Route::post('buy', 'GuardianController@buyGuardian');
+        Route::post('buy', 'GuardianController@buy');
 
         /* 取得使用者消費紀錄 */
         Route::get('history', 'GuardianController@history');
