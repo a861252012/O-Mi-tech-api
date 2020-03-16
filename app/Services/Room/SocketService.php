@@ -147,6 +147,6 @@ class SocketService extends Service
     private function randomProxy($data)
     {
         $hosts = collect(explode(',', $data));
-        return $hosts->isNotEmpty() ? $hosts->random(2)->implode(',') : '';
+        return $hosts->isNotEmpty() ? $hosts->random(3)->implode(',') : '';
     }
 }
