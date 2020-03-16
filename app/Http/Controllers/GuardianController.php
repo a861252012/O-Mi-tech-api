@@ -400,6 +400,11 @@ class GuardianController extends Controller
 
             //4.異動主播資料
             $anchorExp = Redis::hGet('huser_info:' . $rid, 'exp');
+            if (!$anchorExp) {
+                $newAnchorInfo = Users::where('uid', $rid)->first()->toArray();
+                Redis::hMSet('huser_info:' . $rid, $newAnchorInfo);
+                Redis::expire('huser_info:' . $rid, 216000);
+            }
 
             if ($rid) {
                 $a['exp'] = ($anchorExp + $finalPrice); // 增加主播經驗值
@@ -456,6 +461,14 @@ class GuardianController extends Controller
 
         //redis
         //異動用戶資料
+        $CheckUser =  Redis::exists('huser_info:' . $uid);
+
+        if (!$CheckUser) {
+                $userInfo = Users::where('uid', $uid)->first()->toArray();
+                Redis::hMSet('huser_info:' . $uid, $userInfo);
+                Redis::expire('huser_info:' . $uid, 216000);
+        }
+
         $newUserInfo = [
             'points'    => $u['points'],
             'rich'      => $u['rich'],
@@ -470,15 +483,15 @@ class GuardianController extends Controller
 
         //2. 3. 異動主播資料
         if ($rid) {
-            $newUserInfo = [
+            $newAnchorExp = [
                 'exp'       => $a['exp'],
                 'lv_exp'    => $a['lv_exp'],
                 'update_at' => $a['update_at']
             ];
 
-            Redis::hMSet('huser_info:' . $rid, $newUserInfo);
+            Redis::hMSet('huser_info:' . $rid, $newAnchorExp);
 
-            Redis::hSet('hvediosKtv:' . $rid, 'cur_exp', $a['exp']);
+            Redis::hSet('hvediosKtv:' . $rid, 'cur_exp', $newAnchorExp['exp']);
         }
 
         //4. if(用戶守護不是第一次開通，且開通等級比上一次大)
@@ -534,11 +547,15 @@ class GuardianController extends Controller
             }
 
             //9.(直播間內開通才要做)，更新房間排行榜資訊
+
             //直播間-週貢獻榜，zrange_gift_week:主播id，此key若一開始不存在則新增後需要設定ttl為現在到下週0點剩餘的時間
             $checkWeekGift = Redis::exists('zrange_gift_week:' . $rid);
 
             if (!$checkWeekGift) {
+                Redis::zIncrBy('zrange_gift_week:' . $rid, $finalPrice, $uid);
                 Redis::expire('zrange_gift_week:' . $rid, $diffWithNextMon);
+            } else {
+                Redis::zIncrBy('zrange_gift_week:' . $rid, $finalPrice, $uid);
             }
 
             Redis::zIncrBy('zrank_pop_day', $finalPrice, $rid);
@@ -546,7 +563,6 @@ class GuardianController extends Controller
             Redis::zIncrBy('zrank_pop_month:' . $currentYM, $finalPrice, $rid);
             Redis::zIncrBy('zrank_pop_history', $finalPrice, $rid);
             Redis::zIncrBy('zrank_order_today:' . $rid, $finalPrice, $uid);
-            Redis::zIncrBy('zrange_gift_week:' . $rid, $finalPrice, $uid);
             Redis::zIncrBy('zrange_gift_history:' . $rid, $finalPrice, $uid);
 
             //新增守護在線列表對應的redis key
