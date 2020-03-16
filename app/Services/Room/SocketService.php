@@ -35,6 +35,7 @@ class SocketService extends Service
      */
     public function getNextServerAvailable($isHost = 0)
     {
+//        dd(ceil(microtime(true)*1000));
         $redis = resolve('redis');
         $channels_update = collect($redis->hgetall('channel_update'));
         $minLoadChannel = null;
@@ -54,14 +55,15 @@ class SocketService extends Service
                     $minLoadChannel = $channelInfo;
                     $chanhost = explode('|',$channelInfo['host']);
                     if(!empty($chanhost[0])){
-                        $minLoadChannel['host'] = $chanhost[0];
+                        $minLoadChannel['host'] = $this->randomProxy($chanhost[0]);
                     }else{
-                        $minLoadChannel['host'] = $chanhost[1];
+                        $minLoadChannel['host'] = $this->randomProxy($chanhost[1]);
                     }
 
                 }
             }
         });
+
 //        if ($channelIDs->count() == 0) {
         if (!$minLoadChannel) {
             throw new NoSocketChannelException('没有可用channel');
@@ -71,6 +73,8 @@ class SocketService extends Service
         if (empty($minLoadChannel)) {
             throw new NoSocketChannelException('获取Socket Channel失败');
         }
+
+//        dd($minLoadChannel);
         return $minLoadChannel;
     }
     /**
@@ -109,6 +113,8 @@ class SocketService extends Service
         if (empty($minLoadChannel)) {
             throw new NoSocketChannelException('获取Socket Channel失败');
         }
+
+//        dd($minLoadChannel);
         return $minLoadChannel;
     }
     /**
@@ -132,5 +138,15 @@ class SocketService extends Service
                 $channelIDs->push($channelID);
             }
         });
+    }
+
+    /**
+     * 隨機取線
+     * @param $data
+     */
+    private function randomProxy($data)
+    {
+        $hosts = collect(explode(',', $data));
+        return $hosts->isNotEmpty() ? $hosts->random(3)->implode(',') : '';
     }
 }
