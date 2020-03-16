@@ -399,14 +399,16 @@ class GuardianController extends Controller
             DB::table('video_user')->where('uid', $uid)->update($u);
 
             //4.異動主播資料
-            $anchorExp = Redis::hGet('huser_info:' . $rid, 'exp');
-            if (!$anchorExp) {
-                $newAnchorInfo = Users::where('uid', $rid)->first()->toArray();
-                Redis::hMSet('huser_info:' . $rid, $newAnchorInfo);
-                Redis::expire('huser_info:' . $rid, 216000);
-            }
-
             if ($rid) {
+                $anchorExp = Redis::hGet('huser_info:' . $rid, 'exp');
+
+                if (!$anchorExp) {
+                    $newAnchorInfo = Users::where('uid', $rid)->first()->toArray();
+
+                    Redis::hMSet('huser_info:' . $rid, $newAnchorInfo);
+                    Redis::expire('huser_info:' . $rid, 216000);
+                }
+
                 $a['exp'] = ($anchorExp + $finalPrice); // 增加主播經驗值
                 $a['lv_exp'] = $this->guardianService->getAnchorLevel($a['exp']); // 計算主播新等級
                 $a['update_at'] = $nowDateTime;
@@ -499,11 +501,12 @@ class GuardianController extends Controller
         $currentYMD = $now->copy()->format('Ymd');
 
         if ($payType != 1 && ($guardId > $userGuardId)) {
+
             Redis::del('sguardian_chat_interval:' . $uid);
-            Redis::del('sguardian_rename_' . $currentYM . ':' . $uid);
-            Redis::del('sguardian_feiping_' . $currentYM . ':' . $uid);
-            Redis::del('sguardian_forbid_' . $currentYMD . ':' . $uid);
-            Redis::del('sguardian_kick_' . $currentYMD . ':' . $uid);
+            Redis::del('sguardian_rename_??????:' . $uid);
+            Redis::del('sguardian_feiping_??????:' . $uid);
+            Redis::del('sguardian_forbid_????????:' . $uid);
+            Redis::del('sguardian_kick_????????:' . $uid);
         }
 
         //5. 更新個人排行榜資訊
