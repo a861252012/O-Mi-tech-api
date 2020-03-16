@@ -35,6 +35,7 @@ class SocketService extends Service
      */
     public function getNextServerAvailable($isHost = 0)
     {
+//        dd(ceil(microtime(true)*1000));
         $redis = resolve('redis');
         $channels_update = collect($redis->hgetall('channel_update'));
         $minLoadChannel = null;
@@ -62,6 +63,7 @@ class SocketService extends Service
                 }
             }
         });
+
 //        if ($channelIDs->count() == 0) {
         if (!$minLoadChannel) {
             throw new NoSocketChannelException('没有可用channel');
@@ -71,6 +73,8 @@ class SocketService extends Service
         if (empty($minLoadChannel)) {
             throw new NoSocketChannelException('获取Socket Channel失败');
         }
+
+//        dd($minLoadChannel);
         return $minLoadChannel;
     }
     /**
@@ -109,6 +113,8 @@ class SocketService extends Service
         if (empty($minLoadChannel)) {
             throw new NoSocketChannelException('获取Socket Channel失败');
         }
+
+//        dd($minLoadChannel);
         return $minLoadChannel;
     }
     /**

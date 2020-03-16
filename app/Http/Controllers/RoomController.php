@@ -65,17 +65,17 @@ class RoomController extends Controller
             }
         }
         try {
-            $chatServer = $socketService->getNextServerAvailablepc($this->isHost($rid));
+            $chatServer = $socketService->getNextServerAvailable($this->isHost($rid));
         } catch (NoSocketChannelException $e) {
             return JsonResponse::create(['status' => 0, 'msg' => $e->getMessage()]);
         }
 
-        try {
-            $host = $this->getUserHost($chatServer, $this->isHost($rid));
-        } catch (Exception $e) {
-            return JsonResponse::create(['status' => 0, 'msg' => 'channel 配置有误']);
-        }
-        $chat_server_addr = $host . ':' . $chatServer['port'];
+//        try {
+//            $host = $this->getUserHost($chatServer, $this->isHost($rid));
+//        } catch (Exception $e) {
+//            return JsonResponse::create(['status' => 0, 'msg' => 'channel 配置有误']);
+//        }
+        $chat_server_addr = $chatServer['host'] . ':' . $chatServer['port'];
         $logger->info('enter_room:' . $rid . ":" . Auth::id() . ':' . $chatServer['id'] . ':' . $chat_server_addr);
 
         $redis = resolve('redis');
