@@ -4,10 +4,12 @@
  * User: nicholas
  * Date: 2017/2/9
  * Time: 11:10
+ * @apiDefine Room 直播間
  */
 
 namespace App\Http\Controllers\Mobile;
 
+use App\Services\GuardianService;
 use Illuminate\Support\Facades\Session;
 use App\Facades\Site;
 use App\Facades\SiteSer;
@@ -25,7 +27,6 @@ use App\Services\Room\NoSocketChannelException;
 use App\Services\Room\RoomService;
 use App\Services\Room\SocketService;
 use App\Services\Safe\SafeService;
-use App\Services\User\UserService;
 use DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -49,6 +50,13 @@ class RoomController extends Controller
         32,//IOS房间外
     ];
 
+    protected $guardianService;
+
+    public function __construct(Request $request, GuardianService $guardianService)
+    {
+        parent::__construct($request);
+        $this->guardianService = $guardianService;
+    }
 
     public function listReservation($type = 0b11)
     {
@@ -291,8 +299,66 @@ class RoomController extends Controller
 
 
     /**
-     * @param $rid
-     * @return static
+     * @api {get} /get_room/{rid} 進入直播間
+     * @apiGroup Room
+     * @apiName get_room
+     * @apiVersion 1.0.0
+     *
+     * @apiParam {Int} rid 房間id
+     *
+     * @apiError (Error Status) 1
+     *
+     * @apiSuccess {String} room_name 房間名稱
+     * @apiSuccess {String} header_pic
+     * @apiSuccess {String} room_pic
+     * @apiSuccess {String} live_status
+     * @apiSuccess {String} live_device_type
+     * @apiSuccess {String} tid
+     * @apiSuccess {String} is_password
+     * @apiSuccess {String} start_time
+     * @apiSuccess {String} end_time
+     * @apiSuccess {String} user_num
+     * @apiSuccess {String} room_price
+     * @apiSuccess {String} room_price_sale 守護身份優惠價
+     * @apiSuccess {String} room_info 房間額外文字
+     * @apiSuccess {String} time_length
+     * @apiSuccess {String} room_id
+     * @apiSuccess {String} class_id
+     * @apiSuccess {String} authority_in 是否有权限进入房间
+     * (1 是/302 尚未购买一对多/303 尚未预约一对一/304 一对一已被其他人预约/305 余额不足 ，不能进入时长房间/306 密码房间，请输入密码/307 用户不合法/308 房间状态异常)
+     * @apiSuccess {String} host
+     * @apiSuccess {String} ip
+     * @apiSuccess {String} port
+     *
+     * @apiSuccessExample {json} 成功回應
+     *{
+    "data": {
+    "room_name": "ted",
+    "header_pic": "a8193c14a4d0568096a920825defba39",
+    "room_pic": "",
+    "live_status": "0",
+    "live_device_type": "11",
+    "tid": 1,
+    "is_password": 0,
+    "start_time": null,
+    "end_time": null,
+    "user_num": "0",
+    "room_price": 0,
+    "room_price_sale": 0,
+    "room_info": "",
+    "time_length": 0,
+    "room_id": "9493275",
+    "class_id": 0,
+    "authority_in": 1,
+    "host": "192.168.0.2",
+    "ip": null,
+    "port": null
+    },
+    "msg": "",
+    "status": 1
+    }
+     *
+     *
      */
     public function getRoom($rid)
     {
@@ -302,6 +368,7 @@ class RoomController extends Controller
             $tid = $roomService->getCurrentTimeRoomStatus();
 
             $user = UserSer::getUserByUid(Auth::id());
+
             $roomInfo = [
                 'room_name'=>$room['user']['nickname'],
                 'header_pic'=>$room['user']['headimg'],
@@ -312,18 +379,26 @@ class RoomController extends Controller
                 'tid'=>$tid ?: 1,
                 'is_password'=>$roomService->getPasswordRoom()?1:0,
             ];
+
             if (!isset($room['origin'])) {
                 Log::info('origin is null');
             }
+
+            /* 取得房間資訊 */
+//            $ancList = collect(UserSer::anchorlist())->firstWhere('rid', $rid);
+
             $roomExtend = [
                 'start_time'=> null,
                 'end_time'=> null,
                 'user_num'=> $room['total'],
                 'room_price'=> 0,
+                'room_price_sale' => 0,
+                'room_info' => $ancList['room_info'] ?? '',
                 'time_length'=> 0,
                 'room_id'=> $rid,
                 'class_id'=> 0,
             ];
+
             switch ($tid){
                 case 8 :
                     $one2more = resolve('one2more')->getRunningData();
@@ -350,6 +425,12 @@ class RoomController extends Controller
                     break;
                 default:;
             }
+
+            /* 判斷是否守護身份與計算守護優惠價 */
+            if (!empty($user->guard_id) && time() < strtotime($user->guard_end)) {
+                $roomExtend['room_price_sale'] = $this->guardianService->calculRoomSale($roomExtend['room_price'], $user->guardianInfo->show_discount);
+            }
+
             $roomExtend['time_length'] = strtotime($roomExtend['end_time'])-strtotime($roomExtend['start_time']);
 
             $room_user = [
@@ -369,9 +450,14 @@ class RoomController extends Controller
                             }
                             break;
                         case 6:
-                            if($user['points'] < $roomExtend['room_price'])   $room_user['authority_in'] = 305;
+                            if($user['points'] < $roomExtend['room_price']
+                                || ($user['points'] < $roomExtend['room_price_sale'] && $roomExtend['room_price_sale'] != 0)
+                            ) {
+                                $room_user['authority_in'] = 305;
+                            }
                             break;
                     }
+
                    if($room_user['authority_in']==1 && $roomService->getPasswordRoom()){
                             $room_user['authority_in'] = 306;
                    }

@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * @apiDefine User 使用者相關功能
+ */
 namespace App\Http\Controllers;
 
 use App\Models\Users;
@@ -8,6 +10,7 @@ use App\Services\Message\MessageService;
 use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
 class UserController extends Controller
@@ -54,5 +57,33 @@ class UserController extends Controller
     public function following()
     {
         return JsonResponse::create(Redis::zrevrange('zuser_attens:' . Auth::id(), 0, -1));
+    }
+
+    /**
+     * @api {get} /user/set_hidden/:status 設定隱身
+     * @apiGroup User
+     * @apiName set_hidden
+     * @apiVersion 1.0.0
+     *
+     * @apiParam {Int} [Status] 是否隱身(0:否/1:是)
+     *
+     * @apiError (Error Status) 999 API執行錯誤
+     */
+    public function setHidden($status = false)
+    {
+        try {
+            $user = Auth::user();
+            $user->hidden = $status;
+            $user->save();
+
+            Redis::del('huser_info:' . $user->uid);
+
+            $this->setStatus('1', 'OK');
+            return $this->jsonOutput();
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            $this->setStatus('999', 'API執行錯誤');
+            return $this->jsonOutput();
+        }
     }
 }

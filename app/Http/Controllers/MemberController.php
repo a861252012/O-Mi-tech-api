@@ -2715,12 +2715,12 @@ class MemberController extends Controller
     {
         $uid = Auth::id();
         $request = $this->request();
-        $rid = intval($request->input('rid'));
-        $origin = intval($request->input('origin')) ?: 12;
+        $rid = (int) $request->input('rid');
+        $origin = (int) $request->input('origin') ?: 12;
         if ($rid == $uid) {
             return JsonResponse::create(['status' => 0, 'msg' => '不能购买自己房间亲']);
         }
-        $onetomany = intval($request->input('onetomore'));
+        $onetomany = (int) $request->input('onetomore');
         if (empty($onetomany) || empty($uid)) {
             return JsonResponse::create(['status' => 0, 'msg' => '参数错误']);
         }
@@ -2737,12 +2737,19 @@ class MemberController extends Controller
         }
         /** 检查余额 */
         $user = resolve(UserService::class)->getUserByUid($uid);
+
+        /* 守護優惠判斷 */
+        $showDiscount = $user->guardianInfo->show_discount;
+        $points = empty($showDiscount) ? $points : round($points * (100 - $showDiscount) / 100);
+
         if ($user['points'] < $points) {
             return JsonResponse::create(['status' => 0, 'msg' => '余额不足', 'cmd' => 'topupTip']);
         }
+
         if ($this->isMobileUrl($request) && $redis->hGet("hvediosKtv:$rid", "status") == 0) {
             return JsonResponse::create(['status' => 0, 'msg' => '主播不在播，不能购买！']);
         }
+
         /** 通知java送礼*/
         $redis->publish('makeUpOneToMore',
             json_encode([

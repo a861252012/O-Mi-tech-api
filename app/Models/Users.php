@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\SiteSpecific;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Model;
 
 class Users extends Authenticatable
 {
@@ -55,5 +56,15 @@ class Users extends Authenticatable
     public function agentRel()
     {
         return $this->hasOne('App\Entities\AgentRelationship', 'uid', 'uid');
+    }
+
+    public function guardianInfo()
+    {
+        return $this->hasOne('App\Entities\GuardianSetting', 'id', 'guard_id');
+    }
+
+    public function guardian()
+    {
+        return $this->belongsTo('App\Entities\Guardian', 'uid', 'uid');
     }
 }

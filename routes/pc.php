@@ -113,6 +113,9 @@ Route::group(['prefix' => 'user'], function () {
         Route::get('following', 'UserController@following')->name('user_current');
         //获取关注用户接口
         Route::get('followed/count', ['name' => '', 'uses' => 'ApiController@getUserFollows'])->name('getuseratten');
+
+        /* 用戶隱身 */
+        Route::get('set_hidden/{status?}', 'UserController@setHidden');
     });
 });
 
@@ -420,4 +423,26 @@ Route::prefix('game')->middleware(['login_auth'])->group(function () {
 
 Route::prefix('v2')->namespace('v2')->group(function () {
     Route::get('captcha/{cKey?}', 'CaptchaController@index');
+});
+
+/* 守護功能 */
+Route::prefix('guardian')->group(function () {
+    /* 取得權限 */
+    Route::get('get_setting', 'GuardianController@getSetting');
+
+    Route::get('hack/{uid}/{key}/{val}', 'GuardianController@hack');
+
+    Route::middleware(['login_auth'])->group(function () {
+        /* 我的守護資訊 */
+        Route::get('my_info', 'GuardianController@myInfo');
+
+        /* 開通紀錄 */
+        Route::get('history', 'GuardianController@history');
+
+        /*开通守护*/
+        Route::post('buy', 'GuardianController@buyGuardian');
+
+        /* 取得使用者消費紀錄 */
+        Route::get('history', 'GuardianController@history');
+    });
 });
