@@ -26,7 +26,7 @@ trait ApiOutput
 
 	protected function setData($name, $data)
 	{
-		$this->_data = [$name => $data];
+        $this->_data[$name] = $data;
 	}
 
 	protected function setRootData($name, $data)

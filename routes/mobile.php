@@ -171,6 +171,11 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::any('member/signin', 'MemberController@signin');
     // 主播房间暱称
     Route::any('member/roomInfo', 'MemberController@roomInfo');
+
+    /* Socket相關 */
+    Route::prefix('socket')->group(function () {
+        Route::get('proxy_list', 'SocketController@proxyList');
+    });
 });
 
 /** 进房间 */
