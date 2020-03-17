@@ -345,6 +345,11 @@ Route::group(['middleware' => ['login_auth']], function () {
 
 
     Route::get('/ajaxProxy', ['name' => 'ajaxProxy', 'uses' => 'ApiController@ajaxProxy']);
+
+    /* Socket相關 */
+    Route::prefix('socket')->group(function () {
+        Route::get('proxy_list', 'SocketController@proxyList');
+    });
 });
 
 //rtmp地址
