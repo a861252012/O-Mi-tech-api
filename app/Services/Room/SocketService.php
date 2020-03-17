@@ -55,9 +55,9 @@ class SocketService extends Service
                     $minLoadChannel = $channelInfo;
                     $chanhost = explode('|',$channelInfo['host']);
                     if(!empty($chanhost[0])){
-                        $minLoadChannel['host'] = $this->randomProxy($chanhost[0]);
+                        $minLoadChannel['host'] = $this->randomProxy($chanhost[0], 3);
                     }else{
-                        $minLoadChannel['host'] = $this->randomProxy($chanhost[1]);
+                        $minLoadChannel['host'] = $this->randomProxy($chanhost[1], 3);
                     }
 
                 }
@@ -142,11 +142,20 @@ class SocketService extends Service
 
     /**
      * 隨機取線
-     * @param $data
+     * @param $data 傳入hosts
+     * @param $count 取得數量
      */
-    private function randomProxy($data)
+    private function randomProxy($data, $count)
     {
         $hosts = collect(explode(',', $data));
-        return $hosts->isNotEmpty() ? $hosts->random(3)->implode(',') : '';
+        if ($hosts->isEmpty()) {
+            return '';
+        }
+
+        if ($hosts->count() < $count) {
+            return $hosts->implode(',');
+        }
+
+        return $hosts->random(3)->implode(',');
     }
 }
