@@ -9,6 +9,7 @@
 namespace App\Http\Controllers;
 
 use App\Facades\SiteSer;
+use App\Http\Requests\Guardian\GuardianBuy;
 use App\Models\Users;
 use App\Services\GuardianService;
 use App\Services\Message\MessageService;
@@ -279,14 +280,14 @@ class GuardianController extends Controller
     }
      */
 
-    public function buy()
+    public function buy(GuardianBuy $request)
     {
         $uid = Auth::id();
         $user = Auth::user();
-        $rid = $this->request()->post('rid') ?? 0;
-        $guardId = (int)$this->request()->post('guardId');
-        $payType = (int)$this->request()->post('payType');
-        $daysType = $this->request()->post('daysType');
+        $rid = $request->rid ?? 0;
+        $guardId = $request->guardId;
+        $payType = $request->payType;
+        $daysType = $request->daysType;
         $origin = Auth::user()->origin;
         $now = Carbon::now();
         $nowDateTime = Carbon::now()->copy()->toDateTimeString();
@@ -300,6 +301,7 @@ class GuardianController extends Controller
             2 => '7628eb77abb956b94d5fdf75427c1b1b',
             3 => '553a1e24744251a208a2fd1afd6e6ba0'
         );
+
 
         try {
             DB::beginTransaction();
