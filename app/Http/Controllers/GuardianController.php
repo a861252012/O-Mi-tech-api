@@ -284,62 +284,49 @@ class GuardianController extends Controller
     {
         $uid = Auth::id();
         $user = Auth::user();
+        $userGuardId = $user->guard_id;
+        $userPoints = $user->points;
+        $userRich = $user->rich;
+        $userGuardEnd = $user->guard_end;
         $rid = $request->rid ?? 0;
         $guardId = $request->guardId;
         $payType = $request->payType;
         $daysType = $request->daysType;
         $origin = Auth::user()->origin;
         $now = Carbon::now();
+        $nowDate = $now->copy()->toDateString();
+        $currentYM  = $now->copy()->format('Ym');
+        $currentYMD = $now->copy()->format('Ymd');
         $nowDateTime = Carbon::now()->copy()->toDateTimeString();
         $siteId = SiteSer::siteId();
         $valid_dayArr = array(1 => 30, 2 => 90, 3 => 365);
-
+        $guardIdToGid = array(1 => 700004, 2 => 700005, 3 => 700006);
         $payTypeName = array(1 => '开通成功', 2 => '续费成功');
-
+        $payTypeArr = array(1 => 'activate', 2 => 'renewal');
+        $guardIdToName = array(1 => '黄色守护', 2 => '紫色守护', 3 => '黑色守护');
         $defaultImg = array(
             1 => 'c62e026d074d331bb98be8a63b4f5303',
             2 => '7628eb77abb956b94d5fdf75427c1b1b',
             3 => '553a1e24744251a208a2fd1afd6e6ba0'
         );
 
-
         try {
             DB::beginTransaction();
 
-            //1.取得用戶守護大頭貼，房間內就撈主播海報(video_user_host)，房間外用官方固定的守護圖
-            $headimg = DB::table('video_user_host')->where('id', $rid)->value('cover');
-            if (!$headimg) {
-                $headimg = $defaultImg[$guardId];
-            }
-            //2.計算守護到期日
-            //取得守護到期日
-            if (!$user->guard_end) {
-                $guardEndTime = $now->copy()->addDays($valid_dayArr[$daysType]);
-            } else {
-                $guardEndTime = Carbon::parse($user->guard_end)->copy()->subDay()->addDays($valid_dayArr[$daysType]);
-            }
-
-            //處理守護設定之價格 start
-            $payTypeArr = array(1 => 'activate', 2 => 'renewal');
+            //取得守護設定價格
             $key = $payTypeArr[$payType] . '_' . $valid_dayArr[$daysType];
             $saleKey = $key . '_sale';
             $getSalePrice = Redis::hGet('hguardian_info:' . $guardId, $saleKey);
             $getPrice = Redis::hget('hguardian_info:' . $guardId, $key);
-            //處理守護設定之價格 end
 
-            //2.檢核方案是否有開啟
+            //檢核方案是否有開啟
             if (!$getPrice) {
                 $this->setStatus(101, '守护系统' . $valid_dayArr[$daysType] . '天方案未啟用');
                 return $this->jsonOutput();
             }
 
-            //3.取得用戶資訊
-            $userGuardId = $user->guard_id;
-            $userPoints = $user->points;
-            $userRich = $user->rich;
-
-            //4.計算該開通或續約所需的價格為何
-            if (empty($getSalePrice)) {
+            //計算該開通或續約所需的價格為何
+            if (!$getSalePrice) {
                 $finalPrice = $getPrice;
             } else {
                 $finalPrice = $getSalePrice;
@@ -352,24 +339,43 @@ class GuardianController extends Controller
             }
 
             //6.檢核續費還是新開通，是否有符合規定
-            if ($user->guard_end >= $now) {//如有開通且未過期
+            if ($userGuardEnd >= $now) {//如有開通且未過期
                 if ($userGuardId > $guardId) {
                     $this->setStatus(103, '您现在的级别已大於您要开通/续费的等级');
                     return $this->jsonOutput();
                 } else if ($userGuardId == $guardId && $payType != 2) {
                     $this->setStatus(104, '您已开通该级别守护，仅能续费该守护等级');
                     return $this->jsonOutput();
-
                 } else if ($userGuardId < $guardId && $payType != 1) {
                     //(原守護等級 < 開通/續約等級 && 不是新開通)
                     $this->setStatus(105, '您尚未开通该级别守护，无法续费');
                     return $this->jsonOutput();
                 }
-
             } else {
                 if ($payType == 2) {
                     $this->setStatus(105, '您尚未开通该级别守护，无法续费');
                     return $this->jsonOutput();
+                }
+            }
+
+            //1.取得用戶守護大頭貼，房間內就撈主播海報(video_user_host)，房間外用官方固定的守護圖
+            $headimg = DB::table('video_user_host')->where('id', $rid)->value('cover');
+
+            if (!$headimg) {
+                $headimg = $defaultImg[$guardId];
+            }
+            //計算守護到期日
+            if (!$userGuardEnd) {
+                $guardEndTime = $now->copy()->addDays($valid_dayArr[$daysType]);
+            } else {
+                if ($userGuardEnd >= $nowDate) {
+                    if ($payType == 1) {
+                        $guardEndTime = Carbon::parse($userGuardEnd)->copy()->addDays($valid_dayArr[$daysType]);
+                    } else {
+                        $guardEndTime = Carbon::parse($userGuardEnd)->copy()->subDay()->addDays($valid_dayArr[$daysType]);
+                    }
+                } else {
+                    $guardEndTime = $now->copy()->addDays($valid_dayArr[$daysType]);
                 }
             }
 
@@ -394,23 +400,17 @@ class GuardianController extends Controller
             $u['rich'] = ($userRich + $finalPrice); // 增加用戶財富經驗值
             $u['lv_rich'] = $this->guardianService->getRichLv($u['rich']); // 計算用戶財富新等級
             $u['guard_id'] = $guardId; // 開通守護等級
-            $u['guard_end'] = $guardEndTime->copy()->addDay()->toDateString(); // 守護到期日
+            $u['guard_end'] = $guardEndTime->copy()->toDateString(); // 守護到期日
             $u['headimg'] = $headimg;
             $u['update_at'] = $nowDateTime;
 
-            DB::table('video_user')->where('uid', $uid)->update($u);
+            DB::table('video_user')->where('uid', $uid)
+                ->update($u);
 
             //4.異動主播資料
             if ($rid) {
-                $anchorExp = Redis::hGet('huser_info:' . $rid, 'exp');
-
-                if (!$anchorExp) {
-                    $newAnchorInfo = Users::where('uid', $rid)->first()->toArray();
-
-                    Redis::hMSet('huser_info:' . $rid, $newAnchorInfo);
-                    Redis::expire('huser_info:' . $rid, 216000);
-                }
-
+                $anchorExp = Users::select('exp')->where('uid', $rid)
+                    ->value('exp');
                 $a['exp'] = ($anchorExp + $finalPrice); // 增加主播經驗值
                 $a['lv_exp'] = $this->guardianService->getAnchorLevel($a['exp']); // 計算主播新等級
                 $a['update_at'] = $nowDateTime;
@@ -420,8 +420,6 @@ class GuardianController extends Controller
             }
 
             //5.新增送禮紀錄
-            $guardIdToGid = array(1 => 700004, 2 => 700005, 3 => 700006);
-
             $sendGiftData = array(
                 'send_uid' => $uid,
                 'rec_uid'  => $rid,
@@ -435,8 +433,6 @@ class GuardianController extends Controller
                 'created'  => $nowDateTime
             );
             DB::table('video_mall_list')->insert($sendGiftData);
-
-            $guardIdToName = array(1 => '黄色守护', 2 => '紫色守护', 3 => '黑色守护');
 
             $expireMsgDate = $guardEndTime->copy()->subDay()->toDateString();
 
@@ -455,7 +451,6 @@ class GuardianController extends Controller
 
             $this->setStatus(1, '开通守护执行成功');
         } catch (\Exception $e) {
-
             DB::rollback();
 
             Log::error($e->getMessage());
@@ -468,40 +463,14 @@ class GuardianController extends Controller
         $CheckUser =  Redis::exists('huser_info:' . $uid);
 
         if (!$CheckUser) {
-                $userInfo = Users::where('uid', $uid)->first()->toArray();
-                Redis::hMSet('huser_info:' . $uid, $userInfo);
-                Redis::expire('huser_info:' . $uid, 216000);
+            $userInfo = Users::where('uid', $uid)->first()->toArray();
+            Redis::hMSet('huser_info:' . $uid, $userInfo);
+            Redis::expire('huser_info:' . $uid, 216000);
         }
 
-        $newUserInfo = [
-            'points'    => $u['points'],
-            'rich'      => $u['rich'],
-            'lv_rich'   => $u['lv_rich'],
-            'guard_id'  => $u['guard_id'],
-            'guard_end' => $u['guard_end'],
-            'headimg'   => $u['headimg'],
-            'update_at' => $u['update_at']
-        ];
-
-        Redis::hMSet('huser_info:' . $uid, $newUserInfo);
-
-        //2. 3. 異動主播資料
-        if ($rid) {
-            $newAnchorExp = [
-                'exp'       => $a['exp'],
-                'lv_exp'    => $a['lv_exp'],
-                'update_at' => $a['update_at']
-            ];
-
-            Redis::hMSet('huser_info:' . $rid, $newAnchorExp);
-
-            Redis::hSet('hvediosKtv:' . $rid, 'cur_exp', $newAnchorExp['exp']);
-        }
+        Redis::hMSet('huser_info:' . $uid, $u);
 
         //4. if(用戶守護不是第一次開通，且開通等級比上一次大)
-        $currentYM  = $now->copy()->format('Ym');
-        $currentYMD = $now->copy()->format('Ymd');
-
         if ($guardId > $userGuardId && $payType == 1) {
             Redis::del('sguardian_chat_interval:' . $uid);
             Redis::del('sguardian_rename_' . $currentYM . ':' . $uid);
@@ -509,6 +478,7 @@ class GuardianController extends Controller
             Redis::del('sguardian_forbid_' . $currentYMD . ':' . $uid);
             Redis::del('sguardian_kick_' . $currentYMD . ':' . $uid);
         }
+
         //5. 更新個人排行榜資訊
         Redis::zIncrBy('zrank_rich_day:' . $siteId, $finalPrice, $uid);
         Redis::zIncrBy('zrank_rich_week:' . $siteId, $finalPrice, $uid);
@@ -516,14 +486,15 @@ class GuardianController extends Controller
         Redis::zIncrBy('zrank_rich_history:' . $siteId, $finalPrice, $uid);
 
         if ($rid) {
+            //異動主播資料
+            Redis::hMSet('huser_info:' . $rid, $a);
+            Redis::hSet('hvediosKtv:' . $rid, 'cur_exp', $a['exp']);
+
             $diffWithNextMon = $now->copy()->diffInSeconds($now->copy()->addDays(7)->startOfWeek());//距離下週一的秒數
 
             $diffWithTomorrow = $now->copy()->diffInSeconds($now->copy()->tomorrow());
 
-            //7.(直播間內開通才要做)，判斷是否新增白名單或是累積單場消費紀錄
-
-            Redis::hIncrBy('one2many_statistic:' . $rid, $uid, $finalPrice);
-
+            //判斷是否新增白名單或是累積單場消費紀錄
             if (Redis::exists('hroom_whitelist_key:' . $uid)) {
                 $whiteListKey = Redis::SMEMBERS('hroom_whitelist_key:' . $uid);
 
@@ -535,6 +506,8 @@ class GuardianController extends Controller
                     Redis::HINCRBY('hroom_whitelist:' . $rid . ':' . $whiteListKey[0], 'nums', 1);
                 }
             }
+
+            Redis::hIncrBy('one2many_statistic:' . $rid, $uid, $finalPrice);
 
             //8.(直播間內開通才要做)，新增點亮置頂次數
             $checkTopThreshold = Redis::hExists('hsite_config:' . $siteId, 'top_threshold');
@@ -549,8 +522,7 @@ class GuardianController extends Controller
                 Redis::HINCRBY('hsite_config:' . $siteId, 'huser_recommend_anchor:' . $rid, 1);
             }
 
-            //9.(直播間內開通才要做)，更新房間排行榜資訊
-
+            //更新房間排行榜資訊
             //直播間-週貢獻榜，zrange_gift_week:主播id，此key若一開始不存在則新增後需要設定ttl為現在到下週0點剩餘的時間
             $checkWeekGift = Redis::exists('zrange_gift_week:' . $rid);
 
