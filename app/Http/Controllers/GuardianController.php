@@ -385,6 +385,8 @@ class GuardianController extends Controller
                 'rid'         => $rid,
                 'pay_date'    => $now->copy()->toDateString(),
                 'valid_day'   => $valid_dayArr[$daysType],
+                'price'       => $getPrice,
+                'sale'        => $getSalePrice,
                 'pay'         => $finalPrice,
                 'expire_date' => $guardEndTime->copy()->addDay()->toDateString(),
                 'guard_id'    => $guardId,
@@ -392,6 +394,9 @@ class GuardianController extends Controller
                 'created_at'  => $nowDateTime,
                 'updated_at'  => $nowDateTime
             );
+            if (!$getSalePrice) {
+                unset($guardianRecordArr['sale']);
+            }
 
             DB::table('video_guardian')->insert($guardianRecordArr);
 
