@@ -426,16 +426,18 @@ class GuardianController extends Controller
 
             //5.新增送禮紀錄
             $sendGiftData = array(
-                'send_uid' => $uid,
-                'rec_uid'  => $rid,
-                'gid'      => $guardIdToGid[$guardId],
-                'gnum'     => 1,
-                'rid'      => $rid,
-                'points'   => $finalPrice,
-                'rate'     => '50',
-                'origin'   => $origin,
-                'site_id'  => $siteId,
-                'created'  => $nowDateTime
+                'send_uid'   => $uid,
+                'rec_uid'    => $rid,
+                'gid'        => $guardIdToGid[$guardId],
+                'gnum'       => 1,
+                'rid'        => $rid,
+                'points'     => $finalPrice,
+                'rate'       => '50',
+                'origin'     => $origin,
+                'site_id'    => $siteId,
+                'guard_id'   => $userGuardId,
+                'guard_days' => $valid_dayArr[$daysType],
+                'created'    => $nowDateTime
             );
             DB::table('video_mall_list')->insert($sendGiftData);
 
