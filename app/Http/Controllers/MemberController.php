@@ -657,10 +657,10 @@ class MemberController extends Controller
 
         //构建短网址
         //$googleURL = $this->_buildGoogleShortUrl($userUrl);
-        $short_url = $this->_buildWeiboShortUrl($userUrl);
-        $inviteUrl = $short_url ?: $userUrl;
+        // $short_url = $this->_buildWeiboShortUrl($userUrl); // 新浪要收費，早已失效
+        // $inviteUrl = $short_url ?: $userUrl;
 
-        return JsonResponse::create(['status' => 1, 'data' => $inviteUrl]);
+        return JsonResponse::create(['status' => 1, 'data' => $userUrl]);
     }
 
     /**
