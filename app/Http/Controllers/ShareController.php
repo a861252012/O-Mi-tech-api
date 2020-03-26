@@ -17,8 +17,8 @@ class ShareController extends Controller
      * @apiName install_log
      * @apiVersion 1.0.0
      *
-     * @apiParam (Int) origin 來源
-     * @apiParam (Int) site_id 站別ID
+     * @apiParam {Int} origin 來源
+     * @apiParam {Int} site_id 站別ID
      *
      * @apiParamExample {json} Request-Example:
      * {
