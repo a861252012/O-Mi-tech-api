@@ -15,8 +15,8 @@ class UsersRepository
         $this->users = $users;
     }
 
-    public function getUserByUid($uid)
+    public function getUserById($id)
     {
-        return $this->users->find($uid);
+        return $this->users->find($id);
     }
 }

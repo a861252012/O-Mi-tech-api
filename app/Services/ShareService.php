@@ -37,7 +37,7 @@ class ShareService
         $uid = hexdec($data[1]);
 
         /* 檢查UID是否存在 */
-        $user = $this->usersRepository->getUserByUid($uid);
+        $user = $this->usersRepository->getUserById($uid);
         if (empty($user)) {
             return false;
         }
