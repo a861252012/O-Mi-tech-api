@@ -60,7 +60,35 @@ class UserService extends Service
     public function register(array $user, $gift = [], $agent = 0, $invite_code = 0)
     {
         $site_id = SiteSer::siteId();
-        $newUser = Arr::only($user, ['did', 'username', 'password', 'nickname', 'cc_mobile', 'roled', 'exp', 'pop', 'created', 'status', 'province', 'city', 'county', 'video_status', 'rich', 'lv_exp', 'lv_rich', 'pic_total_size', 'pic_used_size', 'lv_type', 'icon_id', 'uuid', 'xtoken', 'origin', 'sex', 'site_id']);
+        $newUser = Arr::only($user, [
+            'did',
+            'username',
+            'password',
+            'nickname',
+            'cc_mobile',
+            'roled',
+            'exp',
+            'pop',
+            'created',
+            'status',
+            'province',
+            'city',
+            'county',
+            'video_status',
+            'rich',
+            'lv_exp',
+            'lv_rich',
+            'pic_total_size',
+            'pic_used_size',
+            'lv_type',
+            'icon_id',
+            'uuid',
+            'xtoken',
+            'origin',
+            'sex',
+            'site_id',
+            'share_uid',
+        ]);
         $newUser['created'] = date('Y-m-d H:i:s');
         $newUser['logined'] = date('Y-m-d H:i:s');
         $newUser['site_id'] = $site_id;

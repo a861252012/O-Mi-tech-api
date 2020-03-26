@@ -1,7 +1,10 @@
 <?php
-
+/**
+ * @apiDefine Api 共用功能
+ */
 namespace App\Http\Controllers;
 
+use App\Services\ShareService;
 use App\Services\Site\SiteService;
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
@@ -52,8 +55,6 @@ use DB;
  */
 class ApiController extends Controller
 {
-
-
     /**
      * [ping 连通测试]
      */
@@ -175,10 +176,116 @@ class ApiController extends Controller
     }
 
     /**
-     * 注册接口
+     * @api {post} /reg 注册接口
+     * @apiGroup Api
+     * @apiName reg
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (m) {Int} use_mobile 是否使用手機(0:否/1:是)
+     * @apiParam (m) {String} cc 國碼
+     * @apiParam (m) {String} mobile 手機
+     * @apiParam (m) {String} code 手機驗證碼
+     * @apiParam {String} captcha 驗證碼
+     * @apiParam {String} username 使用者名稱(使用信箱)
+     * @apiParam {String} nickname 匿稱
+     * @apiParam {String} [agent] 代理網址
+     * @apiParam {String} password1 密碼
+     * @apiParam {String} password2 確認密碼
+     * @apiParam {Int} origin 来源：11 ,12,21,22,31,32，第一位（1网页，2安卓，3IOS，4蜜情 5XO），第二位（1直播间，2前台，3后台）
+     * @apiParam {String} [client] 手機系統(android/ios)
+     *
+     * @apiParamExample {json} Request-Example:
+     * {
+    "use_mobile":1,
+    "cc":"+886",
+    "mobile":"0987654321",
+    "code":"1234",
+    "captcha":"1234",
+    "username":"theman@xxx.com",
+    "nickname":"火星人",
+    "agent":"",
+    "password1":"test123456",
+    "password2":"test123456",
+    "origin":22,
+    "client":"android"
+    }
+     *
+     * @apiError (Error Status) 999 API執行錯誤
+     *
+     * @apiSuccessExample {json} (mobile)成功回應
+     * {
+    "data": {
+    "jwt": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE1ODUyMTUyNzIsImV4cCI6MTYxNjMxOTI3MiwidWlkIjo5NDkzNTQxLCJ1c2VybmFtZSI6InRoZW1hbkB4eHguY29tIn0.HCKmDzUAGpvPGVIdpzPlaMmvPd5azgzFhqDxvg7vfnI",
+    "user": {
+    "uid": 9493541,
+    "did": null,
+    "sid": null,
+    "username": "theman@xxx.com",
+    "password": "4035c9353d0273d9d38aed83a92107c2",
+    "nickname": "火星人",
+    "safemail": null,
+    "cc_mobile": "+8860987654321",
+    "sex": null,
+    "exp": 0,
+    "roled": 0,
+    "description": null,
+    "points": 0,
+    "created": "2020-03-26 17:34:32",
+    "logined": "2020-03-26 17:34:32",
+    "rid": null,
+    "rich": 0,
+    "pop": 0,
+    "status": 1,
+    "vip": 0,
+    "vip_end": null,
+    "province": 0,
+    "city": 0,
+    "county": 0,
+    "video_status": 0,
+    "birthday": null,
+    "headimg": null,
+    "headimg_sagent": null,
+    "lv_exp": 1,
+    "lv_rich": 1,
+    "pic_total_size": 524288000,
+    "pic_used_size": 0,
+    "lv_type": 1,
+    "icon_id": 0,
+    "isedit": 0,
+    "hidden": 0,
+    "transfer": 0,
+    "trade_password": null,
+    "last_play_date": null,
+    "last_ip": null,
+    "first_charge_time": null,
+    "broadcast_type": 0,
+    "show_timecost": 0,
+    "rtmp_ip": null,
+    "safemail_at": null,
+    "uuid": null,
+    "xtoken": null,
+    "origin": 22,
+    "p2p_password": "",
+    "app_key": "",
+    "pwd_change": 1,
+    "cpwd_time": "2020-03-26 09:34:32",
+    "site_id": 1,
+    "update_at": null,
+    "cover": "",
+    "qrcode_image": "",
+    "guard_id": 0,
+    "guard_end": null
+    }
+    },
+    "msg": "",
+    "status": 1
+    }
      */
-    public function reg(Request $request)
+    public function reg(Request $request, $scode = null)
     {
+
+
+
         $regService = resolve(RegService::class);
         $useMobile = $request->post('use_mobile', 0) == '1';
 
@@ -204,10 +311,10 @@ class ApiController extends Controller
                 return $this->msg('对不起, 该手机号已被使用!');
             }
 
-            $result = SmsService::verify(SmsService::ACT_REG, $cc, $mobile, $code);
-            if ($result !== true) {
-                return $this->msg($result);
-            }
+//            $result = SmsService::verify(SmsService::ACT_REG, $cc, $mobile, $code);
+//            if ($result !== true) {
+//                return $this->msg($result);
+//            }
         }
 
         $skipCaptcha = SiteSer::config('skip_captcha_reg');
@@ -299,6 +406,12 @@ class ApiController extends Controller
             ]);
         }
 
+        /* 解碼分享碼 */
+        if (!empty($scode)) {
+            $shareService = resolve(ShareService::class);
+            $shareUid = $shareService->decScode($scode);
+        }
+
         $newUser = [
             'username'       => $username,
             'nickname'       => $nickname,
@@ -307,6 +420,7 @@ class ApiController extends Controller
             'pic_total_size' => 524288000,
             'pic_used_size'  => 0,
             'origin'         => $request->get('origin', 12),
+            'share_uid'      => $shareUid ?? null,
         ];
 
         //跳转过来的
