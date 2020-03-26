@@ -249,3 +249,5 @@ Route::prefix('game')->middleware(['login_auth:mobile'])->group(function () {
 
 /* 安裝資訊紀錄點 */
 Route::post('install_log', 'ShareController@installLog');
+Route::get('share_url', 'ShareController@shareUrl')->middleware(['login_auth:mobile']);
+
