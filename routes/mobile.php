@@ -246,3 +246,6 @@ Route::prefix('game')->middleware(['login_auth:mobile'])->group(function () {
 	Route::get('entry','GameController@entry');
 	Route::post('deposit','GameController@deposit');
 });
+
+/* 安裝資訊紀錄點 */
+Route::post('install_log', 'ShareController@installLog');
