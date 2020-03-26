@@ -67,6 +67,9 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
    //主播列表
     Route::get('video/list/{type}', ['name' => 'm_videolist', 'uses' => 'Mobile\MobileController@videoList']);
 
+    // 用户中心 邀请注册
+    Route::get('/member/invite', ['name' => 'member_invite', 'uses' => 'MemberController@invite']);
+
     /** 获取配置 */
     Route::get('room/{rid}/checkAccess', ['name' => 'm_room_checkAccess', 'uses' => 'Mobile\RoomController@getRoomAccess']);
 

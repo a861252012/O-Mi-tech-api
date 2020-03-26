@@ -56,42 +56,4 @@ class ShareController extends Controller
         }
     }
 
-    /**
-     * @api {get} /share_url 分享網址
-     * @apiGroup Share
-     * @apiName share_url
-     * @apiVersion 1.0.0
-     *
-     * @apiError (Error Status) 999 API執行錯誤
-     *
-     * @apiSuccess {String} url 分享網址
-     *
-     * @apiSuccessExample {json} 成功回應
-     * {
-    "status": "1",
-    "msg": "OK",
-    "data": {
-    "url": "http:\/\/10.2.121.179:81\/126\/static\/landingpage\/10.html?scode=6U90DC24"
-    }
-    }
-     *
-     */
-    public function shareUrl()
-    {
-        try {
-            /* 取得隨機網域 */
-            $domain = $this->shareService->randomDoamin();
-
-            /* 產生分享代碼 */
-            $scode = $this->shareService->genScode(Auth::id());
-
-            $this->setStatus('1', 'OK');
-            $this->setData('url', $domain . '?scode=' . $scode);
-            return $this->jsonOutput();
-        } catch (\Exception $e) {
-            report($e);
-            $this->setStatus('999', 'API執行錯誤');
-            return $this->jsonOutput();
-        }
-    }
 }

@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * 會員中心
+ * @apiDefine Member 會員中心
+ */
 namespace App\Http\Controllers;
 
 use App\Facades\SiteSer;
@@ -36,6 +39,7 @@ use App\Models\WithDrawalList;
 use App\Services\I18n\PhoneNumber;
 use App\Services\Message\MessageService;
 use App\Services\Room\RoomService;
+use App\Services\ShareService;
 use App\Services\Sms\SmsService;
 use App\Services\System\SystemService;
 use App\Services\User\UserService;
@@ -162,6 +166,13 @@ class MemberController extends Controller
             'name' => '代理数据',
         ],
     ];
+
+    protected $shareService;
+
+    public function __construct(ShareService $shareService)
+    {
+        $this->shareService = $shareService;
+    }
 
     public function getMenu()
     {
@@ -646,21 +657,46 @@ class MemberController extends Controller
 
     /**
      * 用户中心 邀请推广
+     * @api {get} /member/invite 分享網址
+     * @apiGroup Member
+     * @apiName invite
+     * @apiVersion 1.0.0
+     *
+     * @apiError (Error Status) 999 API執行錯誤
+     *
+     * @apiSuccess {String} url 分享網址
+     * @apiSuccess {String} title
+     *
+     * @apiSuccessExample {json} 成功回應
+     * {
+    "status": "1",
+    "msg": "OK",
+    "data": {
+    "url": "http:\/\/10.2.121.179:81\/126\/static\/landingpage\/6.html?scode=6U90DC24",
+    "title": "第一坊全球最大成人直播平台。"
+    }
+    }
      */
     public function invite()
     {
-        //获取用户ID
-        $uid = Auth::id();
+        try {
+            /* 取得隨機網域 */
+            $domain = $this->shareService->randomDoamin();
 
-        //组装推广网址
-        $userUrl = rtrim($this->make('request')->getSchemeAndHttpHost(), '/') . '/?u=' . $uid;
+            /* 產生分享代碼 */
+            $scode = $this->shareService->genScode(Auth::id());
 
-        //构建短网址
-        //$googleURL = $this->_buildGoogleShortUrl($userUrl);
-        // $short_url = $this->_buildWeiboShortUrl($userUrl); // 新浪要收費，早已失效
-        // $inviteUrl = $short_url ?: $userUrl;
+            $title = SiteSer::siteConfig('name', SiteSer::siteId()) . '全球最大成人直播平台。';
 
-        return JsonResponse::create(['status' => 1, 'data' => $userUrl]);
+            $this->setStatus('1', 'OK');
+            $this->setData('url', $domain . '?scode=' . $scode);
+            $this->setData('title', $title);
+            return $this->jsonOutput();
+        } catch (\Exception $e) {
+            report($e);
+            $this->setStatus('999', 'API執行錯誤');
+            return $this->jsonOutput();
+        }
     }
 
     /**
