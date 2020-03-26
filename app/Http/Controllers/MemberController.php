@@ -665,16 +665,14 @@ class MemberController extends Controller
      * @apiError (Error Status) 999 API執行錯誤
      *
      * @apiSuccess {String} url 分享網址
-     * @apiSuccess {String} title
+     * @apiSuccess {String} title 標題
      *
      * @apiSuccessExample {json} 成功回應
      * {
     "status": "1",
     "msg": "OK",
-    "data": {
-    "url": "http:\/\/10.2.121.179:81\/126\/static\/landingpage\/6.html?scode=6U90DC24",
+    "data": "http:\/\/10.2.121.179:81\/126\/static\/landingpage\/8.html?scode=6U90DC24",
     "title": "第一坊全球最大成人直播平台。"
-    }
     }
      */
     public function invite()
@@ -689,8 +687,8 @@ class MemberController extends Controller
             $title = SiteSer::siteConfig('name', SiteSer::siteId()) . '全球最大成人直播平台。';
 
             $this->setStatus('1', 'OK');
-            $this->setData('url', $domain . '?scode=' . $scode);
-            $this->setData('title', $title);
+            $this->setRootData('data', $domain . '?scode=' . $scode);
+            $this->setRootData('title', $title);
             return $this->jsonOutput();
         } catch (\Exception $e) {
             report($e);
