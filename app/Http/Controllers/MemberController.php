@@ -669,7 +669,7 @@ class MemberController extends Controller
      *
      * @apiSuccessExample {json} 成功回應
      * {
-    "status": "1",
+    "status": 1,
     "msg": "OK",
     "data": "http:\/\/10.2.121.179:81\/126\/static\/landingpage\/8.html?scode=6U90DC24",
     "title": "第一坊全球最大成人直播平台。"
