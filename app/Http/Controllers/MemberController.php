@@ -686,7 +686,7 @@ class MemberController extends Controller
 
             $title = SiteSer::siteConfig('name', SiteSer::siteId()) . '全球最大成人直播平台。';
 
-            $this->setStatus('1', 'OK');
+            $this->setStatus(1, 'OK');
             $this->setRootData('data', $domain . '?scode=' . $scode);
             $this->setRootData('title', $title);
             return $this->jsonOutput();
