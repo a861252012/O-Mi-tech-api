@@ -11,13 +11,12 @@ class RegController extends Controller
     public function nickname()
     {
         $regService = resolve(RegService::class);
-        $randomNickname = $regService->randomNickname();
         $status = $regService->status();
 
         $resp = [
             'status' => 1,
             'data' => [
-                'nickname' => $randomNickname,
+                'nickname' => '',
                 'reg_status' => $status,
             ],
         ];
