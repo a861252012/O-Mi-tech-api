@@ -44,9 +44,11 @@ class ShareController extends Controller
     "data": {}
     }
      */
-    public function installLog()
+    public function installLog(Request $request)
     {
         try {
+            $this->shareService->addInstallLog($request->origin, $request->site_id);
+
             $this->setStatus('1','OK');
             return $this->jsonOutput();
         } catch (\Exception $e) {

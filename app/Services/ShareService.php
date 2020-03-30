@@ -10,15 +10,29 @@ namespace App\Services;
 
 
 use App\Facades\SiteSer;
+use App\Repositories\InstallLogRepository;
 use App\Repositories\UsersRepository;
 
 class ShareService
 {
+    protected $installLogRepository;
     protected $usersRepository;
 
-    public function __construct(UsersRepository $usersRepository)
+
+    public function __construct(InstallLogRepository $installLogRepository, UsersRepository $usersRepository)
     {
+        $this->installLogRepository = $installLogRepository;
         $this->usersRepository = $usersRepository;
+    }
+
+    /* 新增安裝資訊紀錄 */
+    public function addInstallLog($origin, $siteId)
+    {
+        return $this->installLogRepository->insertLog([
+            'origin'    => $origin,
+            'site_id'   => $siteId,
+            'sign_date' => date('Y-m-d')
+        ]);
     }
 
     /* 產生分享碼 */
@@ -58,4 +72,6 @@ class ShareService
         $domains = collect(explode(PHP_EOL, SiteSer::siteConfig('vdomain_list', SiteSer::siteId())));
         return $domains->random();
     }
+
+
 }
