@@ -284,6 +284,7 @@ class ApiController extends Controller
     public function reg(Request $request, $scode = null)
     {
         $regService = resolve(RegService::class);
+        $shareService = resolve(ShareService::class);
         $useMobile = $request->post('use_mobile', 0) == '1';
 
         $status = $regService->status();
@@ -405,7 +406,6 @@ class ApiController extends Controller
 
         /* 解碼分享碼 */
         if (!empty($scode)) {
-            $shareService = resolve(ShareService::class);
             $shareUid = $shareService->decScode($scode);
         }
 
