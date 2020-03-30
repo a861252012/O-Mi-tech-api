@@ -7,6 +7,7 @@
  */
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Share\ShareInstallLog;
 use App\Services\ShareService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,7 +45,7 @@ class ShareController extends Controller
     "data": {}
     }
      */
-    public function installLog(Request $request)
+    public function installLog(ShareInstallLog $request)
     {
         try {
             $this->shareService->addInstallLog($request->origin, $request->site_id);

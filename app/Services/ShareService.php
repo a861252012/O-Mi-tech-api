@@ -69,9 +69,7 @@ class ShareService
     /* 随機取得域名 */
     public function randomDoamin()
     {
-        $domains = collect(explode(PHP_EOL, SiteSer::siteConfig('vdomain_list', SiteSer::siteId())));
+        $domains = collect(explode(PHP_EOL, SiteSer::siteConfig('vlanding_urls', SiteSer::siteId())));
         return $domains->random();
     }
-
-
 }
