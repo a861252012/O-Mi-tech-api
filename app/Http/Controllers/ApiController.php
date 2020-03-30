@@ -176,11 +176,12 @@ class ApiController extends Controller
     }
 
     /**
-     * @api {post} /reg 注册接口
+     * @api {post} /reg/:scode 注册接口
      * @apiGroup Api
      * @apiName reg
      * @apiVersion 1.0.0
      *
+     * @apiParam {String} [scode] 分享代碼
      * @apiParam (m) {Int} use_mobile 是否使用手機(0:否/1:是)
      * @apiParam (m) {String} cc 國碼
      * @apiParam (m) {String} mobile 手機
@@ -195,6 +196,8 @@ class ApiController extends Controller
      * @apiParam {String} [client] 手機系統(android/ios)
      *
      * @apiParamExample {json} Request-Example:
+     * /api/reg/6U90DC24
+     *
      * {
     "use_mobile":1,
     "cc":"+886",
