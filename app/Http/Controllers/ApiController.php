@@ -407,6 +407,7 @@ class ApiController extends Controller
         /* 解碼分享碼 */
         if (!empty($scode)) {
             $shareUid = $shareService->decScode($scode);
+            info('分享碼解碼結果: ' . $shareUid);
         }
 
         $newUser = [
@@ -437,8 +438,16 @@ class ApiController extends Controller
         $this->checkAgent($uid);
 
         /* 新增用戶推廣清單資訊 */
-        $shareId = $shareService->addUserShare($uid, $shareUid, $domaid->agent->id, $domaid->agent->nickname, $request->get('client'), $cc_mobile);
-
+        if (!empty($scode)) {
+            $shareId = $shareService->addUserShare(
+                $uid,
+                $shareUid,
+                $domaid->agent->id,
+                $domaid->agent->nickname,
+                $request->get('client'),
+                $cc_mobile
+            );
+        }
 
         // 此时调用的是单实例登录的session 验证
         $guard = null;
