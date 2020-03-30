@@ -46,4 +46,9 @@ class Users extends Authenticatable
     {
         return $this->roled == 3;
     }
+
+    public function userShare()
+    {
+        return $this->hasMany('App\Entities\UserShare', 'share_uid', 'uid');
+    }
 }

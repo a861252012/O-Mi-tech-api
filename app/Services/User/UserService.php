@@ -13,6 +13,7 @@ use App\Models\UserGroupPermission;
 use App\Models\UserModNickName;
 use App\Models\Users;
 use App\Services\Service;
+use App\Services\ShareService;
 use App\Services\UserGroup\UserGroupService;
 use App\Services\User\RegService;
 use DB;
@@ -1135,6 +1136,12 @@ class UserService extends Service
             'cc_mobile' => $cc_mobile,
         ];
         $this->updateUserInfo($uid, $data);
+
+        /* 用戶推廣功能第一次綁定手機更新清單狀態 */
+        if (empty($user->cc_mobile)) {
+            $shareService = resolve(ShareService::class);
+            info('用戶推廣更新綁定手機: ' . $shareService->modifyUserShare($user->id, ['is_mobile_match' => 1, 'match_date' => date('Y-m-d')]));
+        }
 
         Redis::hset(self::KEY_CC_MOBILE_TO_ID .':'. $site_id, $cc_mobile, $uid);
     }

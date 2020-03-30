@@ -3156,6 +3156,7 @@ class MemberController extends Controller
 
         $userService = resolve(UserService::class);
         $userService->modifyMobile(Auth::user(), $cc.$mobile);
+
         return $this->msg('修改成功', 1);
     }
 

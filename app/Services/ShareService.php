@@ -11,18 +11,24 @@ namespace App\Services;
 
 use App\Facades\SiteSer;
 use App\Repositories\InstallLogRepository;
+use App\Repositories\UserShareRepository;
 use App\Repositories\UsersRepository;
 
 class ShareService
 {
     protected $installLogRepository;
     protected $usersRepository;
+    protected $userShareRepository;
 
 
-    public function __construct(InstallLogRepository $installLogRepository, UsersRepository $usersRepository)
-    {
+    public function __construct(
+        InstallLogRepository $installLogRepository,
+        UsersRepository $usersRepository,
+        UserShareRepository $userShareRepository
+    ) {
         $this->installLogRepository = $installLogRepository;
         $this->usersRepository = $usersRepository;
+        $this->userShareRepository = $userShareRepository;
     }
 
     /* 新增安裝資訊紀錄 */
@@ -64,6 +70,33 @@ class ShareService
         }
 
         return false;
+    }
+
+    /* 新增用戶推廣清單資訊 */
+    public function addUserShare($uid, $shareUid, $aid = null, $agentName = null, $client = null, $ccMobile = null)
+    {
+        $now = date('Y-m-d');
+
+        $data = [
+            'reg_date'   => $now,
+            'uid'        => $uid,
+            'share_uid'  => $shareUid,
+            'aid'        => $aid ?? '',
+            'agent_name' => $agentName ?? '',
+            'platform'   => in_array($client, ['android', 'ios']) ? 'mobile' : 'web',
+        ];
+
+        if (!empty($ccMobile)) {
+            $data ['is_mobile_match'] = 1;
+            $data ['match_date'] = $now;
+        }
+
+        return $this->userShareRepository->insertData($data);
+    }
+
+    public function modifyUserShare($uid, $data)
+    {
+        return $this->userShareRepository->updateDataByUid($uid, $data);
     }
 
     /* 随機取得域名 */

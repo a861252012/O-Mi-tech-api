@@ -283,9 +283,6 @@ class ApiController extends Controller
      */
     public function reg(Request $request, $scode = null)
     {
-
-
-
         $regService = resolve(RegService::class);
         $useMobile = $request->post('use_mobile', 0) == '1';
 
@@ -317,14 +314,14 @@ class ApiController extends Controller
 //            }
         }
 
-        $skipCaptcha = SiteSer::config('skip_captcha_reg');
-        $needCaptcha = !$skipCaptcha && $status == RegService::STATUS_NEED_CAPTCHA;
-        if (!$useMobile && $needCaptcha && !Captcha::check($request->get('captcha'))) {
-            return JsonResponse::create([
-                "status" => 0,
-                "msg"    => "验证码错误!",
-            ]);
-        }
+//        $skipCaptcha = SiteSer::config('skip_captcha_reg');
+//        $needCaptcha = !$skipCaptcha && $status == RegService::STATUS_NEED_CAPTCHA;
+//        if (!$useMobile && $needCaptcha && !Captcha::check($request->get('captcha'))) {
+//            return JsonResponse::create([
+//                "status" => 0,
+//                "msg"    => "验证码错误!",
+//            ]);
+//        }
 
         $username = $request->get('username');
         if (empty($username)) {
@@ -438,6 +435,11 @@ class ApiController extends Controller
         $user = Users::find($uid);
 
         $this->checkAgent($uid);
+
+        /* 新增用戶推廣清單資訊 */
+        $shareId = $shareService->addUserShare($uid, $shareUid, $domaid->agent->id, $domaid->agent->nickname, $request->get('client'), $cc_mobile);
+
+
         // 此时调用的是单实例登录的session 验证
         $guard = null;
         if ($request->route()->getName() === 'm_reg' || $request->has('client') && in_array(strtolower($request->get('client')),
