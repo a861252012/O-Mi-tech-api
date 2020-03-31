@@ -312,20 +312,20 @@ class ApiController extends Controller
                 return $this->msg('对不起, 该手机号已被使用!');
             }
 
-//            $result = SmsService::verify(SmsService::ACT_REG, $cc, $mobile, $code);
-//            if ($result !== true) {
-//                return $this->msg($result);
-//            }
+            $result = SmsService::verify(SmsService::ACT_REG, $cc, $mobile, $code);
+            if ($result !== true) {
+                return $this->msg($result);
+            }
         }
-//
-//        $skipCaptcha = SiteSer::config('skip_captcha_reg');
-//        $needCaptcha = !$skipCaptcha && $status == RegService::STATUS_NEED_CAPTCHA;
-//        if (!$useMobile && $needCaptcha && !Captcha::check($request->get('captcha'))) {
-//            return JsonResponse::create([
-//                "status" => 0,
-//                "msg"    => "验证码错误!",
-//            ]);
-//        }
+
+        $skipCaptcha = SiteSer::config('skip_captcha_reg');
+        $needCaptcha = !$skipCaptcha && $status == RegService::STATUS_NEED_CAPTCHA;
+        if (!$useMobile && $needCaptcha && !Captcha::check($request->get('captcha'))) {
+            return JsonResponse::create([
+                "status" => 0,
+                "msg"    => "验证码错误!",
+            ]);
+        }
 
         $username = $request->get('username');
         if (empty($username)) {
