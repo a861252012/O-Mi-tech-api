@@ -2,6 +2,7 @@
 
 namespace App\Services\User;
 
+use App\Events\ShareUser;
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
 use App\Models\Agents;
@@ -1141,6 +1142,9 @@ class UserService extends Service
         if (empty($user->cc_mobile) && !empty($user->share_uid)) {
             $shareService = resolve(ShareService::class);
             info('用戶推廣更新綁定手機: ' . $shareService->modifyUserShare($user->id, ['is_mobile_match' => 1, 'match_date' => date('Y-m-d')]));
+
+            /* 全民代理推廣事件 */
+            event(new ShareUser($user));
         }
 
         Redis::hset(self::KEY_CC_MOBILE_TO_ID .':'. $site_id, $cc_mobile, $uid);
