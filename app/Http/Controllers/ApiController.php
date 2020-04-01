@@ -421,7 +421,6 @@ class ApiController extends Controller
             'pic_total_size' => 524288000,
             'pic_used_size'  => 0,
             'origin'         => $request->get('origin', 12),
-            'share_uid'      => $shareUid ?? null,
         ];
 
         //跳转过来的
