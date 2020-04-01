@@ -13,6 +13,12 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
+        'App\Events\ShareUser' => [
+            'App\Listeners\ShareReward',
+            'App\Listeners\ShareRewardNotification',
+        ],
+
+
         'App\Events\Event' => [
             'App\Listeners\EventListener',
         ],
