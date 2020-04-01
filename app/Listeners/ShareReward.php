@@ -9,6 +9,7 @@ namespace App\Listeners;
 use App\Entities\UserShare;
 use App\Events\ShareUser;
 use App\Models\Users;
+use App\Services\User\UserService;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
@@ -16,14 +17,16 @@ class ShareReward
 {
     const REWARD_POINTS = 5;
 
+    protected $userService;
+
     /**
      * Create the event listener.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(UserService $userService)
     {
-        //
+        $this->userService = $userService;
     }
 
     /**
@@ -35,9 +38,8 @@ class ShareReward
     public function handle(ShareUser $event)
     {
         $user  = UserShare::where('uid', $event->user->uid)->first();
-        $share = Users::find($user->share_uid);
-        $share->points += self::REWARD_POINTS;
-        $share->save();
+        $points = $this->userService->getUserInfo($user->share_uid, 'points');
+        $this->userService->updateUserInfo($user->share_uid, ['points' => $points + self::REWARD_POINTS]);
 
         info($user->share_uid . " 推廣用戶獲得推廣獎勵 " . self::REWARD_POINTS . ' 鑽');
     }
