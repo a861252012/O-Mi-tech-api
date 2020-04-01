@@ -330,7 +330,7 @@ class ApiController extends Controller
 
         $username = $request->get('username');
         if (empty($username)) {
-            $username = $regService->randomEmail();;
+            $username = $regService->randomEmail();
         } else {
             if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/',
                     $username) || strlen($username) < 5 || strlen($username) > 30) {
