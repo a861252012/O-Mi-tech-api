@@ -2,6 +2,7 @@
 
 namespace App\Services\User;
 
+use App\Entities\UserShare;
 use App\Events\ShareUser;
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
@@ -1139,7 +1140,7 @@ class UserService extends Service
         $this->updateUserInfo($uid, $data);
 
         /* 用戶推廣功能第一次綁定手機更新清單狀態 */
-        if (empty($user->cc_mobile) && !empty($user->share_uid)) {
+        if (empty($user->cc_mobile) && !empty(UserShare::where('uid', $uid)->first())) {
             $shareService = resolve(ShareService::class);
             info('用戶推廣更新綁定手機: ' . $shareService->modifyUserShare($user->id, ['is_mobile_match' => 1, 'match_date' => date('Y-m-d')]));
 

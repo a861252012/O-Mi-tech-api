@@ -492,7 +492,7 @@ class ApiController extends Controller
         }
 
         /* 全民代理推廣事件 */
-        if (!empty($cc_mobile) && !empty($user)) {
+        if (!empty($cc_mobile) && !empty($shareUser) && !empty($user)) {
             event(new ShareUser($user));
         }
 
