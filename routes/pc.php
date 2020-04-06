@@ -187,7 +187,7 @@ Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@c
 Route::get('/api/downrtmp', 'ApiController@getDownRtmp')->name('downrtmp');
 
 // reg
-Route::post('/reg', 'ApiController@reg')->name('api_reg');
+Route::post('/reg/{scode?}', 'ApiController@reg')->name('api_reg');
 // reg suggest nickname
 Route::get('/reg/nickname', 'RegController@nickname')->name('reg_nickname');
 // PageController

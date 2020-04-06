@@ -46,4 +46,14 @@ class Users extends Authenticatable
     {
         return $this->roled == 3;
     }
+
+    public function userShare()
+    {
+        return $this->hasMany('App\Entities\UserShare', 'share_uid', 'uid');
+    }
+
+    public function agentRel()
+    {
+        return $this->hasOne('App\Entities\AgentRelationship', 'uid', 'uid');
+    }
 }

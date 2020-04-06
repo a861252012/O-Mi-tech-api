@@ -9,7 +9,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('/login/test', 'Mobile\MobileController@logintest');
 });
 // reg
-Route::post('reg','ApiController@reg')->name('m_reg')->middleware('mobile.session');
+Route::post('reg/{scode?}','ApiController@reg')->name('m_reg')->middleware('mobile.session');
 // reg suggest nickname
 Route::get('/reg/nickname', 'RegController@nickname')->name('m_reg_nickname');
 //登录
@@ -66,6 +66,9 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('sliderlist', ['name' => 'm_sliderlist', 'uses' => 'Mobile\MobileController@sliderList']);
    //主播列表
     Route::get('video/list/{type}', ['name' => 'm_videolist', 'uses' => 'Mobile\MobileController@videoList']);
+
+    // 用户中心 邀请注册
+    Route::get('/member/invite', ['name' => 'member_invite', 'uses' => 'MemberController@invite']);
 
     /** 获取配置 */
     Route::get('room/{rid}/checkAccess', ['name' => 'm_room_checkAccess', 'uses' => 'Mobile\RoomController@getRoomAccess']);
@@ -246,3 +249,8 @@ Route::prefix('game')->middleware(['login_auth:mobile'])->group(function () {
 	Route::get('entry','GameController@entry');
 	Route::post('deposit','GameController@deposit');
 });
+
+/* 安裝資訊紀錄點 */
+Route::post('install_log', 'ShareController@installLog');
+Route::get('share_url', 'ShareController@shareUrl')->middleware(['login_auth:mobile']);
+
