@@ -437,7 +437,7 @@ class ApiController extends Controller
         /* 如有推廣人則取得推廣人之aid */
         if (!empty($shareUid)) {
             $shareUser = Users::find($shareUid);
-            $newUser['aid'] = $shareUser->agent->aid;
+            $newUser['aid'] = $shareUser->agentRel->aid;
         }
 
         $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
