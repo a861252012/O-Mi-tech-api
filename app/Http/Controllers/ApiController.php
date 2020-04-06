@@ -290,6 +290,7 @@ class ApiController extends Controller
         $regService = resolve(RegService::class);
         $shareService = resolve(ShareService::class);
         $useMobile = $request->post('use_mobile', 0) == '1';
+        $scode = $request->scode ?? $scode;
 
         $status = $regService->status();
         if ($status == RegService::STATUS_BLOCK) {
