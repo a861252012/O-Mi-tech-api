@@ -434,7 +434,7 @@ class ApiController extends Controller
         }
 
         /* 如有推廣人則取得推廣人之aid */
-        if (!empty($scode)) {
+        if (!empty($shareUid)) {
             $shareUser = Users::find($shareUid);
             $newUser['aid'] = $shareUser->agent->aid;
         }
@@ -448,7 +448,7 @@ class ApiController extends Controller
         $this->checkAgent($uid);
 
         /* 新增用戶推廣清單資訊 */
-        if (!empty($scode)) {
+        if (!empty($shareUid)) {
             $shareId = $shareService->addUserShare(
                 $uid,
                 $shareUid,
