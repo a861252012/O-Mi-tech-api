@@ -24,6 +24,11 @@ use DB;
 
 class GuardianController extends Controller
 {
+    const VALID_DAY_ARR = array(1 => 30, 2 => 90, 3 => 365);
+    const GUARDIAN_GIFT_ID = array(1 => 700004, 2 => 700005, 3 => 700006);
+    const PAY_TYPE_CH = array(1 => '开通成功', 2 => '续费成功');
+    const PAY_TYPE_EN = array(1 => 'activate', 2 => 'renewal');
+
     protected $guardianService;
 
     public function __construct(GuardianService $guardianService)
@@ -282,28 +287,17 @@ class GuardianController extends Controller
 
     public function buy(GuardianBuy $request)
     {
-        $uid = Auth::id();
         $user = Auth::user();
-        $userGuardId = $user->guard_id;
-        $userPoints = $user->points;
-        $userRich = $user->rich;
-        $userGuardEnd = $user->guard_end;
         $rid = $request->rid ?? 0;
         $guardId = $request->guardId;
         $payType = $request->payType;
         $daysType = $request->daysType;
-        $origin = Auth::user()->origin;
         $now = Carbon::now();
         $nowDate = $now->copy()->toDateString();
-        $currentYM  = $now->copy()->format('Ym');
+        $currentYM = $now->copy()->format('Ym');
         $currentYMD = $now->copy()->format('Ymd');
         $nowDateTime = Carbon::now()->copy()->toDateTimeString();
         $siteId = SiteSer::siteId();
-        $valid_dayArr = array(1 => 30, 2 => 90, 3 => 365);
-        $guardIdToGid = array(1 => 700004, 2 => 700005, 3 => 700006);
-        $payTypeName = array(1 => '开通成功', 2 => '续费成功');
-        $payTypeArr = array(1 => 'activate', 2 => 'renewal');
-        $guardIdToName = array(1 => '黄色守护', 2 => '紫色守护', 3 => '黑色守护');
         $defaultImg = array(
             1 => 'c62e026d074d331bb98be8a63b4f5303',
             2 => '7628eb77abb956b94d5fdf75427c1b1b',
@@ -313,15 +307,16 @@ class GuardianController extends Controller
         try {
             DB::beginTransaction();
 
+            $guardName = $this->guardianService->getSetting()->pluck('name', 'id');
+
             //取得守護設定價格
-            $key = $payTypeArr[$payType] . '_' . $valid_dayArr[$daysType];
+            $key = self::PAY_TYPE_EN[$payType] . '_' . self::VALID_DAY_ARR[$daysType];
             $saleKey = $key . '_sale';
             $getSalePrice = Redis::hGet('hguardian_info:' . $guardId, $saleKey);
             $getPrice = Redis::hget('hguardian_info:' . $guardId, $key);
-
             //檢核方案是否有開啟
             if (!$getPrice) {
-                $this->setStatus(101, '守护系统' . $valid_dayArr[$daysType] . '天方案未啟用');
+                $this->setStatus(101, '守护系统' . self::VALID_DAY_ARR[$daysType] . '天方案未啟用');
                 return $this->jsonOutput();
             }
 
@@ -333,23 +328,27 @@ class GuardianController extends Controller
             }
 
             //5.檢核用戶鑽石是否足夠，不足返回資訊，看前端需不需要跳到充值頁
-            if (!($userPoints >= $finalPrice)) {
+            if (!($user->points >= $finalPrice)) {
                 $this->setStatus(102, '您的钻石不足');
                 return $this->jsonOutput();
             }
 
             //6.檢核續費還是新開通，是否有符合規定
-            if ($userGuardEnd >= $now) {//如有開通且未過期
-                if ($userGuardId > $guardId) {
+            if ($user->guard_end >= $now) {//如有開通且未過期
+                if ($user->guard_id > $guardId) {
                     $this->setStatus(103, '您现在的级别已大於您要开通/续费的等级');
                     return $this->jsonOutput();
-                } else if ($userGuardId == $guardId && $payType != 2) {
-                    $this->setStatus(104, '您已开通该级别守护，仅能续费该守护等级');
-                    return $this->jsonOutput();
-                } else if ($userGuardId < $guardId && $payType != 1) {
-                    //(原守護等級 < 開通/續約等級 && 不是新開通)
-                    $this->setStatus(105, '您尚未开通该级别守护，无法续费');
-                    return $this->jsonOutput();
+                } else {
+                    if ($user->guard_id == $guardId && $payType != 2) {
+                        $this->setStatus(104, '您已开通该级别守护，仅能续费该守护等级');
+                        return $this->jsonOutput();
+                    } else {
+                        if ($user->guard_id < $guardId && $payType != 1) {
+                            //(原守護等級 < 開通/續約等級 && 不是新開通)
+                            $this->setStatus(105, '您尚未开通该级别守护，无法续费');
+                            return $this->jsonOutput();
+                        }
+                    }
                 }
             } else {
                 if ($payType == 2) {
@@ -365,26 +364,26 @@ class GuardianController extends Controller
                 $headimg = $defaultImg[$guardId];
             }
             //計算守護到期日
-            if (!$userGuardEnd) {
-                $guardEndTime = $now->copy()->addDays($valid_dayArr[$daysType]);
+            if (!$user->guard_end) {
+                $guardEndTime = $now->copy()->addDays(self::VALID_DAY_ARR[$daysType]);
             } else {
-                if ($userGuardEnd >= $nowDate) {
+                if ($user->guard_end >= $nowDate) {
                     if ($payType == 1) {
-                        $guardEndTime = Carbon::parse($userGuardEnd)->copy()->addDays($valid_dayArr[$daysType]);
+                        $guardEndTime = Carbon::parse($user->guard_end)->copy()->addDays(self::VALID_DAY_ARR[$daysType]);
                     } else {
-                        $guardEndTime = Carbon::parse($userGuardEnd)->copy()->subDay()->addDays($valid_dayArr[$daysType]);
+                        $guardEndTime = Carbon::parse($user->guard_end)->copy()->subDay()->addDays(self::VALID_DAY_ARR[$daysType]);
                     }
                 } else {
-                    $guardEndTime = $now->copy()->addDays($valid_dayArr[$daysType]);
+                    $guardEndTime = $now->copy()->addDays(self::VALID_DAY_ARR[$daysType]);
                 }
             }
 
             //3.新增守護記錄
             $guardianRecordArr = array(
-                'uid'         => $uid,
+                'uid'         => $user->uid,
                 'rid'         => $rid,
                 'pay_date'    => $now->copy()->toDateString(),
-                'valid_day'   => $valid_dayArr[$daysType],
+                'valid_day'   => self::VALID_DAY_ARR[$daysType],
                 'price'       => $getPrice,
                 'sale'        => $getSalePrice,
                 'pay'         => $finalPrice,
@@ -401,15 +400,15 @@ class GuardianController extends Controller
             DB::table('video_guardian')->insert($guardianRecordArr);
 
             //4.異動用戶資料
-            $u['points'] = ($userPoints - $finalPrice); // 扣除鑽石後的餘額
-            $u['rich'] = ($userRich + $finalPrice); // 增加用戶財富經驗值
+            $u['points'] = ($user->points - $finalPrice); // 扣除鑽石後的餘額
+            $u['rich'] = ($user->rich + $finalPrice); // 增加用戶財富經驗值
             $u['lv_rich'] = $this->guardianService->getRichLv($u['rich']); // 計算用戶財富新等級
             $u['guard_id'] = $guardId; // 開通守護等級
             $u['guard_end'] = $guardEndTime->copy()->toDateString(); // 守護到期日
             $u['headimg'] = $headimg;
             $u['update_at'] = $nowDateTime;
 
-            DB::table('video_user')->where('uid', $uid)
+            DB::table('video_user')->where('uid', $user->uid)
                 ->update($u);
 
             //4.異動主播資料
@@ -426,17 +425,17 @@ class GuardianController extends Controller
 
             //5.新增送禮紀錄
             $sendGiftData = array(
-                'send_uid'   => $uid,
+                'send_uid'   => $user->uid,
                 'rec_uid'    => $rid,
-                'gid'        => $guardIdToGid[$guardId],
+                'gid'        => self::GUARDIAN_GIFT_ID[$guardId],
                 'gnum'       => 1,
                 'rid'        => $rid,
                 'points'     => $finalPrice,
                 'rate'       => '50',
-                'origin'     => $origin,
+                'origin'     => Auth::user()->origin,
                 'site_id'    => $siteId,
-                'guard_id'   => $userGuardId,
-                'guard_days' => $valid_dayArr[$daysType],
+                'guard_id'   => $user->guard_id,
+                'guard_days' => self::VALID_DAY_ARR[$daysType],
                 'created'    => $nowDateTime
             );
             DB::table('video_mall_list')->insert($sendGiftData);
@@ -446,8 +445,8 @@ class GuardianController extends Controller
             $message = [
                 'category'  => 2,
                 'mail_type' => 3,
-                'rec_uid'   => $uid,
-                'content'   => '守护开通成功提醒：您已成功开通' . $guardIdToName[$guardId] . ',到期日： ' . $expireMsgDate
+                'rec_uid'   => $user->uid,
+                'content'   => '守护开通成功提醒：您已成功开通' . $guardName[$guardId] . ',到期日： ' . $expireMsgDate
             ];
 
             $messageService = resolve(MessageService::class);
@@ -461,36 +460,36 @@ class GuardianController extends Controller
             DB::rollback();
 
             Log::error($e->getMessage());
-            $this->setStatus(999, '开通守护執行失敗');
+            $this->setStatus(999, $e->getMessage());
             return $this->jsonOutput();
         }
 
         //redis
         //異動用戶資料
-        $CheckUser =  Redis::exists('huser_info:' . $uid);
+        $CheckUser = Redis::exists('huser_info:' . $user->uid);
 
         if (!$CheckUser) {
-            $userInfo = Users::where('uid', $uid)->first()->toArray();
-            Redis::hMSet('huser_info:' . $uid, $userInfo);
-            Redis::expire('huser_info:' . $uid, 216000);
+            $userInfo = Users::where('uid', $user->uid)->first()->toArray();
+            Redis::hMSet('huser_info:' . $user->uid, $userInfo);
+            Redis::expire('huser_info:' . $user->uid, 216000);
         }
 
-        Redis::hMSet('huser_info:' . $uid, $u);
+        Redis::hMSet('huser_info:' . $user->uid, $u);
 
         //4. if(用戶守護不是第一次開通，且開通等級比上一次大)
-        if ($guardId > $userGuardId && $payType == 1) {
-            Redis::del('sguardian_chat_interval:' . $uid);
-            Redis::del('sguardian_rename_' . $currentYM . ':' . $uid);
-            Redis::del('sguardian_feiping_' . $currentYM . ':' . $uid);
-            Redis::del('sguardian_forbid_' . $currentYMD . ':' . $uid);
-            Redis::del('sguardian_kick_' . $currentYMD . ':' . $uid);
+        if ($guardId > $user->guard_id && $payType == 1) {
+            Redis::del('sguardian_chat_interval:' . $user->uid);
+            Redis::del('sguardian_rename_' . $currentYM . ':' . $user->uid);
+            Redis::del('sguardian_feiping_' . $currentYM . ':' . $user->uid);
+            Redis::del('sguardian_forbid_' . $currentYMD . ':' . $user->uid);
+            Redis::del('sguardian_kick_' . $currentYMD . ':' . $user->uid);
         }
 
         //5. 更新個人排行榜資訊
-        Redis::zIncrBy('zrank_rich_day:' . $siteId, $finalPrice, $uid);
-        Redis::zIncrBy('zrank_rich_week:' . $siteId, $finalPrice, $uid);
-        Redis::zIncrBy('zrank_rich_month:' . $currentYM . ':' . $siteId, $finalPrice, $uid);
-        Redis::zIncrBy('zrank_rich_history:' . $siteId, $finalPrice, $uid);
+        Redis::zIncrBy('zrank_rich_day:' . $siteId, $finalPrice, $user->uid);
+        Redis::zIncrBy('zrank_rich_week:' . $siteId, $finalPrice, $user->uid);
+        Redis::zIncrBy('zrank_rich_month:' . $currentYM . ':' . $siteId, $finalPrice, $user->uid);
+        Redis::zIncrBy('zrank_rich_history:' . $siteId, $finalPrice, $user->uid);
 
         if ($rid) {
             //異動主播資料
@@ -502,19 +501,20 @@ class GuardianController extends Controller
             $diffWithTomorrow = $now->copy()->diffInSeconds($now->copy()->tomorrow());
 
             //判斷是否新增白名單或是累積單場消費紀錄
-            if (Redis::exists('hroom_whitelist_key:' . $uid)) {
-                $whiteListKey = Redis::SMEMBERS('hroom_whitelist_key:' . $uid);
+            if (Redis::exists('hroom_whitelist_key:' . $user->uid)) {
+                $whiteListKey = Redis::SMEMBERS('hroom_whitelist_key:' . $user->uid);
 
-                $oneToMorePrice = Redis::hget('hroom_whitelist:' . $uid . ':' . $whiteListKey[0], 'points');
+                $oneToMorePrice = Redis::hget('hroom_whitelist:' . $user->uid . ':' . $whiteListKey[0], 'points');
 
                 if ($finalPrice >= $oneToMorePrice) {
-                    $whiteList = Redis::hget('hroom_whitelist:' . $uid . ':' . $whiteListKey[0], 'uids');
-                    Redis::hSet('hroom_whitelist:' . $rid . ':' . $whiteListKey[0], 'uids', $whiteList . ',' . $uid);
+                    $whiteList = Redis::hget('hroom_whitelist:' . $user->uid . ':' . $whiteListKey[0], 'uids');
+                    Redis::hSet('hroom_whitelist:' . $rid . ':' . $whiteListKey[0], 'uids',
+                        $whiteList . ',' . $user->uid);
                     Redis::HINCRBY('hroom_whitelist:' . $rid . ':' . $whiteListKey[0], 'nums', 1);
                 }
             }
 
-            Redis::hIncrBy('one2many_statistic:' . $rid, $uid, $finalPrice);
+            Redis::hIncrBy('one2many_statistic:' . $rid, $user->uid, $finalPrice);
 
             //8.(直播間內開通才要做)，新增點亮置頂次數
             $checkTopThreshold = Redis::hExists('hsite_config:' . $siteId, 'top_threshold');
@@ -534,24 +534,24 @@ class GuardianController extends Controller
             $checkWeekGift = Redis::exists('zrange_gift_week:' . $rid);
 
             if (!$checkWeekGift) {
-                Redis::zIncrBy('zrange_gift_week:' . $rid, $finalPrice, $uid);
+                Redis::zIncrBy('zrange_gift_week:' . $rid, $finalPrice, $user->uid);
                 Redis::expire('zrange_gift_week:' . $rid, $diffWithNextMon);
             } else {
-                Redis::zIncrBy('zrange_gift_week:' . $rid, $finalPrice, $uid);
+                Redis::zIncrBy('zrange_gift_week:' . $rid, $finalPrice, $user->uid);
             }
 
             Redis::zIncrBy('zrank_pop_day', $finalPrice, $rid);
             Redis::zIncrBy('zrank_pop_week', $finalPrice, $rid);
             Redis::zIncrBy('zrank_pop_month:' . $currentYM, $finalPrice, $rid);
             Redis::zIncrBy('zrank_pop_history', $finalPrice, $rid);
-            Redis::zIncrBy('zrank_order_today:' . $rid, $finalPrice, $uid);
-            Redis::zIncrBy('zrange_gift_history:' . $rid, $finalPrice, $uid);
+            Redis::zIncrBy('zrank_order_today:' . $rid, $finalPrice, $user->uid);
+            Redis::zIncrBy('zrange_gift_history:' . $rid, $finalPrice, $user->uid);
 
             //新增守護在線列表對應的redis key
-            $checkUserOnline = Redis::hExists('hguardian_online:' . $rid, $uid);
+            $checkUserOnline = Redis::hExists('hguardian_online:' . $rid, $user->uid);
 
             if (!$checkUserOnline) {
-                Redis::hSet('hguardian_online:' . $rid, $uid, $uid);
+                Redis::hSet('hguardian_online:' . $rid, $user->uid, $user->uid);
             }
             //通知java直播間內開通
             $activateNotify = Redis::hGet('hguardian_info:' . $guardId, 'activate_notify');
@@ -560,7 +560,7 @@ class GuardianController extends Controller
                 Redis::publish('guardian_broadcast_info',
                     json_encode([
                         'rid'     => (int)$rid,
-                        'uid'     => (int)$uid,
+                        'uid'     => (int)$user->uid,
                         'guardId' => (int)$guardId
                     ])
                 );
@@ -568,8 +568,8 @@ class GuardianController extends Controller
         }
 
         $this->setData('expireDate', $expireMsgDate);
-        $this->setData('guardianName', $guardIdToName[$guardId]);
-        $this->setData('payTypeName', $payTypeName[$payType]);
+        $this->setData('guardianName', $guardName[$guardId]);
+        $this->setData('payTypeName', self::PAY_TYPE_CH[$payType]);
 
         return $this->jsonOutput();
     }
