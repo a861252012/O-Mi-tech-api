@@ -38,6 +38,10 @@ class ShareReward
     public function handle(ShareUser $event)
     {
         $user  = UserShare::where('uid', $event->user->uid)->first();
+        $user->is_mobile_match = 1;
+        $user->match_date = date('Y-m-d');
+        $user->save();
+
         $points = $this->userService->getUserInfo($user->share_uid, 'points');
         $this->userService->updateUserInfo($user->share_uid, ['points' => $points + self::REWARD_POINTS]);
 
