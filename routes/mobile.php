@@ -9,7 +9,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::get('/login/test', 'Mobile\MobileController@logintest');
 });
 // reg
-Route::post('reg/{scode?}','ApiController@reg')->name('m_reg')->middleware('mobile.session');
+Route::post('reg','ApiController@reg')->name('m_reg')->middleware('mobile.session');
 // reg suggest nickname
 Route::get('/reg/nickname', 'RegController@nickname')->name('m_reg_nickname');
 //登录

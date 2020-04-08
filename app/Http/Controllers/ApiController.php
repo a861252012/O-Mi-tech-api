@@ -177,7 +177,7 @@ class ApiController extends Controller
     }
 
     /**
-     * @api {post} /reg/:scode 注册接口
+     * @api {post} /reg 注册接口
      * @apiGroup Api
      * @apiName reg
      * @apiVersion 1.0.0
@@ -195,6 +195,7 @@ class ApiController extends Controller
      * @apiParam {String} password2 確認密碼
      * @apiParam {Int} origin 来源：11 ,12,21,22,31,32，第一位（1网页，2安卓，3IOS，4蜜情 5XO），第二位（1直播间，2前台，3后台）
      * @apiParam {String} [client] 手機系統(android/ios)
+     * @apiParam {String} [scode] 分享碼
      *
      * @apiParamExample {json} Request-Example:
      * /api/reg/6U90DC24
@@ -212,6 +213,7 @@ class ApiController extends Controller
     "password2":"test123456",
     "origin":22,
     "client":"android"
+    "scode":"aaa"
     }
      *
      * @apiError (Error Status) 999 API執行錯誤
@@ -285,12 +287,12 @@ class ApiController extends Controller
     "status": 1
     }
      */
-    public function reg(Request $request, $scode = null)
+    public function reg(Request $request)
     {
         $regService = resolve(RegService::class);
         $shareService = resolve(ShareService::class);
         $useMobile = $request->post('use_mobile', 0) == '1';
-        $scode = $request->scode ?? $scode;
+        $scode = $request->scode ?? null;
 
         $status = $regService->status();
         if ($status == RegService::STATUS_BLOCK) {
