@@ -8,15 +8,25 @@
 namespace App\Services;
 
 
+use App\Entities\Guardian;
+use App\Entities\UserHost;
 use App\Http\Resources\Guardian\GuardianMyInfoResource;
 use App\Http\Resources\Guardian\GuardianSettingResource;
 use App\Repositories\GuardianRepository;
 use App\Repositories\GuardianSettingRepository;
 use App\Repositories\UsersRepository;
+use App\Models\MallList;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Redis;
 
 class GuardianService
 {
+    const DEFAULT_IMG = array(
+        1 => 'c62e026d074d331bb98be8a63b4f5303',
+        2 => '7628eb77abb956b94d5fdf75427c1b1b',
+        3 => '553a1e24744251a208a2fd1afd6e6ba0'
+    );
+
     protected $guardianSettingRepository;
     protected $guardianRepository;
     protected $usersRepository;
@@ -50,7 +60,7 @@ class GuardianService
     }
 
     //取得user最新的財富等級
-    public function getRichLv($user_exp)
+    public function getRichLv($userExp)
     {
         $richLv = array(
             33 => 350000000,
@@ -89,19 +99,19 @@ class GuardianService
         );
 
         foreach ($richLv as $k => $v) {
-            if ($user_exp >= $v) {
-                $new_level = $k;
+            if ($userExp >= $v) {
+                $newLevel = $k;
                 break;
             }
             continue;
         }
 
-        return $new_level;
+        return $newLevel;
     }
 
 
     //取得主播最新的等級
-    public function getAnchorLevel($anchor_exp)
+    public function getAnchorLevel($anchorExp)
     {
         $levelExp = array(
             30 => 93850000,
@@ -137,14 +147,14 @@ class GuardianService
         );
 
         foreach ($levelExp as $k => $v) {
-            if ($anchor_exp >= $v) {
-                $new_exp = $k;
+            if ($anchorExp >= $v) {
+                $newExp = $k;
                 break;
             }
             continue;
         }
 
-        return $new_exp;
+        return $newExp;
     }
 
     /* 計算進直播間價格 */
@@ -153,25 +163,82 @@ class GuardianService
         return (int) round(((100 - $salePercent)/100) * $price);
     }
 
-    /* 更新user redis資訊 */
-    public function updateUserRedis($user, $u = array())
+    /* 取得redis守護設定價格*/
+    public function getGuardianPrice($priceKey, $guardId)
     {
+        $getSalePrice = Redis::hGet('hguardian_info:' . $guardId, $priceKey . '_sale');
+        $getPrice = Redis::hGet('hguardian_info:' . $guardId, $priceKey);
 
-        if (!Redis::exists('huser_info:' . $user->uid)) {
-            Redis::hMSet('huser_info:' . $user->uid, $user->toArray());
-            Redis::expire('huser_info:' . $user->uid, 216000);
+        //計算該開通/續約所需的最終價格
+        if (!$getSalePrice) {
+            $finalPrice = $getPrice;
+        } else {
+            $finalPrice = $getSalePrice;
         }
 
-        Redis::hMSet('huser_info:' . $user->uid, $u);
+        return $data = ['final' => $finalPrice, 'sale' => $getSalePrice, 'price' => $getPrice];
     }
 
-    /* 更新user redis資訊 */
+    /* 異動主播開播資料 redis資訊 */
     public function updateAnchorRedis($rid, $a = array())
     {
         if (!empty($a)) {
-            Redis::hMSet('huser_info:' . $rid, $a);
             Redis::hSet('hvediosKtv:' . $rid, 'cur_exp', $a['exp']);
         }
+    }
+
+    /* 新增DB送禮紀錄 */
+    public function insertGiftRecord($giftRecord = array())
+    {
+        if (!empty($giftRecord)) {
+            MallList::insert($giftRecord);
+
+        }
+    }
+
+    /* 新增守護記錄 */
+    public function insertGuardianRecord($guardianRecord)
+    {
+        if (!$guardianRecord['sale']) {
+            unset($guardianRecord['sale']);
+        }
+
+        Guardian::insert($guardianRecord);
+    }
+
+    /* 取得用戶守護大頭貼，房間內就撈主播海報(video_user_host)，房間外用官方固定的守護圖 */
+    public function getHeadImg($rid, $guardId)
+    {
+        $headimg = UserHost::where('id', $rid)->value('cover');
+
+        if (!$headimg) {
+            $headimg = self::DEFAULT_IMG[$guardId];
+        }
+
+        return $headimg;
+    }
+
+    /* 計算守護到期日 */
+    public function getGuardEndTime($userGuardEnd, $validDays, $payType)
+    {
+        $nowDate = Carbon::now()->copy()->toDateTimeString();
+
+        //計算守護到期日
+        if (!$userGuardEnd) {
+            $guardEndTime = Carbon::now()->copy()->addDays($validDays);
+        } else {
+            if ($userGuardEnd >= $nowDate) {
+                if ($payType == 1) {
+                    $guardEndTime = Carbon::parse($userGuardEnd)->copy()->addDays($validDays);
+                } else {
+                    $guardEndTime = Carbon::parse($userGuardEnd)->copy()->subDay()->addDays($validDays);
+                }
+            } else {
+                $guardEndTime = Carbon::now()->copy()->addDays($validDays);
+            }
+        }
+
+        return $guardEndTime;
     }
 
     /* 刪除user redis特權 */

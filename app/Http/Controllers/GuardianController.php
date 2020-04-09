@@ -11,8 +11,10 @@ namespace App\Http\Controllers;
 use App\Facades\SiteSer;
 use App\Http\Requests\Guardian\GuardianBuy;
 use App\Models\Users;
+use App\Entities\Guardian;
 use App\Services\GuardianService;
 use App\Services\Message\MessageService;
+use App\Services\User\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Log;
@@ -35,10 +37,12 @@ class GuardianController extends Controller
 
     public function __construct(
         GuardianService $guardianService,
-        MessageService $messageService
+        MessageService $messageService,
+        UserService $userService
     ) {
         $this->guardianService = $guardianService;
         $this->messageService = $messageService;
+        $this->userService = $userService;
     }
 
     /**
@@ -298,16 +302,10 @@ class GuardianController extends Controller
         $payType = $request->payType;
         $daysType = $request->daysType;
         $now = Carbon::now();
-        $nowDate = $now->copy()->toDateString();
         $currentYM = $now->copy()->format('Ym');
         $currentYMD = $now->copy()->format('Ymd');
         $nowDateTime = Carbon::now()->copy()->toDateTimeString();
         $siteId = SiteSer::siteId();
-        $defaultImg = array(
-            1 => 'c62e026d074d331bb98be8a63b4f5303',
-            2 => '7628eb77abb956b94d5fdf75427c1b1b',
-            3 => '553a1e24744251a208a2fd1afd6e6ba0'
-        );
 
         try {
             DB::beginTransaction();
@@ -315,30 +313,23 @@ class GuardianController extends Controller
             $guardName = $this->guardianService->getSetting()->pluck('name', 'id');
 
             //取得守護設定價格
-            $key = self::PAY_TYPE_EN[$payType] . '_' . self::VALID_DAY_ARR[$daysType];
-            $saleKey = $key . '_sale';
-            $getSalePrice = Redis::hGet('hguardian_info:' . $guardId, $saleKey);
-            $getPrice = Redis::hget('hguardian_info:' . $guardId, $key);
+            $priceKey = self::PAY_TYPE_EN[$payType] . '_' . self::VALID_DAY_ARR[$daysType];
+
+            $price = $this->guardianService->getGuardianPrice($priceKey, $guardId);
+
             //檢核方案是否有開啟
-            if (!$getPrice) {
+            if (!$price['final']) {
                 $this->setStatus(101, '守护系统' . self::VALID_DAY_ARR[$daysType] . '天方案未啟用');
                 return $this->jsonOutput();
             }
 
-            //計算該開通或續約所需的價格為何
-            if (!$getSalePrice) {
-                $finalPrice = $getPrice;
-            } else {
-                $finalPrice = $getSalePrice;
-            }
-
-            //5.檢核用戶鑽石是否足夠，不足返回資訊，看前端需不需要跳到充值頁
-            if (!($user->points >= $finalPrice)) {
+            //檢核用戶鑽石是否足夠，不足返回資訊
+            if (!($user->points >= $price['final'])) {
                 $this->setStatus(102, '您的钻石不足');
                 return $this->jsonOutput();
             }
 
-            //6.檢核續費還是新開通，是否有符合規定
+            //檢核續費還是新開通，是否有符合規定
             if ($user->guard_end >= $now) {//如有開通且未過期
                 if ($user->guard_id > $guardId) {
                     $this->setStatus(103, '您现在的级别已大於您要开通/续费的等级');
@@ -362,80 +353,61 @@ class GuardianController extends Controller
                 }
             }
 
-            //1.取得用戶守護大頭貼，房間內就撈主播海報(video_user_host)，房間外用官方固定的守護圖
-            $headimg = DB::table('video_user_host')->where('id', $rid)->value('cover');
+            //取得用戶守護大頭貼，房間內就撈主播海報(video_user_host)，房間外用官方固定的守護圖
+            $headimg = $this->guardianService->getHeadImg($rid, $guardId);
 
-            if (!$headimg) {
-                $headimg = $defaultImg[$guardId];
-            }
             //計算守護到期日
-            if (!$user->guard_end) {
-                $guardEndTime = $now->copy()->addDays(self::VALID_DAY_ARR[$daysType]);
-            } else {
-                if ($user->guard_end >= $nowDate) {
-                    if ($payType == 1) {
-                        $guardEndTime = Carbon::parse($user->guard_end)->copy()->addDays(self::VALID_DAY_ARR[$daysType]);
-                    } else {
-                        $guardEndTime = Carbon::parse($user->guard_end)->copy()->subDay()->addDays(self::VALID_DAY_ARR[$daysType]);
-                    }
-                } else {
-                    $guardEndTime = $now->copy()->addDays(self::VALID_DAY_ARR[$daysType]);
-                }
-            }
+            $guardEndTime = $this->guardianService->getGuardEndTime($user->guard_end, self::VALID_DAY_ARR[$daysType], $payType);
 
-            //3.新增守護記錄
+            //新增守護記錄
             $guardianRecordArr = array(
                 'uid'         => $user->uid,
                 'rid'         => $rid,
                 'pay_date'    => $now->copy()->toDateString(),
                 'valid_day'   => self::VALID_DAY_ARR[$daysType],
-                'price'       => $getPrice,
-                'sale'        => $getSalePrice,
-                'pay'         => $finalPrice,
+                'price'       => $price['price'],
+                'sale'        => $price['sale'],
+                'pay'         => $price['final'],
                 'expire_date' => $guardEndTime->copy()->addDay()->toDateString(),
                 'guard_id'    => $guardId,
                 'pay_type'    => $payType,
                 'created_at'  => $nowDateTime,
                 'updated_at'  => $nowDateTime
             );
-            if (!$getSalePrice) {
-                unset($guardianRecordArr['sale']);
-            }
 
-            DB::table('video_guardian')->insert($guardianRecordArr);
+            $this->guardianService->insertGuardianRecord($guardianRecordArr);
 
-            //4.異動用戶資料
-            $u['points'] = ($user->points - $finalPrice); // 扣除鑽石後的餘額
-            $u['rich'] = ($user->rich + $finalPrice); // 增加用戶財富經驗值
+            //異動用戶資料
+            $u['points'] = ($user->points - $price['final']); // 扣除鑽石後的餘額
+            $u['rich'] = ($user->rich + $price['final']); // 增加用戶財富經驗值
             $u['lv_rich'] = $this->guardianService->getRichLv($u['rich']); // 計算用戶財富新等級
             $u['guard_id'] = $guardId; // 開通守護等級
             $u['guard_end'] = $guardEndTime->copy()->toDateString(); // 守護到期日
             $u['headimg'] = $headimg;
             $u['update_at'] = $nowDateTime;
 
-            DB::table('video_user')->where('uid', $user->uid)
-                ->update($u);
+            $this->userService->updateUserInfo($user->uid, $u);
 
-            //4.異動主播資料
+            //異動主播資料
             if ($rid) {
                 $anchorExp = Users::select('exp')->where('uid', $rid)
                     ->value('exp');
-                $a['exp'] = ($anchorExp + $finalPrice); // 增加主播經驗值
+
+                $a['exp'] = ($anchorExp + $price['final']); // 增加主播經驗值
                 $a['lv_exp'] = $this->guardianService->getAnchorLevel($a['exp']); // 計算主播新等級
                 $a['update_at'] = $nowDateTime;
 
-                DB::table('video_user')->where('uid', $rid)
-                    ->update($a);
+                $this->userService->updateUserInfo($rid, $a);
             }
 
-            //5.新增送禮紀錄
+            //新增送禮紀錄
             $sendGiftData = array(
                 'send_uid'   => $user->uid,
                 'rec_uid'    => $rid,
                 'gid'        => self::GUARDIAN_GIFT_ID[$guardId],
                 'gnum'       => 1,
                 'rid'        => $rid,
-                'points'     => $finalPrice,
+                'points'     => $price['final'],
                 'rate'       => '50',
                 'origin'     => $user->origin,
                 'site_id'    => $siteId,
@@ -443,7 +415,8 @@ class GuardianController extends Controller
                 'guard_days' => self::VALID_DAY_ARR[$daysType],
                 'created'    => $nowDateTime
             );
-            DB::table('video_mall_list')->insert($sendGiftData);
+
+            $this->guardianService->insertGiftRecord($sendGiftData);
 
             $expireMsgDate = $guardEndTime->copy()->subDay()->toDateString();
 
@@ -467,32 +440,29 @@ class GuardianController extends Controller
             return $this->jsonOutput();
         }
 
-        //異動用戶redis資料
-        $this->guardianService->updateUserRedis($user, $u);
-
         //if(用戶守護不是第一次開通，且開通等級比上一次大)
         if ($guardId > $user->guard_id && $payType == 1) {
             $this->guardianService->delUserPrivilege($user->uid, $currentYM, $currentYMD);
         }
 
         //更新個人排行榜資訊
-        $this->guardianService->updateUserRank($siteId, $finalPrice, $user->uid, $currentYM);
+        $this->guardianService->updateUserRank($siteId, $price['final'], $user->uid, $currentYM);
 
         if ($rid) {
-            //異動主播資料
+            //異動主播開播資料
             $this->guardianService->updateAnchorRedis($rid, $a);
 
             $diffWithNextMon = $now->copy()->diffInSeconds($now->copy()->addDays(7)->startOfWeek());//距離下週一的秒數
             $diffWithTomorrow = $now->copy()->diffInSeconds($now->copy()->tomorrow());
 
             //判斷是否新增白名單或是累積單場消費紀錄
-            $this->guardianService->WhiteList($user->uid, $rid, $finalPrice);
+            $this->guardianService->WhiteList($user->uid, $rid, $price['final']);
 
             //(直播間內開通才要做)，新增點亮置頂次數
-            $this->guardianService->toTheToppest($siteId, $rid, $finalPrice, $diffWithNextMon, $diffWithTomorrow);
+            $this->guardianService->toTheToppest($siteId, $rid, $price['final'], $diffWithNextMon, $diffWithTomorrow);
 
             //更新房間排行榜資訊
-            $this->guardianService->updateRoomRank($rid, $user->uid, $finalPrice, $diffWithNextMon, $currentYMD);
+            $this->guardianService->updateRoomRank($rid, $user->uid, $price['final'], $diffWithNextMon, $currentYMD);
 
             //新增守護在線列表對應的redis key
             $this->guardianService->userOnlineList($rid, $user->uid);
