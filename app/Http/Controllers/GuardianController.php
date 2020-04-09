@@ -31,9 +31,14 @@ class GuardianController extends Controller
 
     protected $guardianService;
 
-    public function __construct(GuardianService $guardianService)
-    {
+    protected $messageService;
+
+    public function __construct(
+        GuardianService $guardianService,
+        MessageService $messageService
+    ) {
         $this->guardianService = $guardianService;
+        $this->messageService = $messageService;
     }
 
     /**
@@ -449,9 +454,7 @@ class GuardianController extends Controller
                 'content'   => '守护开通成功提醒：您已成功开通' . $guardName[$guardId] . ',到期日： ' . $expireMsgDate
             ];
 
-            $messageService = resolve(MessageService::class);
-
-            $messageService->sendSystemToUsersMessage($message);
+            $this->messageService->sendSystemToUsersMessage($message);
 
             DB::commit();
 
