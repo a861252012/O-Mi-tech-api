@@ -160,7 +160,7 @@ class GuardianService
     /* 計算進直播間價格 */
     public function calculRoomSale($price, $salePercent)
     {
-        return (int) round(((100 - $salePercent)/100) * $price);
+        return (int)round(((100 - $salePercent) / 100) * $price);
     }
 
     /* 取得redis守護設定價格*/
@@ -191,25 +191,24 @@ class GuardianService
     public function insertGiftRecord($giftRecord = array())
     {
         if (!empty($giftRecord)) {
-            MallList::insert($giftRecord);
-
+            $this->guardianRepository->insertGiftRecord($giftRecord);
         }
     }
 
     /* 新增守護記錄 */
-    public function insertGuardianRecord($guardianRecord)
+    public function insertGuardianRecord($guardianRecord = array())
     {
         if (!$guardianRecord['sale']) {
             unset($guardianRecord['sale']);
         }
 
-        Guardian::insert($guardianRecord);
+        $this->guardianRepository->insertGuardianRecord($guardianRecord);
     }
 
     /* 取得用戶守護大頭貼，房間內就撈主播海報(video_user_host)，房間外用官方固定的守護圖 */
     public function getHeadImg($rid, $guardId)
     {
-        $headimg = UserHost::where('id', $rid)->value('cover');
+        $headimg = $this->guardianRepository->getHeadImg($rid);
 
         if (!$headimg) {
             $headimg = self::DEFAULT_IMG[$guardId];

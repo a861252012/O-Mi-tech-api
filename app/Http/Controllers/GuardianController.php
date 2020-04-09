@@ -440,7 +440,7 @@ class GuardianController extends Controller
             return $this->jsonOutput();
         }
 
-        //if(用戶守護不是第一次開通，且開通等級比上一次大)
+        //如果用戶守護不是第一次開通，且開通等級比上一次大,則重製用戶的守護特權
         if ($guardId > $user->guard_id && $payType == 1) {
             $this->guardianService->delUserPrivilege($user->uid, $currentYM, $currentYMD);
         }

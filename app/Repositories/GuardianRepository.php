@@ -8,6 +8,8 @@
 namespace App\Repositories;
 
 use App\Entities\Guardian;
+use App\Entities\UserHost;
+use App\Models\MallList;
 use App\Models\Users;
 use Illuminate\Support\Facades\DB;
 
@@ -33,5 +35,32 @@ class GuardianRepository
                 ->selectRaw('MAX(IF(b.pay_type = 2, b.pay_date, "")) AS last_renewal_date')
                 ->selectRaw('SUM(IF(b.pay_type = 2, 1, 0)) AS renewal_count')
                 ->first();
+    }
+
+
+    /* 新增DB送禮紀錄 */
+    public function insertGiftRecord($giftRecord = array())
+    {
+        if (!empty($giftRecord)) {
+            MallList::insert($giftRecord);
+        }
+    }
+
+    /* 新增守護記錄 */
+    public function insertGuardianRecord($guardianRecord = array())
+    {
+        if (!$guardianRecord['sale']) {
+            unset($guardianRecord['sale']);
+        }
+
+        Guardian::insert($guardianRecord);
+    }
+
+    /* 取得用戶守護大頭貼，房間內就撈主播海報(video_user_host)，房間外用官方固定的守護圖 */
+    public function getHeadImg($rid)
+    {
+        $headimg = UserHost::where('id', $rid)->value('cover');
+
+        return $headimg;
     }
 }
