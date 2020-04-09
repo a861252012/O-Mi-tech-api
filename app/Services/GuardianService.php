@@ -13,6 +13,7 @@ use App\Http\Resources\Guardian\GuardianSettingResource;
 use App\Repositories\GuardianRepository;
 use App\Repositories\GuardianSettingRepository;
 use App\Repositories\UsersRepository;
+use Illuminate\Support\Facades\Redis;
 
 class GuardianService
 {
@@ -150,6 +151,132 @@ class GuardianService
     public function calculRoomSale($price, $salePercent)
     {
         return (int) round(((100 - $salePercent)/100) * $price);
+    }
+
+    /* 更新user redis資訊 */
+    public function updateUserRedis($user, $u = array())
+    {
+
+        if (!Redis::exists('huser_info:' . $user->uid)) {
+            Redis::hMSet('huser_info:' . $user->uid, $user->toArray());
+            Redis::expire('huser_info:' . $user->uid, 216000);
+        }
+
+        Redis::hMSet('huser_info:' . $user->uid, $u);
+    }
+
+    /* 更新user redis資訊 */
+    public function updateAnchorRedis($rid, $a = array())
+    {
+        if (!empty($a)) {
+            Redis::hMSet('huser_info:' . $rid, $a);
+            Redis::hSet('hvediosKtv:' . $rid, 'cur_exp', $a['exp']);
+        }
+    }
+
+    /* 刪除user redis特權 */
+    public function delUserPrivilege($uid, $currentYM, $currentYMD)
+    {
+        Redis::del('sguardian_chat_interval:' . $uid);
+        Redis::del('sguardian_rename_' . $currentYM . ':' . $uid);
+        Redis::del('sguardian_feiping_' . $currentYM . ':' . $uid);
+        Redis::del('sguardian_forbid_' . $currentYMD . ':' . $uid);
+        Redis::del('sguardian_kick_' . $currentYMD . ':' . $uid);
+    }
+
+    /* 更新個人排行榜資訊 */
+    public function updateUserRank($siteId, $finalPrice, $uid, $currentYM)
+    {
+        Redis::zIncrBy('zrank_rich_day:' . $siteId, $finalPrice, $uid);
+        Redis::zIncrBy('zrank_rich_week:' . $siteId, $finalPrice, $uid);
+        Redis::zIncrBy('zrank_rich_month:' . $currentYM . ':' . $siteId, $finalPrice, $uid);
+        Redis::zIncrBy('zrank_rich_history:' . $siteId, $finalPrice, $uid);
+    }
+
+    //更新房間排行榜資訊
+    public function updateRoomRank($rid, $uid, $finalPrice, $diffWithNextMon, $currentYMD)
+    {
+        //直播間-週貢獻榜，zrange_gift_week:主播id，此key若一開始不存在則新增後需要設定ttl為現在到下週0點剩餘的時間
+        $checkWeekGift = Redis::exists('zrange_gift_week:' . $rid);
+        if (!$checkWeekGift) {
+            Redis::zIncrBy('zrange_gift_week:' . $rid, $finalPrice, $uid);
+            Redis::expire('zrange_gift_week:' . $rid, $diffWithNextMon);
+        } else {
+            Redis::zIncrBy('zrange_gift_week:' . $rid, $finalPrice, $uid);
+        }
+
+        Redis::zIncrBy('zrank_pop_day', $finalPrice, $rid);
+        Redis::zIncrBy('zrank_pop_week', $finalPrice, $rid);
+        Redis::zIncrBy('zrank_pop_month:' . $currentYMD, $finalPrice, $rid);
+        Redis::zIncrBy('zrank_pop_history', $finalPrice, $rid);
+        Redis::zIncrBy('zrank_order_today:' . $rid, $finalPrice, $uid);
+        Redis::zIncrBy('zrange_gift_history:' . $rid, $finalPrice, $uid);
+    }
+
+    //(直播間內開通才要做)，新增點亮置頂次數
+    public function toTheToppest($siteId, $rid, $finalPrice, $diffWithTomorrow)
+    {
+        $checkTopThreshold = Redis::hExists('hsite_config:' . $siteId, 'top_threshold');
+
+        if (!$checkTopThreshold) {
+            Redis::expire('huser_recommend_anchor:' . $rid, $diffWithTomorrow);
+        }
+
+        $topThreshold = Redis::hget('hsite_config:' . $siteId, 'top_threshold');
+
+        if ($finalPrice >= $topThreshold) {
+            Redis::HINCRBY('hsite_config:' . $siteId, 'huser_recommend_anchor:' . $rid, 1);
+        }
+
+    }
+
+    //判斷是否新增白名單或是累積單場消費紀錄
+    public function WhiteList($uid, $rid, $finalPrice)
+    {
+        //如消費金額大於一對多價格,則新增白名單
+        if (Redis::exists('hroom_whitelist_key:' . $uid)) {
+            $whiteListKey = Redis::SMEMBERS('hroom_whitelist_key:' . $uid);
+
+            $oneToMorePrice = Redis::hget('hroom_whitelist:' . $uid . ':' . $whiteListKey[0], 'points');
+
+            if ($finalPrice >= $oneToMorePrice) {
+                $whiteList = Redis::hget('hroom_whitelist:' . $uid . ':' . $whiteListKey[0], 'uids');
+                Redis::hSet('hroom_whitelist:' . $rid . ':' . $whiteListKey[0], 'uids',
+                    $whiteList . ',' . $uid);
+                Redis::HINCRBY('hroom_whitelist:' . $rid . ':' . $whiteListKey[0], 'nums', 1);
+            }
+        }
+
+        //累積單場消費紀錄
+        if (Redis::exists('one2many_statistic:' . $rid)) {
+            Redis::hIncrBy('one2many_statistic:' . $rid, $uid, $finalPrice);
+        }
+    }
+
+    //新增守護在線列表redis key
+    public function userOnlineList($rid, $uid)
+    {
+        $checkUserOnline = Redis::hExists('hguardian_online:' . $rid, $uid);
+
+        if (!$checkUserOnline) {
+            Redis::hSet('hguardian_online:' . $rid, $uid, $uid);
+        }
+    }
+
+    //通知java直播間內開通
+    public function pubToJava($guardId, $rid, $uid)
+    {
+        $activateNotify = Redis::hGet('hguardian_info:' . $guardId, 'activate_notify');
+
+        if ($activateNotify) {
+            Redis::publish('guardian_broadcast_info',
+                json_encode([
+                    'rid'     => (int)$rid,
+                    'uid'     => (int)$uid,
+                    'guardId' => (int)$guardId
+                ])
+            );
+        }
     }
 
 }

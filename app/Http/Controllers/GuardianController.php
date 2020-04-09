@@ -432,7 +432,7 @@ class GuardianController extends Controller
                 'rid'        => $rid,
                 'points'     => $finalPrice,
                 'rate'       => '50',
-                'origin'     => Auth::user()->origin,
+                'origin'     => $user->origin,
                 'site_id'    => $siteId,
                 'guard_id'   => $user->guard_id,
                 'guard_days' => self::VALID_DAY_ARR[$daysType],
@@ -464,107 +464,38 @@ class GuardianController extends Controller
             return $this->jsonOutput();
         }
 
-        //redis
-        //異動用戶資料
-        $CheckUser = Redis::exists('huser_info:' . $user->uid);
+        //異動用戶redis資料
+        $this->guardianService->updateUserRedis($user, $u);
 
-        if (!$CheckUser) {
-            $userInfo = Users::where('uid', $user->uid)->first()->toArray();
-            Redis::hMSet('huser_info:' . $user->uid, $userInfo);
-            Redis::expire('huser_info:' . $user->uid, 216000);
-        }
-
-        Redis::hMSet('huser_info:' . $user->uid, $u);
-
-        //4. if(用戶守護不是第一次開通，且開通等級比上一次大)
+        //if(用戶守護不是第一次開通，且開通等級比上一次大)
         if ($guardId > $user->guard_id && $payType == 1) {
-            Redis::del('sguardian_chat_interval:' . $user->uid);
-            Redis::del('sguardian_rename_' . $currentYM . ':' . $user->uid);
-            Redis::del('sguardian_feiping_' . $currentYM . ':' . $user->uid);
-            Redis::del('sguardian_forbid_' . $currentYMD . ':' . $user->uid);
-            Redis::del('sguardian_kick_' . $currentYMD . ':' . $user->uid);
+            $this->guardianService->delUserPrivilege($user->uid, $currentYM, $currentYMD);
         }
 
-        //5. 更新個人排行榜資訊
-        Redis::zIncrBy('zrank_rich_day:' . $siteId, $finalPrice, $user->uid);
-        Redis::zIncrBy('zrank_rich_week:' . $siteId, $finalPrice, $user->uid);
-        Redis::zIncrBy('zrank_rich_month:' . $currentYM . ':' . $siteId, $finalPrice, $user->uid);
-        Redis::zIncrBy('zrank_rich_history:' . $siteId, $finalPrice, $user->uid);
+        //更新個人排行榜資訊
+        $this->guardianService->updateUserRank($siteId, $finalPrice, $user->uid, $currentYM);
 
         if ($rid) {
             //異動主播資料
-            Redis::hMSet('huser_info:' . $rid, $a);
-            Redis::hSet('hvediosKtv:' . $rid, 'cur_exp', $a['exp']);
+            $this->guardianService->updateAnchorRedis($rid, $a);
 
             $diffWithNextMon = $now->copy()->diffInSeconds($now->copy()->addDays(7)->startOfWeek());//距離下週一的秒數
-
             $diffWithTomorrow = $now->copy()->diffInSeconds($now->copy()->tomorrow());
 
             //判斷是否新增白名單或是累積單場消費紀錄
-            if (Redis::exists('hroom_whitelist_key:' . $user->uid)) {
-                $whiteListKey = Redis::SMEMBERS('hroom_whitelist_key:' . $user->uid);
+            $this->guardianService->WhiteList($user->uid, $rid, $finalPrice);
 
-                $oneToMorePrice = Redis::hget('hroom_whitelist:' . $user->uid . ':' . $whiteListKey[0], 'points');
-
-                if ($finalPrice >= $oneToMorePrice) {
-                    $whiteList = Redis::hget('hroom_whitelist:' . $user->uid . ':' . $whiteListKey[0], 'uids');
-                    Redis::hSet('hroom_whitelist:' . $rid . ':' . $whiteListKey[0], 'uids',
-                        $whiteList . ',' . $user->uid);
-                    Redis::HINCRBY('hroom_whitelist:' . $rid . ':' . $whiteListKey[0], 'nums', 1);
-                }
-            }
-
-            Redis::hIncrBy('one2many_statistic:' . $rid, $user->uid, $finalPrice);
-
-            //8.(直播間內開通才要做)，新增點亮置頂次數
-            $checkTopThreshold = Redis::hExists('hsite_config:' . $siteId, 'top_threshold');
-
-            $topThreshold = Redis::hget('hsite_config:' . $siteId, 'top_threshold');
-
-            if (!$checkTopThreshold) {
-                Redis::expire('huser_recommend_anchor:' . $rid, $diffWithTomorrow);
-            }
-
-            if ($finalPrice >= $topThreshold) {
-                Redis::HINCRBY('hsite_config:' . $siteId, 'huser_recommend_anchor:' . $rid, 1);
-            }
+            //(直播間內開通才要做)，新增點亮置頂次數
+            $this->guardianService->toTheToppest($siteId, $rid, $finalPrice, $diffWithNextMon, $diffWithTomorrow);
 
             //更新房間排行榜資訊
-            //直播間-週貢獻榜，zrange_gift_week:主播id，此key若一開始不存在則新增後需要設定ttl為現在到下週0點剩餘的時間
-            $checkWeekGift = Redis::exists('zrange_gift_week:' . $rid);
-
-            if (!$checkWeekGift) {
-                Redis::zIncrBy('zrange_gift_week:' . $rid, $finalPrice, $user->uid);
-                Redis::expire('zrange_gift_week:' . $rid, $diffWithNextMon);
-            } else {
-                Redis::zIncrBy('zrange_gift_week:' . $rid, $finalPrice, $user->uid);
-            }
-
-            Redis::zIncrBy('zrank_pop_day', $finalPrice, $rid);
-            Redis::zIncrBy('zrank_pop_week', $finalPrice, $rid);
-            Redis::zIncrBy('zrank_pop_month:' . $currentYM, $finalPrice, $rid);
-            Redis::zIncrBy('zrank_pop_history', $finalPrice, $rid);
-            Redis::zIncrBy('zrank_order_today:' . $rid, $finalPrice, $user->uid);
-            Redis::zIncrBy('zrange_gift_history:' . $rid, $finalPrice, $user->uid);
+            $this->guardianService->updateRoomRank($rid, $user->uid, $finalPrice, $diffWithNextMon, $currentYMD);
 
             //新增守護在線列表對應的redis key
-            $checkUserOnline = Redis::hExists('hguardian_online:' . $rid, $user->uid);
+            $this->guardianService->userOnlineList($rid, $user->uid);
 
-            if (!$checkUserOnline) {
-                Redis::hSet('hguardian_online:' . $rid, $user->uid, $user->uid);
-            }
             //通知java直播間內開通
-            $activateNotify = Redis::hGet('hguardian_info:' . $guardId, 'activate_notify');
-
-            if ($activateNotify) {
-                Redis::publish('guardian_broadcast_info',
-                    json_encode([
-                        'rid'     => (int)$rid,
-                        'uid'     => (int)$user->uid,
-                        'guardId' => (int)$guardId
-                    ])
-                );
-            }
+            $this->guardianService->pubToJava($guardId, $rid, $user->uid);
         }
 
         $this->setData('expireDate', $expireMsgDate);
