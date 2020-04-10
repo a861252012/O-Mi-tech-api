@@ -446,7 +446,7 @@ class GuardianController extends Controller
         }
 
         //更新個人排行榜資訊
-        $this->guardianService->updateUserRank($siteId, $price['final'], $user->uid, $currentYM);
+        $this->guardianService->updateUserRank($price['final'], $user->uid, $currentYM);
 
         if ($rid) {
             //異動主播開播資料
@@ -459,7 +459,7 @@ class GuardianController extends Controller
             $this->guardianService->WhiteList($user->uid, $rid, $price['final']);
 
             //(直播間內開通才要做)，新增點亮置頂次數
-            $this->guardianService->toTheToppest($siteId, $rid, $price['final'], $diffWithNextMon, $diffWithTomorrow);
+            $this->guardianService->toTheToppest($rid, $price['final'], $diffWithNextMon, $diffWithTomorrow);
 
             //更新房間排行榜資訊
             $this->guardianService->updateRoomRank($rid, $user->uid, $price['final'], $diffWithNextMon, $currentYMD);

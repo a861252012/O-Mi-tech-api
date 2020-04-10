@@ -9,7 +9,9 @@ namespace App\Services;
 
 
 use App\Entities\Guardian;
+use App\Entities\SiteConfigs;
 use App\Entities\UserHost;
+use App\Facades\SiteSer;
 use App\Http\Resources\Guardian\GuardianMyInfoResource;
 use App\Http\Resources\Guardian\GuardianSettingResource;
 use App\Repositories\GuardianRepository;
@@ -251,8 +253,10 @@ class GuardianService
     }
 
     /* 更新個人排行榜資訊 */
-    public function updateUserRank($siteId, $finalPrice, $uid, $currentYM)
+    public function updateUserRank($finalPrice, $uid, $currentYM)
     {
+        $siteId = SiteSer::siteId();
+
         Redis::zIncrBy('zrank_rich_day:' . $siteId, $finalPrice, $uid);
         Redis::zIncrBy('zrank_rich_week:' . $siteId, $finalPrice, $uid);
         Redis::zIncrBy('zrank_rich_month:' . $currentYM . ':' . $siteId, $finalPrice, $uid);
@@ -280,8 +284,10 @@ class GuardianService
     }
 
     //(直播間內開通才要做)，新增點亮置頂次數
-    public function toTheToppest($siteId, $rid, $finalPrice, $diffWithTomorrow)
+    public function toTheToppest($rid, $finalPrice, $diffWithTomorrow)
     {
+        $siteId = SiteSer::siteId();
+
         $checkTopThreshold = Redis::hExists('hsite_config:' . $siteId, 'top_threshold');
 
         if (!$checkTopThreshold) {
