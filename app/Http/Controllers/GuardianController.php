@@ -293,189 +293,29 @@ class GuardianController extends Controller
     }
     }
      */
-
     public function buy(GuardianBuy $request)
     {
-        $user = Auth::user();
-        $rid = $request->rid ?? 0;
-        $guardId = $request->guardId;
-        $payType = $request->payType;
-        $daysType = $request->daysType;
-        $now = Carbon::now();
-        $currentYM = $now->copy()->format('Ym');
-        $currentYMD = $now->copy()->format('Ymd');
-        $nowDateTime = Carbon::now()->copy()->toDateTimeString();
-        $siteId = SiteSer::siteId();
-
         try {
-            DB::beginTransaction();
+            $verification = $this->guardianService->verification($request);
 
-            $guardName = $this->guardianService->getSetting()->pluck('name', 'id');
-
-            //取得守護設定價格
-            $priceKey = self::PAY_TYPE_EN[$payType] . '_' . self::VALID_DAY_ARR[$daysType];
-
-            $price = $this->guardianService->getGuardianPrice($priceKey, $guardId);
-
-            //檢核方案是否有開啟
-            if (!$price['final']) {
-                $this->setStatus(101, '守护系统' . self::VALID_DAY_ARR[$daysType] . '天方案未啟用');
+            if ($verification['status'] != 100) {
+                $this->setStatus($verification['status'], $verification['msg']);
                 return $this->jsonOutput();
             }
 
-            //檢核用戶鑽石是否足夠，不足返回資訊
-            if (!($user->points >= $price['final'])) {
-                $this->setStatus(102, '您的钻石不足');
-                return $this->jsonOutput();
-            }
+            $data = $this->guardianService->purchaseProcess($request);
 
-            //檢核續費還是新開通，是否有符合規定
-            if ($user->guard_end >= $now) {//如有開通且未過期
-                if ($user->guard_id > $guardId) {
-                    $this->setStatus(103, '您现在的级别已大於您要开通/续费的等级');
-                    return $this->jsonOutput();
-                } else {
-                    if ($user->guard_id == $guardId && $payType != 2) {
-                        $this->setStatus(104, '您已开通该级别守护，仅能续费该守护等级');
-                        return $this->jsonOutput();
-                    } else {
-                        if ($user->guard_id < $guardId && $payType != 1) {
-                            //(原守護等級 < 開通/續約等級 && 不是新開通)
-                            $this->setStatus(105, '您尚未开通该级别守护，无法续费');
-                            return $this->jsonOutput();
-                        }
-                    }
-                }
-            } else {
-                if ($payType == 2) {
-                    $this->setStatus(105, '您尚未开通该级别守护，无法续费');
-                    return $this->jsonOutput();
-                }
-            }
+            $this->setData('expireDate', $data['expireDate']);
+            $this->setData('guardianName', $data['guardianName']);
+            $this->setData('payTypeName', $data['payTypeName']);
+            $this->setStatus(1, '成功');
 
-            //取得用戶守護大頭貼，房間內就撈主播海報(video_user_host)，房間外用官方固定的守護圖
-            $headimg = $this->guardianService->getHeadImg($rid, $guardId);
-
-            //計算守護到期日
-            $guardEndTime = $this->guardianService->getGuardEndTime($user->guard_end, self::VALID_DAY_ARR[$daysType], $payType);
-
-            //新增守護記錄
-            $guardianRecordArr = array(
-                'uid'         => $user->uid,
-                'rid'         => $rid,
-                'pay_date'    => $now->copy()->toDateString(),
-                'valid_day'   => self::VALID_DAY_ARR[$daysType],
-                'price'       => $price['price'],
-                'sale'        => $price['sale'],
-                'pay'         => $price['final'],
-                'expire_date' => $guardEndTime->copy()->addDay()->toDateString(),
-                'guard_id'    => $guardId,
-                'pay_type'    => $payType,
-                'created_at'  => $nowDateTime,
-                'updated_at'  => $nowDateTime
-            );
-
-            $this->guardianService->insertGuardianRecord($guardianRecordArr);
-
-            //異動用戶資料
-            $u['points'] = ($user->points - $price['final']); // 扣除鑽石後的餘額
-            $u['rich'] = ($user->rich + $price['final']); // 增加用戶財富經驗值
-            $u['lv_rich'] = $this->guardianService->getRichLv($u['rich']); // 計算用戶財富新等級
-            $u['guard_id'] = $guardId; // 開通守護等級
-            $u['guard_end'] = $guardEndTime->copy()->toDateString(); // 守護到期日
-            $u['headimg'] = $headimg;
-            $u['update_at'] = $nowDateTime;
-
-            $this->userService->updateUserInfo($user->uid, $u);
-
-            //異動主播資料
-            if ($rid) {
-                $anchorExp = Users::select('exp')->where('uid', $rid)
-                    ->value('exp');
-
-                $a['exp'] = ($anchorExp + $price['final']); // 增加主播經驗值
-                $a['lv_exp'] = $this->guardianService->getAnchorLevel($a['exp']); // 計算主播新等級
-                $a['update_at'] = $nowDateTime;
-
-                $this->userService->updateUserInfo($rid, $a);
-            }
-
-            //新增送禮紀錄
-            $sendGiftData = array(
-                'send_uid'   => $user->uid,
-                'rec_uid'    => $rid,
-                'gid'        => self::GUARDIAN_GIFT_ID[$guardId],
-                'gnum'       => 1,
-                'rid'        => $rid,
-                'points'     => $price['final'],
-                'rate'       => '50',
-                'origin'     => $user->origin,
-                'site_id'    => $siteId,
-                'guard_id'   => $user->guard_id,
-                'guard_days' => self::VALID_DAY_ARR[$daysType],
-                'created'    => $nowDateTime
-            );
-
-            $this->guardianService->insertGiftRecord($sendGiftData);
-
-            $expireMsgDate = $guardEndTime->copy()->subDay()->toDateString();
-
-            $message = [
-                'category'  => 2,
-                'mail_type' => 3,
-                'rec_uid'   => $user->uid,
-                'content'   => '守护开通成功提醒：您已成功开通' . $guardName[$guardId] . ',到期日： ' . $expireMsgDate
-            ];
-
-            $this->messageService->sendSystemToUsersMessage($message);
-
-            DB::commit();
-
-            $this->setStatus(1, '开通守护执行成功');
+            return $this->jsonOutput();
         } catch (\Exception $e) {
-            DB::rollback();
-
             Log::error($e->getMessage());
-            $this->setStatus(999, $e->getMessage());
+            $this->setStatus(999, 'api執行失敗');
             return $this->jsonOutput();
         }
-
-        //如果用戶守護不是第一次開通，且開通等級比上一次大,則重製用戶的守護特權
-        if ($guardId > $user->guard_id && $payType == 1) {
-            $this->guardianService->delUserPrivilege($user->uid, $currentYM, $currentYMD);
-        }
-
-        //更新個人排行榜資訊
-        $this->guardianService->updateUserRank($price['final'], $user->uid, $currentYM);
-
-        if ($rid) {
-            //異動主播開播資料
-            $this->guardianService->updateAnchorRedis($rid, $a);
-
-            $diffWithNextMon = $now->copy()->diffInSeconds($now->copy()->addDays(7)->startOfWeek());//距離下週一的秒數
-            $diffWithTomorrow = $now->copy()->diffInSeconds($now->copy()->tomorrow());
-
-            //判斷是否新增白名單或是累積單場消費紀錄
-            $this->guardianService->WhiteList($user->uid, $rid, $price['final']);
-
-            //(直播間內開通才要做)，新增點亮置頂次數
-            $this->guardianService->toTheToppest($rid, $price['final'], $diffWithNextMon, $diffWithTomorrow);
-
-            //更新房間排行榜資訊
-            $this->guardianService->updateRoomRank($rid, $user->uid, $price['final'], $diffWithNextMon, $currentYMD);
-
-            //新增守護在線列表對應的redis key
-            $this->guardianService->userOnlineList($rid, $user->uid);
-
-            //通知java直播間內開通
-            $this->guardianService->pubToJava($guardId, $rid, $user->uid);
-        }
-
-        $this->setData('expireDate', $expireMsgDate);
-        $this->setData('guardianName', $guardName[$guardId]);
-        $this->setData('payTypeName', self::PAY_TYPE_CH[$payType]);
-
-        return $this->jsonOutput();
     }
 
     /**

@@ -42,7 +42,7 @@ class GuardianRepository
     public function insertGiftRecord($giftRecord = array())
     {
         if (!empty($giftRecord)) {
-            MallList::insert($giftRecord);
+            return MallList::insert($giftRecord);
         }
     }
 
@@ -53,7 +53,7 @@ class GuardianRepository
             unset($guardianRecord['sale']);
         }
 
-        Guardian::insert($guardianRecord);
+        return Guardian::insert($guardianRecord);
     }
 
     /* 取得用戶守護大頭貼，房間內就撈主播海報(video_user_host)，房間外用官方固定的守護圖 */

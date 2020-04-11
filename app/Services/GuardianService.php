@@ -14,12 +14,17 @@ use App\Entities\UserHost;
 use App\Facades\SiteSer;
 use App\Http\Resources\Guardian\GuardianMyInfoResource;
 use App\Http\Resources\Guardian\GuardianSettingResource;
+use App\Models\Users;
 use App\Repositories\GuardianRepository;
 use App\Repositories\GuardianSettingRepository;
 use App\Repositories\UsersRepository;
 use App\Models\MallList;
+use App\Services\Message\MessageService;
 use Carbon\Carbon;
+use DB;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Auth;
+use App\Services\User\UserService;
 
 class GuardianService
 {
@@ -29,18 +34,29 @@ class GuardianService
         3 => '553a1e24744251a208a2fd1afd6e6ba0'
     );
 
+    const VALID_DAY_ARR = array(1 => 30, 2 => 90, 3 => 365);
+    const GUARDIAN_GIFT_ID = array(1 => 700004, 2 => 700005, 3 => 700006);
+    const PAY_TYPE_CH = array(1 => '开通成功', 2 => '续费成功');
+    const PAY_TYPE_EN = array(1 => 'activate', 2 => 'renewal');
+
     protected $guardianSettingRepository;
     protected $guardianRepository;
     protected $usersRepository;
+    protected $userService;
+    protected $messageService;
 
     public function __construct(
         GuardianSettingRepository $guardianSettingRepository,
         GuardianRepository $guardianRepository,
-        UsersRepository $usersRepository
+        UsersRepository $usersRepository,
+        UserService $userService,
+        MessageService $messageService
     ) {
         $this->guardianSettingRepository = $guardianSettingRepository;
         $this->guardianRepository = $guardianRepository;
         $this->usersRepository = $usersRepository;
+        $this->userService = $userService;
+        $this->messageService = $messageService;
     }
 
     /* 取得設定 */
@@ -165,6 +181,305 @@ class GuardianService
         return (int)round(((100 - $salePercent) / 100) * $price);
     }
 
+    public function verification($request)
+    {
+        $user = Auth::user();
+        $now = Carbon::now();
+
+        //取得守護設定價格
+        $priceKey = self::PAY_TYPE_EN[$request->payType] . '_' . self::VALID_DAY_ARR[$request->daysType];
+
+        $price = $this->getGuardianPrice($priceKey, $request->guardId);
+
+        //計算該開通/續約所需的最終價格
+        if (!$price['sale']) {
+            $price['final'] = $price['origin'];
+        } else {
+            $price['final'] = $price['sale'];
+        }
+
+        //檢核方案是否有開啟
+        if (!$price['final']) {
+            return ['status' => 101, 'msg' => '守护系统' . self::VALID_DAY_ARR[$request->daysType] . '天方案未啟用'];
+        }
+
+        //檢核用戶鑽石是否足夠，不足返回資訊
+        if (!($user->points >= $price['final'])) {
+            return ['status' => 102, 'msg' => '您的钻石不足'];
+        }
+
+        //檢核續費還是新開通，是否有符合規定
+        if ($user->guard_end >= $now) {//如有開通且未過期
+            if ($user->guard_id > $request->guardId) {
+                return ['status' => 103, 'msg' => '您现在的级别已大於您要开通/续费的等级'];
+            } else {
+                if ($user->guard_id == $request->guardId && $request->payType != 2) {
+                    return ['status' => 104, 'msg' => '您已开通该级别守护，仅能续费该守护等级'];
+                } else {
+                    if ($user->guard_id < $request->guardId && $request->payType != 1) {
+                        //(原守護等級 < 開通/續約等級 && 不是新開通)
+                        return ['status' => 105, 'msg' => '您尚未开通该级别守护，无法续费'];
+                    }
+                }
+            }
+        } else {
+            if ($request->payType == 2) {
+                return ['status' => 105, 'msg' => '您尚未开通该级别守护，无法续费'];
+            }
+        }
+
+        return ['status' => 100, 'msg' => 'pass'];
+    }
+
+    /* 檢核流程  購買守護流程 */
+    public function purchaseProcess($request)
+    {
+        $user = Auth::user();
+
+        $currentDateTime = Carbon::now()->copy()->toDateTimeString();
+
+        //取得守護設定價格
+        $validDays = self::VALID_DAY_ARR[$request->daysType];
+
+        $priceKey = self::PAY_TYPE_EN[$request->payType] . '_' . $validDays;
+
+        $price = $this->getGuardianPrice($priceKey, $request->guardId);
+
+        //計算守護到期日
+        if (!$user->guard_end) {
+            $guardEndTime = Carbon::now()->copy()->addDays($validDays);
+        } else {
+            if ($user->guard_end >= $currentDateTime) {
+                if ($request->payType == 1) {
+                    $guardEndTime = Carbon::parse($user->guard_end)->copy()->addDays($validDays);
+                } else {
+                    $guardEndTime = Carbon::parse($user->guard_end)->copy()->subDay()->addDays($validDays);
+                }
+            } else {
+                $guardEndTime = Carbon::now()->copy()->addDays($validDays);
+            }
+        }
+
+        /* DB PART START */
+        DB::beginTransaction();
+
+        //新增守護記錄
+        $guardianRecordArr = array(
+            'uid'         => $user->uid,
+            'rid'         => $request->rid,
+            'pay_date'    => Carbon::now()->copy()->toDateString(),
+            'valid_day'   => self::VALID_DAY_ARR[$request->daysType],
+            'price'       => $price['origin'],
+            'sale'        => $price['sale'],
+            'pay'         => $price['final'],
+            'expire_date' => $guardEndTime->copy()->addDay()->toDateString(),
+            'guard_id'    => $request->guardId,
+            'pay_type'    => $request->payType,
+            'created_at'  => $currentDateTime,
+            'updated_at'  => $currentDateTime
+        );
+
+        $insertGuardian = $this->guardianRepository->insertGuardianRecord($guardianRecordArr);
+
+        if (!$insertGuardian) {
+            Log::error('新增守護記錄錯誤');
+            DB::rollBack();
+            return false;
+        }
+
+        //異動用戶資料
+        //取得用戶守護大頭貼，房間內就撈主播海報，房間外用官方固定的守護圖
+        $headimg = $this->guardianRepository->getHeadImg($request->rid);
+
+        if (!$headimg) {
+            $headimg = self::DEFAULT_IMG[$request->guardId];
+        }
+
+        $u['points'] = ($user->points - $price['final']); // 扣除鑽石後的餘額
+        $u['rich'] = ($user->rich + $price['final']); // 增加用戶財富經驗值
+        $u['lv_rich'] = $this->getRichLv($u['rich']); // 計算用戶財富新等級
+        $u['guard_id'] = $request->guardId; // 開通守護等級
+        $u['guard_end'] = $guardEndTime->copy()->toDateString(); // 守護到期日
+        $u['headimg'] = $headimg;
+        $u['update_at'] = $currentDateTime;
+
+        $updateUser = $this->userService->updateUserInfo($user->uid, $u);
+
+        if (!$updateUser) {
+            Log::error('異動用戶資料錯誤');
+            DB::rollBack();
+            return false;
+        }
+
+        //異動主播資料
+        if ($request->rid) {
+            $anchorExp = $this->userService->getUserByUid($request->rid)->exp;
+            $a['exp'] = ($anchorExp + $price['final']); // 增加主播經驗值
+            $a['lv_exp'] = $this->getAnchorLevel($a['exp']); // 計算主播新等級
+            $a['update_at'] = $currentDateTime;
+
+            $updateAnchor = $this->userService->updateUserInfo($request->rid, $a);
+
+            if (!$updateAnchor) {
+                Log::error('異動主播資料錯誤');
+                DB::rollBack();
+                return false;
+            }
+        }
+
+        //新增送禮紀錄
+        $sendGiftRecord = array(
+            'send_uid'   => $user->uid,
+            'rec_uid'    => $request->rid,
+            'gid'        => self::GUARDIAN_GIFT_ID[$request->guardId],
+            'gnum'       => 1,
+            'rid'        => $request->rid,
+            'points'     => $price['final'],
+            'rate'       => '50',
+            'origin'     => $user->origin,
+            'site_id'    => SiteSer::siteId(),
+            'guard_id'   => $user->guard_id,
+            'guard_days' => self::VALID_DAY_ARR[$request->daysType],
+            'created'    => $currentDateTime
+        );
+
+        $insertGiftRecord = $this->guardianRepository->insertGiftRecord($sendGiftRecord);
+
+        if (!$insertGiftRecord) {
+            Log::error('新增送禮紀錄錯誤');
+            DB::rollBack();
+            return false;
+        }
+        /* 守护开通成功提醒 */
+        $guardName = $this->getSetting()->pluck('name', 'id');
+
+        $expireMsgDate = $guardEndTime->copy()->subDay()->toDateString();
+
+        $message = [
+            'category'  => 2,
+            'mail_type' => 3,
+            'rec_uid'   => $user->uid,
+            'content'   => '守护开通成功提醒：您已成功开通' . $guardName[$request->guardId] . ',到期日： ' . $expireMsgDate
+        ];
+
+        $sendMsgToUser = $this->messageService->sendSystemToUsersMessage($message);
+
+        if (!$sendMsgToUser) {
+            Log::error('守护开通成功提醒錯誤');
+            DB::rollBack();
+            return false;
+        }
+
+        DB::commit();
+        /* DB PART END */
+
+        //Redis Part
+
+        //如果用戶守護不是第一次開通，且開通等級比上一次大,則重製用戶的守護特權
+        if ($request->guardId > $user->guard_id && $request->payType == 1) {
+            Redis::del('sguardian_chat_interval:' . $user->uid);
+            Redis::del('sguardian_rename_' . Carbon::now()->copy()->format('Ym') . ':' . $user->uid);
+            Redis::del('sguardian_feiping_' . Carbon::now()->copy()->format('Ym') . ':' . $user->uid);
+            Redis::del('sguardian_forbid_' . Carbon::now()->copy()->format('Ymd') . ':' . $user->uid);
+            Redis::del('sguardian_kick_' . Carbon::now()->copy()->format('Ymd') . ':' . $user->uid);
+        }
+
+        //更新個人排行榜資訊
+        Redis::zIncrBy('zrank_rich_day:' . SiteSer::siteId(), $price['final'], $user->uid);
+        Redis::zIncrBy('zrank_rich_week:' . SiteSer::siteId(), $price['final'], $user->uid);
+        Redis::zIncrBy('zrank_rich_month:' . Carbon::now()->copy()->format('Ym') . ':' . SiteSer::siteId(),
+            $price['final'], $user->uid);
+        Redis::zIncrBy('zrank_rich_history:' . SiteSer::siteId(), $price['final'], $user->uid);
+
+        if ($request->rid) {
+            //異動主播開播資料
+            Redis::hSet('hvediosKtv:' . $request->rid, 'cur_exp', $a['exp']);
+
+            $diffWithNextMon = Carbon::now()->copy()->diffInSeconds(Carbon::now()->copy()->addDays(7)->startOfWeek());//距離下週一的秒數
+            $diffWithTomorrow = Carbon::now()->copy()->diffInSeconds(Carbon::now()->copy()->tomorrow());
+
+            //判斷是否新增白名單或是累積單場消費紀錄
+
+            //如消費金額大於一對多價格,則新增白名單
+            if (Redis::exists('hroom_whitelist_key:' . $user->uid)) {
+                $whiteListKey = Redis::SMEMBERS('hroom_whitelist_key:' . $user->uid);
+
+                $oneToMorePrice = Redis::hget('hroom_whitelist:' . $user->uid . ':' . $whiteListKey[0], 'points');
+
+                if ($price['final'] >= $oneToMorePrice) {
+                    $whiteList = Redis::hget('hroom_whitelist:' . $user->uid . ':' . $whiteListKey[0], 'uids');
+
+                    Redis::hSet('hroom_whitelist:' . $request->rid . ':' . $whiteListKey[0], 'uids',
+                        $whiteList . ',' . $user->uid);
+                    Redis::HINCRBY('hroom_whitelist:' . $request->rid . ':' . $whiteListKey[0], 'nums', 1);
+                }
+            }
+
+            //累積單場消費紀錄
+            if (Redis::exists('one2many_statistic:' . $request->rid)) {
+                Redis::hIncrBy('one2many_statistic:' . $request->rid, $user->uid, $price['final']);
+            }
+
+            //(直播間內開通才要做)，新增點亮置頂次數
+            $checkTopThreshold = Redis::hExists('hsite_config:' . SiteSer::siteId(), 'top_threshold');
+
+            if (!$checkTopThreshold) {
+                Redis::expire('huser_recommend_anchor:' . $request->rid, $diffWithTomorrow);
+            }
+
+            $topThreshold = Redis::hget('hsite_config:' . SiteSer::siteId(), 'top_threshold');
+
+            if ($price['final'] >= $topThreshold) {
+                Redis::HINCRBY('hsite_config:' . SiteSer::siteId(), 'huser_recommend_anchor:' . $request->rid, 1);
+            }
+
+            //更新房間排行榜資訊  直播間-週貢獻榜，zrange_gift_week:主播id，此key若一開始不存在則新增後需要設定ttl為現在到下週0點剩餘的時間
+
+            $checkWeekGift = Redis::exists('zrange_gift_week:' . $request->rid);
+
+            if (!$checkWeekGift) {
+                Redis::zIncrBy('zrange_gift_week:' . $request->rid, $price['final'], $user->uid);
+                Redis::expire('zrange_gift_week:' . $request->rid, $diffWithNextMon);
+            } else {
+                Redis::zIncrBy('zrange_gift_week:' . $request->rid, $price['final'], $user->uid);
+            }
+
+            Redis::zIncrBy('zrank_pop_day', $price['final'], $request->rid);
+            Redis::zIncrBy('zrank_pop_week', $price['final'], $request->rid);
+            Redis::zIncrBy('zrank_pop_month:' . Carbon::now()->copy()->format('Ymd'), $price['final'], $request->rid);
+            Redis::zIncrBy('zrank_pop_history', $price['final'], $request->rid);
+            Redis::zIncrBy('zrank_order_today:' . $request->rid, $price['final'], $user->uid);
+            Redis::zIncrBy('zrange_gift_history:' . $request->rid, $price['final'], $user->uid);
+
+            //新增守護在線列表對應的redis key
+            $checkUserOnline = Redis::hExists('hguardian_online:' . $request->rid, $user->uid);
+
+            if (!$checkUserOnline) {
+                Redis::hSet('hguardian_online:' . $request->rid, $user->uid, $user->uid);
+            }
+
+            //通知java直播間內開通
+            $activateNotify = Redis::hGet('hguardian_info:' . $request->guardId, 'activate_notify');
+
+            if ($activateNotify) {
+                Redis::publish('guardian_broadcast_info',
+                    json_encode([
+                        'rid'     => (int)$request->rid,
+                        'uid'     => (int)$user->uid,
+                        'guardId' => (int)$request->guardId
+                    ])
+                );
+            }
+
+        }
+
+        $response['expireDate'] = $expireMsgDate;
+        $response['guardianName'] = $guardName[$request->guardId];
+        $response['payTypeName'] = self::PAY_TYPE_CH[$request->payType];
+
+        return $response;
+    }
+
     /* 取得redis守護設定價格*/
     public function getGuardianPrice($priceKey, $guardId)
     {
@@ -178,177 +493,6 @@ class GuardianService
             $finalPrice = $getSalePrice;
         }
 
-        return $data = ['final' => $finalPrice, 'sale' => $getSalePrice, 'price' => $getPrice];
+        return $data = ['final' => $finalPrice, 'sale' => $getSalePrice, 'origin' => $getPrice];
     }
-
-    /* 異動主播開播資料 redis資訊 */
-    public function updateAnchorRedis($rid, $a = array())
-    {
-        if (!empty($a)) {
-            Redis::hSet('hvediosKtv:' . $rid, 'cur_exp', $a['exp']);
-        }
-    }
-
-    /* 新增DB送禮紀錄 */
-    public function insertGiftRecord($giftRecord = array())
-    {
-        if (!empty($giftRecord)) {
-            $this->guardianRepository->insertGiftRecord($giftRecord);
-        }
-    }
-
-    /* 新增守護記錄 */
-    public function insertGuardianRecord($guardianRecord = array())
-    {
-        if (!$guardianRecord['sale']) {
-            unset($guardianRecord['sale']);
-        }
-
-        $this->guardianRepository->insertGuardianRecord($guardianRecord);
-    }
-
-    /* 取得用戶守護大頭貼，房間內就撈主播海報(video_user_host)，房間外用官方固定的守護圖 */
-    public function getHeadImg($rid, $guardId)
-    {
-        $headimg = $this->guardianRepository->getHeadImg($rid);
-
-        if (!$headimg) {
-            $headimg = self::DEFAULT_IMG[$guardId];
-        }
-
-        return $headimg;
-    }
-
-    /* 計算守護到期日 */
-    public function getGuardEndTime($userGuardEnd, $validDays, $payType)
-    {
-        $nowDate = Carbon::now()->copy()->toDateTimeString();
-
-        //計算守護到期日
-        if (!$userGuardEnd) {
-            $guardEndTime = Carbon::now()->copy()->addDays($validDays);
-        } else {
-            if ($userGuardEnd >= $nowDate) {
-                if ($payType == 1) {
-                    $guardEndTime = Carbon::parse($userGuardEnd)->copy()->addDays($validDays);
-                } else {
-                    $guardEndTime = Carbon::parse($userGuardEnd)->copy()->subDay()->addDays($validDays);
-                }
-            } else {
-                $guardEndTime = Carbon::now()->copy()->addDays($validDays);
-            }
-        }
-
-        return $guardEndTime;
-    }
-
-    /* 刪除user redis特權 */
-    public function delUserPrivilege($uid, $currentYM, $currentYMD)
-    {
-        Redis::del('sguardian_chat_interval:' . $uid);
-        Redis::del('sguardian_rename_' . $currentYM . ':' . $uid);
-        Redis::del('sguardian_feiping_' . $currentYM . ':' . $uid);
-        Redis::del('sguardian_forbid_' . $currentYMD . ':' . $uid);
-        Redis::del('sguardian_kick_' . $currentYMD . ':' . $uid);
-    }
-
-    /* 更新個人排行榜資訊 */
-    public function updateUserRank($finalPrice, $uid, $currentYM)
-    {
-        $siteId = SiteSer::siteId();
-
-        Redis::zIncrBy('zrank_rich_day:' . $siteId, $finalPrice, $uid);
-        Redis::zIncrBy('zrank_rich_week:' . $siteId, $finalPrice, $uid);
-        Redis::zIncrBy('zrank_rich_month:' . $currentYM . ':' . $siteId, $finalPrice, $uid);
-        Redis::zIncrBy('zrank_rich_history:' . $siteId, $finalPrice, $uid);
-    }
-
-    //更新房間排行榜資訊
-    public function updateRoomRank($rid, $uid, $finalPrice, $diffWithNextMon, $currentYMD)
-    {
-        //直播間-週貢獻榜，zrange_gift_week:主播id，此key若一開始不存在則新增後需要設定ttl為現在到下週0點剩餘的時間
-        $checkWeekGift = Redis::exists('zrange_gift_week:' . $rid);
-        if (!$checkWeekGift) {
-            Redis::zIncrBy('zrange_gift_week:' . $rid, $finalPrice, $uid);
-            Redis::expire('zrange_gift_week:' . $rid, $diffWithNextMon);
-        } else {
-            Redis::zIncrBy('zrange_gift_week:' . $rid, $finalPrice, $uid);
-        }
-
-        Redis::zIncrBy('zrank_pop_day', $finalPrice, $rid);
-        Redis::zIncrBy('zrank_pop_week', $finalPrice, $rid);
-        Redis::zIncrBy('zrank_pop_month:' . $currentYMD, $finalPrice, $rid);
-        Redis::zIncrBy('zrank_pop_history', $finalPrice, $rid);
-        Redis::zIncrBy('zrank_order_today:' . $rid, $finalPrice, $uid);
-        Redis::zIncrBy('zrange_gift_history:' . $rid, $finalPrice, $uid);
-    }
-
-    //(直播間內開通才要做)，新增點亮置頂次數
-    public function toTheToppest($rid, $finalPrice, $diffWithTomorrow)
-    {
-        $siteId = SiteSer::siteId();
-
-        $checkTopThreshold = Redis::hExists('hsite_config:' . $siteId, 'top_threshold');
-
-        if (!$checkTopThreshold) {
-            Redis::expire('huser_recommend_anchor:' . $rid, $diffWithTomorrow);
-        }
-
-        $topThreshold = Redis::hget('hsite_config:' . $siteId, 'top_threshold');
-
-        if ($finalPrice >= $topThreshold) {
-            Redis::HINCRBY('hsite_config:' . $siteId, 'huser_recommend_anchor:' . $rid, 1);
-        }
-
-    }
-
-    //判斷是否新增白名單或是累積單場消費紀錄
-    public function WhiteList($uid, $rid, $finalPrice)
-    {
-        //如消費金額大於一對多價格,則新增白名單
-        if (Redis::exists('hroom_whitelist_key:' . $uid)) {
-            $whiteListKey = Redis::SMEMBERS('hroom_whitelist_key:' . $uid);
-
-            $oneToMorePrice = Redis::hget('hroom_whitelist:' . $uid . ':' . $whiteListKey[0], 'points');
-
-            if ($finalPrice >= $oneToMorePrice) {
-                $whiteList = Redis::hget('hroom_whitelist:' . $uid . ':' . $whiteListKey[0], 'uids');
-                Redis::hSet('hroom_whitelist:' . $rid . ':' . $whiteListKey[0], 'uids',
-                    $whiteList . ',' . $uid);
-                Redis::HINCRBY('hroom_whitelist:' . $rid . ':' . $whiteListKey[0], 'nums', 1);
-            }
-        }
-
-        //累積單場消費紀錄
-        if (Redis::exists('one2many_statistic:' . $rid)) {
-            Redis::hIncrBy('one2many_statistic:' . $rid, $uid, $finalPrice);
-        }
-    }
-
-    //新增守護在線列表redis key
-    public function userOnlineList($rid, $uid)
-    {
-        $checkUserOnline = Redis::hExists('hguardian_online:' . $rid, $uid);
-
-        if (!$checkUserOnline) {
-            Redis::hSet('hguardian_online:' . $rid, $uid, $uid);
-        }
-    }
-
-    //通知java直播間內開通
-    public function pubToJava($guardId, $rid, $uid)
-    {
-        $activateNotify = Redis::hGet('hguardian_info:' . $guardId, 'activate_notify');
-
-        if ($activateNotify) {
-            Redis::publish('guardian_broadcast_info',
-                json_encode([
-                    'rid'     => (int)$rid,
-                    'uid'     => (int)$uid,
-                    'guardId' => (int)$guardId
-                ])
-            );
-        }
-    }
-
 }
