@@ -239,24 +239,22 @@ class GuardianService
         $currentDateTime = Carbon::now()->copy()->toDateTimeString();
 
         //取得守護設定價格
-        $validDays = self::VALID_DAY_ARR[$request->daysType];
-
-        $priceKey = self::PAY_TYPE_EN[$request->payType] . '_' . $validDays;
+        $priceKey = self::PAY_TYPE_EN[$request->payType] . '_' . self::VALID_DAY_ARR[$request->daysType];
 
         $price = $this->getGuardianPrice($priceKey, $request->guardId);
 
         //計算守護到期日
         if (!$user->guard_end) {
-            $guardEndTime = Carbon::now()->copy()->addDays($validDays);
+            $guardEndTime = Carbon::now()->copy()->addDays(self::VALID_DAY_ARR[$request->daysType]);
         } else {
             if ($user->guard_end >= $currentDateTime) {
                 if ($request->payType == 1) {
-                    $guardEndTime = Carbon::parse($user->guard_end)->copy()->addDays($validDays);
+                    $guardEndTime = Carbon::parse($user->guard_end)->copy()->addDays(self::VALID_DAY_ARR[$request->daysType]);
                 } else {
-                    $guardEndTime = Carbon::parse($user->guard_end)->copy()->subDay()->addDays($validDays);
+                    $guardEndTime = Carbon::parse($user->guard_end)->copy()->subDay()->addDays(self::VALID_DAY_ARR[$request->daysType]);
                 }
             } else {
-                $guardEndTime = Carbon::now()->copy()->addDays($validDays);
+                $guardEndTime = Carbon::now()->copy()->addDays(self::VALID_DAY_ARR[$request->daysType]);
             }
         }
 
@@ -287,7 +285,6 @@ class GuardianService
             return false;
         }
 
-        //異動用戶資料
         //取得用戶守護大頭貼，房間內就撈主播海報，房間外用官方固定的守護圖
         $headimg = $this->guardianRepository->getHeadImg($request->rid);
 
@@ -295,6 +292,7 @@ class GuardianService
             $headimg = self::DEFAULT_IMG[$request->guardId];
         }
 
+        //異動用戶資料
         $u['points'] = ($user->points - $price['final']); // 扣除鑽石後的餘額
         $u['rich'] = ($user->rich + $price['final']); // 增加用戶財富經驗值
         $u['lv_rich'] = $this->getRichLv($u['rich']); // 計算用戶財富新等級
@@ -398,9 +396,7 @@ class GuardianService
             $diffWithNextMon = Carbon::now()->copy()->diffInSeconds(Carbon::now()->copy()->addDays(7)->startOfWeek());//距離下週一的秒數
             $diffWithTomorrow = Carbon::now()->copy()->diffInSeconds(Carbon::now()->copy()->tomorrow());
 
-            //判斷是否新增白名單或是累積單場消費紀錄
-
-            //如消費金額大於一對多價格,則新增白名單
+            //判斷是否新增白名單或是累積單場消費紀錄,如消費金額大於一對多價格,則新增白名單
             if (Redis::exists('hroom_whitelist_key:' . $user->uid)) {
                 $whiteListKey = Redis::SMEMBERS('hroom_whitelist_key:' . $user->uid);
 
@@ -434,7 +430,6 @@ class GuardianService
             }
 
             //更新房間排行榜資訊  直播間-週貢獻榜，zrange_gift_week:主播id，此key若一開始不存在則新增後需要設定ttl為現在到下週0點剩餘的時間
-
             $checkWeekGift = Redis::exists('zrange_gift_week:' . $request->rid);
 
             if (!$checkWeekGift) {
