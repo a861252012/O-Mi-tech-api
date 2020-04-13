@@ -278,3 +278,4 @@ Route::prefix('guardian')->group(function () {
         Route::get('history', 'GuardianController@history');
     });
 });
+Route::any('omey', 'OmeyController@index');
