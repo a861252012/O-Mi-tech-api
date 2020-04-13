@@ -82,71 +82,71 @@ class GuardianController extends Controller
      *
      * @apiSuccessExample {json} 成功回應
      * {
-    "status": 1,
-    "msg": "成功",
-    "data": {
-    "faq": "http:\/\/localhost\/99\/static\/faq\/guardian.html",
-    "guard_settiings": [
-    {
-    "id": 2,
-    "name": "紫色守护",
-    "activate": {
-    "days": [
-    30,
-    90,
-    365
-    ],
-    "sale": [
-    10,
-    100,
-    300
-    ],
-    "price": [
-    20,
-    200,
-    500
-    ]
-    },
-    "renewal": {
-    "days": [
-    30,
-    90,
-    365
-    ],
-    "sale": [
-    10,
-    100,
-    300
-    ],
-    "price": [
-    20,
-    200,
-    500
-    ]
-    },
-    "activate_notify": false,
-    "room_notify": false,
-    "all_notify": false,
-    "welcome_notify": false,
-    "shot_border": false,
-    "rename": false,
-    "rename_limit": 0,
-    "feiping": false,
-    "feiping_count": 0,
-    "chat_bg": false,
-    "chat_limit": true,
-    "chat_freq_limit": 0,
-    "chat_length_limit": 0,
-    "forbid": false,
-    "forbid_count": 0,
-    "kick": false,
-    "kick_count": 0,
-    "show_discount": 0,
-    "hidden": false
-    }
-    ]
-    }
-    }
+     * "status": 1,
+     * "msg": "成功",
+     * "data": {
+     * "faq": "http:\/\/localhost\/99\/static\/faq\/guardian.html",
+     * "guard_settiings": [
+     * {
+     * "id": 2,
+     * "name": "紫色守护",
+     * "activate": {
+     * "days": [
+     * 30,
+     * 90,
+     * 365
+     * ],
+     * "sale": [
+     * 10,
+     * 100,
+     * 300
+     * ],
+     * "price": [
+     * 20,
+     * 200,
+     * 500
+     * ]
+     * },
+     * "renewal": {
+     * "days": [
+     * 30,
+     * 90,
+     * 365
+     * ],
+     * "sale": [
+     * 10,
+     * 100,
+     * 300
+     * ],
+     * "price": [
+     * 20,
+     * 200,
+     * 500
+     * ]
+     * },
+     * "activate_notify": false,
+     * "room_notify": false,
+     * "all_notify": false,
+     * "welcome_notify": false,
+     * "shot_border": false,
+     * "rename": false,
+     * "rename_limit": 0,
+     * "feiping": false,
+     * "feiping_count": 0,
+     * "chat_bg": false,
+     * "chat_limit": true,
+     * "chat_freq_limit": 0,
+     * "chat_length_limit": 0,
+     * "forbid": false,
+     * "forbid_count": 0,
+     * "kick": false,
+     * "kick_count": 0,
+     * "show_discount": 0,
+     * "hidden": false
+     * }
+     * ]
+     * }
+     * }
      */
     public function getSetting()
     {
@@ -207,38 +207,38 @@ class GuardianController extends Controller
      *
      * @apiSuccessExample {json} 成功回應
      * {
-    "status": 1,
-    "msg": "成功",
-    "data": {
-    "faq": "http:\/\/localhost\/99\/static\/faq\/guardian.html",
-    "guard_id": 1,
-    "guardian_name": "黄色守护",
-    "last_activate_date": "2019-12-10",
-    "last_renewal_date": "2020-02-14",
-    "expire_date": "2020-03-14",
-    "hidden": 0,
-    "renewal_count": 2,
-    "guardian_permission": {
-    "activate_notify": 0,
-    "welcome_notify": 0,
-    "shot_border": 0,
-    "rename": 0,
-    "rename_limit": 0,
-    "feiping": 0,
-    "feiping_count": 0,
-    "chat_bg": 0,
-    "chat_limit": 0,
-    "chat_freq_limit": 0,
-    "chat_length_limit": 0,
-    "forbid": 0,
-    "forbid_count": 0,
-    "kick": 0,
-    "kick_count": 0,
-    "show_discount": 0,
-    "hidden": 0
-    }
-    }
-    }
+     * "status": 1,
+     * "msg": "成功",
+     * "data": {
+     * "faq": "http:\/\/localhost\/99\/static\/faq\/guardian.html",
+     * "guard_id": 1,
+     * "guardian_name": "黄色守护",
+     * "last_activate_date": "2019-12-10",
+     * "last_renewal_date": "2020-02-14",
+     * "expire_date": "2020-03-14",
+     * "hidden": 0,
+     * "renewal_count": 2,
+     * "guardian_permission": {
+     * "activate_notify": 0,
+     * "welcome_notify": 0,
+     * "shot_border": 0,
+     * "rename": 0,
+     * "rename_limit": 0,
+     * "feiping": 0,
+     * "feiping_count": 0,
+     * "chat_bg": 0,
+     * "chat_limit": 0,
+     * "chat_freq_limit": 0,
+     * "chat_length_limit": 0,
+     * "forbid": 0,
+     * "forbid_count": 0,
+     * "kick": 0,
+     * "kick_count": 0,
+     * "show_discount": 0,
+     * "hidden": 0
+     * }
+     * }
+     * }
      */
     public function myInfo()
     {
@@ -283,15 +283,15 @@ class GuardianController extends Controller
      * @apiSuccess {String} guardianName 守護類型(1 => '黄色守护', 2 => '紫色守护', 3 => '黑色守护')
      *
      * @apiSuccessExample {json} 成功回應
-    {
-    "status": 1,
-    "msg": "开通守护执行成功",
-    "data": {
-    "expireDate": "2037-07-09",
-    "guardianName": "紫色守护",
-    "payTypeName": "续费成功"
-    }
-    }
+     * {
+     * "status": 1,
+     * "msg": "开通守护执行成功",
+     * "data": {
+     * "expireDate": "2037-07-09",
+     * "guardianName": "紫色守护",
+     * "payTypeName": "续费成功"
+     * }
+     * }
      */
     public function buy(GuardianBuy $request)
     {
@@ -319,55 +319,55 @@ class GuardianController extends Controller
      *
      * @apiSuccessExample {json} 成功回應
      *{
-    "status": 1,
-    "msg": "OK",
-    "data": {
-    "list": {
-    "current_page": 1,
-    "data": [
-    {
-    "id": 54,
-    "uid": 9493540,
-    "pay_date": "2020-03-13",
-    "valid_day": 30,
-    "price": 100,
-    "sale": 0,
-    "pay": 100,
-    "expire_date": "2020-04-13",
-    "guard_id": 1,
-    "pay_type": 1,
-    "created_at": "2020-03-13 17:16:30",
-    "updated_at": "2020-03-13 09:16:31"
-    },
-    {
-    "id": 55,
-    "uid": 9493540,
-    "pay_date": "2020-03-14",
-    "valid_day": 30,
-    "price": 100,
-    "sale": 0,
-    "pay": 100,
-    "expire_date": "2020-04-14",
-    "guard_id": 2,
-    "pay_type": 2,
-    "created_at": "2020-03-13 17:17:05",
-    "updated_at": "2020-03-13 09:17:05"
-    }
-    ],
-    "first_page_url": "http:\/\/localhost\/api\/m\/guardian\/history?page=1",
-    "from": 1,
-    "last_page": 1,
-    "last_page_url": "http:\/\/localhost\/api\/m\/guardian\/history?page=1",
-    "next_page_url": null,
-    "path": "http:\/\/localhost\/api\/m\/guardian\/history",
-    "per_page": 15,
-    "prev_page_url": null,
-    "to": 2,
-    "total": 2
-    },
-    "type": "guardian"
-    }
-    }
+     * "status": 1,
+     * "msg": "OK",
+     * "data": {
+     * "list": {
+     * "current_page": 1,
+     * "data": [
+     * {
+     * "id": 54,
+     * "uid": 9493540,
+     * "pay_date": "2020-03-13",
+     * "valid_day": 30,
+     * "price": 100,
+     * "sale": 0,
+     * "pay": 100,
+     * "expire_date": "2020-04-13",
+     * "guard_id": 1,
+     * "pay_type": 1,
+     * "created_at": "2020-03-13 17:16:30",
+     * "updated_at": "2020-03-13 09:16:31"
+     * },
+     * {
+     * "id": 55,
+     * "uid": 9493540,
+     * "pay_date": "2020-03-14",
+     * "valid_day": 30,
+     * "price": 100,
+     * "sale": 0,
+     * "pay": 100,
+     * "expire_date": "2020-04-14",
+     * "guard_id": 2,
+     * "pay_type": 2,
+     * "created_at": "2020-03-13 17:17:05",
+     * "updated_at": "2020-03-13 09:17:05"
+     * }
+     * ],
+     * "first_page_url": "http:\/\/localhost\/api\/m\/guardian\/history?page=1",
+     * "from": 1,
+     * "last_page": 1,
+     * "last_page_url": "http:\/\/localhost\/api\/m\/guardian\/history?page=1",
+     * "next_page_url": null,
+     * "path": "http:\/\/localhost\/api\/m\/guardian\/history",
+     * "per_page": 15,
+     * "prev_page_url": null,
+     * "to": 2,
+     * "total": 2
+     * },
+     * "type": "guardian"
+     * }
+     * }
      */
     public function history()
     {
