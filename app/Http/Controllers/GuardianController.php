@@ -295,27 +295,20 @@ class GuardianController extends Controller
      */
     public function buy(GuardianBuy $request)
     {
-        try {
-            $verification = $this->guardianService->verification($request);
+        $data = $this->guardianService->purchaseProcess(Auth::user(), $request->payType, $request->daysType,
+            $request->guardId, $request->rid);
 
-            if ($verification['status'] != 100) {
-                $this->setStatus($verification['status'], $verification['msg']);
-                return $this->jsonOutput();
-            }
-
-            $data = $this->guardianService->purchaseProcess($request);
-
-            $this->setData('expireDate', $data['expireDate']);
-            $this->setData('guardianName', $data['guardianName']);
-            $this->setData('payTypeName', $data['payTypeName']);
-            $this->setStatus(1, '成功');
-
+        if ($data['status'] != 200) {
+            $this->setStatus($data['status'], $data['msg']);
             return $this->jsonOutput();
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            $this->setStatus(999, 'api執行失敗');
-            return $this->jsonOutput();
+        } else {
+            unset($data['status']);
         }
+
+        $this->setStatus(1, '开通守护执行成功');
+        $this->setRootData('data', $data);
+
+        return $this->jsonOutput();
     }
 
     /**
@@ -387,45 +380,6 @@ class GuardianController extends Controller
             report($e);
             $this->setStatus(999, 'api執行失敗');
             return $this->jsonOutput();
-        }
-    }
-
-    /**
-     * @api {get} /guardian/hack/:uid/:key/:val 用戶守護後門(開發用)
-     * @apiGroup Guardian
-     * @apiName hack
-     * @apiVersion 1.0.0
-     *
-     * @apiParam {Int} uid 用戶id
-     * @apiParam {Int} key 異動欄位(guard_id:守護id/guard_expire_date:守護到期日)
-     * @apiParam {Int} val 值
-     *
-     */
-    public function hack($uid, $key, $val)
-    {
-        try {
-//            dd($uid, $key, $val);
-
-            if (empty($uid) || empty($key)) {
-                $this->setStatus(0, '輸入不得為空');
-                return $this->jsonOutput();
-            }
-
-            $user = Users::find($uid);
-//            dd($user);
-            $user->{$key} = $val;
-
-            if ($key == 'guard_id' && $val == 0) {
-                $user->guardian()->delete();
-            }
-
-            $user->save();
-
-            $this->setStatus(1, 'OK');
-            return $this->jsonOutput();
-
-        } catch (\Exception $e) {
-            report($e);
         }
     }
 }
