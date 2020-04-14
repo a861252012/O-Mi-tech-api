@@ -17,6 +17,7 @@ use App\Http\Resources\Guardian\GuardianSettingResource;
 use App\Models\Users;
 use App\Repositories\GuardianRepository;
 use App\Repositories\GuardianSettingRepository;
+use App\Repositories\UserHostRepository;
 use App\Repositories\UsersRepository;
 use App\Models\MallList;
 use App\Services\Message\MessageService;
@@ -45,19 +46,22 @@ class GuardianService
     protected $usersRepository;
     protected $userService;
     protected $messageService;
+    protected $userHostRepository;
 
     public function __construct(
         GuardianSettingRepository $guardianSettingRepository,
         GuardianRepository $guardianRepository,
         UsersRepository $usersRepository,
         UserService $userService,
-        MessageService $messageService
+        MessageService $messageService,
+        UserHostRepository $userHostRepository
     ) {
         $this->guardianSettingRepository = $guardianSettingRepository;
         $this->guardianRepository = $guardianRepository;
         $this->usersRepository = $usersRepository;
         $this->userService = $userService;
         $this->messageService = $messageService;
+        $this->userHostRepository = $userHostRepository;
     }
 
     /* 取得設定 */
@@ -127,7 +131,6 @@ class GuardianService
 
         return $newLevel;
     }
-
 
     //取得主播最新的等級
     public function getAnchorLevel($anchorExp)
@@ -482,5 +485,11 @@ class GuardianService
         }
 
         return $data = ['final' => $finalPrice, 'sale' => $getSalePrice, 'origin' => $getPrice];
+    }
+
+    /* 主播海報檔案處理 */
+    public function coverTrans($imgCode)
+    {
+        return $this->userHostRepository->updateOrCreate(Auth::id(), ['cover' => $imgCode]);
     }
 }

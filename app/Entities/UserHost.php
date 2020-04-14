@@ -12,6 +12,8 @@ class UserHost extends Model
 {
     protected $table = 'video_user_host';
 
+    protected $fillable = ['id', 'cover'];
+
     protected function user()
     {
         return $this->hasOne('App\Models\Users', 'uid');
