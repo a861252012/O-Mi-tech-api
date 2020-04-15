@@ -63,7 +63,7 @@ class GuardianCover extends Command
                 /* 檔案上傳 */
                 /* 因應zimg上傳方法需做resource處理 */
                 $fo = fopen(Storage::path('uploads/s88888/anchor/' . $user->cover), 'r');
-                if (empty($fo)) {
+                if (false === $fo) {
                     $this->info('用戶ID (' . $user->uid . ') 無法取得海報檔案，故略過');
                     continue;
                 }
