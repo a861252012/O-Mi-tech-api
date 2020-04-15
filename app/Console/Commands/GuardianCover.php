@@ -55,11 +55,13 @@ class GuardianCover extends Command
                 $user = Users::find($k);
                 if (empty($user) || empty($user->cover)) {
                     $this->info('查無用戶(' . $user->uid . ')資料，故略過');
+                    Log::info('查無用戶(' . $user->uid . ')資料，故略過');
                     continue;
                 }
 
                 if (!empty(UserHost::find($k))) {
                     $this->info('用戶ID (' . $user->uid . ') 已存在主播海報檔，故略過');
+                    Log::info('用戶ID (' . $user->uid . ') 已存在主播海報檔，故略過');
                     continue;
                 }
 
@@ -69,6 +71,7 @@ class GuardianCover extends Command
                 $fo = fopen(Storage::path('uploads/s88888/anchor/' . $user->cover), 'r');
                 if (false === $fo) {
                     $this->info('用戶ID (' . $user->uid . ') 無法取得海報檔案，故略過');
+                    Log::info('用戶ID (' . $user->uid . ') 無法取得海報檔案，故略過');
                     continue;
                 }
 
@@ -80,6 +83,8 @@ class GuardianCover extends Command
 
                 if (empty($imgData['ret'])) {
                     $this->info('用戶ID (' . $user->uid . ') zimg上传失败');
+                    Log::info('用戶ID (' . $user->uid . ') zimg上传失败');
+                    continue;
                 }
 
                 /* 更新主播海報資訊 */
