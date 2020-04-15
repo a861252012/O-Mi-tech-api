@@ -67,6 +67,9 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
    //主播列表
     Route::get('video/list/{type}', ['name' => 'm_videolist', 'uses' => 'Mobile\MobileController@videoList']);
 
+    // 用户中心 邀请注册
+    Route::get('/member/invite', ['name' => 'member_invite', 'uses' => 'MemberController@invite']);
+
     /** 获取配置 */
     Route::get('room/{rid}/checkAccess', ['name' => 'm_room_checkAccess', 'uses' => 'Mobile\RoomController@getRoomAccess']);
 
@@ -246,3 +249,8 @@ Route::prefix('game')->middleware(['login_auth:mobile'])->group(function () {
 	Route::get('entry','GameController@entry');
 	Route::post('deposit','GameController@deposit');
 });
+
+/* 安裝資訊紀錄點 */
+Route::post('install_log', 'ShareController@installLog');
+Route::get('share_url', 'ShareController@shareUrl')->middleware(['login_auth:mobile']);
+

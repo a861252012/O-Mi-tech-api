@@ -2,6 +2,8 @@
 
 namespace App\Services\User;
 
+use App\Entities\UserShare;
+use App\Events\ShareUser;
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
 use App\Models\Agents;
@@ -13,6 +15,7 @@ use App\Models\UserGroupPermission;
 use App\Models\UserModNickName;
 use App\Models\Users;
 use App\Services\Service;
+use App\Services\ShareService;
 use App\Services\UserGroup\UserGroupService;
 use App\Services\User\RegService;
 use DB;
@@ -60,7 +63,35 @@ class UserService extends Service
     public function register(array $user, $gift = [], $agent = 0, $invite_code = 0)
     {
         $site_id = SiteSer::siteId();
-        $newUser = Arr::only($user, ['did', 'username', 'password', 'nickname', 'cc_mobile', 'roled', 'exp', 'pop', 'created', 'status', 'province', 'city', 'county', 'video_status', 'rich', 'lv_exp', 'lv_rich', 'pic_total_size', 'pic_used_size', 'lv_type', 'icon_id', 'uuid', 'xtoken', 'origin', 'sex', 'site_id']);
+        $newUser = Arr::only($user, [
+            'did',
+            'username',
+            'password',
+            'nickname',
+            'cc_mobile',
+            'roled',
+            'exp',
+            'pop',
+            'created',
+            'status',
+            'province',
+            'city',
+            'county',
+            'video_status',
+            'rich',
+            'lv_exp',
+            'lv_rich',
+            'pic_total_size',
+            'pic_used_size',
+            'lv_type',
+            'icon_id',
+            'uuid',
+            'xtoken',
+            'origin',
+            'sex',
+            'site_id',
+            'share_uid',
+        ]);
         $newUser['created'] = date('Y-m-d H:i:s');
         $newUser['logined'] = date('Y-m-d H:i:s');
         $newUser['site_id'] = $site_id;
@@ -1107,6 +1138,15 @@ class UserService extends Service
             'cc_mobile' => $cc_mobile,
         ];
         $this->updateUserInfo($uid, $data);
+
+        /* 用戶推廣功能第一次綁定手機更新清單狀態 */
+        if (empty($user->cc_mobile) && !empty(UserShare::where('uid', $uid)->first())) {
+            $shareService = resolve(ShareService::class);
+            info('用戶推廣更新綁定手機: ' . $shareService->modifyUserShare($user->id, ['is_mobile_match' => 1, 'match_date' => date('Y-m-d')]));
+
+            /* 全民代理推廣事件 */
+            event(new ShareUser($user));
+        }
 
         Redis::hset(self::KEY_CC_MOBILE_TO_ID .':'. $site_id, $cc_mobile, $uid);
     }
