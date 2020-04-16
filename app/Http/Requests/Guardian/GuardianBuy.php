@@ -15,7 +15,6 @@ class GuardianBuy extends VRequest
     {
         return [
             'rid'      => 'numeric|nullable',
-            'uid'      => 'required|numeric',
             'guardId'  => 'required|numeric|min:1|max:3',
             'payType'  => 'required|numeric|min:1|max:2',
             'daysType' => 'required|numeric|min:1|max:3',
@@ -26,7 +25,6 @@ class GuardianBuy extends VRequest
     {
         return [
             'rid.numeric'       => ':attribute 參數類型不正確',
-            'uid.required'      => ':attribute 需必填',
             'uid.numeric'       => ':attribute 參數類型不正確',
             'guardId.required'  => ':attribute 需必填',
             'guardId.numeric'   => ':attribute 參數類型不正確',
