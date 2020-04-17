@@ -241,8 +241,8 @@ class GuardianService
             $guardEndTime = Carbon::now()->copy()->addDays(self::VALID_DAY_ARR[$daysType]);
         } else {
             if ($user->guard_end >= $currentDateTime) {
-                if ($payType == 1) {
-                    $guardEndTime = Carbon::parse($user->guard_end)->copy()->addDays(self::VALID_DAY_ARR[$daysType]);
+                if ($payType == 1 && $guardId > $user->guard_id) {
+                    $guardEndTime = Carbon::now()->copy()->addDays(self::VALID_DAY_ARR[$daysType]);
                 } else {
                     $guardEndTime = Carbon::parse($user->guard_end)->copy()->subDay()->addDays(self::VALID_DAY_ARR[$daysType]);
                 }
@@ -302,7 +302,6 @@ class GuardianService
             return false;
         }
 
-
         //異動主播資料
         if ($rid) {
             $anchorExp = $this->userService->getUserByUid($rid)->exp;
@@ -346,7 +345,7 @@ class GuardianService
         /* 守护开通成功提醒 */
         $guardName = $this->getSetting()->pluck('name', 'id');
 
-        $expireMsgDate = $guardEndTime->copy()->subDay()->toDateString();
+        $expireMsgDate = $guardEndTime->copy()->toDateString();
 
         $message = [
             'category'  => 2,

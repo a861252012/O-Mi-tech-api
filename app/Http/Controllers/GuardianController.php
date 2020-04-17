@@ -295,8 +295,12 @@ class GuardianController extends Controller
      */
     public function buy(GuardianBuy $request)
     {
-        $data = $this->guardianService->purchaseProcess(Auth::user(), $request->payType, $request->daysType,
-            $request->guardId, $request->rid);
+        $data = $this->guardianService->purchaseProcess(
+            Auth::user(),
+            $request->payType,
+            $request->daysType,
+            $request->guardId,
+            $request->rid);
 
         if ($data['status'] != 200) {
             $this->setStatus($data['status'], $data['msg']);
