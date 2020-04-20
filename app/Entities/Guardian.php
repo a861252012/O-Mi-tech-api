@@ -19,6 +19,6 @@ class Guardian extends Model
 
     public function user()
     {
-        return $this->hasOne('App\Models\Users', 'uid', 'uid');
+        return $this->belongsTo('App\Models\Users', 'uid', 'uid');
     }
 }

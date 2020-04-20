@@ -65,6 +65,6 @@ class Users extends Authenticatable
 
     public function guardian()
     {
-        return $this->belongsTo('App\Entities\Guardian', 'uid', 'uid');
+        return $this->hasMany('App\Entities\Guardian', 'uid', 'uid');
     }
 }
