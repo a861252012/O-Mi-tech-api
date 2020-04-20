@@ -65,7 +65,7 @@ class SmsService
             if ($cc == '86') {
                 $result = self::sendToCN($mobile, $msg);
             } else {
-                $result = self::sendToWW($cc.$mobile, $msg);
+                $result = self::sendToWW($cc.$mobile, 'Password:'.$pwd);
             }
         }
 
@@ -114,7 +114,7 @@ class SmsService
             if ($cc == '86') {
                 $result = self::sendToCN($mobile, $msg);
             } else {
-                $result = self::sendToWW($cc.$mobile, $msg);
+                $result = self::sendToWW($cc.$mobile, 'Code:'. $code);
             }
             // TODO: log result error
             // {"code": "0", "error":"", "msgid":"1102849617877536768"}
