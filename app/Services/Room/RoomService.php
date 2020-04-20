@@ -399,14 +399,16 @@ class RoomService extends Service
                 if ($user_send_gite) {
                     foreach ($user_send_gite as $k => $v) {
                         /* 守護優惠判斷 */
+                        $checkPoint = $data['points'];
                         $guardId = Redis::hGet('huser_info:' . $k, 'guard_id');
+                        $guardEnd = strtotime(Redis::hGet('huser_info:' . $k, 'guard_end'));
 
-                        if (!empty($guardId)) {
+                        if (!empty($guardId) && time() < $guardEnd) {
                             $showDiscount = Redis::hGet('hguardian_info:' . $guardId, 'show_discount');
-                            $data['points'] = (int) round($data['points'] * (100 - $showDiscount) / 100);
+                            $checkPoint = (int) round($checkPoint * (100 - $showDiscount) / 100);
                         }
 
-                        if ($v >= $data['points']) {
+                        if ($v >= $checkPoint) {
                             $tickets += 1;
                             $uids .= $k . ",";
                         }

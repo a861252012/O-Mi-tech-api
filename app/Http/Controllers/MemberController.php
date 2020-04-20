@@ -2739,8 +2739,10 @@ class MemberController extends Controller
         $user = resolve(UserService::class)->getUserByUid($uid);
 
         /* 守護優惠判斷 */
-        $showDiscount = $user->guardianInfo->show_discount;
-        $points = empty($showDiscount) ? $points : round($points * (100 - $showDiscount) / 100);
+        if (!empty($user['guard_id']) && time() < strtotime($user['guard_end'])) {
+            $showDiscount = $user->guardianInfo->show_discount;
+            $points = empty($showDiscount) ? $points : round($points * (100 - $showDiscount) / 100);
+        }
 
         if ($user['points'] < $points) {
             return JsonResponse::create(['status' => 0, 'msg' => '余额不足', 'cmd' => 'topupTip']);
