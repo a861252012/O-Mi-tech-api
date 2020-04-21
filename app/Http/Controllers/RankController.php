@@ -1,8 +1,6 @@
 <?php
 
-
 namespace App\Http\Controllers;
-
 
 use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
@@ -40,11 +38,17 @@ class RankController extends Controller
     const RANK_PAGE_SIZE = 15;
 
 
-    function rankData()
+    public function rankData()
     {
         /** @var UserService $userService */
         $userService = resolve(UserService::class);
-        return response($userService->getAllRank())->header('Content-Type','application/json');
+        $rankStr = $userService->getAllRank();
+        $rank = json_decode($rankStr, true);
+        $rank['data']['rank_exp_day'] = [];
+        $rank['data']['rank_exp_his'] = [];
+        $rank['data']['rank_exp_month'] = [];
+        $rank['data']['rank_exp_week'] = [];
 
+        return response($rank)->header('Content-Type', 'application/json');
     }
 }
