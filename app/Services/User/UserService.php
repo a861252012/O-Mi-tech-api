@@ -716,6 +716,18 @@ class UserService extends Service
             return ['num' => $flag];
         }
 
+        /* 守護身份驗證 */
+        if (!empty($this->user['guard_id']) && time() < strtotime($this->user['guard_end'])) {
+            $num = 0;
+            if (Redis::hget('hguardian_info:' . $this->user['guard_id'], 'rename')) {
+                $guardianRenameCount = Redis::hget('hguardian_info:' . $this->user['guard_id'], 'rename_limit');
+                $modCount = UserModNickName::where('uid', auth()->id())->count();
+                $num = abs($guardianRenameCount - $modCount);
+            }
+
+            return ['num' => $num];
+        }
+
         // TODO 贵族的权限
         if ($this->user['vip']) {
             $vip = $this->user['vipGroup']['permission'];
