@@ -406,9 +406,7 @@ class GuardianService
             }
 
             //累積單場消費紀錄
-            if (Redis::exists('one2many_statistic:' . $rid)) {
-                Redis::hIncrBy('one2many_statistic:' . $rid, $user->uid, $price['final']);
-            }
+            Redis::hIncrBy('one2many_statistic:' . $rid, $user->uid, $price['final']);
 
             //(直播間內開通才要做)，新增點亮置頂次數
             $checkTopThreshold = Redis::hExists('hsite_config:' . SiteSer::siteId(), 'top_threshold');
