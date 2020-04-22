@@ -16,7 +16,7 @@ class RegController extends Controller
         $resp = [
             'status' => 1,
             'data' => [
-                'nickname' => '',
+                'nickname' => $regService->randomNickname(),
                 'reg_status' => $status,
             ],
         ];

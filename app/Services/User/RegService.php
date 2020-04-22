@@ -23,7 +23,7 @@ class RegService
     'Burn','Hell','Planet','Loch','Blaze','Lucifer','Powder','Ocean','Psycho',
     'Quake','Rain','Inferno','Shadow','Rock','River','Flame','Skull','Sand',
     'Sea','Boil','Spider','Soil','Snow','Animal','Spike','Solid','Swamp',
-    'Venom','Stone','Wave','Bear','Zombie','Sun','Air','Boar','Metal','Water',
+    'Venom','Stone','Wave','Bear','Zombie','Air','Boar','Metal','Water',
     'Blast','Cheetah','Alloy','Wood','Breath','Dragon','Copper','Tree','Cloud',
     'Fox','Gold','Leaf','Flow','Horse','Iron','Jungle','Fog','Phoneix','Bush',
     'Fresh','Rhino','Silver','Forest','Gas','Steel','Ebony','Oxygen','Shark',
@@ -33,10 +33,25 @@ class RegService
     'Melon','Delta','Theta','Nuts','Venus','Echo','Lambda','Orange','Zeus',
     'Foxtrot','Sigma','War','Adverbs','Color','Nouns','Assault','Black','Boxer',
     'Battle','Brave','Cyan','Cleaner','Combat','Cruel','Green','Dancer','Elite',
-    'Indigo','Eater','Killer','Magenta','Killer','Nuke','Orange','Player',
+    'Indigo','Eater','Killer','Magenta','Nuke','Player',
     'Sniper','Funny','Pink','Sleeper','Soldier','Lazy','Purple','Spy','Phenom',
     'Red','Sucker','Strike','Rude','Violet','Talker','Warrior','Selfish','White',
-    'Walker'];
+    'Walker',
+    // https://en.wikipedia.org/wiki/List_of_aviators_by_nickname
+    'Aggy','Assi','Bake','Baron','Buster','Bam','Barron','Beazle','Bee','Ben',
+    'BigJoe','Bing','Bird','Blondie','Bo','Bob','Bobbi','Bomber','Boom','Boy',
+    'Bubi','Buck','Bud','Bully','Bunny','Butch','Butcher','Buzz','Breeze','Cat',
+    'Chappie','Chuck','Cobber','Cobra','Cocky','Cowboy','Crow','Cloudy','Demon',
+    'Dizzy','Dog','Dolfo','Dookie','Dutch','Eagle','Fighter','Fish','Flotte',
+    'Fly','Gabby','Ginger','Hamish','Hap','Hasse','Hilly','Hipshot','Hogey',
+    'Hooter','Hoppy','Huss','Igo','Illu','Jack','Jackie','Jake','JB','Jimmy',
+    'Johnnie','Johnny','Kaos','Kinch','Knight','Little','Lock','Lucky','Mad',
+    'Major','Mick','Mouse','Mutt','One','Paddy','Pancho','Pappy','Pete','Petit',
+    'Pick','Pritzl','Punch','Paambu','Ratsy','Red','Reeste','Sailor','Sandy',
+    'Shorty','Skip','Slew','Spig','Spuds','Stan','Stapme','Strafer','Stuffy',
+    'Sawn','Spoojr','Taffy','Tex','Tim','Titch','Uncle','Wop','Whitey','Willie',
+    'Winkle',
+    ];
 
     public function randomNickname()
     {
@@ -44,13 +59,10 @@ class RegService
         shuffle($prefixes);
         $prefix = $prefixes[0];
         $len = strlen($prefix);
-        $gen_bytes = min(6, 11 - $len);
+        $gen_bytes = 11 - $len;
         $rand_max = pow(10, $gen_bytes) - 1;
-        $rand_num = mt_rand(0, $rand_max);
-        if (strlen($rand_num) < $gen_bytes) {
-            $rand_num = $rand_num + ($rand_max + 1);
-            $rand_num = substr($rand_num, 1);
-        }
+        $rand_min = pow(10, $gen_bytes - 1);
+        $rand_num = mt_rand($rand_min, $rand_max);
         return $prefix . $rand_num;
     }
 
