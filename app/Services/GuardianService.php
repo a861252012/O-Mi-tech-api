@@ -454,7 +454,7 @@ class GuardianService
                         'rid'     => (int)$rid,
                         'uid'     => (int)$user->uid,
                         'guardId' => (int)$guardId,
-                        'points'  => (int)$price['final']
+                        'price'  => (int)$price['final']
                     ])
                 );
             }
