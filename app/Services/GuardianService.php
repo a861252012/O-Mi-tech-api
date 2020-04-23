@@ -391,13 +391,13 @@ class GuardianService
             $diffWithTomorrow = Carbon::now()->copy()->diffInSeconds(Carbon::now()->copy()->tomorrow());
 
             //判斷是否新增白名單或是累積單場消費紀錄,如消費金額大於一對多價格,則新增白名單
-            if (Redis::exists('hroom_whitelist_key:' . $user->uid)) {
-                $whiteListKey = Redis::SMEMBERS('hroom_whitelist_key:' . $user->uid);
+            if (Redis::exists('hroom_whitelist_key:' . $rid)) {
+                $whiteListKey = Redis::SMEMBERS('hroom_whitelist_key:' . $rid);
 
-                $oneToMorePrice = Redis::hget('hroom_whitelist:' . $user->uid . ':' . $whiteListKey[0], 'points');
+                $oneToMorePrice = Redis::hget('hroom_whitelist:' . $rid . ':' . $whiteListKey[0], 'points');
 
                 if ($price['final'] >= $oneToMorePrice) {
-                    $whiteList = Redis::hget('hroom_whitelist:' . $user->uid . ':' . $whiteListKey[0], 'uids');
+                    $whiteList = Redis::hget('hroom_whitelist:' . $rid . ':' . $whiteListKey[0], 'uids');
 
                     Redis::hSet('hroom_whitelist:' . $rid . ':' . $whiteListKey[0], 'uids',
                         $whiteList . ',' . $user->uid);
@@ -454,7 +454,7 @@ class GuardianService
                         'rid'     => (int)$rid,
                         'uid'     => (int)$user->uid,
                         'guardId' => (int)$guardId,
-                        'price'  => (int)$price['final']
+                        'price'   => (int)$price['final']
                     ])
                 );
             }
