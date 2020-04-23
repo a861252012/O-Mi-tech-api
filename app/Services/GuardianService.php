@@ -453,7 +453,8 @@ class GuardianService
                     json_encode([
                         'rid'     => (int)$rid,
                         'uid'     => (int)$user->uid,
-                        'guardId' => (int)$guardId
+                        'guardId' => (int)$guardId,
+                        'points'  => (int)$price['final']
                     ])
                 );
             }
