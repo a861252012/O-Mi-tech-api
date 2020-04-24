@@ -405,7 +405,7 @@ class RoomService extends Service
 //                        $guardEnd = resolve(UserService::class)->getUserInfo($k, 'guard_end');
 
                         $roomUser = resolve(UserService::class)->getUserInfo($k);
-                        if (!empty($roomUser['guard_id']) && time() < $roomUser['guard_end']) {
+                        if (!empty($roomUser['guard_id']) && time() < strtotime($roomUser['guard_end'])) {
                             $showDiscount = Redis::hGet('hguardian_info:' . $roomUser['guard_id'], 'show_discount');
                             $checkPoint = (int) round($checkPoint * (100 - $showDiscount) / 100);
                         }
