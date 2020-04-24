@@ -351,7 +351,7 @@ class GuardianService
             'category'  => 2,
             'mail_type' => 3,
             'rec_uid'   => $user->uid,
-            'content'   => '守护开通成功提醒：您已成功开通' . $guardName[$guardId] . ',到期日： ' . $expireMsgDate
+            'content'   => '守护' . self::PAY_TYPE_CH[$payType] . '提醒：您已成功开通 ' . $guardName[$guardId] . ' ，到期日：' . $expireMsgDate
         ];
 
         $sendMsgToUser = $this->messageService->sendSystemToUsersMessage($message);
