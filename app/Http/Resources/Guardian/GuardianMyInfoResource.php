@@ -26,7 +26,7 @@ class GuardianMyInfoResource extends JsonResource
             'guardian_name'       => $this->guardianInfo->name,
             'last_activate_date'  => $this->guardian()->where('pay_type', 1)->max('pay_date'),
             'last_renewal_date'   => $this->guardian()->where('pay_type', 2)->max('pay_date'),
-            'expire_date'         => $this->guard_end,
+            'expire_date'         => date('Y-m-d', strtotime("-1 day", strtotime($this->guard_end))),
             'hidden'              => $this->hidden,
             'renewal_count'       => $this->guardian()->where('pay_type', 2)->count(),
             'guardian_permission' => collect($this->guardianInfo)->except([
