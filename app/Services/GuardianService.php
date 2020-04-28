@@ -244,7 +244,7 @@ class GuardianService
                 if ($payType == 1 && $guardId > $user->guard_id) {
                     $guardEndTime = Carbon::now()->copy()->addDays(self::VALID_DAY_ARR[$daysType]);
                 } else {
-                    $guardEndTime = Carbon::parse($user->guard_end)->copy()->subDay()->addDays(self::VALID_DAY_ARR[$daysType]);
+                    $guardEndTime = Carbon::parse($user->guard_end)->copy()->addDays(self::VALID_DAY_ARR[$daysType]);
                 }
             } else {
                 $guardEndTime = Carbon::now()->copy()->addDays(self::VALID_DAY_ARR[$daysType]);
