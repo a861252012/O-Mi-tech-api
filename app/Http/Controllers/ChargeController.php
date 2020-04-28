@@ -185,7 +185,15 @@ class ChargeController extends Controller
      * @apiError (Error Status) 999 API執行錯誤
      *
      * @apiSuccessExample {json} 成功回應
-     * {}
+     * {
+    "status": 0,
+    "data": {
+    "postdata": "{\"serviceCode\":\"FC0045\",\"version\":\"1.5\",\"serviceType\":\"03\",\"signType\":\"md5\",\"sysPlatCode\":\"V\",\"sentTime\":\"2020-04-28 18:34:32\",\"expTime\":\"\",\"charset\":\"utf-8\",\"sMessageNo\":\"FC00450045394915880700729692\",\"Datas\":[{\"dataNo\":\"FCDATA0045394915880700729694\",\"amount\":\"1000.00\",\"noticeUrl\":\"http:\\\/\\\/www.ymrenn.com\\\/api\\\/charge\\\/notice\",\"returnUrl\":\"\\\/charge\\\/reback\",\"remark\":\"rand9551107869@x.com\",\"channel\":\"\",\"vipLevel\":\"1\",\"bankCode\":\"\",\"lan\":\"\",\"currency\":\"\",\"isMobile\":\"false\"}],\"sign\":\"73fe05fbe29c5688ed49812df0e4f93e\"}",
+    "orderId": "FC00450045394915880700729692",
+    "remoteUrl": "https:\/\/gopay.pay-sin.com\/pay"
+    },
+    "msg": ""
+    }
      */
     public function pay()
     {
