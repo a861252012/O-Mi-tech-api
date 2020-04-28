@@ -1,4 +1,8 @@
-<?php /** @noinspection PhpUndefinedClassInspection */
+<?php
+/**
+ * @apiDefine Charge 充值功能
+ */
+/** @noinspection PhpUndefinedClassInspection */
 
 namespace App\Http\Controllers;
 
@@ -166,17 +170,33 @@ class ChargeController extends Controller
      *   ]
      * }
      *
+     * @api {post} /api/charge/pay 執行支付動作
+     * @apiGroup Charge
+     * @apiName pay
+     * @apiVersion 1.0.0
+     *
+     * @apiParam {Int} price 價格
+     * @apiParam {Int} vipLevel 充值渠道
+     * @apiParam {Int} mode_type
+     * @apiParam {String} name
+     *
+     * @apiError (Error Status) 1 请输入正确的金额
+     * @apiError (Error Status) 1 请选择充值渠道
+     * @apiError (Error Status) 999 API執行錯誤
+     *
+     * @apiSuccessExample {json} 成功回應
+     * {}
      */
     public function pay()
     {
-        $amount = isset($_POST['price']) ? number_format(intval($_POST['price']), 2, '.', '') : 0;
+        $amount = isset($_POST['price']) ? number_format(((int) $_POST['price']), 2, '.', '') : 0;
 
         if (!$amount || $amount < 1) {
             $msg = '请输入正确的金额!';
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
         }
         $fee = 0;
-        if ($giftactive = GiftActivity::query()->where('moneymin', intval($amount))->first()) {
+        if ($giftactive = GiftActivity::query()->where('moneymin', ((int) $amount))->first()) {
             $fee = $giftactive->fee;
         }
 
@@ -191,8 +211,9 @@ class ChargeController extends Controller
         }
 
         $origin = $this->getClient();
+
         /** 古都 */
-        if (intval($mode_type) === static::CHANNEL_GD_ALI || intval($mode_type) === static::CHANNEL_GD_BANK) {
+        if (((int) $mode_type) === static::CHANNEL_GD_ALI || ((int) $mode_type) === static::CHANNEL_GD_BANK) {
             return $this->processGD([
                 'money' => $amount,
                 'uid' => Auth::id(),
