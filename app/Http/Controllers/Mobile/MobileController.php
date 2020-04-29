@@ -243,7 +243,7 @@ class MobileController extends Controller
             $guardVaildDay = ceil((strtotime($userinfo->guard_end) - time()) / 86400);
         }
 
-        if ($userinfo->guard_id != 0 && time() < strtotime($userinfo->guard_end)) {
+        if ($userinfo->guard_id != 0 && time() > strtotime($userinfo->guard_end)) {
             $userinfo->guard_id = "0";
         }
 
