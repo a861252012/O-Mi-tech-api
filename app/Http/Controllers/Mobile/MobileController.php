@@ -174,7 +174,7 @@ class MobileController extends Controller
      * @apiSuccess {String} guard_name 守護名稱
      * @apiSuccess {String} guard_end 守護到期日
      * @apiSuccess {Int} guard_vaild_day 守護剩餘天數
-     * @apiSuccess {String} guard_shot_border  頭像邊框(0:關/1:開)
+     * @apiSuccess {Int} guard_shot_border  頭像邊框(0:關/1:開)
      *
      * @apiSuccessExample {json} 成功回應
      * {
@@ -207,7 +207,7 @@ class MobileController extends Controller
     "guard_name": "黄色守护",
     "guard_end": "2020-03-26",
     "guard_vaild_day": 29,
-    "guard_shot_border": "1"
+    "guard_shot_border": 1
     },
     "msg": ""
     }
