@@ -174,6 +174,7 @@ class MobileController extends Controller
      * @apiSuccess {String} guard_name 守護名稱
      * @apiSuccess {String} guard_end 守護到期日
      * @apiSuccess {Int} guard_vaild_day 守護剩餘天數
+     * @apiSuccess {Int} guard_shot_border  頭像邊框(0:關/1:開)
      *
      * @apiSuccessExample {json} 成功回應
      * {
@@ -205,7 +206,8 @@ class MobileController extends Controller
     "guard_id": "1",
     "guard_name": "黄色守护",
     "guard_end": "2020-03-26",
-    "guard_vaild_day": 29
+    "guard_vaild_day": 29,
+    "guard_shot_border": "1"
     },
     "msg": ""
     }
@@ -241,37 +243,43 @@ class MobileController extends Controller
             $guardVaildDay = ceil((strtotime($userinfo->guard_end) - time()) / 86400);
         }
 
+        if ($userinfo->guard_id != 0 && time() < strtotime($userinfo->guard_end)) {
+            $userinfo->guard_id = "0";
+        }
+
         return JsonResponse::create([
             'status' => 1,
-            'data' => [
-                'uid' => $userinfo->uid,
-                'username' => $userinfo->username,
-                'nickname' => $userinfo->nickname,
-                'headimg' => $this->getHeadimg($userinfo->headimg),
-                'points' => $userinfo->points,
-                'roled' => $userinfo->roled,
-                'rid' => $userinfo->rid,
-                'vip' => $userinfo->vip,
-                'vip_end' => $userinfo->vip_end,
-                'lv_rich' => $userinfo->lv_rich,
-                'lv_exp' => $userinfo->lv_exp,
-                'safemail' => $userinfo->safemail ?? '',
+            'data'   => [
+                'uid'               => $userinfo->uid,
+                'username'          => $userinfo->username,
+                'nickname'          => $userinfo->nickname,
+                'headimg'           => $this->getHeadimg($userinfo->headimg),
+                'points'            => $userinfo->points,
+                'roled'             => $userinfo->roled,
+                'rid'               => $userinfo->rid,
+                'vip'               => $userinfo->vip,
+                'vip_end'           => $userinfo->vip_end,
+                'lv_rich'           => $userinfo->lv_rich,
+                'lv_exp'            => $userinfo->lv_exp,
+                'safemail'          => $userinfo->safemail ?? '',
 //                'mails' => $this->make('messageServer')->getMessageNotReadCount($userinfo->uid, $userinfo->lv_rich),// 通过服务取到数量
-                'icon_id' => intval($userinfo->icon_id),
-                'gender' => $userinfo->sex,
-                'follows' => $userfollow,
-                'fansCount' => $by_atttennums,
-                'system_tip_count' => Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status', 0)->count(),
-                'transfer' => $userinfo->transfer,
-                'birthday' => $userinfo->birthday,
-                'province' => $userinfo->province,
-                'city' => $userinfo->city,
-                'nickcount' => $nickcount,
-                'age' => date('Y') - explode('-',$userinfo->birthday)[0],
-                'guard_id' => $userinfo->guard_id,
-                'guard_name' => $guardianInfo->name ?? '',
-                'guard_end' => $userinfo->guard_end ?? '',
-                'guard_vaild_day' => $guardVaildDay ?? 0,
+                'icon_id'           => intval($userinfo->icon_id),
+                'gender'            => $userinfo->sex,
+                'follows'           => $userfollow,
+                'fansCount'         => $by_atttennums,
+                'system_tip_count'  => Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status',
+                    0)->count(),
+                'transfer'          => $userinfo->transfer,
+                'birthday'          => $userinfo->birthday,
+                'province'          => $userinfo->province,
+                'city'              => $userinfo->city,
+                'nickcount'         => $nickcount,
+                'age'               => date('Y') - explode('-', $userinfo->birthday)[0],
+                'guard_id'          => $userinfo->guard_id,
+                'guard_name'        => $guardianInfo->name ?? '',
+                'guard_end'         => $userinfo->guard_end ?? '',
+                'guard_vaild_day'   => $guardVaildDay ?? 0,
+                'guard_shot_border' => $guardianInfo->shot_border
             ],
         ]);
     }

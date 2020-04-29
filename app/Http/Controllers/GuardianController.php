@@ -187,23 +187,23 @@ class GuardianController extends Controller
      * @apiSuccess {String} hidden 隱身狀態(0:關/1:開)
      * @apiSuccess {String} renewal_count 續費次數
      * @apiSuccess {Object[]} guardian_permission 守護特權
-     * @apiSuccess {String} activate_notify 開通通知
-     * @apiSuccess {String} welcome_notify 歡迎通知
-     * @apiSuccess {String} shot_border 頭像邊框(0:關/1:開)
-     * @apiSuccess {String} rename 改名限制(0:不可修改/1:可修改)
-     * @apiSuccess {String} rename_limit 改名限制次數
-     * @apiSuccess {String} feiping 專屬飛頻(0:關/1:開)
-     * @apiSuccess {String} feiping_count 贈送飛頻數
-     * @apiSuccess {String} chat_bg 聊天底圖(0:關/1:開)
-     * @apiSuccess {String} chat_limit 聊天文字限制開關(0:關/1:開)
-     * @apiSuccess {String} chat_freq_limit 聊天文字時間限制(0:不限制)
-     * @apiSuccess {String} chat_length_limit 聊天文字長度限制(0:不限制)
-     * @apiSuccess {String} forbid 防禁言(0:關/1:開)
-     * @apiSuccess {String} forbid_count 禁言用戶數
-     * @apiSuccess {String} kick 防踢人(0:關/1:開)
-     * @apiSuccess {String} kick_count 踢人數
-     * @apiSuccess {String} show_discount 看秀折扣(%)
-     * @apiSuccess {String} hidden 是否允許隱身(0:關/1:開)
+     * @apiSuccess {Int} guardian_permission.activate_notify 開通通知
+     * @apiSuccess {Int} guardian_permission.welcome_notify 歡迎通知
+     * @apiSuccess {Int} guardian_permission.shot_border 頭像邊框(0:關/1:開)
+     * @apiSuccess {Int} guardian_permission.rename 改名限制(0:不可修改/1:可修改)
+     * @apiSuccess {Int} guardian_permission.rename_limit 改名限制次數
+     * @apiSuccess {Int} guardian_permission.feiping 專屬飛頻(0:關/1:開)
+     * @apiSuccess {Int} guardian_permission.feiping_count 贈送飛頻數
+     * @apiSuccess {Int} guardian_permission.chat_bg 聊天底圖(0:關/1:開)
+     * @apiSuccess {Int} guardian_permission.chat_limit 聊天文字限制開關(0:關/1:開)
+     * @apiSuccess {Int} guardian_permission.chat_freq_limit 聊天文字時間限制(0:不限制)
+     * @apiSuccess {Int} guardian_permission.chat_length_limit 聊天文字長度限制(0:不限制)
+     * @apiSuccess {Int} guardian_permission.forbid 防禁言(0:關/1:開)
+     * @apiSuccess {Int} guardian_permission.forbid_count 禁言用戶數
+     * @apiSuccess {Int} guardian_permission.kick 防踢人(0:關/1:開)
+     * @apiSuccess {Int} guardian_permission.kick_count 踢人數
+     * @apiSuccess {Int} guardian_permission.show_discount 看秀折扣(%)
+     * @apiSuccess {Int} guardian_permission.hidden 是否允許隱身(0:關/1:開)
      *
      * @apiSuccessExample {json} 成功回應
      * {
