@@ -43,12 +43,6 @@ class RankController extends Controller
         /** @var UserService $userService */
         $userService = resolve(UserService::class);
         $rankStr = $userService->getAllRank();
-        $rank = json_decode($rankStr, true);
-        $rank['data']['rank_exp_day'] = [];
-        $rank['data']['rank_exp_his'] = [];
-        $rank['data']['rank_exp_month'] = [];
-        $rank['data']['rank_exp_week'] = [];
-
-        return response($rank)->header('Content-Type', 'application/json');
+        return response($rankStr)->header('Content-Type', 'application/json');
     }
 }
