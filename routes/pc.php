@@ -430,8 +430,6 @@ Route::prefix('guardian')->group(function () {
     /* 取得權限 */
     Route::get('get_setting', 'GuardianController@getSetting');
 
-    Route::get('hack/{uid}/{key}/{val}', 'GuardianController@hack');
-
     Route::middleware(['login_auth'])->group(function () {
         /* 我的守護資訊 */
         Route::get('my_info', 'GuardianController@myInfo');

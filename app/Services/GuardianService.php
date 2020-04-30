@@ -494,11 +494,12 @@ class GuardianService
     /* 主播海報檔案處理 */
     public function getGuardianHistory()
     {
-        $list = Auth::user()->guardian()->paginate();
+        $list = Auth::user()->guardian()->paginate()->toArray();
 
-        foreach ($list as $v) {
-            $v->expire_date = Carbon::parse($v->expire_date)->copy()->subDay()->toDateString();
+        foreach ($list['data'] as $k => $v) {
+            $list['data'][$k]['expire_date'] = Carbon::parse($v['expire_date'])->copy()->subDay()->toDateString();
         }
+
         return $list;
     }
 }
