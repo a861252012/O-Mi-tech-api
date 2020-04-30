@@ -18,16 +18,7 @@ class OnePayService
     /* 充值接口 – 取得銀行卡資訊 */
     public function pay()
     {
-        $result = '{
-                      "returncode": "00",
-                      "bank_account": "6228480478780957872",
-                      "bank_account_name": "龙浩",
-                      "bank_code": "ABC",
-                      "bank_area": "重庆沙坪",
-                      "remark": "44QU",
-                      "merchant_order": "PAY0000112020042814273200000027",
-                      "alipay_bankcard_id": "1234"
-                    }';
+        $result = '{"returncode": "00","bank_account": "6228480478780957872","bank_account_name": "龙浩","bank_code": "ABC","bank_area": "重庆沙坪","remark": "44QU","merchant_order": "PAY0000112020042814273200000027","alipay_bankcard_id": "1234"}';
 
         return $result;
     }

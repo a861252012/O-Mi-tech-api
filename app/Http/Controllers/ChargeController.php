@@ -15,6 +15,7 @@ use App\Models\PayGD;
 use App\Models\Recharge;
 use App\Models\RechargeMoney;
 use App\Models\Users;
+use App\Services\Charge\OnePayService;
 use App\Services\User\UserService;
 use DB;
 use Hashids\Hashids;
@@ -30,6 +31,9 @@ class ChargeController extends Controller
     const CHANNEL_GD_ALI = 7;
     const CHANNEL_GD_BANK = 8;
     const ORDER_REPEAT_LIMIT_GD = 60;
+
+    /* One Pay */
+    const CHANNEL_ONE_PAY = 98;
 
     private $codeMsg = array(
         -1 => '未知',
@@ -220,6 +224,11 @@ class ChargeController extends Controller
 
         $origin = $this->getClient();
 
+        /* 回傳資料處理動作 */
+        $act = '1';
+
+        $orderId = '';
+
         /** 古都 */
         if (((int) $mode_type) === static::CHANNEL_GD_ALI || ((int) $mode_type) === static::CHANNEL_GD_BANK) {
             return $this->processGD([
@@ -232,7 +241,20 @@ class ChargeController extends Controller
                 'origin' => $origin,
             ]);
         }
-        $postdata = resolve('charge')->postData($amount, $channel);
+
+        switch ($channel) {
+            case self::CHANNEL_ONE_PAY:
+                $act = '3';
+                $onePayService = resolve(OnePayService::class);
+                $orderId = resolve('charge')->getMessageNo();
+                $postdata = $onePayService->pay();
+//                dd(json_decode($postdata));
+                break;
+            default :
+                $charge = resolve('charge');
+                $orderId = $charge->getMessageNo();
+                $postdata = $charge->postData($amount, $channel);
+        }
 
         //记录下数据库
         $uid = Auth::id();
@@ -245,7 +267,7 @@ class ChargeController extends Controller
                 'del' => 0,
                 'paymoney' => $amount,
                 'points' => ceil($amount * 10) + $fee,
-                'order_id' => resolve('charge')->getMessageNo(),
+                'order_id' => $orderId,
                 'postdata' => $postdata,
                 'nickname' => Auth::user()['nickname'],
                 'channel' => $channel,
@@ -256,8 +278,9 @@ class ChargeController extends Controller
 
         $rtn = array(
             'postdata' => $postdata,
-            'orderId' => resolve('charge')->getMessageNo(),
+            'orderId' => $orderId,
             'remoteUrl' => resolve('charge')->remote(),
+            'act' => $act,
         );
 
         Log::channel('charge')->info($rtn);
