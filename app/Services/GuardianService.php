@@ -490,4 +490,15 @@ class GuardianService
     {
         return $this->userHostRepository->updateOrCreate(Auth::id(), ['cover' => $imgCode]);
     }
+
+    /* 主播海報檔案處理 */
+    public function getGuardianHistory()
+    {
+        $list = Auth::user()->guardian()->paginate();
+
+        foreach ($list as $v) {
+            $v->expire_date = Carbon::parse($v->expire_date)->copy()->subDay()->toDateString();
+        }
+        return $list;
+    }
 }

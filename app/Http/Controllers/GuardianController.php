@@ -377,7 +377,7 @@ class GuardianController extends Controller
     {
         try {
             $this->setStatus(1, 'OK');
-            $this->setData('list', Auth::user()->guardian()->paginate());
+            $this->setData('list', $this->guardianService->getGuardianHistory());
             $this->setData('type', 'guardian');
             return $this->jsonOutput();
         } catch (\Exception $e) {
