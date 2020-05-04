@@ -33,7 +33,7 @@ class ChargeController extends Controller
     const ORDER_REPEAT_LIMIT_GD = 60;
 
     /* One Pay */
-    const CHANNEL_ONE_PAY = 98;
+    const CHANNEL_ONE_PAY = 13;
 
     private $codeMsg = array(
         -1 => '未知',
@@ -242,12 +242,18 @@ class ChargeController extends Controller
             ]);
         }
 
-        switch ($channel) {
+        switch ($mode_type) {
             case self::CHANNEL_ONE_PAY:
                 $act = '3';
                 $onePayService = resolve(OnePayService::class);
-                $orderId = resolve('charge')->getMessageNo();
+
+                if (!$onePayService->genOrder()) {
+                    Log::error('One Pay產生訂單號失敗!');
+                }
+
+                $orderId = $onePayService->getOrderId();
                 $postdata = $onePayService->pay();
+
 //                dd(json_decode($postdata));
                 break;
             default :
