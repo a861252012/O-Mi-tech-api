@@ -1880,7 +1880,7 @@ class MemberController extends Controller
             ->where('video_mall_list.created', '<', $maxtime)
             ->where('video_mall_list.gid', '>', 10)
             ->where('video_mall_list.gid', '!=', 410001)
-            ->where('video_goods.category', '!=', 1002)
+            ->whereNotIn('video_goods.category', [1002, 1009])
             ->orderBy('video_mall_list.created', 'desc')
             ->allSites()
             ->paginate();
@@ -1893,7 +1893,7 @@ class MemberController extends Controller
             ->where('video_mall_list.created', '<', $maxtime)
             ->where('video_mall_list.gid', '>', 10)
             ->where('video_mall_list.gid', '!=', 410001)
-            ->where('video_goods.category', '!=', 1002)
+            ->whereNotIn('video_goods.category', [1002, 1009])
             ->allSites()
             ->sum('gnum');
 
@@ -1905,7 +1905,7 @@ class MemberController extends Controller
             ->where('video_mall_list.created', '<', $maxtime)
             ->where('video_mall_list.gid', '>', 10)
             ->where('video_mall_list.gid', '!=', 410001)
-            ->where('video_goods.category', '!=', 1002)
+            ->whereNotIn('video_goods.category', [1002, 1009])
             ->allSites()
             ->sum('points');
         $sum_gift_num = $sum_gift_num ?: 0;
