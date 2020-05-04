@@ -18,6 +18,7 @@ Route::post('/login', 'Mobile\MobileController@login')->name('m_login')->middlew
 Route::get('captcha', 'Mobile\MobileController@captcha')->middleware('mobile.session');
 // send SMS
 Route::post('/sms/send', 'SmsController@send')->name('sms_send');
+Route::post('/sms/send_test', 'SmsController@sendTest')->name('sms_send');
 
 Route::any('change_pwd', 'Mobile\MobileController@changePwd')->name('change_pwd')->middleware('mobile.session');
 //app版本ｈ
