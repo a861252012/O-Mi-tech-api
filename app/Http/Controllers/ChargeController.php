@@ -7,6 +7,7 @@
 namespace App\Http\Controllers;
 
 use App\Facades\SiteSer;
+use App\Http\Requests\Charge\ChargePay;
 use App\Libraries\ErrorResponse;
 use App\Libraries\SuccessResponse;
 use App\Models\GiftActivity;
@@ -199,16 +200,17 @@ class ChargeController extends Controller
     "msg": ""
     }
      */
-    public function pay()
+    public function pay(ChargePay $request)
     {
-        $amount = isset($_POST['price']) ? number_format(((int) $_POST['price']), 2, '.', '') : 0;
-
-        if (!$amount || $amount < 1) {
+        Log::info('金流支付request: ' . var_export($request->all(), true));
+//        $amount = isset($_POST['price']) ? number_format(((int) $_POST['price']), 2, '.', '') : 0;
+//
+        if ($request->price < 1) {
             $msg = '请输入正确的金额!';
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
         }
         $fee = 0;
-        if ($giftactive = GiftActivity::query()->where('moneymin', ((int) $amount))->first()) {
+        if ($giftactive = GiftActivity::query()->where('moneymin', $request->price)->first()) {
             $fee = $giftactive->fee;
         }
 
@@ -252,41 +254,40 @@ class ChargeController extends Controller
                 }
 
                 $orderId = $onePayService->getOrderId();
-                $postdata = $onePayService->pay();
+                $postdata = $onePayService->pay($request->price);
 
-//                dd(json_decode($postdata));
                 break;
             default :
                 $charge = resolve('charge');
                 $orderId = $charge->getMessageNo();
-                $postdata = $charge->postData($amount, $channel);
+                $postdata = $charge->postData($request->price, $channel);
         }
 
         //记录下数据库
         $uid = Auth::id();
         Recharge::create(
             array(
-                'uid' => $uid,
-                'created' => date('Y-m-d H:i:s'),
+                'uid'        => $uid,
+                'created'    => date('Y-m-d H:i:s'),
                 'pay_status' => 0,// 刚开始受理
-                'pay_type' => Recharge::PAY_TYPE_CHONGTI, // 银行充值
-                'del' => 0,
-                'paymoney' => $amount,
-                'points' => ceil($amount * 10) + $fee,
-                'order_id' => $orderId,
-                'postdata' => $postdata,
-                'nickname' => Auth::user()['nickname'],
-                'channel' => $channel,
-                'mode_type' => $mode_type,
-                'origin' => $origin
+                'pay_type'   => Recharge::PAY_TYPE_CHONGTI, // 银行充值
+                'del'        => 0,
+                'paymoney'   => $request->price,
+                'points'     => ceil($request->price * 10) + $fee,
+                'order_id'   => $orderId,
+                'postdata'   => $postdata,
+                'nickname'   => Auth::user()['nickname'],
+                'channel'    => $channel,
+                'mode_type'  => $mode_type,
+                'origin'     => $origin
             )
         );
 
         $rtn = array(
-            'postdata' => $postdata,
-            'orderId' => $orderId,
+            'postdata'  => $postdata,
+            'orderId'   => $orderId,
             'remoteUrl' => resolve('charge')->remote(),
-            'act' => $act,
+            'act'       => $act,
         );
 
         Log::channel('charge')->info($rtn);
