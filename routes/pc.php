@@ -366,6 +366,8 @@ Route::group(['prefix' => 'charge', 'middleware' => ['charge', 'login_auth']], f
     Route::match(['POST', 'GET'], '/pay2', ['name' => 'charge_pay2', 'uses' => 'ChargeController@pay2']);
     Route::match(['POST', 'GET'], '/translate', ['name' => 'translate', 'uses' => 'ChargeController@translate']);
 
+    /* One Pay */
+    Route::post('/onepay/notify', 'OnePayController@notify');
 });
 
 Route::post('charge/chongti', 'ChargeController@chongti')->name('chongti');

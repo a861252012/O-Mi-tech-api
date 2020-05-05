@@ -37,13 +37,9 @@ class OnePayService
             'pay_orderid'
         ];
 
-//        dd(collect($payload)->only($encStrKey));
-
         $oStr = collect(collect($payload)->only($encStrKey))->map(function ($item, $key) {
             return trim($item);
         })->implode('');
-
-//        dd($oStr . self::SECRET_KEY);
 
         return md5($oStr . self::SECRET_KEY);
     }
@@ -99,6 +95,25 @@ class OnePayService
             return false;
         }
 
-        return $result->getBody()->getContents();
+        $onePayCollection = collect(json_decode($result->getBody()->getContents()));
+
+        if ($onePayCollection->get('returncode') != "00") {
+            \Log::error("One Pay支付錯誤代碼: " . ($onePayCollection->get('returncode') ?? '999'));
+            return false;
+        }
+
+        $onePayCollection->put('price', $price);
+
+        info('One Pay支付回應: ' . var_export($onePayCollection->toJson(), true));
+
+//        echo $onePayCollection->toJson();exit;
+
+        return $onePayCollection->toJson();
+    }
+
+    /* 異步通知 */
+    public function notify($data)
+    {
+        return true;
     }
 }
