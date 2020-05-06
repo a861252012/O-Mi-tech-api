@@ -215,13 +215,23 @@ class SmsService
 
     public static function sendToWW($mobile, $msg, $needstatus = 'true')
     {
-        $postArr = array(
-            'account'  => self::WW_API_ACCOUNT,
-            'password' => self::WW_API_PASSWORD,
-            'msg' => $msg,
-            'mobile' => $mobile,
-            'report' => $needstatus,
-        );
+//        $postArr = array(
+//            'account'  => self::WW_API_ACCOUNT,
+//            'password' => self::WW_API_PASSWORD,
+//            'msg' => $msg,
+//            'mobile' => $mobile,
+//            'report' => $needstatus,
+//        );
+        $postArr = [
+            'json' => [
+                'account'  => self::WW_API_ACCOUNT,
+                'password' => self::WW_API_PASSWORD,
+                'mobile' => $mobile,
+                'msg' => $msg,
+                'report' => $needstatus,
+            ]
+        ];
+
         $result = self::curlPost(self::WW_API_SEND_URL, $postArr);
         return $result;
     }

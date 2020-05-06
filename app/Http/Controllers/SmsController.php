@@ -13,8 +13,6 @@ use Illuminate\Support\Str;
 
 class SmsController extends Controller
 {
-    const API_KEY = '9e4a9df8a3b3ab0ef5f1552f1ab66ab8';
-
     public function send(Request $req)
     {
         $cc = $req->post('cc');
