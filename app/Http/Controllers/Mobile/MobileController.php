@@ -387,7 +387,7 @@ class MobileController extends Controller
                 }
 
                 /* 檢查驗證碼或自動化測試驗證(主播機器人項目) */
-                if (!Captcha::check($captcha) || !app(LoginService::class)->autoCheck($captcha)) {
+                if (!Captcha::check($captcha) && !app(LoginService::class)->autoCheck($captcha)) {
                     return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
                 }
             }
