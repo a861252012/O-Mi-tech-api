@@ -1,5 +1,9 @@
 <?php
-
+/**
+ * 手機資訊 控制器
+ * @date 2020-02-26
+ * @apiDefine Mobile 手機資訊
+ */
 
 namespace App\Http\Controllers\Mobile;
 
@@ -138,7 +142,76 @@ class MobileController extends Controller
     }
 
     /**
-     * 获取用户信息
+     * @api {get} /user/info 获取用户信息
+     * @apiGroup Mobile
+     * @apiName 手機資訊
+     * @apiVersion 1.0.0
+     *
+     * @apiSuccess {Int} uid 用户id
+     * @apiSuccess {String} username 帳號
+     * @apiSuccess {String} nickname 暱稱
+     * @apiSuccess {String} headimg 頭像
+     * @apiSuccess {Int} points 點卷
+     * @apiSuccess {Int} roled 角色
+     * @apiSuccess {Int} rid 房間id
+     * @apiSuccess {Int} vip 貴族等級
+     * @apiSuccess {Int} vip_end 貴族到期日
+     * @apiSuccess {Int} lv_rich 財富等級
+     * @apiSuccess {Int} lv_exp 主播經驗值
+     * @apiSuccess {String} safemail 信箱
+     * @apiSuccess {Int} icon_id 圖標id
+     * @apiSuccess {String} gender 性別
+     * @apiSuccess {Int} follows 關注數
+     * @apiSuccess {Int} fansCount 跟隨人數
+     * @apiSuccess {Int} system_tip_count 訊息發送數量
+     * @apiSuccess {Int} transfer 轉帳權限(0:否/1:是)
+     * @apiSuccess {String} birthday 生日
+     * @apiSuccess {Int} province 省份
+     * @apiSuccess {Int} city 城市
+     * @apiSuccess {Int} nickcount 暱稱修改次數
+     * @apiSuccess {Int} age 年齡
+     * @apiSuccess {Int} guard_id 守護id
+     * @apiSuccess {String} guard_name 守護名稱
+     * @apiSuccess {String} guard_end 守護到期日
+     * @apiSuccess {Int} guard_vaild_day 守護剩餘天數
+     * @apiSuccess {Int} guard_shot_border  頭像邊框(0:關/1:開)
+     *
+     * @apiSuccessExample {json} 成功回應
+     * {
+    "status": 1,
+    "data": {
+    "uid": 9493540,
+    "username": "rand9551107869@x.com",
+    "nickname": "weine01",
+    "headimg": "",
+    "points": "0",
+    "roled": "0",
+    "rid": "",
+    "vip": "0",
+    "vip_end": "",
+    "lv_rich": "1",
+    "lv_exp": "1",
+    "safemail": "",
+    "icon_id": 0,
+    "gender": "",
+    "follows": 0,
+    "fansCount": 0,
+    "system_tip_count": 0,
+    "transfer": "0",
+    "birthday": "",
+    "province": "0",
+    "city": "0",
+    "nickcount": 1,
+    "age": 2020,
+    "guard_id": "1",
+    "guard_name": "黄色守护",
+    "guard_end": "2020-03-26",
+    "guard_vaild_day": 29,
+    "guard_shot_border": 1
+    },
+    "msg": ""
+    }
+     *
      */
     public function userInfo()
     {
@@ -165,33 +238,48 @@ class MobileController extends Controller
             $nickcount = 0;
         }
 
+        if(!empty($userinfo->guard_id)) {
+            $guardianInfo = Users::find($uid)->guardianInfo;
+            $guardVaildDay = ceil((strtotime($userinfo->guard_end) - time()) / 86400);
+        }
+
+        if ($userinfo->guard_id != 0 && time() > strtotime($userinfo->guard_end)) {
+            $userinfo->guard_id = "0";
+        }
+
         return JsonResponse::create([
             'status' => 1,
-            'data' => [
-                'uid' => $userinfo->uid,
-                'username' => $userinfo->username,
-                'nickname' => $userinfo->nickname,
-                'headimg' => $this->getHeadimg($userinfo->headimg),
-                'points' => $userinfo->points,
-                'roled' => $userinfo->roled,
-                'rid' => $userinfo->rid,
-                'vip' => $userinfo->vip,
-                'vip_end' => $userinfo->vip_end,
-                'lv_rich' => $userinfo->lv_rich,
-                'lv_exp' => $userinfo->lv_exp,
-                'safemail' => $userinfo->safemail ?? '',
+            'data'   => [
+                'uid'               => $userinfo->uid,
+                'username'          => $userinfo->username,
+                'nickname'          => $userinfo->nickname,
+                'headimg'           => $this->getHeadimg($userinfo->headimg),
+                'points'            => $userinfo->points,
+                'roled'             => $userinfo->roled,
+                'rid'               => $userinfo->rid,
+                'vip'               => $userinfo->vip,
+                'vip_end'           => $userinfo->vip_end,
+                'lv_rich'           => $userinfo->lv_rich,
+                'lv_exp'            => $userinfo->lv_exp,
+                'safemail'          => $userinfo->safemail ?? '',
 //                'mails' => $this->make('messageServer')->getMessageNotReadCount($userinfo->uid, $userinfo->lv_rich),// 通过服务取到数量
-                'icon_id' => intval($userinfo->icon_id),
-                'gender' => $userinfo->sex,
-                'follows' => $userfollow,
-                'fansCount' => $by_atttennums,
-                'system_tip_count' => Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status', 0)->count(),
-                'transfer' => $userinfo->transfer,
-                'birthday' => $userinfo->birthday,
-                'province' => $userinfo->province,
-                'city' => $userinfo->city,
-                'nickcount' => $nickcount,
-                'age' => date('Y') - explode('-',$userinfo->birthday)[0]
+                'icon_id'           => intval($userinfo->icon_id),
+                'gender'            => $userinfo->sex,
+                'follows'           => $userfollow,
+                'fansCount'         => $by_atttennums,
+                'system_tip_count'  => Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status',
+                    0)->count(),
+                'transfer'          => $userinfo->transfer,
+                'birthday'          => $userinfo->birthday,
+                'province'          => $userinfo->province,
+                'city'              => $userinfo->city,
+                'nickcount'         => $nickcount,
+                'age'               => date('Y') - explode('-', $userinfo->birthday)[0],
+                'guard_id'          => $userinfo->guard_id,
+                'guard_name'        => $guardianInfo->name ?? '',
+                'guard_end'         => $userinfo->guard_end ?? '',
+                'guard_vaild_day'   => $guardVaildDay ?? 0,
+                'guard_shot_border' => $guardianInfo->shot_border
             ],
         ]);
     }

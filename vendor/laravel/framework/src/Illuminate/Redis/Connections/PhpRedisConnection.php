@@ -409,4 +409,22 @@ class PhpRedisConnection extends Connection implements ConnectionContract
 
         return parent::__call($method, $parameters);
     }
+
+    /**
+     * Scans the given hash for all values based on options.
+     *
+     * @param  string  $key
+     * @param  mixed  $cursor
+     * @param  array  $options
+     * @return mixed
+     */
+    public function hscan($key, $cursor, $options = [])
+    {
+        $result = $this->client->hscan($key, $cursor,
+            $options['match'] ?? '*',
+            $options['count'] ?? 10
+        );
+
+        return $result === false ? [0, []] : [$cursor, $result];
+    }
 }

@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Events\ShareUser;
 use App\Services\ShareService;
+use App\Services\GuardianService;
 use App\Services\Site\SiteService;
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
@@ -1292,6 +1293,7 @@ EOT;
         ];
     }
 
+    /* 主播上傳海報 */
     public function coverUpload(Request $request)
     {
 
@@ -1338,6 +1340,22 @@ EOT;
             $fileName = $uid . '_' . time() . '.jpg';
             if (Storage::put('uploads/s88888/anchor/' . $fileName, $imageContent)) {
                 resolve(UserService::class)->updateUserInfo($uid, ['cover' => $fileName]);
+
+                /* 因應zimg上傳方法需做resource處理 */
+                $fo = fopen(Storage::path('uploads/s88888/anchor/' . $fileName), 'r');
+
+                /* 主播海報檔案處理並更新主播資料 */
+                $imgData = resolve(SystemService::class)->upload(Auth::user()->toArray(), $fo);
+                info('主播海報zimg資訊: ' . var_export($imgData, true));
+                fclose($fo);
+
+                if (empty($imgData['ret'])) {
+                    JsonResponse::create(['msg' => 'zimg上传失败']);
+                }
+
+                /* 更新主播海報資訊 */
+                resolve(GuardianService::class)->coverTrans($imgData['info']['md5']);
+
                 return JsonResponse::create(['msg' => '上传成功']);
             } else {
                 return JsonResponse::create(['msg' => '上传失败']);

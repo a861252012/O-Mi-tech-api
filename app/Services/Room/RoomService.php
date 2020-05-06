@@ -398,7 +398,19 @@ class RoomService extends Service
                 $user_send_gite = $redis->hGetAll('one2many_statistic:' . Auth::id());
                 if ($user_send_gite) {
                     foreach ($user_send_gite as $k => $v) {
-                        if ($v >= $data['points']) {
+                        /* 守護優惠判斷 */
+                        $checkPoint = $data['points'];
+
+//                        $guardId = resolve(UserService::class)->getUserInfo($k, 'guard_id');
+//                        $guardEnd = resolve(UserService::class)->getUserInfo($k, 'guard_end');
+
+                        $roomUser = resolve(UserService::class)->getUserInfo($k);
+                        if (!empty($roomUser['guard_id']) && time() < strtotime($roomUser['guard_end'])) {
+                            $showDiscount = Redis::hGet('hguardian_info:' . $roomUser['guard_id'], 'show_discount');
+                            $checkPoint = (int) round($checkPoint * (100 - $showDiscount) / 100);
+                        }
+
+                        if ($v >= $checkPoint) {
                             $tickets += 1;
                             $uids .= $k . ",";
                         }

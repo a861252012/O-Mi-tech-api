@@ -86,6 +86,9 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
         Route::post('unmount/{gid}', ['name' => 'm_userunmount', 'uses' => 'Mobile\MobileController@unmount']);
         //隐身
         Route::any('stealth/{status}', 'Mobile\MobileController@stealth')->where('status','[0,1]')->name('m_stealths');
+
+        /* 用戶隱身 */
+        Route::get('set_hidden/{status?}', 'UserController@setHidden');
     });
 
     //关注
@@ -254,3 +257,25 @@ Route::prefix('game')->middleware(['login_auth:mobile'])->group(function () {
 Route::post('install_log', 'ShareController@installLog');
 Route::get('share_url', 'ShareController@shareUrl')->middleware(['login_auth:mobile']);
 
+
+
+/* 守護功能 */
+Route::prefix('guardian')->group(function () {
+    /* 取得權限 */
+    Route::get('get_setting', 'GuardianController@getSetting');
+
+    Route::middleware(['login_auth:mobile'])->group(function () {
+        /* 我的守護資訊 */
+        Route::get('my_info', 'GuardianController@myInfo');
+
+        /* 開通紀錄 */
+        Route::get('history', 'GuardianController@history');
+
+        /*开通守护*/
+        Route::post('buy', 'GuardianController@buy');
+
+        /* 取得使用者消費紀錄 */
+        Route::get('history', 'GuardianController@history');
+    });
+});
+Route::any('omey', 'OmeyController@index');
