@@ -47,44 +47,4 @@ class SmsController extends Controller
         }
         return $this->msg('成功发送', 1);
     }
-
-    public function sendTest()
-    {
-        try {
-//            $apiUri = 'https://sms-api.luosimao.com/v1/send.json';
-
-//            $payload = [
-//                'auth' => ['api', self::API_KEY],
-//                'form_params' => [
-//                    'mobile' => '13170555414',
-//                    'message' => '測試隨機驗證碼: ' . Str::random(6) . ' 【YOU品】',
-//                ],
-//            ];
-
-//            dd($payload);
-
-//            info('sms payload: ' . var_export($payload, true));
-
-//            $result = Http::withBasicAuth('api', 'key-' . self::API_KEY)
-//                ->asForm()
-//                ->post($apiUri, $payload);
-//
-//            dd($result->json());
-
-//            $client = new Client([
-//                'timeout' => 25,
-//            ]);
-//
-//            $result = $client->request('POST', $apiUri, $payload);
-//            dd(json_decode($result->getBody()->getContents()));
-
-            $result = SmsService::sendToCN('13170555414', '測試隨機驗證碼: ' . Str::random(6) . ' 【YOU品】');
-
-            return $result;
-
-        } catch (\Exception $e) {
-            report($e);
-            return response()->json(['status' => 0, 'msg' => 'error']);
-        }
-    }
 }
