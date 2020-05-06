@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use App\Facades\SiteSer;
 use App\Services\I18n\PhoneNumber;
 use App\Services\Sms\SmsService;
+use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
 
 class SmsController extends Controller
 {
+    const API_KEY = '9e4a9df8a3b3ab0ef5f1552f1ab66ab8';
+
     public function send(Request $req)
     {
         $cc = $req->post('cc');
