@@ -6,6 +6,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\BankCode;
 use App\Facades\SiteSer;
 use App\Http\Requests\Charge\ChargePay;
 use App\Libraries\ErrorResponse;

@@ -8,6 +8,7 @@
 namespace App\Services\Charge;
 
 
+use App\Constants\BankCode;
 use GuzzleHttp\Client;
 
 class OnePayService
@@ -103,6 +104,7 @@ class OnePayService
         }
 
         $onePayCollection->put('price', $price);
+        $onePayCollection->put('bank_name', BankCode::CN[$onePayCollection->get('bank_code')]);
 
         info('One Pay支付回應: ' . var_export($onePayCollection->toJson(), true));
 
