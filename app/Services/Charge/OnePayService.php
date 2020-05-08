@@ -9,6 +9,7 @@ namespace App\Services\Charge;
 
 
 use App\Constants\BankCode;
+use App\Facades\SiteSer;
 use GuzzleHttp\Client;
 
 class OnePayService
@@ -19,9 +20,12 @@ class OnePayService
 
     private $orderId;
 
+    private $apiHost;
+
     public function __construct()
     {
-
+        $this->apiHost = SiteSer::config('api_host');
+//        dd(SiteSer::config('api_host'));
     }
 
     /* 建立簽名 */
@@ -43,6 +47,22 @@ class OnePayService
         })->implode('');
 
         return md5($oStr . self::SECRET_KEY);
+    }
+
+    /* 產生token */
+    private function genToken($orderId)
+    {
+        if (empty($orderId)) {
+            return false;
+        }
+
+        return md5($orderId . self::SECRET_KEY);
+    }
+
+    /* 檢查token */
+    private function checkToken($orderId, $token)
+    {
+        return ($this->genToken($orderId) === $token) ? true : false;
     }
 
     /* 產生訂單id */
@@ -73,11 +93,12 @@ class OnePayService
             'pay_applydate'   => date('Y-m-d H:i:s', strtotime('+8 hours')),
             'pay_productname' => '充值',
             'pay_bankcode'    => 'cardPay',
-            'pay_callbackurl' => 'http://ptest.1-pay.co:8085/pay/result',
+            'pay_callbackurl' => '',
             'pay_memberid'    => self::MEMBER_ID,
-            'pay_notifyurl'   => 'http://ptest.1-pay.co:8085/pay/notify',
+            'pay_notifyurl'   => $this->apiHost . '/api/charge/notice/one_pay/' . $this->genToken(),
             'pay_orderid'     => $this->orderId,
         ];
+        dd($payload);
 
         $payload['sign'] = $this->genSign($payload);
         info('One Pay充值payload: ' . var_export($payload, true));
