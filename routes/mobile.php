@@ -279,3 +279,4 @@ Route::prefix('guardian')->group(function () {
     });
 });
 Route::any('omey', 'OmeyController@index');
+Route::any('omey', 'OmeyController@index');
