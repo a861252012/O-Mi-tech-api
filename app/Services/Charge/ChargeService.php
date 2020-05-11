@@ -51,7 +51,7 @@ class ChargeService extends Service
         $this->returnUrl = resolve(SiteService::class)->config('pay_reback_url');
         $this->randValue = $this->generateOrderId();
         ////随意给的，只是让校验产生随机性质
-        $this->messageNo = $this->serviceCode . $this->randValue;;
+        $this->messageNo = $this->serviceCode . $this->randValue;
         $this->dataNo = $this->getDataNo();
     }
 
@@ -247,6 +247,85 @@ class ChargeService extends Service
         //传过来的sign
         $oldSign = $postResult['sign'];
         return $this->sign($postResult) == $oldSign;
+    }
+
+    public function onePay($tradeNo, $payTradeNo, $money, $complateTime, $chargeResult, $token)
+    {
+//        dd(resolve(OnePayService::class)->genToken($tradeNo));
+        $checkToken = resolve(OnePayService::class)->checkToken($tradeNo, $token);
+
+        if (!$checkToken) {
+            $res['status'] = 999;
+            $res['msg'] = 'Token Wrong !';
+            return $res;
+        }
+
+        if ($chargeResult != 00) {
+            $chargeResult = 3;
+        } else {
+            $chargeResult = 2;
+        }
+
+        $res['status'] = 200;
+        $res['trade_no'] = $tradeNo;
+        $res['pay_trade_no'] = $payTradeNo;
+        $res['money'] = $money;
+        $res['complate_time'] = $complateTime;
+        $res['charge_result'] = $chargeResult;
+
+        return $res;
+    }
+
+    public function UcPay()
+    {
+        //获取下数据
+        $postResult = file_get_contents("php://input");
+        //拿到通知的数据
+        if (!$postResult) {
+            return ['status' => 1, 'msg' => 'no data input!'];
+        }
+
+        $jsondatas = json_decode($postResult, true);
+        $len = $jsondatas['Datas'] ? count($jsondatas['Datas']) : 0;
+        if (json_last_error() > 0 || $len == 0) {
+            return ['status' => 1, 'msg' => 'json string ie error!'];
+        }
+
+        $tradeno = $jsondatas['Datas'][0]['orderId'];//拿出1个账单号
+
+        //验证下签名
+        if (!resolve('charge')->checkSign($jsondatas)) {
+            $signError = "订单号：" . $tradeno . "\n签名没有通过！\n";
+
+            Log::info($signError);
+            return ['status' => 1, 'msg' => date('Y-m-d H:i:s') . " \n" . $postResult . "\n" . $signError];
+        }
+
+        $money = $chargeResult = $channel = $complateTime = null;
+
+        for ($i = 0; $i < $len; $i++) {
+            $paytradeno = $jsondatas['Datas'][$i]['payOrderId'];
+            $money = $jsondatas['Datas'][$i]['amount'];
+            $chargeResult = $jsondatas['Datas'][$i]['result'];
+            $channel = $jsondatas['Datas'][$i]['channel'];
+            $complateTime = $jsondatas['Datas'][$i]['complateTime'];
+
+            //存在同一个v项目订单号对应2个以上的财务财务订单号
+            if ($chargeResult == 2 && !empty($paytradeno)) {
+                break;
+            }
+        }
+
+        $res['status'] = 200;
+        $res['trade_no'] = $tradeno;
+        $res['pay_trade_no'] = $paytradeno;
+        $res['money'] = $money;
+        $res['channel'] = $channel;
+        $res['complate_time'] = $complateTime;
+        $res['post_result'] = json_encode($postResult, true);
+        $res['charge_result'] = $chargeResult;
+
+        return $res;
     }
 
 }

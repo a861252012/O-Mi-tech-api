@@ -18,6 +18,7 @@ use App\Models\Recharge;
 use App\Models\RechargeMoney;
 use App\Models\Users;
 use App\Services\Charge\OnePayService;
+use App\Services\Charge\ChargeService;
 use App\Services\User\UserService;
 use DB;
 use Hashids\Hashids;
@@ -755,43 +756,35 @@ class ChargeController extends Controller
     /**
      * 通知地址
      */
-    public function notice()
+    public function notice(Request $request)
     {
-        //获取下数据
-        $postResult = file_get_contents("php://input");
-        //拿到通知的数据
-        if (!$postResult) {
-            return new JsonResponse(array('status' => 1, 'msg' => 'no data input!'));
+        $payType = $request->route('pay_type');
+
+        if ($payType == 'onepay') {
+            $data = resolve(ChargeService::class)->onePay($request->orderid, $request->merchant_order, $request->amount,
+                $request->datetime, $request->returncode, $request->route('one_pay_token'));
+        } else {
+            $data = resolve(ChargeService::class)->UcPay();
         }
 
-        $jsondatas = json_decode($postResult, true);
-        $len = $jsondatas['Datas'] ? count($jsondatas['Datas']) : 0;
-        if (json_last_error() > 0 || $len == 0) {
-            return new JsonResponse(array('status' => 1, 'msg' => 'json string ie error!'));
-        }
         //记录下日志
-        Log::info("传输的数据记录: " . $postResult);
+        Log::info("传输的数据记录: " . json_encode($request->all(), true));
 
-        $tradeno = $jsondatas['Datas'][0]['orderId'];//拿出1个账单号
-        //验证下签名
-        if (!resolve('charge')->checkSign($jsondatas)) {
-            $signError = "订单号：" . $tradeno . "\n签名没有通过！\n";
-            Log::info($signError);
-            return new JsonResponse(array('status' => 1, 'msg' => date('Y-m-d H:i:s') . " \n" . $postResult . "\n" . $signError));
+        if ($data['status'] == 200) {
+            unset($data['status']);
+        } else {
+            $this->setStatus($data['status'], $data['msg']);
+            return $this->jsonOutput();
         }
-        $money=$chargeResult=$channel=$complateTime=null;
-        for ($i = 0; $i < $len; $i++) {
-            $paytradeno = $jsondatas['Datas'][$i]['payOrderId'];
-            $money = $jsondatas['Datas'][$i]['amount'];
-            $chargeResult = $jsondatas['Datas'][$i]['result'];
-            $channel = $jsondatas['Datas'][$i]['channel'];
-            $complateTime = $jsondatas['Datas'][$i]['complateTime'];
-            //存在同一个v项目订单号对应2个以上的财务财务订单号
-            if ($chargeResult == 2 && !empty($paytradeno)) {
-                break;
-            }
+
+        $res = $this->orderHandler($data['trade_no'], $data['pay_trade_no'], $loginfo = "", $logPath = "",
+            $data['money'], $data['charge_result'], $data['channel'] = "", $data['complate_time']);
+
+        if ($payType == 'onepay' && $res->getData()->status == 0) {
+            return 'OK';
         }
-        return $this->orderHandler($tradeno, $paytradeno, $loginfo = "", $logPath = "", $money, $chargeResult, $channel, $complateTime);
+
+        return $res;
     }
 
     /**

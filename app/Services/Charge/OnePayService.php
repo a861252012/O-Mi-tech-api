@@ -50,7 +50,7 @@ class OnePayService
     }
 
     /* 產生token */
-    private function genToken($orderId)
+    public function genToken($orderId)
     {
         if (empty($orderId)) {
             return false;
@@ -60,7 +60,7 @@ class OnePayService
     }
 
     /* 檢查token */
-    private function checkToken($orderId, $token)
+    public function checkToken($orderId, $token)
     {
         return ($this->genToken($orderId) === $token) ? true : false;
     }
