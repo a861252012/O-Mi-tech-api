@@ -95,7 +95,7 @@ class OnePayService
             'pay_bankcode'    => 'cardPay',
             'pay_callbackurl' => '',
             'pay_memberid'    => self::MEMBER_ID,
-            'pay_notifyurl'   => $this->apiHost . '/api/charge/notice/one_pay/' . $this->genToken(),
+            'pay_notifyurl'   => $this->apiHost . '/api/charge/notice/one_pay/' . $this->genToken($this->orderId),
             'pay_orderid'     => $this->orderId,
         ];
 //        dd($payload);
