@@ -98,7 +98,7 @@ class OnePayService
             'pay_notifyurl'   => $this->apiHost . '/api/charge/notice/one_pay/' . $this->genToken(),
             'pay_orderid'     => $this->orderId,
         ];
-        dd($payload);
+//        dd($payload);
 
         $payload['sign'] = $this->genSign($payload);
         info('One Pay充值payload: ' . var_export($payload, true));
