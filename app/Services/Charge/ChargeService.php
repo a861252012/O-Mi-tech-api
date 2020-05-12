@@ -322,7 +322,6 @@ class ChargeService extends Service
         $res['money'] = $money;
         $res['channel'] = $channel;
         $res['complate_time'] = $complateTime;
-        $res['post_result'] = json_encode($postResult, true);
         $res['charge_result'] = $chargeResult;
 
         return $res;
