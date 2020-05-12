@@ -760,15 +760,21 @@ class ChargeController extends Controller
     {
         $payType = $request->route('pay_type');
 
-        if ($payType == 'onepay') {
-            $data = resolve(ChargeService::class)->onePay($request->orderid, $request->merchant_order, $request->amount,
-                $request->datetime, $request->returncode, $request->route('one_pay_token'));
+        if ($payType === 'onepay') {
+            $data = resolve(ChargeService::class)->onePay(
+                $request->orderid,
+                $request->merchant_order,
+                $request->amount,
+                $request->datetime,
+                $request->returncode,
+                $request->route('one_pay_token')
+            );
         } else {
             $data = resolve(ChargeService::class)->UcPay();
         }
 
         //记录下日志
-        Log::info("传输的数据记录: " . json_encode($request->all(), true));
+        Log::info('传输的数据记录: ' . json_encode($request->all(), true));
 
         if ($data['status'] == 200) {
             unset($data['status']);
@@ -777,10 +783,18 @@ class ChargeController extends Controller
             return $this->jsonOutput();
         }
 
-        $res = $this->orderHandler($data['trade_no'], $data['pay_trade_no'], $loginfo = "", $logPath = "",
-            $data['money'], $data['charge_result'], $data['channel'] = "", $data['complate_time']);
+        $res = $this->orderHandler(
+            $data['trade_no'],
+            $data['pay_trade_no'],
+            "",
+            "",
+            $data['money'],
+            $data['charge_result'],
+            $data['channel'],
+            $data['complate_time']
+        );
 
-        if ($payType == 'onepay' && $res->getData()->status == 0) {
+        if ($payType === 'onepay' && $res->getData()->status == 0) {
             return 'OK';
         }
 
