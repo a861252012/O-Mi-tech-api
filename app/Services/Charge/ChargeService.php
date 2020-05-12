@@ -249,37 +249,8 @@ class ChargeService extends Service
         return $this->sign($postResult) == $oldSign;
     }
 
-    public function onePay($tradeNo, $payTradeNo, $money, $complateTime, $chargeResult, $token)
+    public function updateOrder($postResult)
     {
-//        dd(resolve(OnePayService::class)->genToken($tradeNo));
-        $checkToken = resolve(OnePayService::class)->checkToken($tradeNo, $token);
-
-        if (!$checkToken) {
-            $res['status'] = 999;
-            $res['msg'] = 'Token Wrong !';
-            return $res;
-        }
-
-        if ($chargeResult != 00) {
-            $chargeResult = 3;
-        } else {
-            $chargeResult = 2;
-        }
-
-        $res['status'] = 200;
-        $res['trade_no'] = $tradeNo;
-        $res['pay_trade_no'] = $payTradeNo;
-        $res['money'] = $money;
-        $res['complate_time'] = $complateTime;
-        $res['charge_result'] = $chargeResult;
-
-        return $res;
-    }
-
-    public function UcPay()
-    {
-        //获取下数据
-        $postResult = file_get_contents("php://input");
         //拿到通知的数据
         if (!$postResult) {
             return ['status' => 1, 'msg' => 'no data input!'];

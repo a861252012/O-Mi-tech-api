@@ -135,8 +135,29 @@ class OnePayService
     }
 
     /* 異步通知 */
-    public function notify($data)
+    public function updateOrder($tradeNo, $payTradeNo, $money, $complateTime, $chargeResult, $token)
     {
-        return true;
+        $checkToken = resolve(OnePayService::class)->checkToken($tradeNo, $token);
+
+        if (!$checkToken) {
+            $res['status'] = 999;
+            $res['msg'] = 'Token Wrong !';
+            return $res;
+        }
+
+        if ($chargeResult != 00) {
+            $chargeResult = 3;
+        } else {
+            $chargeResult = 2;
+        }
+
+        $res['status'] = 200;
+        $res['trade_no'] = $tradeNo;
+        $res['pay_trade_no'] = $payTradeNo;
+        $res['money'] = $money;
+        $res['complate_time'] = $complateTime;
+        $res['charge_result'] = $chargeResult;
+
+        return $res;
     }
 }

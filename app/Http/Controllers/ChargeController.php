@@ -259,7 +259,7 @@ class ChargeController extends Controller
                 $postdata = $onePayService->pay($request->price);
 
                 break;
-            default :
+            default:
                 $charge = resolve('charge');
                 $orderId = $charge->getMessageNo();
                 $postdata = $charge->postData($request->price, $channel);
@@ -761,7 +761,7 @@ class ChargeController extends Controller
         $payType = $request->route('pay_type');
 
         if ($payType === 'onepay') {
-            $data = resolve(ChargeService::class)->onePay(
+            $data = resolve(OnePayService::class)->updateOrder(
                 $request->orderid,
                 $request->merchant_order,
                 $request->amount,
@@ -770,11 +770,23 @@ class ChargeController extends Controller
                 $request->route('one_pay_token')
             );
         } else {
-            $data = resolve(ChargeService::class)->UcPay();
+            //获取下数据
+            $ucPostResult = file_get_contents("php://input");
+
+            $data = resolve(ChargeService::class)->updateOrder($ucPostResult);
         }
 
         //记录下日志
-        Log::info('传输的数据记录: ' . json_encode($request->all(), true));
+        Log::info('传输的数据记录: ' . json_encode(
+            $request->only(
+                'memberid',
+                'orderid',
+                'merchant_order',
+                'amount',
+                'datetime',
+                'returncode'
+            )
+        ));
 
         if ($data['status'] == 200) {
             unset($data['status']);
@@ -794,7 +806,7 @@ class ChargeController extends Controller
             $data['complate_time']
         );
 
-        if ($payType === 'onepay' && $res->getData()->status == 0) {
+        if ($payType === 'onepay') {
             return 'OK';
         }
 
