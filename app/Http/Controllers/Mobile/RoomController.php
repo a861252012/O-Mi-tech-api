@@ -385,7 +385,7 @@ class RoomController extends Controller
             }
 
             /* 取得房間資訊 */
-//            $ancList = collect(UserSer::anchorlist())->firstWhere('rid', $rid);
+            $ancList = collect(UserSer::anchorlist())->firstWhere('rid', $rid);
 
             $roomExtend = [
                 'start_time'=> null,
