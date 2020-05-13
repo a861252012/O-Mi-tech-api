@@ -369,13 +369,15 @@ Route::group(['prefix' => 'charge', 'middleware' => ['charge', 'login_auth']], f
     Route::match(['POST', 'GET'], '/pay2', ['name' => 'charge_pay2', 'uses' => 'ChargeController@pay2']);
     Route::match(['POST', 'GET'], '/translate', ['name' => 'translate', 'uses' => 'ChargeController@translate']);
 
+    /* One Pay */
+    Route::post('/onepay/notify', 'OnePayController@notify');
 });
 
 Route::post('charge/chongti', 'ChargeController@chongti')->name('chongti');
 //通知
 Route::group(['prefix' => 'charge', 'middleware' => ['charge']], function () {
     Route::match(['POST', 'GET'], 'notice2', ['name' => 'notice2', 'uses' => 'ChargeController@notice2']);
-    Route::match(['POST', 'GET'], 'notice', ['name' => 'charge_notice', 'uses' => 'ChargeController@notice'])->name('charge_notice');
+    Route::match(['POST', 'GET'], 'notice/{pay_type?}/{one_pay_token?}', ['name' => 'charge_notice', 'uses' => 'ChargeController@notice'])->name('charge_notice');
     Route::match(['POST', 'GET'], 'checkKeepVip', ['name' => 'checkKeepVip', 'uses' => 'ChargeController@checkKeepVip']);
     Route::match(['POST', 'GET'], 'callFailOrder', ['name' => 'callFailOrder', 'uses' => 'ChargeController@callFailOrder']);
     Route::post('moniCharge', ['name' => 'charge', 'uses' => 'ChargeController@moniCharge']);
