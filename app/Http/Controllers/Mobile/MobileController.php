@@ -23,6 +23,7 @@ use App\Models\AppMarket;
 use App\Models\UserModNickName;
 use App\Services\AnnouncementService;
 use App\Services\I18n\PhoneNumber;
+use App\Services\LoginService;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
 use App\Services\User\UserService;
@@ -472,7 +473,9 @@ class MobileController extends Controller
                 if (empty($captcha)) {
                     return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
                 }
-                if (!Captcha::check($captcha)) {
+
+                /* 檢查驗證碼或自動化測試驗證(主播機器人項目) */
+                if (!Captcha::check($captcha) && !app(LoginService::class)->autoCheck($captcha)) {
                     return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
                 }
             }
