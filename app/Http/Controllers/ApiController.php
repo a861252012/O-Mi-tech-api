@@ -31,6 +31,7 @@ use App\Services\Sms\SmsService;
 use App\Services\System\SystemService;
 use App\Services\User\RegService;
 use App\Services\User\UserService;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -480,6 +481,9 @@ class ApiController extends Controller
                     return JsonResponse::create(['status' => 0, 'msg' => 'token写入redis失败，请重新登录!']);
                 }
             }
+            //註冊成功時紀錄IP
+            event(new Login($user, false));
+
             $return['data'] = [
                 'jwt'  => (string)$guard->getToken(),
                 'user' => $user,
