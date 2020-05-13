@@ -58,7 +58,7 @@ class updateMonthRank extends Command
             $sumOfThisMonth = GiftList::where('rec_uid', $v)->where('gid', '!=', '410001')->whereBetween(
                 'created',
                 [
-                    Carbon::now()->copy()->firstOfMonth()->toDateTimeString(),
+                    Carbon::now()->copy()->firstOfMonth(),
                     Carbon::now()->copy()->endOfMonth()->toDateTimeString()
                 ]
             )->sum('points');
@@ -68,7 +68,10 @@ class updateMonthRank extends Command
         }
 
         //刪除原先錯誤的redis key
-        for ($x = 0; $x <= 31; $x++) {
+        for ($x = 1; $x <= 31; $x++) {
+            if ($x < 10) {
+                $x = '0' . $x;
+            }
             Redis::del('zrank_pop_month:' . Carbon::now()->copy()->format('Ym') . $x);
         }
     }

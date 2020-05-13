@@ -433,7 +433,7 @@ class GuardianService
 
             Redis::zIncrBy('zrank_pop_day', $price['final'], $rid);
             Redis::zIncrBy('zrank_pop_week', $price['final'], $rid);
-            Redis::zIncrBy('zrank_pop_month:' . Carbon::now()->copy()->format('Ymd'), $price['final'], $rid);
+            Redis::zIncrBy('zrank_pop_month:' . Carbon::now()->copy()->format('Ym'), $price['final'], $rid);
             Redis::zIncrBy('zrank_pop_history', $price['final'], $rid);
             Redis::zIncrBy('zrank_order_today:' . $rid, $price['final'], $user->uid);
             Redis::zIncrBy('zrange_gift_history:' . $rid, $price['final'], $user->uid);
@@ -446,19 +446,15 @@ class GuardianService
             }
 
             //通知java直播間內開通
-            $activateNotify = Redis::hGet('hguardian_info:' . $guardId, 'activate_notify');
-
-            if ($activateNotify) {
-                Redis::publish('guardian_broadcast_info',
-                    json_encode([
-                        'rid'     => (int)$rid,
-                        'uid'     => (int)$user->uid,
-                        'guardId' => (int)$guardId,
-                        'price'   => (int)$price['final']
-                    ])
-                );
-            }
-
+            Redis::publish(
+                'guardian_broadcast_info',
+                json_encode([
+                    'rid'     => (int)$rid,
+                    'uid'     => (int)$user->uid,
+                    'guardId' => (int)$guardId,
+                    'price'   => (int)$price['final']
+                ])
+            );
         }
 
         $res['expireDate'] = $expireMsgDate;
