@@ -18,6 +18,8 @@ class OnePayService
 {
     const TOKEN_CODE = 'EEE0xIJXaT';
 
+    const ORDER_PREFIX = 'OP';
+
     /* One Pay設定 */
     private $onePaySettings;
 
@@ -71,9 +73,7 @@ class OnePayService
     /* 產生訂單id */
     public function genOrder() : bool
     {
-//        $this->orderId = self::ORDER_PREFIX . substr(str_shuffle(str_repeat('0123456789', 5)), 0, 5);
-
-        $this->orderId = resolve('charge')->getMessageNo();
+        $this->orderId = self::ORDER_PREFIX . date('YmdHis') . substr(str_shuffle(str_repeat('0123456789', 5)), 0, 8);
 
         return empty($this->orderId) ? false : true;
     }
