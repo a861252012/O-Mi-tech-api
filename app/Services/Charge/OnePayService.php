@@ -11,12 +11,12 @@ namespace App\Services\Charge;
 use App\Constants\BankCode;
 use App\Facades\SiteSer;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
 class OnePayService
 {
-    const SECRET_KEY = 'VdNIVdkVP1WnmtfRiMhZ41OuA7WHkmIMJ1wAlqQB2102NNRNT2W2K6nL6m58';
-    const ORDER_PREFIX = 'onepay_test_';
-    const MEMBER_ID = 'XO01';
+    /* One Pay設定 */
+    private $onePaySettings;
 
     private $orderId;
 
@@ -25,7 +25,7 @@ class OnePayService
     public function __construct()
     {
         $this->apiHost = SiteSer::config('api_host');
-//        dd(SiteSer::config('api_host'));
+        $this->onePaySettings = json_decode(SiteSer::globalSiteConfig('onepay_setting'));
     }
 
     /* 建立簽名 */
@@ -46,7 +46,7 @@ class OnePayService
             return trim($item);
         })->implode('');
 
-        return md5($oStr . self::SECRET_KEY);
+        return md5($oStr . $this->onePaySettings->secret_key);
     }
 
     /* 產生token */
@@ -56,7 +56,7 @@ class OnePayService
             return false;
         }
 
-        return md5($orderId . self::SECRET_KEY);
+        return md5($orderId . $this->onePaySettings->token_code);
     }
 
     /* 檢查token */
@@ -68,7 +68,9 @@ class OnePayService
     /* 產生訂單id */
     public function genOrder() : bool
     {
-        $this->orderId = self::ORDER_PREFIX . substr(str_shuffle(str_repeat('0123456789', 5)), 0, 5);
+//        $this->orderId = self::ORDER_PREFIX . substr(str_shuffle(str_repeat('0123456789', 5)), 0, 5);
+
+        $this->orderId = resolve('charge')->getMessageNo();
 
         return empty($this->orderId) ? false : true;
     }
@@ -82,7 +84,7 @@ class OnePayService
     /* 充值接口 – 取得銀行卡資訊 */
     public function pay($price)
     {
-        $apiUri = 'http://ptest.1-pay.co:8085/api/payment/payRequest/get';
+        $apiUri = $this->onePaySettings->host . $this->onePaySettings->pay_api;
 
         if (empty($this->orderId)) {
             $this->genOrder();
@@ -93,15 +95,15 @@ class OnePayService
             'pay_applydate'   => date('Y-m-d H:i:s', strtotime('+8 hours')),
             'pay_productname' => '充值',
             'pay_bankcode'    => 'cardPay',
-            'pay_callbackurl' => 'http://ptest.1-pay.co:8085/pay/result',
-            'pay_memberid'    => self::MEMBER_ID,
+            'pay_callbackurl' => $this->apiHost . '/api/charge/notice/one_pay/' . $this->genToken($this->orderId),
+            'pay_memberid'    => $this->onePaySettings->member_id,
             'pay_notifyurl'   => $this->apiHost . '/api/charge/notice/one_pay/' . $this->genToken($this->orderId),
             'pay_orderid'     => $this->orderId,
         ];
 //        dd($payload);
 
         $payload['sign'] = $this->genSign($payload);
-        info('One Pay充值payload: ' . var_export($payload, true));
+        Log::debug('One Pay充值payload: ' . var_export($payload, true));
 
 //        $result = '{"returncode": "00","bank_account": "6228480478780957872","bank_account_name": "龙浩","bank_code": "ABC","bank_area": "重庆沙坪","remark": "44QU","merchant_order": "PAY0000112020042814273200000027","alipay_bankcard_id": "1234"}';
 
@@ -110,17 +112,15 @@ class OnePayService
             'form_params' => $payload,
         ]);
 
-//        dd($result->getStatusCode(), $result->getBody()->getContents());
-
         if ($result->getStatusCode() != 200) {
-            \Log::error('金流回應HTTP status: ' . $result->getStatusCode());
+            Log::debug('金流回應HTTP status: ' . $result->getStatusCode());
             return false;
         }
 
         $onePayCollection = collect(json_decode($result->getBody()->getContents()));
 
         if ($onePayCollection->get('returncode') != "00") {
-            \Log::error("One Pay支付錯誤代碼: " . ($onePayCollection->get('returncode') ?? '999'));
+            Log::debug("One Pay支付錯誤代碼: " . ($onePayCollection->get('returncode') ?? '999'));
             return false;
         }
 
@@ -129,17 +129,13 @@ class OnePayService
 
         info('One Pay支付回應: ' . var_export($onePayCollection->toJson(), true));
 
-//        echo $onePayCollection->toJson();exit;
-
         return $onePayCollection->toJson();
     }
 
     /* 異步通知 */
     public function updateOrder($tradeNo, $payTradeNo, $money, $complateTime, $chargeResult, $token)
     {
-        $checkToken = resolve(OnePayService::class)->checkToken($tradeNo, $token);
-
-        if (!$checkToken) {
+        if (!$this->checkToken($tradeNo, $token)) {
             $res['status'] = 999;
             $res['msg'] = 'Token Wrong !';
             return $res;

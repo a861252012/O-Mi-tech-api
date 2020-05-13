@@ -17,7 +17,7 @@ class ChargePay extends VRequest
         return [
             'price'     => 'required|integer',
             'vipLevel'  => 'required|string',
-            'mode_type' => 'required|string',
+            'mode_type' => 'required|integer',
             'name'      => 'string|nullable',
         ];
     }

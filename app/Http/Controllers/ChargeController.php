@@ -204,9 +204,8 @@ class ChargeController extends Controller
      */
     public function pay(ChargePay $request)
     {
-        Log::info('金流支付request: ' . var_export($request->all(), true));
-//        $amount = isset($_POST['price']) ? number_format(((int) $_POST['price']), 2, '.', '') : 0;
-//
+        Log::debug('金流支付request: ' . var_export($request->all(), true));
+
         if ($request->price < 1) {
             $msg = '请输入正确的金额!';
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
