@@ -12,9 +12,12 @@ use App\Constants\BankCode;
 use App\Facades\SiteSer;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class OnePayService
 {
+    const TOKEN_CODE = 'EEE0xIJXaT';
+
     /* One Pay設定 */
     private $onePaySettings;
 
@@ -56,7 +59,7 @@ class OnePayService
             return false;
         }
 
-        return md5($orderId . $this->onePaySettings->token_code);
+        return md5($orderId . self::TOKEN_CODE);
     }
 
     /* 檢查token */
@@ -100,7 +103,6 @@ class OnePayService
             'pay_notifyurl'   => $this->apiHost . '/api/charge/notice/one_pay/' . $this->genToken($this->orderId),
             'pay_orderid'     => $this->orderId,
         ];
-//        dd($payload);
 
         $payload['sign'] = $this->genSign($payload);
         Log::debug('One Pay充值payload: ' . var_export($payload, true));
