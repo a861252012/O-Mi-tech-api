@@ -5,6 +5,7 @@ namespace App\Listeners;
 use App\Events\Active;
 use App\Models\UserLoginLog;
 use App\Models\Users;
+use App\Traits\Commons;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Request;
 use Illuminate\Queue\InteractsWithQueue;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 
 class SuccessfulLogin
 {
+    use Commons;
     /**
      * Create the event listener.
      *
@@ -35,7 +37,7 @@ class SuccessfulLogin
     public function handle(Login $event)
     {
         $user = $event->user;
-        $login_ip = $this->request->ip();
+        $login_ip = $this->getIp();
         $uid = $user->getAuthIdentifier();
 
         Users::query()->where('uid', $uid)->update([
