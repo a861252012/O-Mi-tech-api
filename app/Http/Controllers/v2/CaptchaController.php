@@ -8,6 +8,7 @@
 
 namespace App\Http\Controllers\v2;
 
+use App\Traits\Commons;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +17,7 @@ use Mews\Captcha\Facades\Captcha;
 
 class CaptchaController extends Controller
 {
+    use Commons;
 
     /* 有效時間(分鐘) */
     const EXPIRE_TIME = 6;
