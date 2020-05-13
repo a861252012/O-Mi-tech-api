@@ -59,7 +59,7 @@ class CaptchaController extends Controller
     /* 驗證client ip */
     private function vaildateClient($c)
     {
-        $clientIdentificationCode = substr(md5(request()->ip()), 1, 6);
+        $clientIdentificationCode = substr(md5($this->getIp()), 1, 6);
         if ($c === $clientIdentificationCode) {
             return true;
         }
