@@ -100,19 +100,7 @@ class OnePayService
             'pay_orderid'     => $this->orderId,
         ];
 
-        /* 簽名所需的key序 */
-        $encStrKey = [
-            'pay_amount',
-            'pay_applydate',
-            'pay_productname',
-            'pay_bankcode',
-            'pay_callbackurl',
-            'pay_memberid',
-            'pay_notifyurl',
-            'pay_orderid'
-        ];
-
-        $payload['sign'] = $this->genSign($payload, $encStrKey);
+        $payload['sign'] = $this->genSign($payload, array_keys($payload));
         Log::debug('One Pay充值payload: ' . var_export($payload, true));
 
 //        $result = '{"returncode": "00","bank_account": "6228480478780957872","bank_account_name": "龙浩","bank_code": "ABC","bank_area": "重庆沙坪","remark": "44QU","merchant_order": "PAY0000112020042814273200000027","alipay_bankcard_id": "1234"}';
