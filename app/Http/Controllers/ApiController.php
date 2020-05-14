@@ -31,6 +31,7 @@ use App\Services\Sms\SmsService;
 use App\Services\System\SystemService;
 use App\Services\User\RegService;
 use App\Services\User\UserService;
+use App\Traits\Commons;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
@@ -58,6 +59,8 @@ use DB;
  */
 class ApiController extends Controller
 {
+    use Commons;
+
     /**
      * [ping 连通测试]
      */
@@ -134,7 +137,7 @@ class ApiController extends Controller
     public function getConf()
     {
         /* captcha v2 驗證 */
-        $c = dechex(time()) . '.' . substr(md5(request()->ip()), 1, 6);
+        $c = dechex(time()) . '.' . substr(md5($this->getIp()), 1, 6);
 
         $conf = collect((new Config(SiteSer::siteId()))->all())->only([
             'cdn_host',
