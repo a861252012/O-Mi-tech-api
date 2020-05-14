@@ -262,6 +262,7 @@ class ChargeController extends Controller
                 $charge = resolve('charge');
                 $orderId = $charge->getMessageNo();
                 $postdata = $charge->postData($request->price, $channel);
+                $remoteUrl = resolve('charge')->remote();
         }
 
         //记录下数据库
@@ -287,7 +288,7 @@ class ChargeController extends Controller
         $rtn = array(
             'postdata'  => $postdata,
             'orderId'   => $orderId,
-            'remoteUrl' => resolve('charge')->remote(),
+            'remoteUrl' => $remoteUrl ?? '',
             'act'       => $act,
         );
 
