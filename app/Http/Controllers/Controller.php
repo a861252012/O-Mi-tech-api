@@ -53,6 +53,8 @@ class Controller extends BaseController
     const SEVER_SESS_ID = 'webonline';//在线用户id
     const  TOKEN_CONST = 'auth_key';
     const  WEB_SECRET_KEY = 'c5ff645187eb7245d43178f20607920e456';
+    const TTL_USER_NICKNAME = 2678400;
+
     protected $_online; // 在线用户的uid
     protected $userInfo; // 在线用户的信息
     protected $_reqSession;
@@ -1124,12 +1126,18 @@ class Controller extends BaseController
                 $redis->del('modify.nickname', Auth::id());
             }
 
+            /* 守護功能 - 加總修改次數 */
+            $modCountRedisKey = 'smname_num:' . date('m') . ':' . auth()->id();
+            if (1 == Redis::incr($modCountRedisKey)) {
+                Redis::expire($modCountRedisKey, self::TTL_USER_NICKNAME);
+            }
         }
 
         //保证使用默认图片的headimg是空值
         if (isset($postData['headimg']) && strpos($postData['headimg'], 'head_') === 0) {
             unset($postData['headimg']);
         }
+
         // 修改用户表
         $user->update($postData);
 
@@ -1137,17 +1145,28 @@ class Controller extends BaseController
         if (isset($postData['nickname']) && ($postData['nickname'] != $from_nickname)) {
             Redis::hset('hnickname_to_id:' . SiteSer::siteId(), $postData['nickname'], $user['uid']);
             Redis::hdel('hnickname_to_id:' . SiteSer::siteId(), $from_nickname);//删除旧昵称登入权限
+
+            /* 檢查守護身份 */
+            $isG = false;
+            if (!empty($user->guard_id) && time() < strtotime($user->guard_end)) {
+                $isG = true;
+            }
+
             // 修改昵称成功后 就记录日志
-            $modNameLog = [
-                'uid' => $user['uid'],
-                'before' => $from_nickname,
-                'after' => $postData['nickname'],
-                'update_at' => time(),
-                'init_time' => date('Y-m-d H:i:s', time()),
-                'dml_time' => date('Y-m-d H:i:s', time()),
-                'dml_flag' => 1,
-            ];
-            UserModNickName::create($modNameLog);
+            /* 守護更名次數不記log */
+            if (empty($isG) && Redis::get($modCountRedisKey) > $user->guardianInfo->rename_limit) {
+                $modNameLog = [
+                    'uid' => $user['uid'],
+                    'before' => $from_nickname,
+                    'after' => $postData['nickname'],
+                    'update_at' => time(),
+                    'init_time' => date('Y-m-d H:i:s', time()),
+                    'dml_time' => date('Y-m-d H:i:s', time()),
+                    'dml_flag' => 1,
+                ];
+                UserModNickName::create($modNameLog);
+            }
+
         }
         $userServer->getUserReset($user->uid);
 

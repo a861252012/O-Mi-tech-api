@@ -36,7 +36,7 @@ class UserService extends Service
     const KEY_USER_INFO = 'huser_info:';
     const KEY_USER_SID = 'huser_sid';
     const TTL_USER_INFO = 216000;
-    const TTL_USER_NICKNAME = 2592000;
+
 
     public $user;
     protected $redis;
@@ -723,16 +723,10 @@ class UserService extends Service
             $num = 0;
             if (Redis::hget('hguardian_info:' . $this->user['guard_id'], 'rename')) {
                 $guardianRenameCount = Redis::hget('hguardian_info:' . $this->user['guard_id'], 'rename_limit');
-                $modCountRedisKey = 'smod_nickname_count:' . date('m') . ':' . auth()->id();
+                $modCountRedisKey = 'smname_num:' . date('m') . ':' . auth()->id();
                 $modCount = Redis::get($modCountRedisKey) ?? 0;
-                if (empty($modCount)) {
-                    Redis::set($modCountRedisKey, $guardianRenameCount);
 
-                    /* 存活時間為30天 */
-                    Redis::expire($modCountRedisKey, self::TTL_USER_NICKNAME);
-                }
-
-                $num = abs($guardianRenameCount - $modCount);
+                $num = $guardianRenameCount - $modCount;
             }
 
             if ($num > 0) {
