@@ -27,6 +27,9 @@ class OnePayService
 
     private $apiHost;
 
+    /* 金流回應碼 */
+    private $status = '';
+
     public function __construct()
     {
         $this->apiHost = SiteSer::config('api_host');
@@ -60,17 +63,21 @@ class OnePayService
     }
 
     /* 產生訂單id */
-    public function genOrder() : bool
+    public function genOrder()
     {
         $this->orderId = self::ORDER_PREFIX . date('YmdHis') . substr(str_shuffle(str_repeat('0123456789', 5)), 0, 8);
-
-        return empty($this->orderId) ? false : true;
     }
 
     /* 取得訂單id */
     public function getOrderId() : string
     {
         return $this->orderId;
+    }
+
+    /* 取得金流回應碼 */
+    public function getStatus()
+    {
+        return $this->status;
     }
 
     /* 充值接口 – 取得銀行卡資訊 */
@@ -117,6 +124,7 @@ class OnePayService
 
         if ($result->getStatusCode() != 200) {
             Log::debug('金流回應HTTP status: ' . $result->getStatusCode());
+            $this->status = '01';
             return false;
         }
 
@@ -124,6 +132,7 @@ class OnePayService
 
         if ($onePayCollection->get('returncode') != "00") {
             Log::debug("One Pay支付錯誤代碼: " . ($onePayCollection->get('returncode') ?? '999'));
+            $this->status = $onePayCollection->get('returncode');
             return false;
         }
 

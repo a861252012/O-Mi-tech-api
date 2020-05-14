@@ -249,13 +249,13 @@ class ChargeController extends Controller
             case self::CHANNEL_ONE_PAY:
                 $act = '3';
                 $onePayService = resolve(OnePayService::class);
-
-                if (!$onePayService->genOrder()) {
-                    Log::error('One Pay產生訂單號失敗!');
-                }
-
+                $onePayService->genOrder();
                 $orderId = $onePayService->getOrderId();
                 $postdata = $onePayService->pay($request->price);
+
+                if (!empty($onePayService->getStatus())) {
+                    $msg = '请联系客服，错误代码 ' . $onePayService->getStatus();
+                }
 
                 break;
             default:
@@ -293,7 +293,7 @@ class ChargeController extends Controller
         );
 
         Log::channel('charge')->info($rtn);
-        return new JsonResponse(array('status' => 0, 'data' => $rtn));
+        return new JsonResponse(array('status' => 0, 'data' => $rtn, 'msg' => $msg ?? ''));
     }
 
     public function exchange(Request $request)
