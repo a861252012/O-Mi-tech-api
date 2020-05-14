@@ -762,11 +762,13 @@ class ChargeController extends Controller
 
         if ($payType === 'onepay') {
             $data = resolve(OnePayService::class)->updateOrder(
+                $request->memberid,
                 $request->orderid,
                 $request->merchant_order,
                 $request->amount,
                 $request->datetime,
                 $request->returncode,
+                $request->sign,
                 $request->route('one_pay_token')
             );
         } else {
@@ -784,7 +786,9 @@ class ChargeController extends Controller
                 'merchant_order',
                 'amount',
                 'datetime',
-                'returncode'
+                'returncode',
+                'pay_ext',
+                'sign'
             )
         ));
 

@@ -7,7 +7,6 @@
 
 namespace App\Services\Charge;
 
-
 use App\Constants\BankCode;
 use App\Facades\SiteSer;
 use GuzzleHttp\Client;
@@ -145,8 +144,34 @@ class OnePayService
     }
 
     /* 異步通知 */
-    public function updateOrder($tradeNo, $payTradeNo, $money, $complateTime, $chargeResult, $token)
+    public function updateOrder($memberId, $tradeNo, $payTradeNo, $money, $complateTime, $chargeResult, $sign, $token)
     {
+        $payload = [
+            'memberid'       => $memberId,
+            'orderid'        => $tradeNo,
+            'merchant_order' => $payTradeNo,
+            'amount'         => $money,
+            'datetime'       => $complateTime,
+            'returncode'     => $chargeResult
+        ];
+
+        $encStrKey = [
+            'memberid',
+            'orderid',
+            'merchant_order',
+            'amount',
+            'datetime',
+            'returncode'
+        ];
+
+        /*驗證one pay 的sign*/
+        if ($sign !== $this->genSign($payload, $encStrKey)) {
+            $res['status'] = 999;
+            $res['msg'] = 'sign Wrong !';
+            return $res;
+        }
+
+        /*驗證omey自行添加的驗證token*/
         if (!$this->checkToken($tradeNo, $token)) {
             $res['status'] = 999;
             $res['msg'] = 'Token Wrong !';
