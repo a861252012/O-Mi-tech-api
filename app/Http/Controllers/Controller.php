@@ -1119,17 +1119,32 @@ class Controller extends BaseController
                 $msg['status'] = false;
                 return new JsonResponse($msg);
             }
+
+            /* 購買旗標 */
+            $boughtModifyFlag = false;
             //查询购买记录
             $redis = resolve('redis');
-            $boughtModifyNickname = intval($redis->hget('modify.nickname', Auth::id()));
+            $boughtModifyNickname = (int) $redis->hget('modify.nickname', Auth::id());
             if ($boughtModifyNickname >= 1) {//重置
                 $redis->del('modify.nickname', Auth::id());
+                $boughtModifyFlag = true;
             }
+
+            /* 守護修改旗標 */
+            $guardianModFlag = false;
 
             /* 守護功能 - 加總修改次數 */
             $modCountRedisKey = 'smname_num:' . date('m') . ':' . auth()->id();
-            if (1 == Redis::incr($modCountRedisKey)) {
-                Redis::expire($modCountRedisKey, self::TTL_USER_NICKNAME);
+            if (!$boughtModifyFlag
+                && (!empty($user->guard_id) && time() < strtotime($user->guard_end))
+                && ($redis->get($modCountRedisKey) < $user->guardianInfo->rename_limit)
+            ) {
+                $modNum = $redis->incr($modCountRedisKey);
+                $guardianModFlag = true;
+
+                if (1 == $modNum) {
+                    $redis->expire($modCountRedisKey, self::TTL_USER_NICKNAME);
+                }
             }
         }
 
@@ -1146,15 +1161,9 @@ class Controller extends BaseController
             Redis::hset('hnickname_to_id:' . SiteSer::siteId(), $postData['nickname'], $user['uid']);
             Redis::hdel('hnickname_to_id:' . SiteSer::siteId(), $from_nickname);//删除旧昵称登入权限
 
-            /* 檢查守護身份 */
-            $isG = false;
-            if (!empty($user->guard_id) && time() < strtotime($user->guard_end)) {
-                $isG = true;
-            }
-
             // 修改昵称成功后 就记录日志
             /* 守護更名次數不記log */
-            if (empty($isG) && Redis::get($modCountRedisKey) > $user->guardianInfo->rename_limit) {
+            if (!$guardianModFlag) {
                 $modNameLog = [
                     'uid' => $user['uid'],
                     'before' => $from_nickname,
