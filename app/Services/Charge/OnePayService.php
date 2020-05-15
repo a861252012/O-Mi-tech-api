@@ -93,9 +93,9 @@ class OnePayService
             'pay_applydate'   => date('Y-m-d H:i:s', strtotime('+8 hours')),
             'pay_productname' => '充值',
             'pay_bankcode'    => 'cardPay',
-            'pay_callbackurl' => $this->apiHost . '/api/charge/notice/one_pay/' . $this->genToken($this->orderId),
+            'pay_callbackurl' => $this->apiHost . '/api/charge/notice/onepay/' . $this->genToken($this->orderId),
             'pay_memberid'    => $this->onePaySettings->member_id,
-            'pay_notifyurl'   => $this->apiHost . '/api/charge/notice/one_pay/' . $this->genToken($this->orderId),
+            'pay_notifyurl'   => $this->apiHost . '/api/charge/notice/onepay/' . $this->genToken($this->orderId),
             'pay_orderid'     => $this->orderId,
         ];
 
