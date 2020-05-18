@@ -444,3 +444,8 @@ Route::prefix('guardian')->group(function () {
         Route::get('history', 'GuardianController@history');
     });
 });
+
+Route::any('omey/v2/check', 'OmeyController@v2Check');
+Route::group(['middleware' => 'login_auth'], function () {
+    Route::any('omey/v2/{act?}', 'OmeyController@v2');
+});

@@ -2,8 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Facades\SiteSer;
+use App\Services\User\UserService;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class OmeyController extends Controller
 {
@@ -22,6 +27,92 @@ class OmeyController extends Controller
             report($e);
 
         }
+    }
+
+    // 二站整合測試
+    public function v2(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            echo '請先登入';
+            return;
+        }
+
+        $act = $request->route('act');
+        if ($act === 'check') {
+            $this->v2Check($rid);
+        } elseif (is_null($act)) {
+            $this->v2Index();
+        } else {
+            $this->v2Live($act);
+        }
+    }
+
+    private function v2Index()
+    {
+        $hosts = json_decode(file_get_contents(Storage::path('/public/s1/videolistall.json')), true);
+
+        $cdnHost = SiteSer::config('cdn_host');
+        $liveCnt = 0;
+        foreach ($hosts['rooms'] as $h) {
+            if ($h['live_status'] == 0) {
+                continue;
+            }
+            echo '<a href="/api/omey/v2/', $h['rid'], '">',
+                '<img width="100" src="', $cdnHost, '/storage/uploads/s88888/anchor/', $h['cover'], '">',
+                '</a>';
+            $liveCnt++;
+        }
+        if ($liveCnt == 0) {
+            echo '目前無主播上線';
+        }
+    }
+
+    private function v2Live($rid)
+    {
+        echo '<h1>蜜坊</h1>';
+        $user = Auth::user();
+        $platforms = $this->make('redis')->hgetall('hplatforms:60');
+        $host = 'http://'. $_SERVER['HTTP_HOST'];
+
+        $sskey = $user->uid;
+        $callback = $rid;
+        $key = $platforms['key'];
+        $signData = [$sskey, $callback, $key];
+        $sign = md5(implode('', $signData));
+        $q = [
+            'origin' => 60,
+            'sskey' => $sskey,
+            'callback' => $callback,
+            'sign' => $sign,
+            'httphost' => $host,
+        ];
+        $qs = http_build_query($q);
+
+        $v2Host = str_replace('v1.com', 'v2.com', $host);
+        $v2URL =  $v2Host .'/recvSskey?'. $qs;
+        echo '<iframe src="', $v2URL, '" width="100%" height="90%"></iframe>';
+    }
+
+    public function v2Check(Request $request)
+    {
+        $uid = $request->get('sskey');
+        $userService = resolve(UserService::class);
+        $userInfo = $userService->getUserByUid($uid);
+        if (!$userInfo) {
+            return JsonResponse::create([
+                'status' => 0,
+                'msg'    => '用户不存在',
+            ]);
+        }
+
+        $d = [
+            'data' => [
+                'uuid' => $uid,
+                'nickename' => $userInfo->nickname,
+            ],
+        ];
+        echo json_encode($d);
     }
 
     public function fakeCall()
