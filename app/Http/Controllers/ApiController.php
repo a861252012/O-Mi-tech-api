@@ -823,7 +823,8 @@ class ApiController extends Controller
         }
         $time = date('Y-m-d H:i:s');
         Users::where('uid', $this->userInfo['uid'])->update([
-            'logined' => $time,
+            'last_ip' => $this->getIp(),
+            'logined' => $time
         ]);
         $this->userInfo['logined'] = $time;
         resolve(UserService::class)->getUserReset($this->userInfo['uid']);
