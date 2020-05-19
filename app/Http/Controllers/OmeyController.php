@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Facades\SiteSer;
 use App\Services\User\UserService;
 use GuzzleHttp\Client;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -133,7 +134,24 @@ class OmeyController extends Controller
                 'nickename' => $userInfo->nickname,
             ],
         ];
-        echo json_encode($d);
+        return JsonResponse::create($d);
+    }
+
+    public function v2DiamondGet(Request $request)
+    {
+        $d = [
+            'status' => '000',
+            'data' => [
+                'diamond' => 50000,
+            ],
+        ];
+        return JsonResponse::create($d);
+    }
+
+    public function v2DiamondExpend(Request $request)
+    {
+        $d = ['status' => '000'];
+        return JsonResponse::create($d);
     }
 
     public function fakeCall()

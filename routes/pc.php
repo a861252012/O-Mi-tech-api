@@ -446,6 +446,8 @@ Route::prefix('guardian')->group(function () {
 });
 
 Route::any('omey/v2/check', 'OmeyController@v2Check');
+Route::any('omey/v2/diamondGet', 'OmeyController@v2DiamondGet');
+Route::any('omey/v2/diamondExpend', 'OmeyController@v2DiamondExpend');
 Route::group(['middleware' => 'login_auth'], function () {
     Route::any('omey/v2/{act?}', 'OmeyController@v2');
 });
