@@ -31,6 +31,8 @@ use App\Services\Sms\SmsService;
 use App\Services\System\SystemService;
 use App\Services\User\RegService;
 use App\Services\User\UserService;
+use App\Traits\Commons;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -57,6 +59,8 @@ use DB;
  */
 class ApiController extends Controller
 {
+    use Commons;
+
     /**
      * [ping 连通测试]
      */
@@ -133,7 +137,7 @@ class ApiController extends Controller
     public function getConf()
     {
         /* captcha v2 驗證 */
-        $c = dechex(time()) . '.' . substr(md5(request()->ip()), 1, 6);
+        $c = dechex(time()) . '.' . substr(md5($this->getIp()), 1, 6);
 
         $conf = collect((new Config(SiteSer::siteId()))->all())->only([
             'cdn_host',
@@ -480,6 +484,9 @@ class ApiController extends Controller
                     return JsonResponse::create(['status' => 0, 'msg' => 'token写入redis失败，请重新登录!']);
                 }
             }
+            //註冊成功時紀錄IP
+            event(new Login($user, false));
+
             $return['data'] = [
                 'jwt'  => (string)$guard->getToken(),
                 'user' => $user,
@@ -816,7 +823,8 @@ class ApiController extends Controller
         }
         $time = date('Y-m-d H:i:s');
         Users::where('uid', $this->userInfo['uid'])->update([
-            'logined' => $time,
+            'last_ip' => $this->getIp(),
+            'logined' => $time
         ]);
         $this->userInfo['logined'] = $time;
         resolve(UserService::class)->getUserReset($this->userInfo['uid']);

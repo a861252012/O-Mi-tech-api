@@ -208,7 +208,7 @@ Route::group(['prefix' => 'pay','namespace'=>'Mobile',],function () {
 
 //通知
 Route::group(['prefix' => 'pay', 'middleware' => ['charge']], function () {
-    Route::match(['POST', 'GET'], 'notice', ['name' => 'charge_notice', 'uses' => 'ChargeController@notice'])->name('charge_notice');
+    Route::match(['POST', 'GET'], 'notice/{pay_type?}/{one_pay_token?}', ['name' => 'charge_notice', 'uses' => 'ChargeController@notice'])->name('charge_notice');
     Route::match(['POST', 'GET'], 'checkKeepVip', ['name' => 'checkKeepVip', 'uses' => 'ChargeController@checkKeepVip']);
     Route::match(['POST', 'GET'], 'callFailOrder', ['name' => 'callFailOrder', 'uses' => 'ChargeController@callFailOrder']);
     Route::post( 'moniCharge', ['name' => 'charge', 'uses' => 'ChargeController@moniCharge']);
@@ -278,5 +278,6 @@ Route::prefix('guardian')->group(function () {
         Route::get('history', 'GuardianController@history');
     });
 });
-Route::any('omey', 'OmeyController@index');
+
+/* 測試用entry point */
 Route::any('omey', 'OmeyController@index');

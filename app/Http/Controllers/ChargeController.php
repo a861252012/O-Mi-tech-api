@@ -1,8 +1,14 @@
-<?php /** @noinspection PhpUndefinedClassInspection */
+<?php
+/**
+ * @apiDefine Charge 充值功能
+ */
+/** @noinspection PhpUndefinedClassInspection */
 
 namespace App\Http\Controllers;
 
+use App\Constants\BankCode;
 use App\Facades\SiteSer;
+use App\Http\Requests\Charge\ChargePay;
 use App\Libraries\ErrorResponse;
 use App\Libraries\SuccessResponse;
 use App\Models\GiftActivity;
@@ -11,6 +17,8 @@ use App\Models\PayGD;
 use App\Models\Recharge;
 use App\Models\RechargeMoney;
 use App\Models\Users;
+use App\Services\Charge\OnePayService;
+use App\Services\Charge\ChargeService;
 use App\Services\User\UserService;
 use DB;
 use Hashids\Hashids;
@@ -26,6 +34,9 @@ class ChargeController extends Controller
     const CHANNEL_GD_ALI = 7;
     const CHANNEL_GD_BANK = 8;
     const ORDER_REPEAT_LIMIT_GD = 60;
+
+    /* One Pay */
+    const CHANNEL_ONE_PAY = 13;
 
     private $codeMsg = array(
         -1 => '未知',
@@ -166,17 +177,41 @@ class ChargeController extends Controller
      *   ]
      * }
      *
+     * @api {post} /api/charge/pay 執行支付動作
+     * @apiGroup Charge
+     * @apiName pay
+     * @apiVersion 1.0.0
+     *
+     * @apiParam {Int} price 價格
+     * @apiParam {Int} vipLevel 充值渠道
+     * @apiParam {Int} mode_type
+     * @apiParam {String} name
+     *
+     * @apiError (Error Status) 1 请输入正确的金额
+     * @apiError (Error Status) 1 请选择充值渠道
+     * @apiError (Error Status) 999 API執行錯誤
+     *
+     * @apiSuccessExample {json} 成功回應
+     * {
+    "status": 0,
+    "data": {
+    "postdata": "{\"serviceCode\":\"FC0045\",\"version\":\"1.5\",\"serviceType\":\"03\",\"signType\":\"md5\",\"sysPlatCode\":\"V\",\"sentTime\":\"2020-04-28 18:34:32\",\"expTime\":\"\",\"charset\":\"utf-8\",\"sMessageNo\":\"FC00450045394915880700729692\",\"Datas\":[{\"dataNo\":\"FCDATA0045394915880700729694\",\"amount\":\"1000.00\",\"noticeUrl\":\"http:\\\/\\\/www.ymrenn.com\\\/api\\\/charge\\\/notice\",\"returnUrl\":\"\\\/charge\\\/reback\",\"remark\":\"rand9551107869@x.com\",\"channel\":\"\",\"vipLevel\":\"1\",\"bankCode\":\"\",\"lan\":\"\",\"currency\":\"\",\"isMobile\":\"false\"}],\"sign\":\"73fe05fbe29c5688ed49812df0e4f93e\"}",
+    "orderId": "FC00450045394915880700729692",
+    "remoteUrl": "https:\/\/gopay.pay-sin.com\/pay"
+    },
+    "msg": ""
+    }
      */
-    public function pay()
+    public function pay(ChargePay $request)
     {
-        $amount = isset($_POST['price']) ? number_format(intval($_POST['price']), 2, '.', '') : 0;
+        Log::debug('金流支付request: ' . var_export($request->all(), true));
 
-        if (!$amount || $amount < 1) {
+        if ($request->price < 1) {
             $msg = '请输入正确的金额!';
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
         }
         $fee = 0;
-        if ($giftactive = GiftActivity::query()->where('moneymin', intval($amount))->first()) {
+        if ($giftactive = GiftActivity::query()->where('moneymin', $request->price)->first()) {
             $fee = $giftactive->fee;
         }
 
@@ -191,8 +226,14 @@ class ChargeController extends Controller
         }
 
         $origin = $this->getClient();
+
+        /* 回傳資料處理動作 */
+        $act = '1';
+
+        $orderId = '';
+
         /** 古都 */
-        if (intval($mode_type) === static::CHANNEL_GD_ALI || intval($mode_type) === static::CHANNEL_GD_BANK) {
+        if (((int) $mode_type) === static::CHANNEL_GD_ALI || ((int) $mode_type) === static::CHANNEL_GD_BANK) {
             return $this->processGD([
                 'money' => $amount,
                 'uid' => Auth::id(),
@@ -203,36 +244,56 @@ class ChargeController extends Controller
                 'origin' => $origin,
             ]);
         }
-        $postdata = resolve('charge')->postData($amount, $channel);
+
+        switch ($mode_type) {
+            case self::CHANNEL_ONE_PAY:
+                $act = '3';
+                $onePayService = resolve(OnePayService::class);
+                $onePayService->genOrder();
+                $orderId = $onePayService->getOrderId();
+                $postdata = $onePayService->pay($request->price);
+
+                if (!empty($onePayService->getStatus())) {
+                    $msg = '请联系客服，错误代码 ' . $onePayService->getStatus();
+                }
+
+                break;
+            default:
+                $charge = resolve('charge');
+                $orderId = $charge->getMessageNo();
+                $postdata = $charge->postData($request->price, $channel);
+                $remoteUrl = resolve('charge')->remote();
+        }
 
         //记录下数据库
         $uid = Auth::id();
         Recharge::create(
             array(
-                'uid' => $uid,
-                'created' => date('Y-m-d H:i:s'),
+                'uid'        => $uid,
+                'created'    => date('Y-m-d H:i:s'),
                 'pay_status' => 0,// 刚开始受理
-                'pay_type' => Recharge::PAY_TYPE_CHONGTI, // 银行充值
-                'del' => 0,
-                'paymoney' => $amount,
-                'points' => ceil($amount * 10) + $fee,
-                'order_id' => resolve('charge')->getMessageNo(),
-                'postdata' => $postdata,
-                'nickname' => Auth::user()['nickname'],
-                'channel' => $channel,
-                'mode_type' => $mode_type,
-                'origin' => $origin
+                'pay_type'   => Recharge::PAY_TYPE_CHONGTI, // 银行充值
+                'del'        => 0,
+                'paymoney'   => $request->price,
+                'points'     => ceil($request->price * 10) + $fee,
+                'order_id'   => $orderId,
+                'postdata'   => $postdata,
+                'nickname'   => Auth::user()['nickname'],
+                'channel'    => $channel,
+                'mode_type'  => $mode_type,
+                'origin'     => $origin
             )
         );
 
         $rtn = array(
-            'postdata' => $postdata,
-            'orderId' => resolve('charge')->getMessageNo(),
-            'remoteUrl' => resolve('charge')->remote(),
+            'postdata'  => $postdata,
+            'orderId'   => $orderId,
+            'remoteUrl' => $remoteUrl ?? '',
+            'act'       => $act,
         );
 
         Log::channel('charge')->info($rtn);
-        return new JsonResponse(array('status' => 0, 'data' => $rtn));
+        return new JsonResponse(array('status' => 0, 'data' => $rtn, 'msg' => $msg ?? ''));
     }
 
     public function exchange(Request $request)
@@ -695,43 +756,65 @@ class ChargeController extends Controller
     /**
      * 通知地址
      */
-    public function notice()
+    public function notice(Request $request)
     {
-        //获取下数据
-        $postResult = file_get_contents("php://input");
-        //拿到通知的数据
-        if (!$postResult) {
-            return new JsonResponse(array('status' => 1, 'msg' => 'no data input!'));
+        $payType = $request->route('pay_type');
+
+        if ($payType === 'onepay') {
+            $data = resolve(OnePayService::class)->updateOrder(
+                $request->memberid,
+                $request->orderid,
+                $request->merchant_order,
+                $request->amount,
+                $request->datetime,
+                $request->returncode,
+                $request->sign,
+                $request->route('one_pay_token')
+            );
+        } else {
+            //获取下数据
+            $ucPostResult = file_get_contents("php://input");
+
+            $data = resolve(ChargeService::class)->updateOrder($ucPostResult);
         }
 
-        $jsondatas = json_decode($postResult, true);
-        $len = $jsondatas['Datas'] ? count($jsondatas['Datas']) : 0;
-        if (json_last_error() > 0 || $len == 0) {
-            return new JsonResponse(array('status' => 1, 'msg' => 'json string ie error!'));
-        }
         //记录下日志
-        Log::info("传输的数据记录: " . $postResult);
+        Log::info('传输的数据记录: ' . json_encode(
+            $request->only(
+                'memberid',
+                'orderid',
+                'merchant_order',
+                'amount',
+                'datetime',
+                'returncode',
+                'pay_ext',
+                'sign'
+            )
+        ));
 
-        $tradeno = $jsondatas['Datas'][0]['orderId'];//拿出1个账单号
-        //验证下签名
-        if (!resolve('charge')->checkSign($jsondatas)) {
-            $signError = "订单号：" . $tradeno . "\n签名没有通过！\n";
-            Log::info($signError);
-            return new JsonResponse(array('status' => 1, 'msg' => date('Y-m-d H:i:s') . " \n" . $postResult . "\n" . $signError));
+        if ($data['status'] == 200) {
+            unset($data['status']);
+        } else {
+            $this->setStatus($data['status'], $data['msg']);
+            return $this->jsonOutput();
         }
-        $money=$chargeResult=$channel=$complateTime=null;
-        for ($i = 0; $i < $len; $i++) {
-            $paytradeno = $jsondatas['Datas'][$i]['payOrderId'];
-            $money = $jsondatas['Datas'][$i]['amount'];
-            $chargeResult = $jsondatas['Datas'][$i]['result'];
-            $channel = $jsondatas['Datas'][$i]['channel'];
-            $complateTime = $jsondatas['Datas'][$i]['complateTime'];
-            //存在同一个v项目订单号对应2个以上的财务财务订单号
-            if ($chargeResult == 2 && !empty($paytradeno)) {
-                break;
-            }
+
+        $res = $this->orderHandler(
+            $data['trade_no'],
+            $data['pay_trade_no'],
+            "",
+            "",
+            $data['money'],
+            $data['charge_result'],
+            $data['channel'],
+            $data['complate_time']
+        );
+
+        if ($payType === 'onepay') {
+            return 'OK';
         }
-        return $this->orderHandler($tradeno, $paytradeno, $loginfo = "", $logPath = "", $money, $chargeResult, $channel, $complateTime);
+
+        return $res;
     }
 
     /**

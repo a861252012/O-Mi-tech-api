@@ -53,6 +53,8 @@ class Controller extends BaseController
     const SEVER_SESS_ID = 'webonline';//在线用户id
     const  TOKEN_CONST = 'auth_key';
     const  WEB_SECRET_KEY = 'c5ff645187eb7245d43178f20607920e456';
+    const TTL_USER_NICKNAME = 2678400;
+
     protected $_online; // 在线用户的uid
     protected $userInfo; // 在线用户的信息
     protected $_reqSession;
@@ -1072,6 +1074,8 @@ class Controller extends BaseController
         //昵称重复
         $from_nickname = $user['nickname'];
         if (isset($postData['nickname']) && ($postData['nickname'] != $user['nickname'])) {
+            /* 修改類型 */
+            $type = 1;
 
             // 判断长度 和 格式 是否正确
             $len = $this->count_chinese_utf8($postData['nickname']);
@@ -1117,19 +1121,43 @@ class Controller extends BaseController
                 $msg['status'] = false;
                 return new JsonResponse($msg);
             }
+
+            /* 購買旗標 */
+            $boughtModifyFlag = false;
             //查询购买记录
             $redis = resolve('redis');
-            $boughtModifyNickname = intval($redis->hget('modify.nickname', Auth::id()));
+            $boughtModifyNickname = (int) $redis->hget('modify.nickname', Auth::id());
             if ($boughtModifyNickname >= 1) {//重置
                 $redis->del('modify.nickname', Auth::id());
+                $boughtModifyFlag = true;
+                $type = 2;
             }
 
+            /* 守護修改旗標 */
+            $guardianModFlag = false;
+
+            /* 守護功能 - 加總修改次數 */
+            $modCountRedisKey = 'smname_num:' . date('m') . ':' . auth()->id();
+            if (!$boughtModifyFlag
+                && (!empty($user->guard_id) && time() < strtotime($user->guard_end))
+                && ($redis->get($modCountRedisKey) < $user->guardianInfo->rename_limit)
+            ) {
+                $modNum = $redis->incr($modCountRedisKey);
+                $guardianModFlag = true;
+
+                if (1 == $modNum) {
+                    $redis->expire($modCountRedisKey, self::TTL_USER_NICKNAME);
+                }
+
+                $type = 3;
+            }
         }
 
         //保证使用默认图片的headimg是空值
         if (isset($postData['headimg']) && strpos($postData['headimg'], 'head_') === 0) {
             unset($postData['headimg']);
         }
+
         // 修改用户表
         $user->update($postData);
 
@@ -1137,17 +1165,19 @@ class Controller extends BaseController
         if (isset($postData['nickname']) && ($postData['nickname'] != $from_nickname)) {
             Redis::hset('hnickname_to_id:' . SiteSer::siteId(), $postData['nickname'], $user['uid']);
             Redis::hdel('hnickname_to_id:' . SiteSer::siteId(), $from_nickname);//删除旧昵称登入权限
+
             // 修改昵称成功后 就记录日志
-            $modNameLog = [
-                'uid' => $user['uid'],
-                'before' => $from_nickname,
-                'after' => $postData['nickname'],
-                'update_at' => time(),
-                'init_time' => date('Y-m-d H:i:s', time()),
-                'dml_time' => date('Y-m-d H:i:s', time()),
-                'dml_flag' => 1,
-            ];
-            UserModNickName::create($modNameLog);
+                $modNameLog = [
+                    'uid'       => $user['uid'],
+                    'before'    => $from_nickname,
+                    'after'     => $postData['nickname'],
+                    'update_at' => time(),
+                    'init_time' => date('Y-m-d H:i:s', time()),
+                    'dml_time'  => date('Y-m-d H:i:s', time()),
+                    'dml_flag'  => 1,
+                    'type'      => $type,
+                ];
+                UserModNickName::create($modNameLog);
         }
         $userServer->getUserReset($user->uid);
 

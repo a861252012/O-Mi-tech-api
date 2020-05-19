@@ -36,6 +36,8 @@ class UserService extends Service
     const KEY_USER_INFO = 'huser_info:';
     const KEY_USER_SID = 'huser_sid';
     const TTL_USER_INFO = 216000;
+
+
     public $user;
     protected $redis;
 
@@ -711,7 +713,7 @@ class UserService extends Service
     public function getModNickNameStatus()
     {
         /** 先查询购买的权限 */
-        $flag = intval(Redis::hget('modify.nickname', $this->user['uid']));
+        $flag = (int) Redis::hget('modify.nickname', $this->user['uid']);
         if ($flag >= 1) {
             return ['num' => $flag];
         }
@@ -721,11 +723,15 @@ class UserService extends Service
             $num = 0;
             if (Redis::hget('hguardian_info:' . $this->user['guard_id'], 'rename')) {
                 $guardianRenameCount = Redis::hget('hguardian_info:' . $this->user['guard_id'], 'rename_limit');
-                $modCount = UserModNickName::where('uid', auth()->id())->count();
-                $num = abs($guardianRenameCount - $modCount);
+                $modCountRedisKey = 'smname_num:' . date('m') . ':' . auth()->id();
+                $modCount = Redis::get($modCountRedisKey) ?? 0;
+
+                $num = $guardianRenameCount - $modCount;
             }
 
-            return ['num' => $num];
+            if ($num > 0) {
+                return ['num' => $num];
+            }
         }
 
         // TODO 贵族的权限

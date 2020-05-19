@@ -267,7 +267,7 @@ class SiteService
     public function siteConfig($name, $site_id = null)
     {
         $redisKey = $this->siteConfigKey($name, $site_id);
-        $v = Redis::get($redisKey . $siteId);
+        $v = Redis::get($redisKey);
         if ($v !== null) {
             return $v;
         }
