@@ -53,29 +53,50 @@ class OmeyController extends Controller
         $hosts = json_decode(file_get_contents(Storage::path('/public/s1/videolistall.json')), true);
 
         $cdnHost = SiteSer::config('cdn_host');
-        $liveCnt = 0;
+        $liveHosts = [];
         foreach ($hosts['rooms'] as $h) {
             if ($h['live_status'] == 0) {
                 continue;
             }
+            $liveHosts[] = [
+                'rid' => $h['rid'],
+                'cover' => $h['cover'],
+            ];
+        }
+        if (count($liveHosts) == 0) {
+            echo '目前無主播上線';
+            return;
+        }
+
+        echo '<h1>PC</h1>';
+        foreach ($liveHosts as $h) {
             echo '<a href="/api/omey/v2/', $h['rid'], '">',
                 '<img width="100" src="', $cdnHost, '/storage/uploads/s88888/anchor/', $h['cover'], '">',
                 '</a>';
-            $liveCnt++;
         }
-        if ($liveCnt == 0) {
-            echo '目前無主播上線';
+
+        echo '<h1>Mobile</h1>';
+        foreach ($liveHosts as $h) {
+            $v2URL = $this->v2GetEntryURL($h['rid']). '&m=1';
+            echo '<a href="', $v2URL, '">',
+                '<img width="100" src="', $cdnHost, '/storage/uploads/s88888/anchor/', $h['cover'], '">',
+                '</a>';
         }
     }
 
     private function v2Live($rid)
     {
         echo '<h1>蜜坊</h1>';
+        echo '<iframe src="', $this->v2GetEntryURL($rid), '" width="100%" height="90%"></iframe>';
+    }
+
+    private function v2GetEntryURL($rid)
+    {
         $user = Auth::user();
         $platforms = $this->make('redis')->hgetall('hplatforms:60');
         $host = 'http://'. $_SERVER['HTTP_HOST'];
 
-        $sskey = $user->uid;
+        $sskey = $user->uid;    // 不同合作站會有自己的加密資料。
         $callback = $rid;
         $key = $platforms['key'];
         $signData = [$sskey, $callback, $key];
@@ -91,7 +112,7 @@ class OmeyController extends Controller
 
         $v2Host = str_replace('v1.com', 'v2.com', $host);
         $v2URL =  $v2Host .'/recvSskey?'. $qs;
-        echo '<iframe src="', $v2URL, '" width="100%" height="90%"></iframe>';
+        return $v2URL;
     }
 
     public function v2Check(Request $request)
