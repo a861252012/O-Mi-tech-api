@@ -148,7 +148,7 @@ class OmeyController extends Controller
         $userInfo = $userService->getUserByUid($uid);
         $diamond = 0;
         if ($userInfo) {
-            $diamond = $userInfo->points;
+            $diamond = (int) $userInfo->points;
         }
 
         $d = [
