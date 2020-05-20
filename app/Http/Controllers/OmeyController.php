@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class OmeyController extends Controller
@@ -132,6 +133,7 @@ class OmeyController extends Controller
             'data' => [
                 'uuid' => $uid,
                 'nickename' => $userInfo->nickname,
+                'token' => $uid, // 平台在後續請求中用來辨識用戶的方式
             ],
         ];
         return JsonResponse::create($d);
@@ -139,10 +141,20 @@ class OmeyController extends Controller
 
     public function v2DiamondGet(Request $request)
     {
+        Log::debug('v2DiamondGet: '. print_r($request->all(), true));
+
+        $uid = $request->get('token');
+        $userService = resolve(UserService::class);
+        $userInfo = $userService->getUserByUid($uid);
+        $diamond = 0;
+        if ($userInfo) {
+            $diamond = $userInfo->points;
+        }
+
         $d = [
             'status' => '000',
             'data' => [
-                'diamond' => 50000,
+                'diamond' => $diamond,
             ],
         ];
         return JsonResponse::create($d);
@@ -150,7 +162,39 @@ class OmeyController extends Controller
 
     public function v2DiamondExpend(Request $request)
     {
-        $d = ['status' => '000'];
+        Log::debug('v2DiamondExpend: '. print_r($request->all(), true));
+
+        $uid = $request->get('token');
+        $userService = resolve(UserService::class);
+        $userInfo = $userService->getUserByUid($uid);
+        if (!$userInfo) {
+            $d = [
+                'status' => '9999',
+                'message' => '異常，找不到這個人～',
+            ];
+            return JsonResponse::create($d);
+        }
+        $diamond = $userInfo->points;
+
+        $number = max((int)$request->get('number'), 0);
+
+        // 檢查餘額
+        if ($diamond < $number) {
+            $d = [
+                'status' => '3301',
+                'message' => '蜜鑽不足呦，先去充值吧～',
+            ];
+            return JsonResponse::create($d);
+        }
+
+        $diamond -= $number;
+        $userService->updateUserInfo($uid, ['points' => $diamond]);
+        $d = [
+            'status' => '000',
+            'data' => [
+                'diamond' => $diamond,
+            ],
+        ];
         return JsonResponse::create($d);
     }
 
