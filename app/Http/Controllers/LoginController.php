@@ -198,12 +198,17 @@ class LoginController extends Controller
             $uid = UserSer::getUidByNickname($username);
         }
         if($member = Users::find($uid)){
+            // freeze check
             if ($member->status==2) {
                 $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
                 return [
                     'status' => 0,
                     'msg' => '您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq
                 ];
+            }
+            // platform user check
+            if ($member->origin >= 50) {
+                return ['status' => 0, 'msg' => '请由平台网站登入'];
             }
         }
 
@@ -264,11 +269,15 @@ class LoginController extends Controller
 
         $open_pwd_change = SiteSer::config('pwd_change') ?: false;
 
-        // freeze check
         if ($member = Users::find($uid)) {
             $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
+            // freeze check
             if ($member->status==2) {
                 return $this->msg('您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq);
+            }
+            // platform user check
+            if ($member->origin >= 50) {
+                return $this->msg(['status' => 0, 'msg' => '请由平台网站登入']);
             }
         }
 
