@@ -829,7 +829,7 @@ class ApiController extends Controller
             ])) {
                 return JsonResponse::create([
                     'status' => 0,
-                    'data'   => $this->userInfo['username'] . $password,
+                    'data'   => $this->userInfo['uid'].' '.$this->userInfo['username'],
                     'msg'    => '用户名密码错误'
                 ]);
             };
