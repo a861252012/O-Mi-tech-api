@@ -34,6 +34,11 @@ class OmeyController extends Controller
     // 二站整合測試
     public function v2(Request $request)
     {
+        if (SiteSer::siteId() == 2) {
+            echo '禁止二站使用造成用戶名稱遞迴！';
+            return;
+        }
+
         $user = Auth::user();
         if (!$user) {
             echo '請先登入';
