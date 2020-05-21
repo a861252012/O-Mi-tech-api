@@ -291,7 +291,7 @@ class GuardianService
         $u['lv_rich'] = $this->getRichLv($u['rich']); // 計算用戶財富新等級
         $u['guard_id'] = $guardId; // 開通守護等級
         $u['guard_end'] = $guardEndTime->copy()->addDay()->toDateString(); // 守護到期日
-        $u['headimg'] = $headimg;
+        $u['headimg'] = $headimg . '.jpg';
         $u['update_at'] = $currentDateTime;
 
         $updateUser = $this->userService->updateUserInfo($user->uid, $u);

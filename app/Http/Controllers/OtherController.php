@@ -36,6 +36,10 @@ class OtherController extends Controller
             //改成接口调用
             $user = UserSer::getUserByUid($onetomany->uid);
             $temp = $user ? $user->only(["lv_type", "lv_exp", "rid", "uid", "username", "headimg", "points", "new_user", "points"]) : [];
+            if (count($temp)) {
+                $temp['headimg'] .= '.jpg';
+            }
+
             $room = $onetomany->only(['id', 'live_status', 'origin']);
             $other = [];
             $other['start_time'] = date('m-d H:i', strtotime($onetomany['starttime']));

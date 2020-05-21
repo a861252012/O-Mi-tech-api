@@ -573,7 +573,7 @@ class UserService extends Service
                 $attens = $this->getUserAttensCount($user->uid,false);
 
                 $items->push([
-                    'headimg' => $user->headimg,
+                    'headimg' => $user->headimg . '.jpg',
                     'rid' => $user->uid,
                     'username' => $user->nickname,//190417: 暫時解決安全問題 by stanly
                     'nickname' => $user->nickname,
@@ -617,7 +617,7 @@ class UserService extends Service
      */
     public function getHeadimg($headimg, $size = 180)
     {
-        return $headimg ? SiteSer::config('img_host') . '/' . $headimg . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size)
+        return $headimg ? SiteSer::config('img_host') . '/' . $headimg . '.jpg' . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size)
             : SiteSer::config('cdn_host') . '/src/img/head_' . $size . '.png';
     }
 
@@ -993,6 +993,10 @@ class UserService extends Service
         foreach ($rank as $uid => $score) {
             $userObj = $this->getUserByUid($uid);
             $userInfo = $userObj ? $userObj->toArray() : [];
+            if (count($userInfo)) {
+                $userInfo['headimg'] .= '.jpg';
+            }
+
             $ret[] = array_merge([
                 'uid' => $uid,
                 'score' => $score,
