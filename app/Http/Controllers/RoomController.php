@@ -259,11 +259,22 @@ class RoomController extends Controller
             'qq_sideroom' => $qq_sideroom,
         ];
         $data['chat_server_addr'] = $chat_server_addr;
-        if ($h5 === 'h5hls') {
+        if ($h5 === 'h5') {
+            unset($data['getRoomKey']);
+            $httpStreaming = $this->getHTTPStreaming($rid);
+            if (isset($httpStreaming['flv'])) {
+                $data['flv_addr'] = $httpStreaming['flv'];
+            } elseif (isset($httpStreaming['hls'])) {
+                $data['hls_addr'] = $httpStreaming['hls'];
+            } else {
+                $data['http_streaming'] = 0;
+            }
+        } elseif ($h5 === 'h5hls') {
             unset($data['getRoomKey']);
             $data['status'] = 1;
             $data['chat_ws'] = $redis->smembers('schatws');
-            $data['hls_addr'] = $this->getHLS($rid);
+            $httpStreaming = $this->getHTTPStreaming($rid);
+            $data['hls_addr'] = $httpStreaming['hls'];
         }
         return JsonResponse::create(['data' => $data]);
     }
@@ -435,9 +446,9 @@ class RoomController extends Controller
     }
 
     /**
-     * 获取房间的HLS播放地址
+     * 获取房间的HTTP播放地址
      */
-    public function getHLS($rid)
+    public function getHTTPStreaming($rid)
     {
         $redis = resolve('redis');
         $host = $redis->hget('hvediosKtv:' . $rid, 'rtmp_host');
@@ -454,39 +465,20 @@ class RoomController extends Controller
                 break;
             }
         }
-        //$rtmp_up = $port? "rtmp://$host:$port/proxypublish":"rtmp://$host/proxypublish";
+        $sid = $redis->hget('hvedios_ktv_set:' . $rid, 'sid');
+        $flv_down = $redis->smembers("srtmp_flv:$rtmp_up");
         $hls_down = $redis->smembers("srtmp_hls:$rtmp_up");
 
-        //$certi = 'certi='.$this->make("safeService")->getLcertificate("cdn");
-        $sid = $redis->hget('hvedios_ktv_set:' . $rid, 'sid');
-        $addr = array_map(function ($hls) use ($sid, $redis) {
-            $hls_arr = explode('@@', $hls);
-            // 防盗链
-            $url = $hls_arr[0] . '/' . $sid . '.m3u8';
-            $uri = parse_url($url, PHP_URL_PATH);
+        $addr = [];
+        if (is_array($flv_down)) {
+            $addr['flv'] = str_replace('{SID}', $sid, $flv_down[0]);
+        }
+        if (is_array($hls_down)) {
+            $addr['hls'] = str_replace('{SID}', $sid, $hls_down[0]);
+        }
 
-            $cdnParams = [];
-            switch ($hls_arr[1]) {
-                case 'superVIP:4':// 帝联
-                    $url = $hls_arr[0] . '/' . $sid . '';
-                    $uri = parse_url($url, PHP_URL_PATH);
-                    $cdn = $redis->hgetall('hrtmp_cdn:4');
-                    $time = dechex(time());
-                    $k = hash('md5', $cdn['key'] . $uri . $time);
-                    $url .= '/index.m3u8';
-                    $cdnParams = [
-                        'k' => $k,
-                        't' => $time,
-                    ];
-                    break;
-                default:
-                    break;
-            }
-            return [
-                'addr' => empty($cdnParams) ? $url : $url . '?' . http_build_query($cdnParams),
-                'name' => $hls_arr[1],
-            ];
-        }, $hls_down);
+        // TODO: 防盜連 AUTH
+
         return $addr;
     }
 
