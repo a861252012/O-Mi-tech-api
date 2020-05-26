@@ -160,6 +160,7 @@ class ApiController extends Controller
             'customer_service_url',
             'hqt_game_status',
             'hqt_marquee',
+            'socket_quality',
         ])->put('c', $c)->all();
 
         return JsonResponse::create(['data' => $conf]);
