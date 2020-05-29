@@ -24,6 +24,7 @@ use App\Models\UserModNickName;
 use App\Services\AnnouncementService;
 use App\Services\I18n\PhoneNumber;
 use App\Services\LoginService;
+use App\Services\RedisCacheService;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
 use App\Services\User\UserService;
@@ -46,10 +47,12 @@ class MobileController extends Controller
     const APCU_TTL = 1;
 
     protected $announcementService;
+    protected $redisCacheService;
 
-    public function __construct(AnnouncementService $announcementService)
+    public function __construct(AnnouncementService $announcementService, RedisCacheService $redisCacheService)
     {
         $this->announcementService = $announcementService;
+        $this->redisCacheService = $redisCacheService;
     }
 
     /**
@@ -508,11 +511,12 @@ class MobileController extends Controller
         if (!$jwt->attempt($credentials)) {
             return JsonResponse::create(['status' => 0, 'msg' => '用户名密码错误']);
         }
-        $user = $jwt->user();
 
+        $user = $jwt->user();
+        $token = (string) $jwt->getToken();
         //添加是否写入sid判断
-        $this->redisCacheService->setSidForMobile($uid, ((string) $jwt->getToken()));
-        $sidUser = (int) $this->redisCacheService->sid($uid);
+        $this->redisCacheService->setSidForMobile($uid, $token);
+        $sidUser = $this->redisCacheService->sid($uid);
         if (empty($sidUser)) {
             $this->setStatus(0, 'token写入redis失败，请重新登录!');
             return $this->jsonOutput();

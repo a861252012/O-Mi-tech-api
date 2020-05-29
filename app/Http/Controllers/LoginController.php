@@ -7,6 +7,7 @@ use App\Facades\UserSer;
 use App\Models\UserLoginLog;
 use App\Models\Users;
 use App\Services\I18n\PhoneNumber;
+use App\Services\RedisCacheService;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
 use Illuminate\Http\JsonResponse;
@@ -121,7 +122,7 @@ class LoginController extends Controller
             return false;
         }
         $this->login_user = $member;
-        $this->redisCacheService->setSidForPC($uid, request()->session()->getId());
+        resolve(RedisCacheService::class)->setSidForPC($uid, request()->session()->getId());
 
         /**
          * 如果传过来是记录几天免登陆的，操作cookie
@@ -314,7 +315,7 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         if (Auth::check()) {
-            $this->redisCacheService->delSid(Auth::id());
+            resolve(RedisCacheService::class)->delSid(Auth::id());
             Auth::logout();
         }
         $request->session()->invalidate();

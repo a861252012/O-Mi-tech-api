@@ -5,6 +5,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\ShareUser;
+use App\Services\RedisCacheService;
 use App\Services\ShareService;
 use App\Services\GuardianService;
 use App\Services\Site\SiteService;
@@ -475,9 +476,12 @@ class ApiController extends Controller
             $guard = Auth::guard('mobile');
             $guard->login($user);
 
+            $token = (string) $guard->getToken();
+
+            $redisCacheService = resolve(RedisCacheService::class);
             //添加是否写入sid判断
-            $this->redisCacheService->setSidForPC($uid, ((string) $guard->getToken()));
-            $sidUser = (int) $this->redisCacheService->sid($uid);
+            $redisCacheService->setSidForPC($uid, $token);
+            $sidUser = (int) $redisCacheService->sid($uid);
             if (empty($sidUser)) {
                 $this->setStatus(0, 'token 寫入redis失敗，請重新登錄');
                 return $this->jsonOutput();
@@ -1718,7 +1722,7 @@ EOT;
 
         if (Auth::check()) {
             $res['status'] = 1;
-            $res['data']['sid'] = $this->redisCacheService->sid(Auth::id());
+            $res['data']['sid'] = resolve(RedisCacheService::class)->sid(Auth::id());
             $res['msg'] = '获取成功';
         } else {
             $res['msg'] = session_id();
