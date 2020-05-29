@@ -474,16 +474,15 @@ class ApiController extends Controller
             /** @var JWTGuard $guard */
             $guard = Auth::guard('mobile');
             $guard->login($user);
+
             //添加是否写入sid判断
-            $token = (string)$guard->getToken();
-            $huser_sid = (int)resolve('redis')->hget('huser_sid', $uid);
-            if (empty($huser_sid)) {
-                resolve('redis')->hset('huser_sid', $uid, $token);
-                $huser_sid_confirm = (int)resolve('redis')->hget('huser_sid', $uid);
-                if ($huser_sid_confirm) {
-                    return JsonResponse::create(['status' => 0, 'msg' => 'token写入redis失败，请重新登录!']);
-                }
+            $this->redisCacheService->setSidForPC($uid, ((string) $guard->getToken()));
+            $sidUser = (int) $this->redisCacheService->sid($uid);
+            if (empty($sidUser)) {
+                $this->setStatus(0, 'token 寫入redis失敗，請重新登錄');
+                return $this->jsonOutput();
             }
+
             //註冊成功時紀錄IP
             event(new Login($user, false));
 
@@ -1719,7 +1718,7 @@ EOT;
 
         if (Auth::check()) {
             $res['status'] = 1;
-            $res['data']['sid'] = $this->make('redis')->hget('huser_sid', Auth::id());
+            $res['data']['sid'] = $this->redisCacheService->sid(Auth::id());
             $res['msg'] = '获取成功';
         } else {
             $res['msg'] = session_id();

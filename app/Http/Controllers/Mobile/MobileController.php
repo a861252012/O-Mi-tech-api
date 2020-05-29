@@ -511,14 +511,11 @@ class MobileController extends Controller
         $user = $jwt->user();
 
         //添加是否写入sid判断
-        $token = (string)$jwt->getToken();
-        $huser_sid = (int)resolve('redis')->hget('huser_sid', $user->uid);
-        if(empty($huser_sid)){
-            resolve('redis')->hset('huser_sid', $user->uid, $token);
-            $huser_sid_confirm = (int)resolve('redis')->hget('huser_sid', $user->uid);
-            if($huser_sid_confirm){
-                return JsonResponse::create(['status' => 0, 'msg' => 'token写入redis失败，请重新登录!']);
-            }
+        $this->redisCacheService->setSidForMobile($uid, ((string) $jwt->getToken()));
+        $sidUser = (int) $this->redisCacheService->sid($uid);
+        if (empty($sidUser)) {
+            $this->setStatus(0, 'token写入redis失败，请重新登录!');
+            return $this->jsonOutput();
         }
 
         $statis_date = date('Y-m-d');
@@ -555,7 +552,7 @@ class MobileController extends Controller
                         'lv_rich' => $user->lv_rich,
                         'lv_exp' => $user->lv_exp,
                         'safemail' => $user->safemail ?? '',
-                        'icon_id' => intval($user->icon_id),
+                        'icon_id' => (int) $user->icon_id,
                         'gender' => $user->sex,
                         'follows' => $userfollow,
                         'fansCount' => $by_atttennums,

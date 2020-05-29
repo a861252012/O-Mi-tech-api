@@ -3,6 +3,7 @@
 namespace App\Services\Auth;
 
 use App\Facades\SiteSer;
+use App\Services\RedisCacheService;
 use App\Traits\GuardExtend;
 use Illuminate\Auth\Events\Attempting;
 use Illuminate\Auth\Events\Failed;
@@ -84,6 +85,9 @@ class JWTGuard implements StatefulGuard
             'uid' => $user->getAuthIdentifier(),
             'username' => $user->username,
         ]);
+
+        resolve(RedisCacheService::class)->setSidForMobile($user->getAuthIdentifier(), $this->getToken());
+
         //huser_sid uid sid
         $this->updateSid($user->getAuthIdentifier(),$this->getToken());
 

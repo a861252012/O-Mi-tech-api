@@ -26,6 +26,7 @@ use App\Models\Usersall;
 use App\Models\VideoMail;
 use App\Models\WithDrawalList;
 use App\Models\WithDrawalRules;
+use App\Services\RedisCacheService;
 use App\Services\User\UserService;
 use App\Traits\ApiOutput;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -63,6 +64,7 @@ class Controller extends BaseController
     protected $publish_version = '';
     public $_isGetCache = false;
     public $container = null;
+    protected $redisCacheService;
 
 
     public function __construct(Request $request)
@@ -76,6 +78,7 @@ class Controller extends BaseController
         $this->_online = Auth::id();
         $this->userInfo = Auth::user();
         $this->container = app();
+        $this->redisCacheService = resolve(RedisCacheService::class);
     }
 
     public function isMobileUrl(Request $request)

@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Services\RedisCacheService;
 use App\Traits\GuardExtend;
 use Illuminate\Auth\GuardHelpers;
 use Illuminate\Auth\SessionGuard as Guard;
@@ -74,7 +75,7 @@ class SessionGuard extends Guard
 
     public function logout()
     {
-        Redis::hdel('huser_sid', $this->id());
+        resolve(RedisCacheService::class)->delSid($this->id());
         parent::logout();
     }
 
@@ -89,7 +90,7 @@ class SessionGuard extends Guard
         $this->session->put(self::SEVER_SESS_ID, $id);
 
         $sid = $this->session->getId();
-
+        resolve(RedisCacheService::class)->setSidForPC($id, $sid);
         $this->updateSid($id, $sid);
     }
 
