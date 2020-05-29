@@ -878,6 +878,9 @@ class MobileController extends Controller
         foreach ($zuserinfo as $key => $value) {
             $user = UserSer::getUserByUid($value);
             $info = $user ? $user->only(['uid', 'nickname', 'rich', 'headimg', 'lv_exp', 'lv_rich', 'vip', 'roled']) : [];
+            if (count($info)) {
+                $info['headimg'] .= '.jpg';
+            }
 
             array_push($insertArr, $info);
         }

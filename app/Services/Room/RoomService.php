@@ -91,6 +91,7 @@ class RoomService extends Service
         $user->trade_password = '446d7f90ac03e025c741983cef31325c';
         $user->last_ip = '8.8.8.8';
         $user->username = $rid."@qq.com";
+        $user->headimg .= '.jpg';
         $room['user'] = $user;
         $room['room_status'] = [//todo 1站加7
             1 => $redis->hgetall("hroom_status:$rid:1"),
