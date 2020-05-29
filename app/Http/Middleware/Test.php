@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\RedisCacheService;
 use Closure;
 use Illuminate\Support\Facades\Auth;
 
@@ -21,7 +22,7 @@ class Test
             $auth = Auth::guard();
             $encrypter = app()->make('Illuminate\Encryption\Encrypter');
             $redis = app()->make('redis');
-            $token = $redis->hget('huser_sid', $pid);
+            $token = resolve(RedisCacheService::class)->sid($pid);
             $session = @unserialize(@unserialize($redis->get('PHPREDIS_SESSION:laravel:' . $token)));
 
             if ($session['webonline'] == $pid) {

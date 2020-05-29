@@ -14,6 +14,7 @@ use App\Models\UserGroup;
 use App\Models\UserGroupPermission;
 use App\Models\UserModNickName;
 use App\Models\Users;
+use App\Services\RedisCacheService;
 use App\Services\Service;
 use App\Services\ShareService;
 use App\Services\UserGroup\UserGroupService;
@@ -34,7 +35,6 @@ class UserService extends Service
     const KEY_NICKNAME_TO_ID = 'hnickname_to_id';
     const KEY_CC_MOBILE_TO_ID = 'hcc_mobile_to_id';
     const KEY_USER_INFO = 'huser_info:';
-    const KEY_USER_SID = 'huser_sid';
     const TTL_USER_INFO = 216000;
 
 
@@ -1084,7 +1084,7 @@ class UserService extends Service
 
     public function deleteUserSession(Users $user)
     {
-        $sid = $this->redis->hget(static::KEY_USER_SID, $user->getAuthIdentifier());
+        $sid = resolve(RedisCacheService::class)->sid($user->getAuthIdentifier());
         Session::getHandler()->destroy($sid);
 
     }
