@@ -86,10 +86,12 @@ class JWTGuard implements StatefulGuard
             'username' => $user->username,
         ]);
 
-        resolve(RedisCacheService::class)->setSidForMobile($user->getAuthIdentifier(), $this->getToken());
+        $token = (string) $this->getToken();
+
+        resolve(RedisCacheService::class)->setSidForMobile($user->getAuthIdentifier(), $token);
 
         //huser_sid uid sid
-        $this->updateSid($user->getAuthIdentifier(),$this->getToken());
+        $this->updateSid($user->getAuthIdentifier(), $token);
 
         $this->fireLoginEvent($user, $remember);
         $this->setUser($user);
