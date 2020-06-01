@@ -477,12 +477,8 @@ class ApiController extends Controller
             $guard = Auth::guard('mobile');
             $guard->login($user);
 
-            $token = (string) $guard->getToken();
-
-            $redisCacheService = resolve(RedisCacheService::class);
             //添加是否写入sid判断
-            $redisCacheService->setSidForPC($uid, $token);
-            $sidUser = (int) $redisCacheService->sid($uid);
+            $sidUser = resolve(RedisCacheService::class)->sid($uid);
             if (empty($sidUser)) {
                 $this->setStatus(0, 'token 寫入redis失敗，請重新登錄');
                 return $this->jsonOutput();
