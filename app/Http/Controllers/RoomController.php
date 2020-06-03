@@ -196,7 +196,7 @@ class RoomController extends Controller
                             'hplat_info' => json_encode($hplat_info, JSON_FORCE_OBJECT),
                             //平台用户信息
                             'hplat_user' => json_encode($hplat_user, JSON_FORCE_OBJECT),
-
+                            'uid' => Auth::id(),
                         ]]);
                     }
 
@@ -258,24 +258,29 @@ class RoomController extends Controller
             'chat_fly_limit' => SiteSer::config('chat_fly_limit') ?: 0,
             'qq_sideroom' => $qq_sideroom,
         ];
-        $data['chat_server_addr'] = $chat_server_addr;
+
         if ($h5 === 'h5') {
             unset($data['getRoomKey']);
             $httpStreaming = $this->getHTTPStreaming($rid);
-            if (isset($httpStreaming['flv'])) {
+            if (isset($httpStreaming['flv']) && !empty($httpStreaming['flv'])) {
                 $data['flv_addr'] = $httpStreaming['flv'];
-            } elseif (isset($httpStreaming['hls'])) {
+            } elseif (isset($httpStreaming['hls']) && !empty($httpStreaming['hls'])) {
                 $data['hls_addr'] = $httpStreaming['hls'];
             } else {
                 $data['http_streaming'] = 0;
             }
+            $data['ws_list'] = $redis->smembers('schatws');
+            $data['ws_port'] = $chatServer['port'];
         } elseif ($h5 === 'h5hls') {
             unset($data['getRoomKey']);
             $data['status'] = 1;
             $data['chat_ws'] = $redis->smembers('schatws');
             $httpStreaming = $this->getHTTPStreaming($rid);
             $data['hls_addr'] = $httpStreaming['hls'];
+        } else {
+            $data['chat_server_addr'] = $chat_server_addr;
         }
+
         return JsonResponse::create(['data' => $data]);
     }
 
