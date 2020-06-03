@@ -837,7 +837,7 @@ class ApiController extends Controller
             ])) {
                 return JsonResponse::create([
                     'status' => 0,
-                    'data'   => $this->userInfo['username'] . $password,
+                    'data'   => $this->userInfo['uid'].' '.$this->userInfo['username'],
                     'msg'    => '用户名密码错误'
                 ]);
             };
@@ -845,16 +845,15 @@ class ApiController extends Controller
 
         Session::put('httphost', $httphost);
 
-        $h5 = SiteSer::config('h5') ? "/h5" : "";
-
-
-        return RedirectResponse::create("/$room$h5?httphost=$httphost");
-//        return JsonResponse::create([
-//            'data'=>[
-//                'httphost'=>$httphost,
-//                'h5'=>$h5,
-//            ],
-//        ]);
+        // 判斷手機版或 PC 版
+        $m = $request->get("m");
+        if ($m === '1') {
+            $url = "/m/live/$room?httphost=$httphost";
+        } else {
+            $h5 = SiteSer::config('h5') ? "/h5" : "";
+            $url = "/$room$h5?httphost=$httphost";
+        }
+        return RedirectResponse::create($url);
     }
 
     public function checkSign($sign_data, $expect_sign)
