@@ -1459,7 +1459,7 @@ class MemberController extends Controller
                 if ($room['status'] == 0 && $room['reuid'] == 0 && $room['uid'] != $uid && strtotime($room['starttime']) > time()) {
                     $room['rid'] = $room['uid'];
                     $users = resolve(UserService::class)->getUserInfo($room['uid']);
-                    $room['headimg'] = $users['headimg'];
+                    $room['headimg'] = $users['headimg'] . '.jpg';
                     $room['nickname'] = $users['nickname'];
                     $room['lv_exp'] = $users['lv_exp'];
                     $room['cover'] = $users['cover'];
@@ -3080,7 +3080,7 @@ class MemberController extends Controller
 
             // headimg_sagent first
             if (!empty($userex['headimg_sagent'])) {
-                $userex['headimg'] = $userex['headimg_sagent'];
+                $userex['headimg'] = $userex['headimg_sagent'] . '.jpg';
             }
             unset($userex['headimg_sagent']);
 

@@ -14,6 +14,7 @@ use App\Models\UserGroup;
 use App\Models\UserGroupPermission;
 use App\Models\UserModNickName;
 use App\Models\Users;
+use App\Services\RedisCacheService;
 use App\Services\Service;
 use App\Services\ShareService;
 use App\Services\UserGroup\UserGroupService;
@@ -34,7 +35,6 @@ class UserService extends Service
     const KEY_NICKNAME_TO_ID = 'hnickname_to_id';
     const KEY_CC_MOBILE_TO_ID = 'hcc_mobile_to_id';
     const KEY_USER_INFO = 'huser_info:';
-    const KEY_USER_SID = 'huser_sid';
     const TTL_USER_INFO = 216000;
 
 
@@ -573,7 +573,7 @@ class UserService extends Service
                 $attens = $this->getUserAttensCount($user->uid,false);
 
                 $items->push([
-                    'headimg' => $user->headimg,
+                    'headimg' => $user->headimg . '.jpg',
                     'rid' => $user->uid,
                     'username' => $user->nickname,//190417: 暫時解決安全問題 by stanly
                     'nickname' => $user->nickname,
@@ -617,7 +617,7 @@ class UserService extends Service
      */
     public function getHeadimg($headimg, $size = 180)
     {
-        return $headimg ? SiteSer::config('img_host') . '/' . $headimg . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size)
+        return $headimg ? SiteSer::config('img_host') . '/' . $headimg . '.jpg' . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size)
             : SiteSer::config('cdn_host') . '/src/img/head_' . $size . '.png';
     }
 
@@ -993,6 +993,10 @@ class UserService extends Service
         foreach ($rank as $uid => $score) {
             $userObj = $this->getUserByUid($uid);
             $userInfo = $userObj ? $userObj->toArray() : [];
+            if (count($userInfo)) {
+                $userInfo['headimg'] .= '.jpg';
+            }
+
             $ret[] = array_merge([
                 'uid' => $uid,
                 'score' => $score,
@@ -1084,7 +1088,7 @@ class UserService extends Service
 
     public function deleteUserSession(Users $user)
     {
-        $sid = $this->redis->hget(static::KEY_USER_SID, $user->getAuthIdentifier());
+        $sid = resolve(RedisCacheService::class)->sid($user->getAuthIdentifier());
         Session::getHandler()->destroy($sid);
 
     }

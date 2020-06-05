@@ -727,7 +727,7 @@ class Controller extends BaseController
      */
     public function getHeadimg($headimg, $size = 180)
     {
-        return $headimg ? $headimg . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size) : '';
+        return $headimg ? $headimg . '.jpg' . ($size == 150 ? '' : '?w=' . $size . '&h=' . $size) : '';
     }
 
 

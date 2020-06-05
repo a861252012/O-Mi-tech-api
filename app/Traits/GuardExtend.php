@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Facades\SiteSer;
 use App\Scopes\SiteScope;
+use App\Services\RedisCacheService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Model;
@@ -23,12 +24,8 @@ trait GuardExtend
     {
         $id = (string)$id;
         $sid = (string)$sid;
-        $huser_sid = (int)resolve('redis')->hget('huser_sid', $id);
-        if (empty($huser_sid)){ //说明以前没登陆过，没必要检查重复登录
-            resolve('redis')->hset('huser_sid', $id, $sid);
-        } elseif ($huser_sid != $sid) {//有可能重复登录了
-            //更新用户对应的sessid
-            Redis::hset('huser_sid', $id, $sid);
+        $huser_sid = resolve(RedisCacheService::class)->sid($id);
+        if (!empty($huser_sid) && $huser_sid != $sid) {//有可能重复登录了
             //删除旧session，踢出用户在上一个浏览器的登录状态
             Session::getHandler()->destroy($huser_sid);
         }
@@ -37,6 +34,7 @@ trait GuardExtend
     //$token 是否已在其它机器登录 1是  0否
     public function checkRepeatLogin($id, $token)
     {
-        return $token && Redis::Hexists('huser_sid', $id) && Redis::hget('huser_sid', $id) != $token;
+        return $token && Redis::exists("sid:{$id}")
+            && resolve(RedisCacheService::class)->sid($id) != $token;
     }
 }

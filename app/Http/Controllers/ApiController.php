@@ -5,6 +5,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\ShareUser;
+use App\Services\RedisCacheService;
 use App\Services\ShareService;
 use App\Services\GuardianService;
 use App\Services\Site\SiteService;
@@ -160,6 +161,7 @@ class ApiController extends Controller
             'customer_service_url',
             'hqt_game_status',
             'hqt_marquee',
+            'socket_quality',
         ])->put('c', $c)->all();
 
         return JsonResponse::create(['data' => $conf]);
@@ -474,16 +476,14 @@ class ApiController extends Controller
             /** @var JWTGuard $guard */
             $guard = Auth::guard('mobile');
             $guard->login($user);
+
             //添加是否写入sid判断
-            $token = (string)$guard->getToken();
-            $huser_sid = (int)resolve('redis')->hget('huser_sid', $uid);
-            if (empty($huser_sid)) {
-                resolve('redis')->hset('huser_sid', $uid, $token);
-                $huser_sid_confirm = (int)resolve('redis')->hget('huser_sid', $uid);
-                if ($huser_sid_confirm) {
-                    return JsonResponse::create(['status' => 0, 'msg' => 'token写入redis失败，请重新登录!']);
-                }
+            $sidUser = resolve(RedisCacheService::class)->sid($uid);
+            if (empty($sidUser)) {
+                $this->setStatus(0, 'token 寫入redis失敗，請重新登錄');
+                return $this->jsonOutput();
             }
+
             //註冊成功時紀錄IP
             event(new Login($user, false));
 
@@ -837,7 +837,7 @@ class ApiController extends Controller
             ])) {
                 return JsonResponse::create([
                     'status' => 0,
-                    'data'   => $this->userInfo['username'] . $password,
+                    'data'   => $this->userInfo['uid'].' '.$this->userInfo['username'],
                     'msg'    => '用户名密码错误'
                 ]);
             };
@@ -845,16 +845,15 @@ class ApiController extends Controller
 
         Session::put('httphost', $httphost);
 
-        $h5 = SiteSer::config('h5') ? "/h5" : "";
-
-
-        return RedirectResponse::create("/$room$h5?httphost=$httphost");
-//        return JsonResponse::create([
-//            'data'=>[
-//                'httphost'=>$httphost,
-//                'h5'=>$h5,
-//            ],
-//        ]);
+        // 判斷手機版或 PC 版
+        $m = $request->get("m");
+        if ($m === '1') {
+            $url = "/m/live/$room?httphost=$httphost";
+        } else {
+            $h5 = SiteSer::config('h5') ? "/h5" : "";
+            $url = "/$room$h5?httphost=$httphost";
+        }
+        return RedirectResponse::create($url);
     }
 
     public function checkSign($sign_data, $expect_sign)
@@ -1719,7 +1718,7 @@ EOT;
 
         if (Auth::check()) {
             $res['status'] = 1;
-            $res['data']['sid'] = $this->make('redis')->hget('huser_sid', Auth::id());
+            $res['data']['sid'] = resolve(RedisCacheService::class)->sid(Auth::id());
             $res['msg'] = '获取成功';
         } else {
             $res['msg'] = session_id();
