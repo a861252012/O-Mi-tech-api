@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Redis;
 use App\Facades\SiteSer;
 class SafeService extends Service
 {
+    const DEFAULT_AES_KEY = '4fc358add16ebd2bb3226523ba0d91dd'; // md5('Hello Omey!')
+
     //
     public function auth($uid)
     {
@@ -178,5 +180,21 @@ class SafeService extends Service
         return $crytxt;
     }
 
+    public function AESEncrypt($data, $key = self::DEFAULT_AES_KEY)
+    {
+        $iv = random_bytes(16);
+        $encrypted = mcrypt_encrypt(MCRYPT_RIJNDAEL_128, $key, $data, MCRYPT_MODE_CBC, $iv);
+        return [
+            'base64_iv' => base64_encode($iv),
+            'base64_encrypted' => base64_encode($encrypted),
+        ];
+    }
 
+    public function AESDecrypt($base64_encrypted, $base64_iv, $key = self::DEFAULT_AES_KEY)
+    {
+        $iv = base64_decode($base64_iv);
+        $encrypted = base64_decode($base64_encrypted);
+        $data = mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $encrypted, MCRYPT_MODE_CBC, $iv);
+        return $data;
+    }
 }

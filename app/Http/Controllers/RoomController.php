@@ -26,6 +26,8 @@ use Illuminate\Support\Facades\Session;
 
 class RoomController extends Controller
 {
+    const ROOM_AES_KEY = '29292f7aae467dac83be04761a9d8f38'; // md5('OmeyRoom!!')
+
     /**
      * 直播间首页
      * todo 追加打错日志
@@ -262,13 +264,22 @@ class RoomController extends Controller
         if ($h5 === 'h5') {
             unset($data['getRoomKey']);
             $httpStreaming = $this->getHTTPStreaming($rid);
+            $h5data = [];
             if (isset($httpStreaming['flv']) && !empty($httpStreaming['flv'])) {
-                $data['flv_addr'] = $httpStreaming['flv'];
+                $h5data['flv_addr'] = $httpStreaming['flv'];
+                $data['flv_addr'] = $httpStreaming['flv'];  // TODO: remove it
             } elseif (isset($httpStreaming['hls']) && !empty($httpStreaming['hls'])) {
-                $data['hls_addr'] = $httpStreaming['hls'];
+                $h5data['hls_addr'] = $httpStreaming['hls'];
+                $data['hls_addr'] = $httpStreaming['hls'];  // TODO: remove it
             } else {
+                $h5data['http_streaming'] = 0;
                 $data['http_streaming'] = 0;
             }
+            // encode h5 data
+            $ss = resolve(SafeService::class);
+            $enc = $ss->AESEncrypt(json_encode($h5data), self::ROOM_AES_KEY);
+            $data['h5data'] = $enc;
+
             $data['ws_list'] = $redis->smembers('schatws');
             $data['ws_port'] = $chatServer['port'];
         } elseif ($h5 === 'h5hls') {
