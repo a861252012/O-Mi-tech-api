@@ -848,7 +848,7 @@ class ApiController extends Controller
         // 判斷手機版或 PC 版
         $m = $request->get("m");
         if ($m === '1') {
-            $url = "/m/live/$room?httphost=$httphost";
+            $url = "/m/live/$room?httphost=". urlencode($httphost);
         } else {
             $h5 = SiteSer::config('h5') ? "/h5" : "";
             $url = "/$room$h5?httphost=$httphost";
