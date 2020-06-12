@@ -7,6 +7,7 @@
 
 namespace App\Http\Controllers\Mobile;
 
+use App\Events\Login;
 use App\Facades\Mobile;
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
@@ -536,7 +537,8 @@ class MobileController extends Controller
             $user = (object)UserSer::getUserReset($user->uid);
         }
         //更新最后的登录时间 & ip
-        app('events')->dispatch(new \Illuminate\Auth\Events\Login($user, true));
+//        app('events')->dispatch(new \Illuminate\Auth\Events\Login($user, true));
+        app('events')->dispatch(new Login($user, true, $request->origin));
 
         return JsonResponse::create([
             'status' => 1,
