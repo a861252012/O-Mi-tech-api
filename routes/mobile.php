@@ -249,8 +249,9 @@ Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopControl
 
 // 遊戲中心
 Route::prefix('game')->middleware(['login_auth:mobile'])->group(function () {
-	Route::get('entry','GameController@entry');
+	Route::post('entry','GameController@entry');
 	Route::post('deposit','GameController@deposit');
+	Route::get('game_list','GameController@gameList');
 });
 
 /* 安裝資訊紀錄點 */

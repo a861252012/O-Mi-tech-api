@@ -419,8 +419,9 @@ Route::get('loginmsg', ['name' => 'loginmsg', 'uses' => 'Mobile\MobileController
 
 // 遊戲中心
 Route::prefix('game')->middleware(['login_auth'])->group(function () {
-	Route::get('entry','GameController@entry');
+	Route::post('entry','GameController@entry');
 	Route::post('deposit','GameController@deposit');
+    Route::get('game_list','GameController@gameList');
 });
 
 Route::prefix('v2')->namespace('v2')->group(function () {

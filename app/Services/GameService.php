@@ -93,7 +93,7 @@ class GameService
 		$r = json_decode($r, true);
 
 		/* 更新log時間 */
-		$this->userAccRepository->updateAcc(['uid' => auth()->id(), 'platform' => 'HQT'],['response' => $r['errcode']]);
+		$this->userAccRepository->updateAcc(['uid' => auth()->id(), 'gp_id' => 'GPHQT'],['response' => $r['errcode']]);
 
 		if(empty($r)
 			|| !is_array($r)
@@ -143,7 +143,7 @@ class GameService
 	}
 
 	/* 創建遊戲帳號 */
-	private function createAcc()
+	private function createAcc($uid)
 	{
 		info("創建遊戲帳號");
 		$param = [
@@ -163,55 +163,63 @@ class GameService
 		$apiResponse = $this->decRes($this->get($apiUrl)->getBody()->getContents());
 
 		if(empty($apiResponse)) {
-			Log::error("創建帳號失敗");
+			Log::error("[$uid]HQT創建帳號失敗： {$param['username']}");
 			return false;
 		}
 
 		/* 新增至DB */
 		$insertData = [
-			'uid' 		=> auth()->id(),
-			'platform' 	=> 'HQT',
+			'uid' 		=> $uid,
+			'gp_id' 	=> 'GPHQT',
 			'ref_type' 	=> 1,
 			'ref_acc' 	=> $param['username'],
 			'ref_pwd' 	=> $param['password'],
 		];
 
 		if(empty($this->userAccRepository->insertAcc($insertData))) {
+		    Log::error("[$uid]新增遊戲帳號失敗");
 			return false;
 		}
 
 		$this->username = $param['username'];
 		$this->password = $param['password'];
 
+		Log::info("[$uid]新增HQT遊戲帳號成功");
+
 		return true;
 	}
 
 	/* 登錄 */
-	public function login()
+	public function login($gameCode = '')
 	{
+	    $uid = auth()->id();
+
 		/* 取得遊戲對應帳密 */
-		$user = $this->userAccRepository->getByUid(auth()->id());
+		$user = $this->userAccRepository->getByUid($uid);
 
 		/* 如查無對應帳號，則創建 */
 		if($user->isEmpty()) {
-			if(!$this->createAcc()) {
+			if(!$this->createAcc($uid)) {
 				return false;
 			}
-		} else {
-			$acct = $user->where('platform','HQT')
-						->all()[0]
-						->only(['ref_acc', 'ref_pwd']);
-
-			$this->username = $acct['ref_acc'];
-			$this->password = $acct['ref_pwd'];
 		}
+
+        $user->where('gp_id','GPHQT')->map(function ($item) {
+            $this->username = $item->ref_acc;
+            $this->password = $item->ref_pwd;
+        });
+
+        if (empty($this->username)) {
+            Log::error("[$uid]查無遊戲帳號");
+            return false;
+        }
 
 		/* 登錄遊戲 */
 		info("登錄遊戲");
 		$param = [
 			'action' 	=> 'login',
 			'channel' 	=> $this->channelId,
-			'gamecode' 	=> '',
+			'gamecode' 	=> $gameCode ?? '',
 			'loadbg' 	=> '',
 			'password' 	=> $this->password,
 			'username' 	=> $this->username,
@@ -228,12 +236,12 @@ class GameService
 		$apiResponse = $this->decRes($this->get($apiUrl)->getBody()->getContents());
 
 		if(empty($apiResponse)) {
-			Log::error("登錄遊戲失敗 - API回應不正確");
+			Log::error("[$uid]登錄遊戲失敗 - API回應不正確");
 			return false;
 		}
 
 		if(!Arr::has($apiResponse, 'result')) {
-			Log::error("登錄遊戲失敗 - API回應缺少參數 'result' ");
+			Log::error("[$uid]登錄遊戲失敗 - API回應缺少參數 'result' ");
 			return false;
 		}
 
@@ -252,7 +260,7 @@ class GameService
 				return false;
 			}
 		} else {
-			$acct = $user->where('platform','HQT')
+			$acct = $user->where('gp_id','GPHQT')
 				->all()[0]
 				->only(['ref_acc', 'ref_pwd']);
 
