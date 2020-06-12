@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Events\Login;
 use App\Facades\UserSer;
 use App\Models\UserLoginLog;
 use App\Models\Users;
@@ -230,6 +231,8 @@ class LoginController extends Controller
                 'msg' => '用户名密码错误！',
             ];
         };
+
+        app('events')->dispatch(new Login(Auth::user(), true, 11));
 
         return [
             'status' => 1,
