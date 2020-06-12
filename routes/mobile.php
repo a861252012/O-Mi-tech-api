@@ -20,9 +20,9 @@ Route::get('captcha', 'Mobile\MobileController@captcha')->middleware('mobile.ses
 Route::post('/sms/send', 'SmsController@send')->name('sms_send');
 
 Route::any('change_pwd', 'Mobile\MobileController@changePwd')->name('change_pwd')->middleware('mobile.session');
-//app版本ｈ
+//app版本ｈ 目前安卓和ios都使用app/versio路由
 Route::any('app/version', ['name' => 'm_app_ver', 'uses' => 'Mobile\MobileController@appVersion']);
-Route::any('app/versionIOS', ['name' => 'm_app_ver_ios', 'uses' => 'Mobile\MobileController@appVersionIOS']);
+//Route::any('app/versionIOS', ['name' => 'm_app_ver_ios', 'uses' => 'Mobile\MobileController@appVersionIOS']);
 
 Route::get('conf',['name'=>'m_conf', 'uses'=>'ApiController@getConf']);
 Route::get('pre_conf',['name'=>'m_pre_conf', 'uses'=>'ApiController@getPreConf']);
