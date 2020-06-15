@@ -202,6 +202,12 @@ class GameController extends Controller
 	public function gameList()
     {
         try {
+            if(!$this->gameService->checkSetting()) {
+                info('設置狀態為關閉');
+                $this->setStatus(201, '小遊戲目前維修中');
+                return $this->jsonOutput();
+            }
+
             $result = $this->gameListService->getList();
             if ($result->isEmpty()) {
                 $this->setStatus(201, '小遊戲目前維修中');
