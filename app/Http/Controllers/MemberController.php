@@ -5,6 +5,7 @@
  */
 namespace App\Http\Controllers;
 
+use App\Constants\LvRich;
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
 use App\Libraries\SuccessResponse;
@@ -345,10 +346,20 @@ class MemberController extends Controller
                 'site_id' => $userTo['site_id']
             ]);
 
-            DB::table((new Users)->getTable())->where('uid', $userTo['uid'])->whereNull('first_charge_time')->update([
-                'first_charge_time' => $S_update_time
-            ]);
+            $userRich = (int) resolve(UserService::class)->getUserInfo($uid, 'rich');
 
+            $data = [
+                'first_charge_time' => $S_update_time,
+                'rich'              => $userRich + 500,
+                'lv_rich'           => LvRich::calcul($userRich)
+            ];
+
+            DB::table((new Users)->getTable())
+                ->where('uid', $userTo['uid'])
+                ->whereNull('first_charge_time')
+                ->update($data);
+
+            resolve(UserService::class)->cacheUserInfo($uid, $data);
 
             //发送成功消息给转帐人
             $from_user_transfer_message = [
