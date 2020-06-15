@@ -1303,42 +1303,6 @@ EOT;
     /* 主播上傳海報 */
     public function coverUpload(Request $request)
     {
-
-//        $user = Auth::user();
-
-        /**
-         * 获取提交过来的图片二进制流
-         */
-        /*
-        $images = $request->getContent(true);
-        if ($images) {
-           return false;
-        }
-        $version = time();
-        $old_version = $this->make('redis')->get('shower:cover:version:' . $uid);
-        $this->make('redis')->set('shower:cover:' . $uid, $images);
-        $this->make('redis')->set('shower:cover:version:' . $uid,$version);
-        $this->make('redis')->set('shower:cover:token:' . $uid, $version);
-        return $this->_doImageStatic($uid,$version);
-        */
-
-        /**
-         * 重构封面上传
-         * 上传到图床
-         */
-//        $stream = $request->getContent(true);
-//        $result = resolve(SystemService::class)->upload($user->toArray(), $stream);
-//        if (isset($result['status']) && $result['status'] != 1) {
-//            return JsonResponse::create($result);
-//        }
-//        if (isset($result['ret']) && $result['ret'] === false) {
-//            return JsonResponse::create(['data' => $result]);
-//        }
-//
-//        //写入redis记录图片地址
-//        $this->make('redis')->set('shower:cover:version:' . $uid, $result['info']['md5']);
-//
-//        return JsonResponse::create(['msg' => '封面上传成功。']);
         $uid = Auth::id();
         $imageContent = file_get_contents('php://input');
         if (empty($imageContent)) {
@@ -1369,45 +1333,6 @@ EOT;
             }
         }
     }
-
-    /**
-     * [imageStatic 图片静态化] TODO 优化上传
-     *
-     * @author  dc <dc#wisdominfo.my>
-     * @version 2015-11-10
-     * @return  [json]
-     */
-    protected function _doImageStatic($uid, $version)
-    {
-        $redis = $this->make('redis');
-        $redis_token = $uid ? $redis->get('shower:cover:token:' . $uid) : null;
-
-//        $token = $this->make('request')->get('otken') ?: null;
-        //if( !$redis_token && $redis_token != $token) return new JsonResponse(array('status'=>1, 'data'=>'验证有问题'));
-        $redis_token && $redis->del('shower:cover:token:' . $uid);
-        $img = $redis->get('shower:cover:' . $uid);
-
-        //if(!$img) return new JsonResponse(array('status'=>2, 'data'=>'二进制图片不存在'));
-
-        /*$savename = $version . '.jpg';
-
-        //定义存储路径
-        $dir = DIRECTORY_SEPARATOR;
-        $savedir = BASEDIR . $dir . 'web' . $dir . 'public' . $dir . 'images' . $dir . 'anchorimg' . $dir . $uid . '_' . $savename;
-
-        //存储图片
-        file_put_contents($savedir, $img);
-*/
-        /**
-         * 修改上传到图床
-         * @author  dc
-         * @version 20164
-         */
-        $result = $this->make('systemServer')->upload($this->userInfo, $img);
-
-        return new JsonResponse(['ret' => 100, 'retDesc' => '封面上传成功。']);
-    }
-
 
     /**
      * [imageStatic 图片静态化]
