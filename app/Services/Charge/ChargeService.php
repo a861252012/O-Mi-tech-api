@@ -237,7 +237,7 @@ class ChargeService extends Service
     public function chargeAfter($uid): void
     {
         $userRich = (int) resolve(UserService::class)->getUserInfo($uid, 'rich');
-        $newUserRichLv = LvRich::calcul($userRich);
+        $newUserRichLv = LvRich::calcul($userRich + 500);
 
         $data = [
             'first_charge_time' => date('Y-m-d H:i:s'),

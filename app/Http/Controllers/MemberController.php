@@ -351,7 +351,7 @@ class MemberController extends Controller
             $data = [
                 'first_charge_time' => $S_update_time,
                 'rich'              => $userRich + 500,
-                'lv_rich'           => LvRich::calcul($userRich)
+                'lv_rich'           => LvRich::calcul($userRich + 500)
             ];
 
             DB::table((new Users)->getTable())
