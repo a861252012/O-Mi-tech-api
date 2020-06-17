@@ -43,7 +43,7 @@ class MobileService
     {
         $nowSiteId = SiteSer::siteId();
         $verKey = 'm:app:versionsIOS:branch:' . $branch . ':' . $nowSiteId;
-        $updateVerKey = 'iOS:' . $verCode;
+        $updateVerKey = 'iOS:' . $verCode . ':' . $nowSiteId;
 //        dd(Cache::forget($updateVerKey));
 
         Log::debug("取得APCU快取資訊($updateVerKey): " . json_encode(Cache::get($updateVerKey)));
@@ -95,7 +95,7 @@ class MobileService
     {
         $nowSiteId = SiteSer::siteId();
         $verKey = 'm:app:versions:branch:' . $branch . ':' . $nowSiteId;
-        $updateVerKey = 'android:' . $verCode;
+        $updateVerKey = 'android:' . $verCode . ':' . $nowSiteId;
 //        dd(Cache::forget($updateVerKey));
 
         Log::debug("取得APCU快取資訊($updateVerKey): " . json_encode(Cache::get($updateVerKey)));
