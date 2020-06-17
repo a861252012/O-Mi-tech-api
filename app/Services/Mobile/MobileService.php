@@ -91,22 +91,25 @@ class MobileService
         $nowSiteId = SiteSer::siteId();
         $verKey = 'm:app:versions:branch:' . $branch . ':' . $nowSiteId;
         $updateVerKey = 'android:' . $verCode;
+//        dd(Cache::forget($updateVerKey));
 
         Log::debug("取得APCU快取資訊($updateVerKey): " . json_encode(Cache::get($updateVerKey)));
 
         return Cache::remember($updateVerKey, self::APCU_TTL, function () use ($nowSiteId, $verCode, $branch, $verKey) {
-            $version = $this->appVersionRepository->getLastest($nowSiteId, $branch);
-            if ($version) {
+            $version = collect(json_decode(Redis::get($verKey), true));
+            if ($version->isEmpty()) {
+                $version = $this->appVersionRepository->getLastest($nowSiteId, $branch);
                 Log::debug("資料寫入Redis($verKey): " . $version->toJson());
                 Redis::set($verKey, $version->toJson());
                 Redis::expire($verKey, 300);
-
-                $v = $version->toArray();
-                Log::debug('檢查是否需要強制更新');
-                $v['mandatory'] = $this->checkForceUpdate($verCode, $branch);
-                Log::debug("資料寫入APCU: " . json_encode($v));
-                return $v;
             }
+
+            $v = $version->toArray();
+            Log::debug('檢查是否需要強制更新');
+            $v['mandatory'] = $this->checkForceUpdate($verCode, $branch);
+            Log::debug("資料寫入APCU: " . json_encode($v));
+
+            return $v;
         });
     }
 
