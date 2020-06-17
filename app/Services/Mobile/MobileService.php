@@ -14,6 +14,7 @@ use App\Repositories\AppVersionRepository;
 use App\Repositories\AppVersionIOSRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use App\Facades\SiteSer;
 
@@ -85,28 +86,31 @@ class MobileService
         return app('request')->header('agent');
     }
 
-    public function getLastAndroidVersion($verCode = "", $branch = ""): AppVersion
+    public function getLastAndroidVersion($verCode = "", $branch = "")
     {
         $nowSiteId = SiteSer::siteId();
         $verKey = 'm:app:versions:branch:' . $branch . ':' . $nowSiteId;
+        $updateVerKey = 'android:' . $verCode;
 
-        $version = Redis::get($verKey);
+        Log::debug("取得APCU快取資訊($updateVerKey): " . json_encode(Cache::get($updateVerKey)));
 
-        $rs = (new AppVersion);
-        if (!$version) {
+        return Cache::remember($updateVerKey, self::APCU_TTL, function () use ($nowSiteId, $verCode, $branch, $verKey) {
             $version = $this->appVersionRepository->getLastest($nowSiteId, $branch);
             if ($version) {
+                Log::debug("資料寫入Redis($verKey): " . $version->toJson());
                 Redis::set($verKey, $version->toJson());
                 Redis::expire($verKey, 300);
-                $rs = $version;
+
+                $v = $version->toArray();
+                Log::debug('檢查是否需要強制更新');
+                $v['mandatory'] = $this->checkForceUpdate($verCode, $branch);
+                Log::debug("資料寫入APCU: " . json_encode($v));
+                return $v;
             }
-        } else {
-            $rs->forceFill(json_decode($version, true));
-        }
-        return $rs;
+        });
     }
 
-    /* 客戶端版是否需要強制更新(快取) */
+    /* 客戶端版是否需要強制更新規則 */
     public function checkForceUpdate($verCode, $branch = "")
     {
         /* 如果低於一個版本，則強更 */
@@ -114,15 +118,11 @@ class MobileService
             return 1;
         }
 
-        $updateVerKey = 'android:' . $verCode;
+        if (empty($this->appVersionRepository->getMandatoryCount(SiteSer::siteId(), (int)$verCode, $branch))) {
+            return 0;
+        }
 
-        return Cache::remember($updateVerKey, self::APCU_TTL, function () use ($verCode, $branch) {
-            if (empty($this->appVersionRepository->getMandatoryCount(SiteSer::siteId(), (int)$verCode, $branch))) {
-                return 0;
-            }
-
-            return 1;
-        });
+        return 1;
     }
 
     /* iOS客戶端版是否需要強制更新(快取) */
@@ -133,14 +133,10 @@ class MobileService
             return 1;
         }
 
-        $updateVerKey = 'iOS:' . $verCode;
+        if (empty($this->appVersionIOSRepository->getMandatoryCount(SiteSer::siteId(), (int)$verCode, $branch))) {
+            return 0;
+        }
 
-        return Cache::remember($updateVerKey, self::APCU_TTL, function () use ($verCode, $branch) {
-            if (empty($this->appVersionIOSRepository->getMandatoryCount(SiteSer::siteId(), (int)$verCode, $branch))) {
-                return 0;
-            }
-
-            return 1;
-        });
+        return 1;
     }
 }

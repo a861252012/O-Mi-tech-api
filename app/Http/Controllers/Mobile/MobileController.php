@@ -852,20 +852,12 @@ class MobileController extends Controller
                 Mobile::getLastAndroidVersion($verCode, $branch);
 
             if ($version) {
-                $v = collect($version)->toArray();
-
-                if ($isIOS) {
-                    $v['mandatory'] = (int) Mobile::checkIOSForceUpdate($verCode, $branch);
-                } else {
-                    $v['mandatory'] = (int) Mobile::checkForceUpdate($verCode, $branch);
-                }
-
-                $versions[$branch] = $v;
+                $versions[$branch] = collect($version)->toArray();
             }
 //            if ($version) $versions[$branch] = $version;
         }
 
-        return JsonResponse::create(['status' => empty($versions[1]) ? 0 : 1, 'data' => $versions]);
+        return JsonResponse::create(['status' => empty($versions["1"]) ? 0 : 1, 'data' => $versions]);
     }
 
     public function appVersionIOS(Request $request)
