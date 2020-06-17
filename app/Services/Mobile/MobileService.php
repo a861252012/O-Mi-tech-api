@@ -39,26 +39,31 @@ class MobileService
      * @param string $branch
      * @return AppVersionIOS
      */
-    public function getLastIosVersion($verCode = "", $branch = ""): AppVersionIOS
+    public function getLastIosVersion($verCode = "", $branch = "")
     {
         $nowSiteId = SiteSer::siteId();
         $verKey = 'm:app:versionsIOS:branch:' . $branch . ':' . $nowSiteId;
+        $updateVerKey = 'iOS:' . $verCode;
+//        dd(Cache::forget($updateVerKey));
 
-        $version = Redis::get($verKey);
+        Log::debug("取得APCU快取資訊($updateVerKey): " . json_encode(Cache::get($updateVerKey)));
 
-        $rs = (new AppVersionIOS);
-
-        if (!$version) {
-            $version = $this->appVersionIOSRepository->getLastest($nowSiteId, $branch);
-            if ($version) {
-                Redis::set($verKey, json_encode($version));
+        return Cache::remember($updateVerKey, self::APCU_TTL, function () use ($nowSiteId, $verCode, $branch, $verKey) {
+            $version = collect(json_decode(Redis::get($verKey), true));
+            if ($version->isEmpty()) {
+                $version = $this->appVersionIOSRepository->getLastest($nowSiteId, $branch);
+                Log::debug("資料寫入Redis($verKey): " . $version->toJson());
+                Redis::set($verKey, $version->toJson());
                 Redis::expire($verKey, 300);
-                $rs = $version;
             }
-        } else {
-            $rs = $rs->forceFill(json_decode($version, true));
-        }
-        return $rs;
+
+            $v = $version->toArray();
+            Log::debug('檢查是否需要強制更新');
+            $v['mandatory'] = $this->checkIOSForceUpdate($verCode, $branch);
+            Log::debug("資料寫入APCU: " . json_encode($v));
+
+            return $v;
+        });
     }
 
     public function checkIos()
