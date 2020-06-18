@@ -7,6 +7,7 @@
 
 namespace App\Http\Controllers\Mobile;
 
+use App\Events\Login;
 use App\Facades\Mobile;
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
@@ -536,7 +537,8 @@ class MobileController extends Controller
             $user = (object)UserSer::getUserReset($user->uid);
         }
         //更新最后的登录时间 & ip
-        app('events')->dispatch(new \Illuminate\Auth\Events\Login($user, true));
+//        app('events')->dispatch(new \Illuminate\Auth\Events\Login($user, true));
+        app('events')->dispatch(new Login($user, true, $request->origin));
 
         return JsonResponse::create([
             'status' => 1,
@@ -778,46 +780,111 @@ class MobileController extends Controller
 
 
     /**
-     * branch : 版本，正式| 联调等
-     * @return static
+     * @api {post} /app/version app版本
+     * @apiGroup Mobile
+     * @apiName app版本
+     * @apiVersion 1.0.0
+     *
+     * @apiParam {Int} ver_code 版本號碼(EX: 21700)
+     * @apiParam {Int} [branch] 版本分支(目前前端寫死固定值)
+     *
+     * @apiParamExample {json} Request-Example:
+     *{
+    "branch":1,
+    "ver_code":21200
+    }
+     *
+     * @apiError (Error Status) 0
+     *
+     * @apiSuccess {Int} id 流水號
+     * @apiSuccess {String} ver 版本号
+     * @apiSuccess {Int} ver_code 内部版本号
+     * @apiSuccess {Int} branch 版本类型，1=stable|2=Alpha|3=Beta|4=RC|5=Dev
+     * @apiSuccess {String} content 版本更新内容
+     * @apiSuccess {Int} mandatory 是否为强制更新，0=否|1=是
+     * @apiSuccess {String} released_at 发布时间
+     * @apiSuccess {String} apk_filename apk文件名
+     * @apiSuccess {String} created_at 创建时间
+     * @apiSuccess {String} md5
+     * @apiSuccess {Int} site_id 站点ID
+     * @apiSuccess {String} web_url 外部连结地址
+     *
+     * @apiSuccessExample {json} 成功回應
+     *{
+    "status": 1,
+    "data": {
+    "1": {
+    "id": 17,
+    "ver": "2.16.0",
+    "ver_code": 21600,
+    "branch": 1,
+    "content": "55555",
+    "mandatory": 1,
+    "released_at": "2020-06-08 00:00:00",
+    "apk_filename": "2.16.0-Stable-3.apk",
+    "created_at": "2019-06-03 17:20:46",
+    "md5": "f2c2af4ebbb4c82a34f65a6e36ba3640",
+    "site_id": 1,
+    "web_url": "http:\/\/dev.v1.com"
+    }
+    },
+    "msg": ""
+    }
      */
     public function appVersion(Request $request)
     {
         $branches = $request->get('branch');
+        $verCode = (int) $request->get('ver_code');
+
         if ($branches) {
             $branches = explode(',', $branches);
         } else {
             $branches = range(1, 5);
         }
+
         $versions = [];
 
         foreach ($branches as $branch) {
-            $version = Mobile::checkIos() ?
-                Mobile::getLastIosVersion($branch) :
-                Mobile::getLastAndroidVersion($branch);
+            $isIOS = Mobile::checkIos();
 
-            if ($version) $versions[$branch] = $version;
+            $version = $isIOS ?
+                Mobile::getLastIosVersion($verCode, $branch) :
+                Mobile::getLastAndroidVersion($verCode, $branch);
+
+            if ($version) {
+                $versions[$branch] = collect($version)->toArray();
+            }
+//            if ($version) $versions[$branch] = $version;
         }
-        return JsonResponse::create(['status' => empty($versions[1]->toArray()) ? 0 : 1, 'data' => $versions]);
+
+        return JsonResponse::create(['status' => empty($versions["1"]) ? 0 : 1, 'data' => $versions]);
     }
 
-    /**
-     * 兼容老版本的ios更新
-     */
     public function appVersionIOS(Request $request)
     {
         $branches = $request->get('branch');
+        $verCode = (int) $request->get('ver_code');
+
         if ($branches) {
             $branches = explode(',', $branches);
         } else {
             $branches = range(1, 5);
         }
+
         $versions = [];
+
         foreach ($branches as $branch) {
-            $version = Mobile::getLastIosVersion($branch);
-            if ($version) $versions[$branch] = $version;
+            $version = Mobile::getLastIosVersion($verCode, $branch);
+            if ($version) {
+                $v = collect($version)->toArray();
+
+                /* 檢查是否強更 */
+                $v['mandatory'] = (int) Mobile::checkIOSForceUpdate($verCode, $branch);
+                $versions[$branch] = $v;
+            }
+//            if ($version) $versions[$branch] = $version;
         }
-        return JsonResponse::create(['status' => empty($versions[1]->toArray()) ? 0 : 1, 'data' => $versions]);
+        return JsonResponse::create(['status' => empty($versions[1]) ? 0 : 1, 'data' => $versions]);
     }
 
     public function searchAnchor()

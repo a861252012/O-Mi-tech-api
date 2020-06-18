@@ -3,10 +3,11 @@
 namespace App\Listeners;
 
 use App\Events\Active;
+use App\Events\Login;
 use App\Models\UserLoginLog;
 use App\Models\Users;
 use App\Traits\Commons;
-use Illuminate\Auth\Events\Login;
+//use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Request;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,6 +38,7 @@ class SuccessfulLogin
     public function handle(Login $event)
     {
         $user = $event->user;
+        $origin = $event->origin;
         $login_ip = $this->getIp();
         $uid = $user->getAuthIdentifier();
 
@@ -46,7 +48,7 @@ class SuccessfulLogin
         ]);
 
         //记录登录日志
-        $this->loginLog($uid, $login_ip, $user->site_id, $user->origin, date('Y-m-d H:i:s'));
+        $this->loginLog($uid, $login_ip, $user->site_id, $origin, date('Y-m-d H:i:s'));
 
         // Log::info("test event:".$user->toJson());
     }

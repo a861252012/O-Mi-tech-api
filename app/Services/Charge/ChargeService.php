@@ -9,6 +9,7 @@
 namespace App\Services\Charge;
 
 
+use App\Constants\LvRich;
 use App\Models\Recharge;
 use App\Models\Users;
 use App\Services\Auth\JWTGuard;
@@ -235,8 +236,13 @@ class ChargeService extends Service
 
     public function chargeAfter($uid): void
     {
+        $userRich = (int) resolve(UserService::class)->getUserInfo($uid, 'rich');
+        $newUserRichLv = LvRich::calcul($userRich + 500);
+
         $data = [
             'first_charge_time' => date('Y-m-d H:i:s'),
+            'rich' => $userRich + 500,
+            'lv_rich' => $newUserRichLv
         ];
         $rs = Users::query()->whereRaw('uid='.$uid.'  and first_charge_time is NULL')->update($data);
         $rs && resolve(UserService::class)->cacheUserInfo($uid, $data);
