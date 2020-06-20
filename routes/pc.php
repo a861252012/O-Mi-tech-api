@@ -122,8 +122,6 @@ Route::group(['prefix' => 'user'], function () {
 
 // 所有路由都在这里配置
 /** 代理改造，开放游客 */
-//rtmp地址
-Route::get('/room/rtmp/{rid}', 'RoomController@getRTMP')->where('rid', '[0-9]+')->name('room_rtmp');
 /****** 合作平台接口 ******/
 Route::get('/recvSskey', ['name' => 'recvSskey', 'uses' => 'ApiController@platform']);
 // 测试接口
@@ -339,13 +337,8 @@ Route::group(['middleware' => ['login_auth']], function () {
     //对换
     Route::post('plat_exchange', ['name' => 'plat_exchange', 'uses' => 'ApiController@platExchange']);
 
-
-    //平台一对多跳转测试
-    Route::get('/switchone2more', ['name' => 'switchone2more', 'uses' => 'RoomController@switchToOne2More']);
-
     //获取时长打折信处
     Route::get('/getTimeCountRoomDiscountInfo', ['name' => 'roomdiscountinfo', 'uses' => 'ApiController@getTimeCountRoomDiscountInfo']);
-
 
     Route::get('/ajaxProxy', ['name' => 'ajaxProxy', 'uses' => 'ApiController@ajaxProxy']);
 
@@ -354,10 +347,6 @@ Route::group(['middleware' => ['login_auth']], function () {
         Route::get('proxy_list', 'SocketController@proxyList');
     });
 });
-
-//rtmp地址
-Route::match(['POST', 'GET'], '/test_room/rtmp/{rid:\d+}', ['name' => 'room_rtmp', 'uses' => 'RoomController@get']);
-
 
 // 充值类 TODO 登录验证
 // 验证是否登录

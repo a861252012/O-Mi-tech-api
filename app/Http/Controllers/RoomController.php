@@ -263,7 +263,7 @@ class RoomController extends Controller
 
         if ($h5 === 'h5') {
             unset($data['getRoomKey']);
-            $httpStreaming = $this->getHTTPStreaming($rid);
+            $httpStreaming = resolve(RtmpService::class)->setRoom($rid)->isHost(false)->getURL();
             $h5data = [];
             if (isset($httpStreaming['flv']) && !empty($httpStreaming['flv'])) {
                 $h5data['flv_addr'] = $httpStreaming['flv'];
@@ -277,15 +277,8 @@ class RoomController extends Controller
             $ss = resolve(SafeService::class);
             $enc = $ss->AESEncrypt(json_encode($h5data), self::ROOM_AES_KEY);
             $data['h5data'] = $enc;
-
             $data['ws_list'] = $redis->smembers('schatws');
             $data['ws_port'] = $chatServer['port'];
-        } elseif ($h5 === 'h5hls') {
-            unset($data['getRoomKey']);
-            $data['status'] = 1;
-            $data['chat_ws'] = $redis->smembers('schatws');
-            $httpStreaming = $this->getHTTPStreaming($rid);
-            $data['hls_addr'] = $httpStreaming['hls'];
         } else {
             $data['chat_server_addr'] = $chat_server_addr;
         }
@@ -494,181 +487,6 @@ class RoomController extends Controller
         // TODO: 防盜連 AUTH
 
         return $addr;
-    }
-
-    /**
-     * @return page
-     * @author Young
-     * @des    用于合作平台测试
-     */
-    public function switchToOne2More()
-    {
-
-        $data = [
-            'id' => '123',
-            'rid' => '456',
-            'points' => '789',
-            'start_time' => '11:11',
-            'end_time' => '12:12',
-            'duration' => '30000',
-            'username' => 'young',
-        ];
-
-        $plat_backurl = [
-            'pay' => '/order/young',
-        ];
-
-        return $this->render('Room/plat_whitename_room', [
-//          'room' => &$room,
-            'data' => json_encode($data),
-//          'handle' => $handle,
-            'plat_url' => json_encode($plat_backurl, JSON_FORCE_OBJECT),
-//          'hplat_info' => $hplat_info,
-        ]);
-    }
-
-    /**
-     * 获取房间的rtmp播放地址
-     * @param $rid
-     * @return \Symfony\Component\HttpFoundation\Response
-     */
-    public function getRTMP($rid)
-    {
-        $rtmp = $this->isHost($rid) ? $this->getUpstreamRTMP($rid) : $this->getDownstreamRTMP($rid);
-
-        if (empty($rtmp['rtmp'])) {
-            return JsonResponse::create(['status' => 0, 'msg' => '获取RTMP失败']);
-        }
-        /** 增加防盗链签名 */
-//        $redis=$this->make('redis');
-//        $rtmp_cnd_key = $redis->hget('hconf','rtmp_cdn_key');
-//        $time = time();
-//        $k = hash('md5', $rtmp_cnd_key . $time);
-//        $rtmp = array_merge($rtmp, [
-//            'k' => $k,
-//            'time' => $time
-//        ]);
-
-        $tmp = [];
-        if (!$this->isHost($rid)) {
-            $certi = $this->make("safeService")->getLcertificate("cdn");
-            foreach ($rtmp['rtmp'] as $v) {
-                /**@var $rtmpObj RtmpService */
-                $rtmpObj = resolve(RtmpService::class)->getRtmp($v, $rtmp['sid']);
-
-                $ara = $rtmpObj->append(['certi' => $certi])->getParams();
-                $tmp['sid'] = $rtmp['sid'] . ($ara ? '?' . $ara : "");
-                $tmp['rtmp'][] = $v;
-            }
-        } else {
-            $tmp = $rtmp;
-        }
-        $rtmp = json_encode($tmp, JSON_UNESCAPED_SLASHES);
-
-        $method = 'AES-128-CBC';
-        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($method));
-        $key = SiteSer::config('rtmp_secret_key');
-        $ts = time();
-        $digest = hash('sha256', session_id() . $key . $ts);
-        $data = [
-            base64_encode($iv),
-            openssl_encrypt($rtmp, $method, $key, 0, $iv),
-            $ts,
-            base64_encode($digest),
-        ];
-        $data = join('.', $data);
-        return JsonResponse::create()->setContent(json_encode(['status' => 1, 'data' => $data], JSON_UNESCAPED_SLASHES));
-    }
-
-    /**
-     * 获取房间的rtmp上播地址
-     * 如果开启，取用户自己的RTMP 反之取共用的srtmp_server
-     * @param $rid
-     * @return array
-     */
-    protected function getUpstreamRTMP($rid)
-    {
-        $rtmp = [];
-
-        if ($this->useAnchorRTMP() == 1) {
-            //OBS
-            $tmp = $this->getUserRTMP();
-            $rtmp = is_array($tmp) ? $tmp : [$tmp];
-        } else {
-            $rtmp = $this->getRTMPServers();
-        }
-
-        return [
-            'rtmp' => $rtmp,
-        ];
-    }
-
-    private function useAnchorRTMP()
-    {
-        return SiteSer::config('useanchorrtmp') ?: 1;
-    }
-
-    protected function getUserRTMP($uid = null)
-    {
-        return Auth::user()['rtmp_ip'] ?: $this->make('redis')->get('rtmp_ip') ?: [];
-    }
-
-    protected function getRTMPServers()
-    {
-        $redis = $this->make('redis');
-        $srtmp = [];
-        $srtmp = $redis->smembers('srtmp_server');
-        if (empty($srtmp)) {
-            $tmp = $redis->get('rtmp_live');
-            if (!empty($tmp)) {
-                $srtmp[] = $tmp;
-            }
-        }
-        return $srtmp;
-    }
-
-    /**
-     * 根据主播，获取房间的下播地址
-     * @param $rid
-     * @return array
-     */
-    protected function getDownstreamRTMP($rid)
-    {
-        /** @var \Redis $redis */
-        $redis = $this->make('redis');
-        $host = $redis->hget('hvediosKtv:' . $rid, 'rtmp_host');
-        $port = $redis->hget('hvediosKtv:' . $rid, 'rtmp_port') ?: "";
-
-        $srtmp = $redis->sMembers('srtmp_server');
-        $rtmp_up = "";
-        foreach ($srtmp as $up) {
-            if (preg_match(
-                "/$host:?$port(.*)@@/"
-                , $up
-            )) {
-                $rtmp_up = explode('@@', $up)[0];
-                break;
-            }
-        }
-        //$rtmp_up = $port? "rtmp://$host:$port/proxypublish":"rtmp://$host/proxypublish";
-        $rtmp_down = $redis->smembers("srtmp_user:$rtmp_up");
-
-        //$certi = 'certi='.$this->make("safeService")->getLcertificate("cdn");
-        return [
-            'rtmp' => $rtmp_down,
-            'sid' => $redis->hget('hvedios_ktv_set:' . $rid, 'sid'),
-        ];
-    }
-
-    public function get($rid)
-    {
-        $data = $this->request()->get("data");
-        $dataArr = explode('.', $data);
-        $iv = base64_decode($dataArr[0]);
-        $method = 'AES-128-CBC';
-        $key = SiteSer::config('rtmp_secret_key');
-        $t_data = openssl_decrypt($dataArr[1], $method, $key, 0, $iv);
-        var_dump($t_data);
     }
 
     protected function getBroadcastType($uid = null)

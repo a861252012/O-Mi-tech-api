@@ -4,101 +4,212 @@
 namespace App\Services\Safe;
 
 use App\Services\Service;
+use App\Services\Safe\SafeService;
 
 class RtmpService extends Service
 {
-    /**
-     * 加参后地址
-     * @var string
-     */
-    public $url = "";
-
-    /**
-     * rtmp路径
-     * @var string
-     */
-    public $uri = "";
-    /**
-     * rtmp名字
-     * @var string
-     */
-    public $name = "";
-    public $path = "";
-    /**
-     * 与房间绑定，防盗
-     * @var string
-     */
     public $sid = "";
-    /**
-     * rtmp原始地址
-     * @var string
-     */
-    public $origin_url = "";
-    /**
-     * 额外属性
-     * @var string
-     */
-    public $ext = [];
-    /**
-     * @var string 加参
-     */
-    public $params = "";
-    public function getRtmp($url="",$sid=""){
-        $urlArr = explode('@@',$url);
-        $this->sid = $sid;
-        $this->origin_url = $sid ? $urlArr[0].'/'.$this->sid : $urlArr[0];
-        $this->uri = parse_url($this->origin_url,PHP_URL_PATH);
+    private $rid = 0;
+    private $isHost = false;
 
-        $this->path = parse_url($urlArr[0],PHP_URL_PATH);
-        $this->name = $urlArr[1];
+    public function setRoom($rid)
+    {
+        $this->rid = $rid;
         return $this;
     }
+    public function isHost($isHost)
+    {
+        $this->isHost = $isHost;
+        return $this;
+    }
+    public function getURL()
+    {
+        // host
+        if ($this->isHost) {
+            return $this->getUpstreamRTMP();
+        }
+
+        // user
+        return $this->getDownstreamRTMP();
+    }
+
+    /**
+     * 获取房间的rtmp上播地址
+     * @param $rid
+     * @return array
+     */
+    protected function getUpstreamRTMP()
+    {
+        return [
+            'rtmp' => $this->getRTMPServers(),
+        ];
+    }
+    protected function getRTMPServers()
+    {
+        $redis = $this->make('redis');
+        $srtmp = [];
+        $srtmp = $redis->smembers('srtmp_server');
+        if (empty($srtmp)) {
+            $tmp = $redis->get('rtmp_live');
+            if (!empty($tmp)) {
+                $srtmp[] = $tmp;
+            }
+        }
+        return $srtmp;
+    }
+
+    /**
+     * 根据主播，获取房间的下播地址
+     * @param $rid
+     * @return array
+     */
+    protected function getDownstreamRTMP()
+    {
+        $redis = $this->make('redis');
+
+        // 取得房間 rtmp host & port
+        $host = $redis->hget('hvediosKtv:' . $this->rid, 'rtmp_host') ?: "";
+        $port = $redis->hget('hvediosKtv:' . $this->rid, 'rtmp_port') ?: "";
+        $host_port = $host . ($port == '' ? '' : ':'.$port);
+        if ($host == '') {
+            return [];
+        }
+
+        // 取得 rtmp (含 application path)
+        $srtmp = $redis->sMembers('srtmp_server');
+        $rtmp_up = '';
+        $rtmp_name = '';
+        $cdn_id = '';
+        foreach ($srtmp as $up) {
+            if (strpos($up, $host_port) === false) {
+                continue;
+            }
+            list($rtmp_up, $rtmp_name) = explode('@@', $up);
+
+            if (strpos($rtmp_name, ':') !== false) {
+                list($rtmp_name, $cdn_id) = explode(':', $rtmp_name);
+            }
+            break;
+        }
+        if ($rtmp_up == '') {
+            return [];
+        }
+
+        // 取 auth params
+        $sid = $redis->hget('hvedios_ktv_set:' . $this->rid, 'sid');
+        $params = $this->getParams($cdn_id, $sid);
+
+        $rtmp_down = $redis->smembers("srtmp_user:$rtmp_up");
+        if (is_array($rtmp_down)) {
+            $rtn['rtmp'] = explode('@@', $rtmp_down[0])[0] .'/'. $sid . $params['rtmp'];
+        }
+
+        $flv_down = $redis->smembers("srtmp_flv:$rtmp_up");
+        if (is_array($flv_down)) {
+            $rtn['flv'] = str_replace('{SID}', $sid, $flv_down[0]) . $params['flv'];
+        }
+
+        $hls_down = $redis->smembers("srtmp_hls:$rtmp_up");
+        if (is_array($hls_down)) {
+            $rtn['hls'] = str_replace('{SID}', $sid, $hls_down[0]) . $params['hls'];
+        }
+
+        return $rtn;
+    }
+
     /**
      * 获取cdn参数
      */
-    public function getParams(){
-        $param_arr = [];
-        switch ($this->name){
-            case 'superVIP:3':
-                $this->ext = [];
-                $param_arr = $this->getBaiyunshan();
-                break;
-            case 'superVIP:4':
-                $param_arr = $this->getDilian();
-                break;
-            case 'superVIP:1':
-                $this->ext = [];
-                $param_arr = $this->getXinyun();
-                break;
-            default:
-                $this->ext = [];
-                $param_arr = [];
-        }
-        //$logPath = BASEDIR . '/app/logs/room' . date('Y-m') . '.log';
-        //resolve(SystemService::class)->logResult(' 线路:' . $this->name, $logPath);
-
-        $this->params = http_build_query(array_merge($param_arr,$this->ext));
-        return $this->params;
-    }
-
-    public function append($params=[]){
-        $this->ext = $params;
-        return $this;
-    }
-    /**
-     * 获取完整的CDN地址
-     * @return string
-     */
-    public function getUrl(){
-        return $this->url = $this->origin_url.'?'.$this->params;
-    }
-
-    private function getDilian(){
+    public function getParams($cdn_id, $sid)
+    {
+        // 取 rtmp 鑑權設定
         $redis = $this->make('redis');
-        $rtmp_cdn = $redis->hgetall('hrtmp_cdn:4');
+        $rtmpConf = $redis->hgetall('hrtmp_cdn:'. $cdn_id);
+        $key = $rtmpConf['key'];
+        $expireTime = isset($rtmpConf['expireTime']) ? intval($rtmpConf['expireTime'])/1000 : 300;
+
+        switch ($cdn_id) {
+            // 网宿
+            case '1':
+            case '2':
+            case '3':
+                $t = time(); // 此時間 +120 到 -240 之間表示有效
+                $txSecret = md5($key .'/iev/'. $sid . $t);
+                $protocols = [
+                    'rtmp' => ['rtmp://', ''],
+                    'flv' => ['http://', '.flv'],
+                    'hls' => ['http://', '/playlist.m3u8'],
+                ];
+                $params = [];
+                foreach ($protocols as $protocal => $data) {
+                    list($protocol_prefix, $suffix) = $data;
+                    $txSecret = md5($key .'/iev/' . $sid . $suffix . $t);
+                    $qs = '?' . http_build_query([
+                        'k' => $txSecret,
+                        't' => $t,
+                    ]);
+                    $params[$protocal] = $qs;
+                }
+                break;
+
+            // toffs => 費用太高，目前沒使用
+            case '4':
+            case '5':
+            case '6':
+                $param_arr = [];
+                break;
+
+            // 騰訊雲
+            case '7':
+            case '8':
+            case '9':
+                $t = time() + $expireTime;
+                $txTime = strtoupper(base_convert($t, 10, 16));
+                $txSecret = md5($key . $sid . $txTime);
+                $param_arr = [
+                    'txSecret' => $txSecret,
+                    'txTime'   => $txTime
+                ];
+                $qs = '?'. http_build_query($param_arr);
+                $params = [
+                    'rtmp' => $qs,
+                    'flv' => $qs,
+                    'hls' => $qs,
+                ];
+                break;
+
+            // 帝聯
+            case '999-000':
+                // 舊代碼裡面僅帝聯的邏輯內有加上 certi，因此把這段先留著參考
+                $certi = $this->make("safeService")->getLcertificate("cdn");
+                $ext = ['certi' => $certi];
+                $param_arr = $this->getDilian($cdn_id); // deprecated!!
+                $qs = '?'. http_build_query(array_merge($param_arr, $ext));
+                $params = [
+                    'rtmp' => $qs,
+                ];
+                break;
+
+            default:
+                $params = [
+                    'rtmp' => '',
+                    'flv' => '',
+                    'hls' => '',
+                ];
+        }
+        return $params;
+    }
+
+    /**
+     * @deprecated deprecated since v2.18
+     */
+    private function getDilian($cdnID)
+    {
+        $redis = $this->make('redis');
+        $rtmp_cdn = $redis->hgetall('hrtmp_cdn:'. $cdnID);
         $time = dechex(time());
 
-        $k = hash('md5', $rtmp_cdn['key'] .$this->uri. $time);
+        $k = hash('md5', $rtmp_cdn['key'] .'/iev'. $time);
         $param_arr = [
             'k' => $k,
             't' => $time
@@ -107,13 +218,15 @@ class RtmpService extends Service
     }
     /**
      * 白云山
+     * @deprecated deprecated since v2.18
      * @return array
      */
-     private function getBaiyunshan(){
+    private function getBaiyunshan($cdnID)
+    {
         $redis = $this->make('redis');
-        $rtmp_cdn = $redis->hgetall('hrtmp_cdn:3');
+        $rtmp_cdn = $redis->hgetall('hrtmp_cdn:'. $cdnID);
         $time = dechex(time()+$rtmp_cdn['down_expire_sec']);
-        $k = hash('md5', $rtmp_cdn['key'] .$this->uri. $time);
+        $k = hash('md5', $rtmp_cdn['key'] .'/iev'. $time);
         $param_arr = [
             'sign' => $k,
             't' => $time
@@ -123,11 +236,13 @@ class RtmpService extends Service
 
     /**
      * 星云
+     * @deprecated deprecated since v2.18
      * @return array
      */
-    private function getXinyun(){
+    private function getXinyun($cdnID)
+    {
         $redis = $this->make('redis');
-        $rtmp_cnd_key = $redis->hgetall('hrtmp_cdn:1');
+        $rtmp_cnd_key = $redis->hgetall('hrtmp_cdn:'. $cdnID);
         $time = time();
         $k = hash('md5', $rtmp_cnd_key['key'] . $time);
         $param_arr = [

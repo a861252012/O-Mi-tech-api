@@ -102,8 +102,6 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
 
         /** 检查密码房密码 */
         Route::post('checkPwd', ['name' => 'm_room_checkpwd', 'uses' => 'Mobile\RoomController@checkPwd'])->middleware('mobile.session');
-        /** 获取RTMP地址 */
-        Route::get('rtmp/{rid}', 'RoomController@getRTMP')->where('rid','[0-9]+')->name('m_room_rtmp');
 
         //移动端删除一对一
         Route::post('delRoomOne2One', ['name' => 'member_roomDelOne2One', 'uses' => 'MemberController@delRoomDuration']);
