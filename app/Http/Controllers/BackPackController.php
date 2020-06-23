@@ -1,7 +1,7 @@
 <?php
 /**
  * 背包功能
- * @apiDefine BackPack 背包功能
+ * @apiDefine User 使用者相關功能
  */
 
 namespace App\Http\Controllers;
@@ -24,7 +24,7 @@ class BackPackController extends Controller
 
     /**
      * @api {post} /user/items 取得用戶背包物品列表
-     * @apiGroup user
+     * @apiGroup User
      * @apiName 取得用戶背包物品列表
      * @apiVersion 1.0.0
      *

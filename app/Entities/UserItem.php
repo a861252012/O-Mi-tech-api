@@ -11,6 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 class UserItem extends Model
 {
     protected $table = 'video_user_item';
-    protected $hidden = ['created_at', 'updated_at'];
+    protected $hidden = ['status', 'created_at', 'updated_at'];
 
 }
