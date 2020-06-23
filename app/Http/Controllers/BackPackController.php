@@ -37,7 +37,7 @@ class BackPackController extends Controller
      * @apiSuccess {Int} status 物品狀態(0:未使用,1:已使用)
      * @apiSuccess {String} item_id 商品id
      * @apiSuccess {String} item_name 商品名稱
-     * @apiSuccess {Int} frontend_mode 前端處理模式(0:不使用,1:需確認,2:直播間內使用)
+     * @apiSuccess {Int} frontend_mode 前端處理模式(0:不使用,1:需確認,2:直播間內使用,3:飛屏券)
      *
      * @apiSuccessExample {json} 成功回應
      * {
@@ -48,9 +48,8 @@ class BackPackController extends Controller
      * "id": 1,
      * "item_id": "G001",
      * "uid": 9493318,
-     * "status": 0,
      * "item_type": 1,
-     * "item_name": "守護體驗卷",
+     * "item_name": "贵族体验券 白尊+7天",
      * "frontend_mode": 1
      * }
      * ]
