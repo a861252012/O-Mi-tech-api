@@ -116,6 +116,9 @@ Route::group(['prefix' => 'user'], function () {
 
         /* 用戶隱身 */
         Route::get('set_hidden/{status?}', 'UserController@setHidden');
+
+        /* - 取得用戶背包物品列表 */
+        Route::get('items', 'BackPackController@getItemList');
     });
 });
 
