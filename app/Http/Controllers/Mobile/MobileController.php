@@ -799,7 +799,7 @@ class MobileController extends Controller
      * @apiSuccess {Int} id 流水號
      * @apiSuccess {String} ver 版本号
      * @apiSuccess {Int} ver_code 内部版本号
-     * @apiSuccess {Int} branch 版本类型，1=stable|2=Alpha|3=Beta|4=RC|5=Dev
+     * @apiSuccess {Int} branch 版本类型，1=stable|2=Alpha|3=Beta|4=RC|5=Dev|6=主播版
      * @apiSuccess {String} content 版本更新内容
      * @apiSuccess {Int} mandatory 是否为强制更新，0=否|1=是
      * @apiSuccess {String} released_at 发布时间
@@ -853,6 +853,8 @@ class MobileController extends Controller
 
             if ($version) {
                 $versions[$branch] = collect($version)->toArray();
+            } else {
+                $versions[$branch] = [];
             }
 //            if ($version) $versions[$branch] = $version;
         }

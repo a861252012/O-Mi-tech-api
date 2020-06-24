@@ -95,7 +95,7 @@ class MobileService
     {
         $nowSiteId = SiteSer::siteId();
         $verKey = 'm:app:versions:branch:' . $branch . ':' . $nowSiteId;
-        $updateVerKey = 'android:' . $verCode . ':' . $nowSiteId;
+        $updateVerKey = 'android:' . $verCode . ':' . $branch . ':' . $nowSiteId;
 //        dd(Cache::forget($updateVerKey));
 
         Log::debug("取得APCU快取資訊($updateVerKey): " . json_encode(Cache::get($updateVerKey)));
