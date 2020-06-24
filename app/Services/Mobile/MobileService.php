@@ -108,6 +108,8 @@ class MobileService
                     Log::debug("資料寫入Redis($verKey): " . $version->toJson());
                     Redis::set($verKey, $version->toJson());
                     Redis::expire($verKey, 300);
+                } else {
+                    return [];
                 }
             }
 
