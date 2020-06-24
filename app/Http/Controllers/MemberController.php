@@ -3070,7 +3070,6 @@ class MemberController extends Controller
             $qr_path = '/api/';
         }
 
-        $blockList = json_decode(Redis::get('sBarCodeRechargeSuspendUids'));
         $orders = $this->_getOrders();
 
         $list = Redis::get('home_all_' . $flashVer. ':'.SiteSer::siteId());
@@ -3085,7 +3084,7 @@ class MemberController extends Controller
             $userex = Usersall::select('uid', 'nickname as nick', 'headimg', 'headimg_sagent', 'qrcode_image')
                 ->where('transfer', 1)->where('qrcode_image', '<>', '')->find($O_list['uid']);
 
-            if (empty($userex) || in_array($userex['uid'], $blockList)) {
+            if (empty($userex)) {
                 continue;
             }
 
