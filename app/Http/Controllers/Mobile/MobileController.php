@@ -843,6 +843,7 @@ class MobileController extends Controller
         }
 
         $versions = [];
+        $status = 0;
 
         foreach ($branches as $branch) {
             $isIOS = Mobile::checkIos();
@@ -853,13 +854,14 @@ class MobileController extends Controller
 
             if ($version) {
                 $versions[$branch] = collect($version)->toArray();
+                $status = 1;
             } else {
                 $versions[$branch] = [];
             }
 //            if ($version) $versions[$branch] = $version;
         }
 
-        return JsonResponse::create(['status' => empty($versions["1"]) ? 0 : 1, 'data' => $versions]);
+        return JsonResponse::create(['status' => $status, 'data' => $versions]);
     }
 
     public function appVersionIOS(Request $request)
