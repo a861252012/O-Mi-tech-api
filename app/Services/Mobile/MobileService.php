@@ -52,9 +52,13 @@ class MobileService
             $version = collect(json_decode(Redis::get($verKey), true));
             if ($version->isEmpty()) {
                 $version = $this->appVersionIOSRepository->getLastest($nowSiteId, $branch);
-                Log::debug("資料寫入Redis($verKey): " . $version->toJson());
-                Redis::set($verKey, $version->toJson());
-                Redis::expire($verKey, 300);
+                if ($version) {
+                    Log::debug("資料寫入Redis($verKey): " . $version->toJson());
+                    Redis::set($verKey, $version->toJson());
+                    Redis::expire($verKey, 300);
+                } else {
+                    return [];
+                }
             }
 
             $v = $version->toArray();
