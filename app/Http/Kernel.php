@@ -3,7 +3,6 @@
 namespace App\Http;
 
 use App\Http\Middleware\Charge;
-use App\Http\Middleware\CheckInput;
 use App\Http\Middleware\FormatResponse;
 use App\Http\Middleware\LoginAuth;
 use App\Http\Middleware\MobileSession;
@@ -30,7 +29,6 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\TrustProxies::class,
         \App\Http\Middleware\IdentifySite::class,
         Test::class,
-        \App\Http\Middleware\CheckInput::class,
     ];
 
     /**
