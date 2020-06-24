@@ -25,4 +25,10 @@ class BackPackService
         return $this->backPackRepository->getUserBackPack(Auth::user()->uid);
     }
 
+    /* 使用背包物品 */
+    public function useItem($itemID)
+    {
+        return $this->backPackRepository->updateItemStatus($itemID);
+    }
+
 }

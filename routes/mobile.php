@@ -92,6 +92,9 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
 
         /* - 取得用戶背包物品列表 */
         Route::get('items', 'BackPackController@getItemList');
+
+        /* 使用背包物品 */
+        Route::get('item/use/{id}', 'BackPackController@useItem');
     });
 
     //关注

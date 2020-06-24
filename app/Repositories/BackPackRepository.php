@@ -8,6 +8,7 @@ namespace App\Repositories;
 
 use App\Entities\Item;
 use App\Entities\UserItem;
+use Illuminate\Support\Facades\Auth;
 
 class BackPackRepository
 {
@@ -28,4 +29,14 @@ class BackPackRepository
         return $data;
     }
 
+    public function updateItemStatus($itemID)
+    {
+        if (UserItem::where('id', $itemID)->exists()) {
+            UserItem::where('id', $itemID)->update(['status' => 1]);
+
+            return ['status' => 1, 'msg' => 'OK'];
+        }
+
+        return ['status' => 101, 'msg' => '物品ID有误'];
+    }
 }
