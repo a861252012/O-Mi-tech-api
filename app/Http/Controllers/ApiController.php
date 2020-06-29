@@ -484,10 +484,6 @@ class ApiController extends Controller
                 return $this->jsonOutput();
             }
 
-            //註冊成功時紀錄IP
-//            event(new Login($user, false));
-            app('events')->dispatch(new \App\Events\Login($user, false, $request->origin));
-
             $return['data'] = [
                 'jwt'  => (string)$guard->getToken(),
                 'user' => $user,
@@ -502,6 +498,9 @@ class ApiController extends Controller
                 Session::getName() => Session::getId(),
             ];
         }
+
+        //註冊成功時紀錄IP
+        app('events')->dispatch(new \App\Events\Login($user, false, $request->origin));
 
         /* 全民代理推廣事件 */
         if (!empty($cc_mobile) && !empty($shareUser) && !empty($user)) {
