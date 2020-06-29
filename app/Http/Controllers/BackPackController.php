@@ -61,7 +61,7 @@ class BackPackController extends Controller
 
             return $this->jsonOutput();
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            report($e);
             $this->setStatus(999, 'api執行失敗');
             return $this->jsonOutput();
         }
@@ -100,7 +100,7 @@ class BackPackController extends Controller
 
             return $this->jsonOutput();
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            report($e);
             $this->setStatus(999, 'api執行失敗');
             return $this->jsonOutput();
         }
