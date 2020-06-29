@@ -485,7 +485,8 @@ class ApiController extends Controller
             }
 
             //註冊成功時紀錄IP
-            event(new Login($user, false));
+//            event(new Login($user, false));
+            app('events')->dispatch(new \App\Events\Login($user, false, $request->origin));
 
             $return['data'] = [
                 'jwt'  => (string)$guard->getToken(),
