@@ -484,6 +484,8 @@ class ApiController extends Controller
                 return $this->jsonOutput();
             }
 
+            $origin = $request->origin;
+
             $return['data'] = [
                 'jwt'  => (string)$guard->getToken(),
                 'user' => $user,
@@ -494,13 +496,14 @@ class ApiController extends Controller
             }
             $guard = Auth::guard('pc');
             $guard->login($user);
+            $origin = 11;
             $return['data'] = [
                 Session::getName() => Session::getId(),
             ];
         }
 
         //註冊成功時紀錄IP
-        app('events')->dispatch(new \App\Events\Login($user, false, $request->origin));
+        app('events')->dispatch(new \App\Events\Login($user, false, $origin));
 
         /* 全民代理推廣事件 */
         if (!empty($cc_mobile) && !empty($shareUser) && !empty($user)) {
