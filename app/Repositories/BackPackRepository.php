@@ -20,23 +20,11 @@ class BackPackRepository
 
     public function getUserBackPack($uid)
     {
-        $data = UserItem::join('video_item as a', 'a.item_id', '=', 'video_user_item.item_id')
-            ->select('video_user_item.*', 'a.item_type', 'a.item_name', 'a.frontend_mode')
-            ->where('video_user_item.uid', $uid)
-            ->where('video_user_item.status', 0)
-            ->get();
-
-        return $data;
+        return $this->userItem->where('uid', $uid)->where('status', 0)->get();
     }
 
-    public function updateItemStatus($itemID)
+    public function updateItemStatus($id, $status)
     {
-        if (UserItem::where('id', $itemID)->exists()) {
-            UserItem::where('id', $itemID)->update(['status' => 1]);
-
-            return ['status' => 1, 'msg' => 'OK'];
-        }
-
-        return ['status' => 101, 'msg' => '物品ID有误'];
+        return UserItem::where('id', $id)->update(['status' => $status]);
     }
 }

@@ -6,7 +6,7 @@
 
 namespace App\Services;
 
-use App\Facades\SiteSer;
+use App\Http\Resources\BackPack\BackPackResource;
 use App\Repositories\BackPackRepository;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,13 +22,12 @@ class BackPackService
     /* 取得背包物品列表 */
     public function getItemList()
     {
-        return $this->backPackRepository->getUserBackPack(Auth::user()->uid);
+        return BackPackResource::collection($this->backPackRepository->getUserBackPack(Auth::id()));
     }
 
     /* 使用背包物品 */
-    public function useItem($itemID)
+    public function useItem($id, $status)
     {
-        return $this->backPackRepository->updateItemStatus($itemID);
+        return $this->backPackRepository->updateItemStatus($id, $status);
     }
-
 }

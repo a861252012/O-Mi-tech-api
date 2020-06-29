@@ -11,6 +11,9 @@ use Illuminate\Database\Eloquent\Model;
 class UserItem extends Model
 {
     protected $table = 'video_user_item';
-    protected $hidden = ['status', 'created_at', 'updated_at'];
 
+    public function item()
+    {
+        return $this->hasOne('App\Entities\Item', 'item_id', 'item_id');
+    }
 }

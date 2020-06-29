@@ -12,4 +12,9 @@ class Item extends Model
 {
     protected $table = 'video_item';
 
+    public function userItem()
+    {
+        return $this->belongsTo('App\Entities\UserItem', 'item_id', 'item_id');
+    }
+
 }

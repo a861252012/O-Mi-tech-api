@@ -6,10 +6,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Facades\SiteSer;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Services\BackPackService;
 
@@ -93,9 +90,13 @@ class BackPackController extends Controller
     public function useItem(Request $request)
     {
         try {
-            $data = $this->backPackService->useItem($request->route('id'));
+            $data = $this->backPackService->useItem($request->route('id'), 1);
 
-            $this->setStatus($data['status'], $data['msg']);
+            if ($data) {
+                $this->setStatus(1, "OK");
+            } else {
+                $this->setStatus(101, "物品ID有误");
+            }
 
             return $this->jsonOutput();
         } catch (\Exception $e) {
