@@ -3613,6 +3613,8 @@ class MemberController extends Controller
      * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
      *
      * @apiParam {String} roomInfo 房間暱稱，範例: 我的房間暱稱
+     * @apiParam {String} feature 特色標籤
+     * @apiParam {String} content 內容標籤
      *
      * @apiSuccess {int} status 狀態<br>
      *                   <code>0</code>: 錯誤<br>
@@ -3644,11 +3646,24 @@ class MemberController extends Controller
 
         $roomService = resolve('roomService');
         if ($req->isMethod('post') || $req->get('postRoomInfo')) {
-            $rtn = $roomService->setInfo($rid, $req->get('roomInfo'));
+            $rtn = $roomService->setInfo(
+                $rid,
+                $req->get('roomInfo'),
+                $req->get('feature'),
+                $req->get('content')
+            );
+
+            if ($rtn) {
+                $this->setStatus(1, 'OK');
+            } else {
+                $this->setStatus(-1, '最多10个字');
+            }
         } else {
             $rtn = $roomService->getInfo($rid);
+            $this->setStatus(1, 'OK');
+            $this->setRootData('data', $rtn);
         }
 
-        return new JsonResponse($rtn);
+        return $this->jsonOutput();
     }
 }
