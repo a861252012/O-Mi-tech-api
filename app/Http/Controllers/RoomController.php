@@ -277,8 +277,7 @@ class RoomController extends Controller
             $ss = resolve(SafeService::class);
             $enc = $ss->AESEncrypt(json_encode($h5data), self::ROOM_AES_KEY);
             $data['h5data'] = $enc;
-            $data['ws_list'] = $redis->smembers('schatws');
-            $data['ws_port'] = $chatServer['port'];
+            $data['ws_list'] = $socketService->getWsList($chatServer['port']);
         } else {
             $data['chat_server_addr'] = $chat_server_addr;
         }
