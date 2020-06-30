@@ -27,14 +27,16 @@ class BackPackRepository
         return $this->userItem->where('uid', $uid)->where('status', 0)->get();
     }
 
-    //透過物品的流水id反查item
-    public function getUserItem($id)
+    //透過物品的流水id反查item_type
+    public function getItemType($id)
     {
-        return $this->userItem->where('id', $id)->first();
+        $itemID = $this->userItem->where('id', $id)->value('item_id');
+
+        return $this->item->where('item_id', $itemID)->value('item_type');
     }
 
     //透過gid反查level相關資訊
-    public function getLevel($gid)
+    public function getLevelByGid($gid)
     {
         return LevelRich::where('gid', $gid)->first()->toArray();
     }
@@ -48,7 +50,7 @@ class BackPackRepository
     //寫入貴族紀錄
     public function insertGroupRecord($gid, $vipEnd)
     {
-        $level = $this->getLevel($gid);
+        $level = $this->getLevelByGid($gid);
 
         $record = array(
             'uid'        => Auth::id(),

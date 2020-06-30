@@ -11,7 +11,6 @@ use App\Repositories\BackPackRepository;
 use App\Services\User\UserService;
 use App\Services\Message\MessageService;
 use Illuminate\Support\Facades\Auth;
-use App\Models\UserBuyGroup;
 
 class BackPackService
 {
@@ -37,13 +36,15 @@ class BackPackService
      */
     public function useItem($id, $status)
     {
-        $item = $this->backPackRepository->getUserItem($id);
-        $levelInfo = $this->backPackRepository->getLevel(30);
+        $itemType = $this->backPackRepository->getItemType($id);
 
-        if ($item['item_id'] === 'G003') {
+        if ($itemType === 1) {
             if (Auth::user()->vip) {
                 return ['status' => 102, 'msg' => '您已经是贵族'];
             }
+
+            $levelInfo = $this->backPackRepository->getLevelByGid(30);
+
             $updateVip = [
                 'vip'     => $levelInfo['level_id'],
                 'vip_end' => date('Y-m-d H:i:s', strtotime("+8 day")),
@@ -67,8 +68,8 @@ class BackPackService
 
         if ($res) {
             return ['status' => 1, 'msg' => 'OK'];
-        } else {
-            return ['status' => 101, 'msg' => '物品ID有误'];
         }
+
+        return ['status' => 101, 'msg' => '物品ID有误'];
     }
 }
