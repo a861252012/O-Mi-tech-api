@@ -6,8 +6,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Request;
 use App\Services\BackPackService;
 
 class BackPackController extends Controller
@@ -88,10 +86,10 @@ class BackPackController extends Controller
      * "data": {}
      * }
      */
-    public function useItem(Request $request)
+    public function useItem($id)
     {
         try {
-            $res = $this->backPackService->useItem($request->route('id'), 1);
+            $res = $this->backPackService->useItem($id);
 
             $this->setStatus($res['status'], $res['msg']);
             return $this->jsonOutput();
@@ -101,6 +99,4 @@ class BackPackController extends Controller
             return $this->jsonOutput();
         }
     }
-
 }
-
