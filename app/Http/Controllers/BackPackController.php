@@ -73,8 +73,7 @@ class BackPackController extends Controller
      *
      * @apiError (Error Status) 999 API執行錯誤
      *
-     * @apiError (Error Status) 101 物品ID有误
-     * @apiError (Error Status) 102 您已经是贵族
+     * @apiError (Error Status) 0 使用失敗
      *
      * @apiSuccess {Int} status 開通執行狀態(1為開通成功,1以外為執行失敗)
      * @apiSuccess {String} msg 執行結果敘述
@@ -90,8 +89,11 @@ class BackPackController extends Controller
     {
         try {
             $res = $this->backPackService->useItem($id);
-
-            $this->setStatus($res['status'], $res['msg']);
+            if ($res) {
+                $this->setStatus(1, 'OK');
+            } else {
+                $this->setStatus(0, '使用失敗');
+            }
             return $this->jsonOutput();
         } catch (\Exception $e) {
             report($e);

@@ -9,6 +9,7 @@ namespace App\Services;
 use App\Http\Resources\BackPack\BackPackResource;
 use App\Repositories\UserItemRepository;
 use App\Repositories\UserBuyGroupRepository;
+use App\Repositories\LevelRichRepository;
 use App\Services\User\UserService;
 use App\Services\Message\MessageService;
 use Illuminate\Support\Facades\Auth;
@@ -22,17 +23,20 @@ class BackPackService
     protected $userService;
     protected $messageService;
     protected $userBuyGroupRepository;
+    protected $levelRichRepository;
 
     public function __construct(
         UserItemRepository $UserItemRepository,
         UserService $userService,
         MessageService $messageService,
-        UserBuyGroupRepository $userBuyGroupRepository
+        UserBuyGroupRepository $userBuyGroupRepository,
+        LevelRichRepository $levelRichRepository
     ) {
         $this->UserItemRepository = $UserItemRepository;
         $this->userService = $userService;
         $this->messageService = $messageService;
         $this->userBuyGroupRepository = $userBuyGroupRepository;
+        $this->levelRichRepository = $levelRichRepository;
     }
 
     /* 取得背包物品列表 */
@@ -49,15 +53,14 @@ class BackPackService
      */
     public function useItem($id)
     {
-        $userItem = $this->UserItemRepository->getItemByGid($id);
+        $userItem = $this->UserItemRepository->getItemById($id);
 
         switch ($userItem->item->item_type) {
             case 1:
                 $res = $this->useVip($id);
                 break;
             default:
-                $res = $this->updateItemStatus($id);
-                break;
+                $res = $this->UserItemRepository->updateItemStatus($id, 1);
         }
         return $res;
     }
@@ -65,15 +68,15 @@ class BackPackService
     public function useVip($id)
     {
         if (Auth::user()->vip) {
-            return ['status' => 102, 'msg' => '您已经是贵族'];
+            return false;
         }
 
-        $levelInfo = $this->UserItemRepository->getLevelByGid(30);
+        $level = $this->levelRichRepository->getLevelByGid(30);
 
         DB::beginTransaction();
 
         $updateVip = [
-            'vip'     => $levelInfo->level_id,
+            'vip'     => $level->level_id,
             'vip_end' => date('Y-m-d H:i:s', strtotime("+8 day")),
         ];
 
@@ -84,8 +87,6 @@ class BackPackService
             DB::rollBack();
             return false;
         }
-
-        $level = $this->UserItemRepository->getLevelByGid(30);
 
         $record = array(
             'uid'        => Auth::id(),
@@ -124,25 +125,17 @@ class BackPackService
             DB::rollBack();
             return false;
         }
-        DB::commit();
-
-        return $this->updateItemStatus($id);
-    }
-
-    public function updateItemStatus($id)
-    {
-        DB::beginTransaction();
 
         $res = $this->UserItemRepository->updateItemStatus($id, 1);
 
         if (!$res) {
             Log::error('更新物品狀態錯誤');
             DB::rollBack();
-            return ['status' => 101, 'msg' => '物品ID有误'];
+            return false;
         }
 
         DB::commit();
 
-        return ['status' => 1, 'msg' => 'OK'];
+        return true;
     }
 }

@@ -28,17 +28,16 @@ class UserItemRepository
         return $this->userItem->where('uid', $uid)->where('status', 0)->get();
     }
 
-    public function getItemByGid($id)
+    public function getItemById($id)
     {
         return $this->userItem->where('id', $id)->first();
     }
 
-    public function getLevelByGid($gid)
-    {
-        return $this->levelRich->where('gid', $gid)->first();
-    }
+//    public function getLevelByGid($gid)
+//    {
+//        return $this->levelRich->where('gid', $gid)->first();
+//    }
 
-    //更新物品狀態
     public function updateItemStatus($id, $status)
     {
         return $this->userItem->where('id', $id)->update(['status' => $status]);
