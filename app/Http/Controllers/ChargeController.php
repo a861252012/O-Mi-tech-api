@@ -20,6 +20,7 @@ use App\Models\Users;
 use App\Services\Charge\OnePayService;
 use App\Services\Charge\ChargeService;
 use App\Services\User\UserService;
+use App\Traits\Commons;
 use DB;
 use Hashids\Hashids;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ChargeController extends Controller
 {
+    use Commons;
+
     const NOTICE_TIMEOUT_GD = 30;
     const CHANNEL_GD_ALI = 7;
     const CHANNEL_GD_BANK = 8;
@@ -212,6 +215,14 @@ class ChargeController extends Controller
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
         }
 
+        $chargeService = resolve(ChargeService::class);
+
+        // IP 黑名單為最高優先權，不用考慮後台的充值黑名單設定
+        $ip = $this->getIp();
+        if ($chargeService->isIpBlocked($ip)) {
+            return new JsonResponse(array('status' => 1, 'msg' => self::BLOCK_MSG));
+        }
+
         // 擋掉没有充值的权限
         $uid = Auth::id();
         if (resolve('chargeGroup')->close($uid)) {
@@ -234,7 +245,6 @@ class ChargeController extends Controller
         }
 
         // 檢查每日請求上限 (未完成訂單 < 5)
-        $chargeService = resolve(ChargeService::class);
         if ($chargeService->isDailyLimitReached($uid)) {
             return new JsonResponse(array('status' => 1, 'msg' => self::BLOCK_MSG));
         }
@@ -296,7 +306,8 @@ class ChargeController extends Controller
                 'nickname'   => Auth::user()['nickname'],
                 'channel'    => $channel,
                 'mode_type'  => $mode_type,
-                'origin'     => $origin
+                'origin'     => $origin,
+                'ip'         => $this->getIp(),
             )
         );
         $chargeService->incrDailyLimit($uid);
@@ -469,6 +480,7 @@ class ChargeController extends Controller
                 'channel' => $channel,
                 'mode_type' => $modeType,
                 'origin' => $origin,
+                'ip' => $this->getIp(),
             ]);
 
         PayGD::create([

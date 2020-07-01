@@ -10,6 +10,7 @@ namespace App\Services\Charge;
 
 
 use App\Constants\LvRich;
+use App\Entities\RechargeBlockIp;
 use App\Models\Recharge;
 use App\Models\Users;
 use App\Models\RechargeWhiteList;
@@ -331,6 +332,22 @@ class ChargeService extends Service
         // 刪 key
         Redis::del($key);
 
+        // 把最近 20 筆訂單的 IP 加到 IP 黑名單庫
+        $ips = Recharge::query()
+            ->where('uid', $uid)
+            ->where('ip', '<>', '')
+            ->orderby('created', 'DESC')
+            ->limit(20)
+            ->distinct()
+            ->pluck('ip')
+            ->toArray();
+
+        foreach ($ips as $ip) {
+            RechargeBlockIp::updateOrCreate(['ip' => $ip], [
+                'modified' => date('Y-m-d H:i:s'),
+            ]);
+        }
+
         // 寫 log
         $loginfo = "UID: {$uid} 未處理訂單數量達 {$cnt} 次，加入黑名單";
         Log::channel('charge')->info($loginfo);
@@ -362,5 +379,11 @@ class ChargeService extends Service
             $cnt = 0;
         }
         return $cnt;
+    }
+
+    public function isIpBlocked($ip)
+    {
+        $blocked = RechargeBlockIp::where('ip', $ip)->first();
+        return !is_null($blocked);
     }
 }
