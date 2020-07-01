@@ -27,7 +27,10 @@ class SocketService extends Service
         $list = [];
         foreach ($schatws as $chatws) {
             list($url, $name) = explode(",", $chatws);
-            $list[$name] = $url .'/'. $port . '/websocket';
+            $list[] = [
+                'name' => $name,
+                'url' => $url .'/'. $port . '/websocket',
+            ];
         }
         return $list;
     }
