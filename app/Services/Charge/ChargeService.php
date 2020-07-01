@@ -12,12 +12,15 @@ namespace App\Services\Charge;
 use App\Constants\LvRich;
 use App\Models\Recharge;
 use App\Models\Users;
+use App\Models\RechargeWhiteList;
 use App\Services\Auth\JWTGuard;
 use App\Services\Service;
 use App\Services\Site\SiteService;
 use App\Services\User\UserService;
+use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 
 class ChargeService extends Service
 {
@@ -34,6 +37,9 @@ class ChargeService extends Service
     private $returnUrl = null;
     private $randValue = null;
     private $dataNo = null;
+
+    const ORDER_DAILY_CNT_PREFIX = 'ordercnt:';
+    const ORDER_DAILY_LIMIT = 5;    // 每日五次
 
     public function __construct()
     {
@@ -304,4 +310,57 @@ class ChargeService extends Service
         return $res;
     }
 
+    // 檢查是否達到暫存的每日上限
+    // 這邊不能直接檢查 DB 的原因是希望後台可以解除黑名單後，用戶馬上可用
+    // 所以只用 Redis 紀錄次數
+    public function isDailyLimitReached($uid)
+    {
+        $key = $this->getDailyLimitCntKey($uid);
+        $cnt = Redis::get($key);
+        if ($cnt < self::ORDER_DAILY_LIMIT) {
+            return false;
+        }
+
+        // 達上限，寫入黑名單
+        RechargeWhiteList::create([
+            'uid'    => $uid,
+            'author' => 1,      // admin
+            'type'   => 1,      // 黑名單
+        ]);
+
+        // 刪 key
+        Redis::del($key);
+
+        // 寫 log
+        $loginfo = "UID: {$uid} 未處理訂單數量達 {$cnt} 次，加入黑名單";
+        Log::channel('charge')->info($loginfo);
+
+        return true;
+    }
+
+    private function getDailyLimitCntKey($uid)
+    {
+        return self::ORDER_DAILY_CNT_PREFIX . $uid .':'. date('Ymd');
+    }
+
+    public function incrDailyLimit($uid)
+    {
+        $key = $this->getDailyLimitCntKey($uid);
+        $cnt = Redis::incr($key);
+        if ($cnt == 1) {
+            Redis::expire($key, (24 - date('G')) * 3600);
+        }
+        return $cnt;
+    }
+
+    public function decrDailyLimit($uid)
+    {
+        $key = $this->getDailyLimitCntKey($uid);
+        $cnt = Redis::decr($key);
+        if ($cnt <= 0) {
+            Redis::del($key);
+            $cnt = 0;
+        }
+        return $cnt;
+    }
 }

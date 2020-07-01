@@ -34,6 +34,7 @@ class ChargeController extends Controller
     const CHANNEL_GD_ALI = 7;
     const CHANNEL_GD_BANK = 8;
     const ORDER_REPEAT_LIMIT_GD = 60;
+    const BLOCK_MSG = '尊敬的用户，您好，恭喜您成为今日幸运之星，请点击在线客服领取钻石，感谢您的支持与理解！';
 
     /* One Pay */
     const CHANNEL_ONE_PAY = 13;
@@ -68,7 +69,7 @@ class ChargeController extends Controller
 
         // 没有充值的权限
         if (resolve('chargeGroup')->close($uid)) {
-            return ErrorResponse::create(array('title' => '尊敬的用户，您好，恭喜您成为今日幸运之星，请点击在线客服领取钻石，感谢您的支持与理解！', 'msg' => ''));
+            return ErrorResponse::create(array('title' => self::BLOCK_MSG, 'msg' => ''));
         }
 
         if (resolve('chargeGroup')->customer($uid)) {
@@ -210,6 +211,13 @@ class ChargeController extends Controller
             $msg = '请输入正确的金额!';
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
         }
+
+        // 擋掉没有充值的权限
+        $uid = Auth::id();
+        if (resolve('chargeGroup')->close($uid)) {
+            return new JsonResponse(array('status' => 1, 'msg' => self::BLOCK_MSG));
+        }
+
         $fee = 0;
         if ($giftactive = GiftActivity::query()->where('moneymin', $request->price)->first()) {
             $fee = $giftactive->fee;
@@ -225,6 +233,12 @@ class ChargeController extends Controller
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
         }
 
+        // 檢查每日請求上限 (未完成訂單 < 5)
+        $chargeService = resolve(ChargeService::class);
+        if ($chargeService->isDailyLimitReached($uid)) {
+            return new JsonResponse(array('status' => 1, 'msg' => self::BLOCK_MSG));
+        }
+
         $origin = $this->getClient();
 
         /* 回傳資料處理動作 */
@@ -234,6 +248,7 @@ class ChargeController extends Controller
 
         /** 古都 */
         if (((int) $mode_type) === static::CHANNEL_GD_ALI || ((int) $mode_type) === static::CHANNEL_GD_BANK) {
+            $chargeService->incrDailyLimit($uid);
             return $this->processGD([
                 'money' => $amount,
                 'uid' => Auth::id(),
@@ -284,6 +299,7 @@ class ChargeController extends Controller
                 'origin'     => $origin
             )
         );
+        $chargeService->incrDailyLimit($uid);
 
         $rtn = array(
             'postdata'  => $postdata,
@@ -687,6 +703,9 @@ class ChargeController extends Controller
             }
 
             DB::commit();
+
+            // 未完成訂單數減 1
+            resolve(ChargeService::class)->decrDailyLimit($stmt['uid']);
 
             //刷新redis钻石
             if ($chargeStatus) {
