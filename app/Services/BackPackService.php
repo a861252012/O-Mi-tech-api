@@ -96,7 +96,7 @@ class BackPackService
             'level_id'   => $level->level_id,
             'type'       => 4,//操作类型:1 开通,2保级,3赠送 新增type 4:贵族体验券
             'create_at'  => date("Y-m-d H:i:s"),
-            'rid'        => Auth::user()->rid ?? 0,
+            'rid'        => 0,
             'status'     => 1,
             'end_time'   => $updateVip['vip_end'],
             'open_money' => 0,
