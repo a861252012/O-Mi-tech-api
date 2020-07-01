@@ -67,6 +67,7 @@ class BackPackService
 
     public function useVip($id)
     {
+        //檢查用戶是否有貴族身份
         if (Auth::user()->vip) {
             return false;
         }
@@ -80,6 +81,7 @@ class BackPackService
             'vip_end' => date('Y-m-d H:i:s', strtotime("+8 day")),
         ];
 
+        //賦予用戶貴族身份
         $updateUser = $this->userService->updateUserInfo(Auth::id(), $updateVip);
 
         if (!$updateUser) {
@@ -102,6 +104,7 @@ class BackPackService
             'site_id'    => SiteSer::siteId(),
         );
 
+        //新增貴族開通紀錄
         $insertGroupRecord = $this->userBuyGroupRepository->insertRecord($record);
 
         if (!$insertGroupRecord) {
@@ -118,6 +121,7 @@ class BackPackService
                 date('Y-m-d', strtotime('-1 day', strtotime($updateVip['vip_end']))),
         ];
 
+        //新增開通守護的系統消息
         $insertMsgRecord = $this->messageService->sendSystemToUsersMessage($message);
 
         if (!$insertMsgRecord) {
@@ -126,6 +130,7 @@ class BackPackService
             return false;
         }
 
+        //更改物品狀態為使用
         $res = $this->UserItemRepository->updateItemStatus($id, 1);
 
         if (!$res) {

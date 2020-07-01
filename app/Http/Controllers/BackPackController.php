@@ -66,24 +66,15 @@ class BackPackController extends Controller
     }
 
     /**
-     * @api {get} /user/item/use/{id} 使用背包物品
+     * @api {get} /user/item/use/:id 使用背包物品
      * @apiGroup User
      * @apiName 使用背包物品
      * @apiVersion 1.0.0
      *
+     * @apiParam {Int} id 商品流水號
+     *
      * @apiError (Error Status) 999 API執行錯誤
-     *
      * @apiError (Error Status) 0 使用失敗
-     *
-     * @apiSuccess {Int} status 開通執行狀態(1為開通成功,1以外為執行失敗)
-     * @apiSuccess {String} msg 執行結果敘述
-     *
-     * @apiSuccessExample {json} 成功回應
-     * {
-     * "status": 1,
-     * "msg": "OK",
-     * "data": {}
-     * }
      */
     public function useItem($id)
     {
@@ -97,7 +88,7 @@ class BackPackController extends Controller
             return $this->jsonOutput();
         } catch (\Exception $e) {
             report($e);
-            $this->setStatus(999, 'api執行失敗');
+            $this->setStatus(999, 'API執行錯誤');
             return $this->jsonOutput();
         }
     }
