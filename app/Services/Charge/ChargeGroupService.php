@@ -140,4 +140,22 @@ class ChargeGroupService extends Service
         $item = $this->groupByUid($uid);
         return $item['isopen'] == RechargeConf::ONLINE;
     }
+
+    public function validChannel(int $uid, $userChannel): bool
+    {
+        $item = $this->groupByUid($uid);
+        if (!isset($item['recharge_type'])) {
+            return false;
+        }
+        $rechargeType = unserialize($item['recharge_type']);
+        if (!is_array($rechargeType)) {
+            return false;
+        }
+        foreach ($rechargeType as $id => $channelInfo) {
+            if ($channelInfo['channel'] == $userChannel) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

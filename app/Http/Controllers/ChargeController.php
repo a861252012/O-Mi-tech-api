@@ -232,6 +232,12 @@ class ChargeController extends Controller
             $msg = '请选择充值渠道!';
             return new JsonResponse(array('status' => 1, 'msg' => $msg));
         }
+        //判断下渠道是否開放
+        $valid = resolve('chargeGroup')->validChannel($uid, $channel);
+        if (!$valid) {
+            $msg = '充值渠道未开放!';
+            return new JsonResponse(array('status' => 1, 'msg' => $msg));
+        }
 
         // 檢查每日請求上限 (未完成訂單 < 5)
         $chargeService = resolve(ChargeService::class);
