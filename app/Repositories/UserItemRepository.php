@@ -33,13 +33,13 @@ class UserItemRepository
         return $this->userItem->where('id', $id)->first();
     }
 
-//    public function getLevelByGid($gid)
-//    {
-//        return $this->levelRich->where('gid', $gid)->first();
-//    }
-
     public function updateItemStatus($id, $status)
     {
         return $this->userItem->where('id', $id)->update(['status' => $status]);
+    }
+
+    public function insertGift($gift)
+    {
+        return $this->userItem->insert($gift);
     }
 }
