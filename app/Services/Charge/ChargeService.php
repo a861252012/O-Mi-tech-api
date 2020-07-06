@@ -8,7 +8,6 @@
 
 namespace App\Services\Charge;
 
-
 use App\Constants\LvRich;
 use App\Models\Recharge;
 use App\Models\Users;
@@ -16,6 +15,7 @@ use App\Services\Auth\JWTGuard;
 use App\Services\Service;
 use App\Services\Site\SiteService;
 use App\Services\User\UserService;
+use App\Services\UserAttrService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -34,8 +34,9 @@ class ChargeService extends Service
     private $returnUrl = null;
     private $randValue = null;
     private $dataNo = null;
+    private $userAttrService;
 
-    public function __construct()
+    public function __construct(userAttrService $userAttrService)
     {
         parent::__construct();
 
@@ -54,6 +55,7 @@ class ChargeService extends Service
         ////随意给的，只是让校验产生随机性质
         $this->messageNo = $this->serviceCode . $this->randValue;
         $this->dataNo = $this->getDataNo();
+        $this->userAttrService = $userAttrService;
     }
 
     public function generateOrderId()
@@ -302,6 +304,18 @@ class ChargeService extends Service
         $res['charge_result'] = $chargeResult;
 
         return $res;
+    }
+
+    //計算用戶首充禮剩餘秒數
+    public function countRemainingTime(): int
+    {
+        return time() - $this->userAttrService->get('first_charge_gift_start_time');
+    }
+
+    //驗證是否符合首充豪禮條件(首充 及 符合首充禮時限(72小時))
+    public function checkFirstGift(): int
+    {
+        return empty(Auth::user()->first_charge_time) && ($this->countRemainingTime() < 259200);
     }
 
 }

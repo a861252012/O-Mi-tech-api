@@ -7,6 +7,7 @@
 namespace App\Http\Controllers;
 
 use App\Constants\BankCode;
+use App\Events\FirstGift;
 use App\Facades\SiteSer;
 use App\Http\Requests\Charge\ChargePay;
 use App\Libraries\ErrorResponse;
@@ -20,6 +21,7 @@ use App\Models\Users;
 use App\Services\Charge\OnePayService;
 use App\Services\Charge\ChargeService;
 use App\Services\User\UserService;
+use App\Services\UserAttrService;
 use DB;
 use Hashids\Hashids;
 use Illuminate\Http\JsonResponse;
@@ -110,9 +112,13 @@ class ChargeController extends Controller
                 array_push($temp, $value);
             }
         }
+
         $var['recharge_money'] = json_encode($temp);
         $var['token'] = $token;
         $var['pay'] = 1;
+        $var['giftShow'] = resolve(ChargeService::class)->checkFirstGift();
+        $var['giftRemainingTime'] = resolve(ChargeService::class)->countRemainingTime();
+
         return SuccessResponse::create($var);
     }
 
