@@ -12,6 +12,6 @@ class EncryptCookies extends Middleware
      * @var array
      */
     protected $except = [
-        //
+        'agent',    // 代理 url 由 JavaScript 寫入
     ];
 }

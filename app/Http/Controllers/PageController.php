@@ -4,6 +4,8 @@
 namespace App\Http\Controllers;
 
 use App\Libraries\SuccessResponse;
+use App\Models\Agents;
+use App\Models\Domain;
 use App\Models\Faq;
 use Core\Exceptions\NotFoundHttpException;
 use Illuminate\Http\JsonResponse;
@@ -112,6 +114,23 @@ class PageController extends Controller
 
     public function downloadQR()
     {
+        // 如果是代理推广用户，则显示代理下载 QRCODE
+        $url = trim($this->request()->cookie('agent'));
+        if ($url != '') {
+            //查询域名表
+            $domain = Domain::where('url', $url)->where('status', 0)->first();
+            if ($domain->exists) {
+                //通过域名查询对应的代理列表（did为对应的domain id）
+                $agent = Agents::where('did', $domain->id)->where('status', 0)->first();
+                $img = QrCode::format('png')->size(200)->generate($agent->download_url);
+                $img = gzencode($img);
+                return Response::create($img)->header('Content-Type', 'image/png')
+                    ->setMaxAge(300)
+                    ->setSharedMaxAge(300)
+                    ->header('Content-Encoding', 'gzip');
+            }
+        }
+
         $redis = $this->make('redis');
         $download = $redis->hGet("hsite_config:".SiteSer::siteId(), "down_url");
         $data = json_decode($download, true);
