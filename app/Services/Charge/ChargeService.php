@@ -312,13 +312,17 @@ class ChargeService extends Service
         $milliSecondTimeStamp = $this->userAttrService->get('first_charge_gift_start_time');
         $firstChargeGiftTime = (int)substr($milliSecondTimeStamp, 0, -3);
 
-        return (time() - $firstChargeGiftTime);
+        $remainingTime = 259200 - (time() - $firstChargeGiftTime);
+
+        return ($remainingTime < 0) ? 0 : $remainingTime;
     }
 
     //驗證是否符合首充豪禮條件(首充 及 符合首充禮時限(72小時))
-    public function checkFirstGift(): int
+    public function checkFirstGift()
     {
-        return empty(Auth::user()->first_charge_time) && ($this->countRemainingTime() < 259200);
+        if (empty(Auth::user()->first_charge_time) && ($this->countRemainingTime())) {
+            return 1;
+        }
+        return 0;
     }
-
 }
