@@ -309,7 +309,10 @@ class ChargeService extends Service
     //計算用戶首充禮剩餘秒數
     public function countRemainingTime(): int
     {
-        return time() - $this->userAttrService->get('first_charge_gift_start_time');
+        $milliSecondTimeStamp = $this->userAttrService->get('first_charge_gift_start_time');
+        $firstChargeGiftTime = (int)substr($milliSecondTimeStamp, 0, -3);
+
+        return (time() - $firstChargeGiftTime);
     }
 
     //驗證是否符合首充豪禮條件(首充 及 符合首充禮時限(72小時))
