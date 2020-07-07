@@ -11,6 +11,7 @@ use App\Repositories\UserItemRepository;
 use App\Repositories\UserBuyGroupRepository;
 use App\Repositories\LevelRichRepository;
 use App\Services\User\UserService;
+use App\Models\UserGroup;
 use App\Services\Message\MessageService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -24,19 +25,22 @@ class BackPackService
     protected $messageService;
     protected $userBuyGroupRepository;
     protected $levelRichRepository;
+    protected $userGroup;
 
     public function __construct(
         UserItemRepository $UserItemRepository,
         UserService $userService,
         MessageService $messageService,
         UserBuyGroupRepository $userBuyGroupRepository,
-        LevelRichRepository $levelRichRepository
+        LevelRichRepository $levelRichRepository,
+        UserGroup $userGroup
     ) {
         $this->UserItemRepository = $UserItemRepository;
         $this->userService = $userService;
         $this->messageService = $messageService;
         $this->userBuyGroupRepository = $userBuyGroupRepository;
         $this->levelRichRepository = $levelRichRepository;
+        $this->userGroup = $userGroup;
     }
 
     /* 取得背包物品列表 */
@@ -90,21 +94,23 @@ class BackPackService
             return false;
         }
 
+        //新增貴族開通紀錄
+        $levelRich = unserialize($this->userGroup->where('gid', 30)->first()->system, ['allowed_classes' => false]);
+
         $record = array(
             'uid'        => Auth::id(),
             'gid'        => 30,
             'level_id'   => $level->level_id,
-            'type'       => 4,//操作类型:1 开通,2保级,3赠送 新增type 4:贵族体验券
+            'type'       => 3,//操作类型:1 开通,2保级,3赠送
             'create_at'  => date("Y-m-d H:i:s"),
             'rid'        => 0,
             'status'     => 1,
             'end_time'   => $updateVip['vip_end'],
-            'open_money' => 0,
-            'keep_level' => 1500,
+            'open_money' => $levelRich['open_money'],
+            'keep_level' => $levelRich['keep_level'],
             'site_id'    => SiteSer::siteId(),
         );
 
-        //新增貴族開通紀錄
         $insertGroupRecord = $this->userBuyGroupRepository->insertRecord($record);
 
         if (!$insertGroupRecord) {
@@ -119,6 +125,7 @@ class BackPackService
             'rec_uid'   => Auth::id(),
             'content'   => '亲爱的用户，您的白尊体验将从 ' . date('Y-m-d') . '至' .
                 date('Y-m-d', strtotime('-1 day', strtotime($updateVip['vip_end']))),
+            'site_id'   => SiteSer::siteId(),
         ];
 
         //新增開通守護的系統消息

@@ -14,7 +14,7 @@ class Item extends Model
 
     public function userItem()
     {
-        return $this->belongsTo('App\Entities\UserItem', 'item_id', 'item_id');
+        return $this->belongsTo('App\Entities\UserItem', 'id', 'item_id');
     }
 
 }

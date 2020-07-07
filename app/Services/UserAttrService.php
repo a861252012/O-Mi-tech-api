@@ -7,7 +7,6 @@
 
 namespace App\Services;
 
-
 use App\Repositories\UserAttrRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;

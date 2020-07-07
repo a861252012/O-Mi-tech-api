@@ -8,18 +8,15 @@ namespace App\Repositories;
 
 use App\Entities\Item;
 use App\Entities\UserItem;
-use App\Models\LevelRich;
 
 class UserItemRepository
 {
     public function __construct(
         Item $item,
-        UserItem $userItem,
-        LevelRich $levelRich
+        UserItem $userItem
     ) {
         $this->item = $item;
         $this->userItem = $userItem;
-        $this->levelRich = $levelRich;
     }
 
     //取得user的背包列表

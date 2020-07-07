@@ -29,7 +29,6 @@ class BackPackController extends Controller
      * @apiSuccess {String} msg 執行結果敘述
      *
      * @apiSuccess {Int} id 流水號
-     * @apiSuccess {String} item_id 商品id
      * @apiSuccess {String} item_name 商品名稱
      * @apiSuccess {String} item_icon 商品圖片
      * @apiSuccess {Int} frontend_mode 前端處理模式(0:不使用,1:需確認,2:直播間內使用,3:飛屏券)
@@ -41,9 +40,7 @@ class BackPackController extends Controller
      * "data": [
      * {
      * "id": 1,
-     * "item_id": "G001",
      * "uid": 9493318,
-     * "item_type": 1,
      * "item_name": "贵族体验券 白尊+7天",
      * "item_icon": "http://10.2.121.240:9869/78c0d93d985c85d59492b5161eac39ac.png",
      * "frontend_mode": 1

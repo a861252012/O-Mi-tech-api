@@ -14,6 +14,6 @@ class UserItem extends Model
 
     public function item()
     {
-        return $this->hasOne('App\Entities\Item', 'item_id', 'item_id');
+        return $this->hasOne('App\Entities\Item', 'id', 'item_id');
     }
 }

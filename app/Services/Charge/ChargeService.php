@@ -318,11 +318,11 @@ class ChargeService extends Service
     }
 
     //驗證是否符合首充豪禮條件(首充 及 符合首充禮時限(72小時))
-    public function checkFirstGift()
+/*    public function checkFirstGift()
     {
         if (empty(Auth::user()->first_charge_time) && ($this->countRemainingTime())) {
             return 1;
         }
         return 0;
-    }
+    }*/
 }

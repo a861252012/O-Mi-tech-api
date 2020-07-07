@@ -34,6 +34,9 @@ class EventServiceProvider extends ServiceProvider
         'App\Events\Login' => [
             'App\Listeners\SuccessfulLogin',
         ],
+        'App\Events\FirstGift' => [
+            'App\Listeners\FirstCharge',
+        ],
     ];
 
     /**
