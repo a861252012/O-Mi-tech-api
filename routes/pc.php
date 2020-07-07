@@ -108,6 +108,7 @@ Route::group(['prefix' => 'user'], function () {
     Route::post('pwdreset/by_mobile', 'PasswordController@pwdResetByMobile')->middleware('throttle.route:10,1')->name('pwdreset_by_mobile');
     Route::post('pwdreset/submit', 'PasswordController@pwdResetSubmit')->middleware('throttle.route:10,1')->name('pwdreset_submit');
     Route::post('pwdreset/reset', 'PasswordController@pwdResetConfirm');
+    Route::get('check', 'UserController@check')->name('user_check');    // 是否允許用戶停在直播間
     Route::group(['middleware' => 'login_auth'], function () {
         Route::get('current', 'UserController@getCurrentUser')->name('user_current');
         Route::get('following', 'UserController@following')->name('user_current');
