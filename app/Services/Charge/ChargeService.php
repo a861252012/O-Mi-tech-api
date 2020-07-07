@@ -333,19 +333,22 @@ class ChargeService extends Service
         Redis::del($key);
 
         // 把最近 20 筆訂單的 IP 加到 IP 黑名單庫
-        $ips = Recharge::query()
-            ->where('uid', $uid)
-            ->where('ip', '<>', '')
-            ->orderby('created', 'DESC')
-            ->limit(20)
-            ->distinct()
-            ->pluck('ip')
-            ->toArray();
+        $enable_block = resolve(SiteService::class)->config('enable_recharge_block_ip') == "1";
+        if ($enable_block) {
+            $ips = Recharge::query()
+                ->where('uid', $uid)
+                ->where('ip', '<>', '')
+                ->orderby('created', 'DESC')
+                ->limit(20)
+                ->distinct()
+                ->pluck('ip')
+                ->toArray();
 
-        foreach ($ips as $ip) {
-            RechargeBlockIp::updateOrCreate(['ip' => $ip], [
-                'modified' => date('Y-m-d H:i:s'),
-            ]);
+            foreach ($ips as $ip) {
+                RechargeBlockIp::updateOrCreate(['ip' => $ip], [
+                    'modified' => date('Y-m-d H:i:s'),
+                ]);
+            }
         }
 
         // 寫 log

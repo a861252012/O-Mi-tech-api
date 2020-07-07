@@ -37,7 +37,7 @@ class ChargeController extends Controller
     const CHANNEL_GD_ALI = 7;
     const CHANNEL_GD_BANK = 8;
     const ORDER_REPEAT_LIMIT_GD = 60;
-    const BLOCK_MSG = '尊敬的用户，您好，恭喜您成为今日幸运之星，请点击在线客服领取钻石，感谢您的支持与理解！';
+    const BLOCK_MSG = '尊敬的用户，您好，您今日的充值申请已达上限，请点击在线客服，让我们协助您，感谢您的支持与理解！';
 
     /* One Pay */
     const CHANNEL_ONE_PAY = 13;
@@ -218,9 +218,12 @@ class ChargeController extends Controller
         $chargeService = resolve(ChargeService::class);
 
         // IP 黑名單為最高優先權，不用考慮後台的充值黑名單設定
-        $ip = $this->getIp();
-        if ($chargeService->isIpBlocked($ip)) {
-            return new JsonResponse(array('status' => 1, 'msg' => self::BLOCK_MSG));
+        $enable_block = SiteSer::globalSiteConfig('enable_recharge_block_ip') == "1";
+        if ($enable_block) {
+            $ip = $this->getIp();
+            if ($chargeService->isIpBlocked($ip)) {
+                return new JsonResponse(array('status' => 1, 'msg' => self::BLOCK_MSG));
+            }
         }
 
         // 擋掉没有充值的权限
