@@ -38,7 +38,7 @@ class UserController extends Controller
      *         "redirectUrl": "/?type=signup&rid=9123456",
      *     }
      * }
-     * @apiSuccessExample 用戶有登入
+     * @apiSuccessExample 主播使用了加密線路
      * {
      *     "status": 1,
      *     "data": {
@@ -62,17 +62,22 @@ class UserController extends Controller
             ]);
         }
 
-        // 非主播，全部導到下載頁
+
+        // 一般用戶，且主播使用了加密線路，導到下載頁
         if ($rid != $user->uid) {
-            return JsonResponse::create([
-                'status' => 1,
-                'data' => [
-                    'redirectUrl' => '/download',
-                ],
-            ]);
+            $rtmpServer = Redis::hget('hvediosKtv:'. $rid, 'rtmp_server');
+            $isObfuscate = Redis::get('rtmp_obfuscate:'. $rtmpServer);
+            if ($isObfuscate == '1') {
+                return JsonResponse::create([
+                    'status' => 1,
+                    'data' => [
+                        'redirectUrl' => '/download',
+                    ],
+                ]);
+            }
         }
 
-        // 主播
+        // 其他情況可留在直播間瀏覽或上播
         return JsonResponse::create([
             'status' => 1,
             'data' => [
