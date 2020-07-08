@@ -12,7 +12,7 @@ class UserHost extends Model
 {
     protected $table = 'video_user_host';
 
-    protected $fillable = ['id', 'cover'];
+    protected $fillable = ['id', 'cover', 'feature', 'content'];
 
     protected function user()
     {

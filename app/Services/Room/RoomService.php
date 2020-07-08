@@ -7,6 +7,7 @@ use App\Models\RoomDuration;
 use App\Models\RoomOneToMore;
 use App\Models\UserBuyOneToMore;
 use App\Models\Users;
+use App\Repositories\UserHostRepository;
 use App\Services\Service;
 use App\Services\User\UserService;
 use Illuminate\Http\Request;
@@ -39,7 +40,6 @@ class RoomService extends Service
     public function __construct(Request $request)
     {
         parent::__construct();
-
     }
 
     /**
@@ -658,43 +658,34 @@ class RoomService extends Service
         fclose($fp);
     }
 
-    // 取得房间暱称
+    // 取得房间暱称、標籤
     public function getInfo($rid)
     {
         $key = static::ROOM_KEY.$rid;
         $redis = $this->make('redis');
 
         // 目前仅读 redis，不读 DB
-        $roomInfo = $redis->hget($key, 'room_info');
-        if (!$roomInfo) {
-            $roomInfo = "";
-        }
+        list($roomInfo, $feature, $content) = $redis->hmget($key, ['room_info', 'feature', 'content']);
 
-        $rtn = [
-            'status' => 1,
-            'data' => [
-                'room_info' => $roomInfo,
-            ],
+        return [
+            'room_info' => $roomInfo ? $roomInfo : '',
+            'feature'   => $feature ? $feature : '',
+            'content'   => $content ? $content : '',
         ];
-        return $rtn;
     }
 
-    // 设定房间暱称
-    public function setInfo($rid, $roomInfo)
+    // 设定房间暱称、標籤
+    public function setInfo($rid, $roomInfo, $feature = '', $content = '')
     {
         $redis = $this->make('redis');
 
         if (mb_strlen($roomInfo) > 10) {
-            $rtn = [
-                'status' => -1,
-                'msg' => '最多10个字',
-            ];
-            return $rtn;
+            return false;
         }
 
         // Redis
         $key = static::ROOM_KEY.$rid;
-        $redis->hset($key, 'room_info', $roomInfo);
+        $redis->hmset($key, ['room_info' => $roomInfo, 'feature' => $feature, 'content' => $content]);
 
         // DB
         $anchorExt = AnchorExt::find($rid);
@@ -706,9 +697,8 @@ class RoomService extends Service
         $anchorExt->room_info = $roomInfo;
         $anchorExt->save();
 
-        $rtn = [
-            'status' => 1,
-        ];
-        return $rtn;
+        $this->make(UserHostRepository::class)->updateOrCreate($rid, ['feature' => $feature, 'content' => $content]);
+
+        return true;
     }
 }
