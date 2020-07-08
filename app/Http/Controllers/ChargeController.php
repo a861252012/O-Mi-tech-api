@@ -7,7 +7,6 @@
 namespace App\Http\Controllers;
 
 use App\Constants\BankCode;
-use App\Events\FirstGift;
 use App\Facades\SiteSer;
 use App\Http\Requests\Charge\ChargePay;
 use App\Libraries\ErrorResponse;
@@ -20,6 +19,7 @@ use App\Models\RechargeMoney;
 use App\Models\Users;
 use App\Services\Charge\OnePayService;
 use App\Services\Charge\ChargeService;
+use App\Services\FirstChargeService;
 use App\Services\User\UserService;
 use App\Services\UserAttrService;
 use DB;
@@ -721,11 +721,11 @@ class ChargeController extends Controller
 
             //驗證是否符合首充豪禮條件
             if (resolve(UserAttrService::class)->get('first_gift')) {
-                DB::beginTransaction();
+                $firstCharge = resolve(FirstChargeService::class)->firstCharge($tradeno);
 
-                event(new FirstGift(Auth::user(), $tradeno));
-
-                DB::commit();
+                if (!$firstCharge) {
+                    Log::error('贈送首充禮錯誤');
+                }
             }
         }
 
