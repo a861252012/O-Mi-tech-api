@@ -62,7 +62,7 @@ class ChargeService extends Service
     {
         $uid = Auth::id();
         //return sprintf('%08s', strrev($uid)) . date('ymdHis') . mt_rand(10, 99) . '';
-        return sprintf('%08s', strrev($uid)) . microtime(true)*10000;
+        return sprintf('%08s', strrev($uid)) . microtime(true) * 10000;
     }
 
     public function getDataNo()
@@ -238,15 +238,15 @@ class ChargeService extends Service
 
     public function chargeAfter($uid): void
     {
-        $userRich = (int) resolve(UserService::class)->getUserInfo($uid, 'rich');
+        $userRich = (int)resolve(UserService::class)->getUserInfo($uid, 'rich');
         $newUserRichLv = LvRich::calcul($userRich + 500);
 
         $data = [
             'first_charge_time' => date('Y-m-d H:i:s'),
-            'rich' => $userRich + 500,
-            'lv_rich' => $newUserRichLv
+            'rich'              => $userRich + 500,
+            'lv_rich'           => $newUserRichLv
         ];
-        $rs = Users::query()->whereRaw('uid='.$uid.'  and first_charge_time is NULL')->update($data);
+        $rs = Users::query()->whereRaw('uid=' . $uid . '  and first_charge_time is NULL')->update($data);
         $rs && resolve(UserService::class)->cacheUserInfo($uid, $data);
     }
 
@@ -317,12 +317,15 @@ class ChargeService extends Service
         return ($remainingTime < 0) ? 0 : $remainingTime;
     }
 
-    //驗證是否符合首充豪禮條件(首充 及 符合首充禮時限(72小時))
-/*    public function checkFirstGift()
+    //驗證是否符合首充豪禮條件
+    public function checkFirstGift(): int
     {
-        if (empty(Auth::user()->first_charge_time) && ($this->countRemainingTime())) {
-            return 1;
+        $isGetFirstGift = $this->userAttrService->get('first_gift');
+        $remainTime = $this->countRemainingTime();
+
+        if ($isGetFirstGift || $remainTime == 0) {
+            return 0;
         }
-        return 0;
-    }*/
+        return 1;
+    }
 }

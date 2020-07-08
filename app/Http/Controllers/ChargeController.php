@@ -116,7 +116,7 @@ class ChargeController extends Controller
         $var['recharge_money'] = json_encode($temp);
         $var['token'] = $token;
         $var['pay'] = 1;
-        $var['giftShow'] = (int)resolve(UserAttrService::class)->get('first_gift');
+        $var['giftShow'] = resolve(ChargeService::class)->checkFirstGift();
         $var['giftRemainingTime'] = resolve(ChargeService::class)->countRemainingTime();
 
         return SuccessResponse::create($var);
@@ -797,6 +797,7 @@ class ChargeController extends Controller
             $data = resolve(ChargeService::class)->updateOrder($ucPostResult);
         }
 
+        //確認first_charge_gift_start_time是否存在
         $firstGiftStartTime = resolve(UserAttrService::class)->get('first_charge_gift_start_time');
         if (!$firstGiftStartTime) {
             resolve(UserAttrService::class)->set('first_charge_gift_start_time', round(microtime(true) * 1000));
