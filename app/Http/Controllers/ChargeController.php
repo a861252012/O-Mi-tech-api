@@ -116,8 +116,8 @@ class ChargeController extends Controller
         $var['recharge_money'] = json_encode($temp);
         $var['token'] = $token;
         $var['pay'] = 1;
-        $var['giftShow'] = resolve(ChargeService::class)->checkFirstGift();
-        $var['giftRemainingTime'] = resolve(ChargeService::class)->countRemainingTime();
+        $var['giftShow'] = resolve(FirstChargeService::class)->checkFirstGift();
+        $var['giftRemainingTime'] = resolve(FirstChargeService::class)->countRemainingTime();
 
         return SuccessResponse::create($var);
     }
@@ -300,8 +300,10 @@ class ChargeController extends Controller
 
         Log::channel('charge')->info($rtn);
 
-        //先將首充禮包設定為已領取
-        resolve(UserAttrService::class)->set('first_gift', 1);
+        //驗證剩餘時間是否符合72hr,再將首充禮包設定為已領取
+        if (resolve(FirstChargeService::class)->checkFirstGift()) {
+            dd('here' . resolve(UserAttrService::class)->set('first_gift', 1));
+        }
 
         return new JsonResponse(array('status' => 0, 'data' => $rtn, 'msg' => $msg ?? ''));
     }
@@ -799,6 +801,7 @@ class ChargeController extends Controller
 
         //確認first_charge_gift_start_time是否存在
         $firstGiftStartTime = resolve(UserAttrService::class)->get('first_charge_gift_start_time');
+
         if (!$firstGiftStartTime) {
             resolve(UserAttrService::class)->set('first_charge_gift_start_time', round(microtime(true) * 1000));
         }

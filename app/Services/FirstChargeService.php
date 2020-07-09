@@ -20,16 +20,18 @@ class FirstChargeService
     protected $userItemRepository;
     protected $userService;
     protected $recharge;
-
+    protected $userAttrService;
 
     public function __construct(
         UserItemRepository $userItemRepository,
-        userService $userService,
-        Recharge $recharge
+        UserService $userService,
+        Recharge $recharge,
+        UserAttrService $userAttrService
     ) {
         $this->userItemRepository = $userItemRepository;
         $this->userService = $userService;
         $this->recharge = $recharge;
+        $this->userAttrService = $userAttrService;
     }
 
     public function firstCharge($trendNo)
@@ -87,5 +89,38 @@ class FirstChargeService
         DB::commit();
 
         return true;
+    }
+
+    //計算用戶首充禮剩餘秒數
+    public function countRemainingTime(): int
+    {
+        $milliSecondTimeStamp = $this->userAttrService->get('first_charge_gift_start_time');
+
+        //確認first_charge_gift_start_time是否存在
+        if (!$milliSecondTimeStamp) {
+            $this->userAttrService->set('first_charge_gift_start_time', round(microtime(true) * 1000));
+        }
+
+        $firstChargeGiftTime = (int)substr($milliSecondTimeStamp, 0, -3);
+
+        $remainingTime = 259200 - (time() - $firstChargeGiftTime);
+
+        return ($remainingTime < 0) ? 0 : $remainingTime;
+    }
+
+    //驗證是否符合首充豪禮條件
+    public function checkFirstGift(): int
+    {
+        //非首充
+        if (Auth::user()->first_charge_time) {
+            return 0;
+        }
+
+        //驗證剩餘秒數是否歸零,是否已領取首充禮
+        if ($this->userAttrService->get('first_gift') == 1 || $this->countRemainingTime() == 0) {
+            return 0;
+        }
+
+        return 1;
     }
 }

@@ -35,8 +35,9 @@ class ChargeService extends Service
     private $randValue = null;
     private $dataNo = null;
     private $userAttrService;
+    private $userService;
 
-    public function __construct(userAttrService $userAttrService)
+    public function __construct()
     {
         parent::__construct();
 
@@ -55,7 +56,8 @@ class ChargeService extends Service
         ////随意给的，只是让校验产生随机性质
         $this->messageNo = $this->serviceCode . $this->randValue;
         $this->dataNo = $this->getDataNo();
-        $this->userAttrService = $userAttrService;
+        $this->userAttrService = resolve(UserAttrService::class);
+        $this->userService = resolve(UserService::class);
     }
 
     public function generateOrderId()
@@ -238,7 +240,7 @@ class ChargeService extends Service
 
     public function chargeAfter($uid): void
     {
-        $userRich = (int)resolve(UserService::class)->getUserInfo($uid, 'rich');
+        $userRich = (int)$this->userService->getUserInfo($uid, 'rich');
         $newUserRichLv = LvRich::calcul($userRich + 500);
 
         $data = [
@@ -304,28 +306,5 @@ class ChargeService extends Service
         $res['charge_result'] = $chargeResult;
 
         return $res;
-    }
-
-    //計算用戶首充禮剩餘秒數
-    public function countRemainingTime(): int
-    {
-        $milliSecondTimeStamp = $this->userAttrService->get('first_charge_gift_start_time');
-        $firstChargeGiftTime = (int)substr($milliSecondTimeStamp, 0, -3);
-
-        $remainingTime = 259200 - (time() - $firstChargeGiftTime);
-
-        return ($remainingTime < 0) ? 0 : $remainingTime;
-    }
-
-    //驗證是否符合首充豪禮條件
-    public function checkFirstGift(): int
-    {
-        $isGetFirstGift = $this->userAttrService->get('first_gift');
-        $remainTime = $this->countRemainingTime();
-
-        if ($isGetFirstGift || $remainTime == 0) {
-            return 0;
-        }
-        return 1;
     }
 }
