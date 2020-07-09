@@ -17,7 +17,7 @@ class UserAttr extends Model
 
     protected $primaryKey = ['uid', 'k'];
 
-    protected $fillable = ['v'];
+    protected $fillable = ['uid', 'k', 'v'];
 
     public $incrementing = false;
 }
