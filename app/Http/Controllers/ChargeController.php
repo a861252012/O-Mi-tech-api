@@ -302,7 +302,7 @@ class ChargeController extends Controller
 
         //驗證剩餘時間是否符合72hr,再將首充禮包設定為已領取
         if (resolve(FirstChargeService::class)->checkFirstGift()) {
-            dd('here' . resolve(UserAttrService::class)->set('first_gift', 1));
+            resolve(UserAttrService::class)->set('first_gift', 1);
         }
 
         return new JsonResponse(array('status' => 0, 'data' => $rtn, 'msg' => $msg ?? ''));
