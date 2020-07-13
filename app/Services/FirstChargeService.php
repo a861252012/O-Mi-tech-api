@@ -117,8 +117,14 @@ class FirstChargeService
         }
 
         //驗證剩餘秒數是否歸零,是否已領取首充禮
-        if ($this->userAttrService->get('first_gift') == 1 || $this->countRemainingTime() == 0) {
+        $firstGift = $this->userAttrService->get('first_gift');
+
+        if ($firstGift == 1 || $this->countRemainingTime() == 0) {
             return 0;
+        }
+
+        if ($firstGift === null) {
+            $this->userAttrService->set('first_gift', 0);
         }
 
         return 1;

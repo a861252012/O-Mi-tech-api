@@ -37,6 +37,7 @@ use App\Models\Users;
 use App\Models\UserSignin;
 use App\Models\Usersall;
 use App\Models\WithDrawalList;
+use App\Services\FirstChargeService;
 use App\Services\I18n\PhoneNumber;
 use App\Services\Message\MessageService;
 use App\Services\Room\RoomService;
@@ -319,6 +320,16 @@ class MemberController extends Controller
             //本次紀錄時間
             $S_update_time = date('Y-m-d H:i:s');
 
+            //驗證是否符合首充豪禮條件
+            $trendNo = 'transfer_' . $uid . '_to_' . $userTo['uid'] . '_' . uniqid();
+            if (resolve(FirstChargeService::class)->checkFirstGift()) {
+                $firstCharge = resolve(FirstChargeService::class)->firstCharge($trendNo);
+
+                if (!$firstCharge) {
+                    Log::error('贈送首充禮錯誤');
+                }
+            }
+
             //记录转帐
             DB::table((new Transfer)->getTable())->insert([
                 'by_uid' => $uid,
@@ -338,7 +349,7 @@ class MemberController extends Controller
                 'points' => $points,
                 'paymoney' => round($points / 10, 2),
                 'created' => $S_update_time,
-                'order_id' => 'transfer_' . $uid . '_to_' . $userTo['uid'] . '_' . uniqid(),
+                'order_id' => $trendNo,
                 'del' => 0,//190418stanly添加
                 'pay_type' => 7,
                 'pay_status' => 2,
