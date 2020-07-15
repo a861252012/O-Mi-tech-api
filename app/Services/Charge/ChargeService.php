@@ -9,9 +9,11 @@
 namespace App\Services\Charge;
 
 use App\Constants\LvRich;
+use App\Entities\UserAttr;
 use App\Models\Recharge;
 use App\Models\Users;
 use App\Services\Auth\JWTGuard;
+use App\Services\FirstChargeService;
 use App\Services\Service;
 use App\Services\Site\SiteService;
 use App\Services\User\UserService;
@@ -238,16 +240,28 @@ class ChargeService extends Service
         return $this->priviteKey;
     }
 
-    public function chargeAfter($uid): void
+    public function chargeAfter($uid, $tradeNo = ''): void
     {
         $userRich = (int)$this->userService->getUserInfo($uid, 'rich');
         $newUserRichLv = LvRich::calcul($userRich + 500);
+
+        //驗證是否符合首充豪禮條件
+        if (resolve(UserAttrService::class)->get('is_first_gift') != 1) {
+            $firstCharge = resolve(FirstChargeService::class)->firstCharge($tradeNo);
+
+            if (!$firstCharge) {
+                Log::error('贈送首充禮錯誤');
+            }
+        }
+
+        resolve(UserAttrService::class)->set('is_first_gift', 1);
 
         $data = [
             'first_charge_time' => date('Y-m-d H:i:s'),
             'rich'              => $userRich + 500,
             'lv_rich'           => $newUserRichLv
         ];
+
         $rs = Users::query()->whereRaw('uid=' . $uid . '  and first_charge_time is NULL')->update($data);
         $rs && resolve(UserService::class)->cacheUserInfo($uid, $data);
     }

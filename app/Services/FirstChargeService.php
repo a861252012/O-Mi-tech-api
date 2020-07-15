@@ -34,7 +34,7 @@ class FirstChargeService
         $this->userAttrService = $userAttrService;
     }
 
-    public function firstCharge($trendNo)
+    public function firstCharge($trendNo = '')
     {
         $gift = [
             ['item_id' => '1', 'uid' => Auth::id(), 'status' => 0],
@@ -108,25 +108,25 @@ class FirstChargeService
         return ($remainingTime < 0) ? 0 : $remainingTime;
     }
 
-    //驗證是否符合首充豪禮條件
-    public function checkFirstGift(): int
+    //是否顯示首充好禮icon (1:顯示/0：不顯示)
+    public function isShowFirstGiftIcon(): int
     {
         //非首充
-        if (Auth::user()->first_charge_time) {
-            return 0;
+        $isFirstGift = $this->userAttrService->get('first_gift');
+
+        if ($isFirstGift != null) {
+            return $isFirstGift;
         }
 
-        //驗證剩餘秒數是否歸零,是否已領取首充禮
-        $firstGift = $this->userAttrService->get('first_gift');
+        //first_gift如為空,則判斷剩餘秒數及用戶是否充值過
+        if ($this->countRemainingTime() > 0 && Auth::user()->first_charge_time === null) {
+            $this->userAttrService->set('first_gift', 1);
 
-        if ($firstGift == 1 || $this->countRemainingTime() == 0) {
-            return 0;
+            return 1;
         }
 
-        if ($firstGift === null) {
-            $this->userAttrService->set('first_gift', 0);
-        }
+        $this->userAttrService->set('first_gift', 0);
 
-        return 1;
+        return 0;
     }
 }

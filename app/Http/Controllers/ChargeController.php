@@ -116,7 +116,7 @@ class ChargeController extends Controller
         $var['recharge_money'] = json_encode($temp);
         $var['token'] = $token;
         $var['pay'] = 1;
-        $var['giftShow'] = resolve(FirstChargeService::class)->checkFirstGift();
+        $var['giftShow'] = resolve(FirstChargeService::class)->isShowFirstGiftIcon();
         $var['giftRemainingTime'] = resolve(FirstChargeService::class)->countRemainingTime();
 
         return SuccessResponse::create($var);
@@ -300,10 +300,8 @@ class ChargeController extends Controller
 
         Log::channel('charge')->info($rtn);
 
-        //驗證剩餘時間是否符合72hr,再將首充禮包設定為已領取
-        if (resolve(FirstChargeService::class)->checkFirstGift()) {
-            resolve(UserAttrService::class)->set('first_gift', 1);
-        }
+        //將首充禮包icon改回不顯示
+        resolve(UserAttrService::class)->set('first_gift', 1);
 
         return new JsonResponse(array('status' => 0, 'data' => $rtn, 'msg' => $msg ?? ''));
     }
@@ -719,16 +717,7 @@ class ChargeController extends Controller
 
         //首次充值时间
         if ($chargeStatus) {
-            resolve('charge')->chargeAfter($stmt['uid']);
-
-            //驗證是否符合首充豪禮條件
-            if (resolve(UserAttrService::class)->get('first_gift')) {
-                $firstCharge = resolve(FirstChargeService::class)->firstCharge($tradeno);
-
-                if (!$firstCharge) {
-                    Log::error('贈送首充禮錯誤');
-                }
-            }
+            resolve('charge')->chargeAfter($stmt['uid'], $tradeno = '');
         }
 
         //第二步，更新数据
@@ -799,13 +788,6 @@ class ChargeController extends Controller
             $data = resolve(ChargeService::class)->updateOrder($ucPostResult);
         }
 
-        //確認first_charge_gift_start_time是否存在
-        $firstGiftStartTime = resolve(UserAttrService::class)->get('first_charge_gift_start_time');
-
-        if (!$firstGiftStartTime) {
-            resolve(UserAttrService::class)->set('first_charge_gift_start_time', round(microtime(true) * 1000));
-        }
-
         //记录下日志
         Log::info('传输的数据记录: ' . json_encode(
             $request->only(
@@ -823,7 +805,7 @@ class ChargeController extends Controller
         if ($data['status'] == 200) {
             unset($data['status']);
         } else {
-            //如充值失敗,則將首充禮包改回未領取
+            //如充值失敗,則將首充禮包icon改回不顯示
             resolve(UserAttrService::class)->set('first_gift', 0);
 
             $this->setStatus($data['status'], $data['msg']);
@@ -840,6 +822,11 @@ class ChargeController extends Controller
             $data['channel'],
             $data['complate_time']
         );
+
+        //確認first_charge_gift_start_time是否存在
+        if (!resolve(UserAttrService::class)->get('first_charge_gift_start_time')) {
+            resolve(UserAttrService::class)->set('first_charge_gift_start_time', round(microtime(true) * 1000));
+        }
 
         if ($payType === 'onepay') {
             return 'OK';
