@@ -46,6 +46,7 @@ use App\Services\Sms\SmsService;
 use App\Services\System\SystemService;
 use App\Services\User\UserService;
 use App\Services\User\SigninService;
+use App\Services\UserAttrService;
 use App\Services\UserGroup\UserGroupService;
 use DB;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -322,8 +323,9 @@ class MemberController extends Controller
 
             //驗證是否符合首充豪禮條件
             $trendNo = 'transfer_' . $uid . '_to_' . $userTo['uid'] . '_' . uniqid();
-            if (resolve(FirstChargeService::class)->checkFirstGift()) {
-                $firstCharge = resolve(FirstChargeService::class)->firstCharge($trendNo);
+
+            if (resolve(UserAttrService::class)->get('is_first_gift') != 1) {
+                $firstCharge = resolve(FirstChargeService::class)->firstCharge($username, $trendNo);
 
                 if (!$firstCharge) {
                     Log::error('贈送首充禮錯誤');

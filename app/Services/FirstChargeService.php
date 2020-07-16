@@ -34,11 +34,12 @@ class FirstChargeService
         $this->userAttrService = $userAttrService;
     }
 
-    public function firstCharge($trendNo = '')
+    public function firstCharge($uid, $trendNo = '')
     {
+        $user = $this->userService->getUserInfo($uid);
         $gift = [
-            ['item_id' => '1', 'uid' => Auth::id(), 'status' => 0],
-            ['item_id' => '2', 'uid' => Auth::id(), 'status' => 0]
+            ['item_id' => '1', 'uid' => $uid, 'status' => 0],
+            ['item_id' => '2', 'uid' => $uid, 'status' => 0]
         ];
 
         DB::beginTransaction();
@@ -54,12 +55,12 @@ class FirstChargeService
 
         //更新用戶資訊
         $data = [
-            'rich'    => Auth::user()->rich + 500,
-            'lv_rich' => LvRich::calcul(Auth::user()->rich + 500),
-            'points'  => Auth::user()->points + 50
+            'rich'    => (int)$user['rich'] + 500,
+            'lv_rich' => LvRich::calcul($user->rich + 500),
+            'points'  => (int)$user['points'] + 50
         ];
 
-        $updateUser = $this->userService->updateUserInfo(Auth::id(), $data);
+        $updateUser = $this->userService->updateUserInfo($uid, $data);
 
         if (!$updateUser) {
             Log::error('更新用戶資訊錯誤');
@@ -69,7 +70,7 @@ class FirstChargeService
 
         //新增充值紀錄(首充禮)
         $rechargeRecord = $this->recharge->insert([
-            'uid'        => Auth::id(),
+            'uid'        => $uid,
             'points'     => 50,
             'paymoney'   => 0,
             'created'    => date('Y-m-d H:i:s'),
@@ -77,8 +78,8 @@ class FirstChargeService
             'pay_type'   => 5,
             'pay_status' => 2,
             'del'        => 0,
-            'nickname'   => Auth::user()->nickname,
-            'site_id'    => SiteSer::siteId(),
+            'nickname'   => $user['nickname'],
+            'site_id'    => (int)$user['site_id'],
         ]);
 
         if (!$rechargeRecord) {
