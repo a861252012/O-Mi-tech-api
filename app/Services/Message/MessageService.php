@@ -140,7 +140,7 @@ class MessageService extends Service
     {
         // TODO 私信的状态的修改 以后要抽象起来 最好是需求上单独来更新每条私信状态 而不是批量
         //移除私信 By Young
-        
+
         // if ($category == self::USER_MESSAGE) {
         //     Messages::where('rec_uid', $uid)->where('status', 0)
         //         ->where('category', $category)
@@ -151,7 +151,7 @@ class MessageService extends Service
         // 系统消息的状态
         //if ($category == self::SYSTEM_MESSAGE) {
         // 首先修改单独发给用户的系统消息
-        
+
         // update by Young status:1 已读。 status:0 未读
         Messages::where('rec_uid', $uid)->where('status', 0)
             ->where('category', self::SYSTEM_MESSAGE)
@@ -180,6 +180,7 @@ class MessageService extends Service
         // 检查群发消息是否读过了---
         $res = Messages::where('rec_uid', $uid)
             ->where('status',0)
+            ->where('category',1)
             ->where('logicflag',1)
             ->count();
 
