@@ -70,6 +70,8 @@ class OmeyController extends Controller
                 'cover' => $h['cover'],
             ];
         }
+
+        echo '<h1><a href="/m/home">回首頁</a></h1>';
         if (count($liveHosts) == 0) {
             echo '目前無主播上線';
             return;
@@ -101,7 +103,10 @@ class OmeyController extends Controller
     {
         $user = Auth::user();
         $platforms = $this->make('redis')->hgetall('hplatforms:60');
-        $host = 'http://'. $_SERVER['HTTP_HOST'];
+        $host = '//'. $_SERVER['HTTP_HOST'];
+        if (substr($host, -3) == ':80') {
+            $host = substr($host, 0, -3);
+        }
 
         $sskey = $user->uid;    // 不同合作站會有自己的加密資料。
         $callback = $rid;
@@ -117,7 +122,7 @@ class OmeyController extends Controller
         ];
         $qs = http_build_query($q);
 
-        $v2Host = str_replace('v1.com', 'v2.com', $host);
+        $v2Host = str_replace(['v1.', 'kdncjbw.space'], ['v2.', 'ymrenn.com'], $host);
         $v2URL =  $v2Host .'/recvSskey?'. $qs;
         return $v2URL;
     }

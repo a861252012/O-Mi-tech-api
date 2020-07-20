@@ -19,6 +19,22 @@ class SocketService extends Service
         $this->socketProxyService = $socketProxyService;
     }
 
+    public function getWsList($port = 1056)
+    {
+        $redis = $this->make('redis');
+        $schatws = $redis->smembers('schatws');
+
+        $list = [];
+        foreach ($schatws as $chatws) {
+            list($url, $name) = explode(",", $chatws);
+            $list[] = [
+                'name' => $name,
+                'url' => $url .'/'. $port . '/websocket',
+            ];
+        }
+        return $list;
+    }
+
     public function getServer($channelID)
     {
         $redis = $this->make('redis');
