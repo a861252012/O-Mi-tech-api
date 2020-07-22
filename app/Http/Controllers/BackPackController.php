@@ -31,7 +31,7 @@ class BackPackController extends Controller
      * @apiSuccess {Int} id 流水號
      * @apiSuccess {String} item_name 商品名稱
      * @apiSuccess {String} item_icon 商品圖片
-     * @apiSuccess {Int} frontend_mode 前端處理模式(0:不使用,1:需確認,2:直播間內使用,3:飛屏券)
+     * @apiSuccess {Int} frontend_mode 前端處理模式(0:不使用（暫定,目前無此種道具）,1:貴族體驗券,2:飛屏券)
      *
      * @apiSuccessExample {json} 成功回應
      * {
