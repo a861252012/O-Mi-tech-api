@@ -267,11 +267,9 @@ class RoomController extends Controller
             $h5data = [];
             if (isset($httpStreaming['flv']) && !empty($httpStreaming['flv'])) {
                 $h5data['flv_addr'] = $httpStreaming['flv'];
-            } elseif (isset($httpStreaming['hls']) && !empty($httpStreaming['hls'])) {
+            }
+            if (isset($httpStreaming['hls']) && !empty($httpStreaming['hls'])) {
                 $h5data['hls_addr'] = $httpStreaming['hls'];
-            } else {
-                $h5data['http_streaming'] = 0;
-                $data['http_streaming'] = 0;
             }
             // encode h5 data
             $ss = resolve(SafeService::class);
