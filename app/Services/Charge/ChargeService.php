@@ -8,17 +8,19 @@
 
 namespace App\Services\Charge;
 
-
 use App\Constants\LvRich;
 use App\Entities\RechargeBlockIp;
+use App\Entities\UserAttr;
 use App\Models\Recharge;
 use App\Models\Users;
 use App\Models\RechargeWhiteList;
 use App\Services\Auth\JWTGuard;
+use App\Services\FirstChargeService;
 use App\Services\Service;
 use App\Services\Site\SiteService;
 use App\Services\User\UserService;
 use Illuminate\Redis\RedisManager;
+use App\Services\UserAttrService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -38,6 +40,8 @@ class ChargeService extends Service
     private $returnUrl = null;
     private $randValue = null;
     private $dataNo = null;
+    private $userAttrService;
+    private $userService;
 
     const ORDER_DAILY_CNT_PREFIX = 'ordercnt:';
     const ORDER_DAILY_LIMIT = 5;    // 每日五次
@@ -61,13 +65,15 @@ class ChargeService extends Service
         ////随意给的，只是让校验产生随机性质
         $this->messageNo = $this->serviceCode . $this->randValue;
         $this->dataNo = $this->getDataNo();
+        $this->userAttrService = resolve(UserAttrService::class);
+        $this->userService = resolve(UserService::class);
     }
 
     public function generateOrderId()
     {
         $uid = Auth::id();
         //return sprintf('%08s', strrev($uid)) . date('ymdHis') . mt_rand(10, 99) . '';
-        return sprintf('%08s', strrev($uid)) . microtime(true)*10000;
+        return sprintf('%08s', strrev($uid)) . microtime(true) * 10000;
     }
 
     public function getDataNo()
@@ -241,17 +247,29 @@ class ChargeService extends Service
         return $this->priviteKey;
     }
 
-    public function chargeAfter($uid): void
+    public function chargeAfter($uid, $tradeNo = ''): void
     {
-        $userRich = (int) resolve(UserService::class)->getUserInfo($uid, 'rich');
+        $userRich = (int)$this->userService->getUserInfo($uid, 'rich');
         $newUserRichLv = LvRich::calcul($userRich + 500);
+
+        //驗證是否符合首充豪禮條件
+        if (resolve(UserAttrService::class)->get('is_first_gift') != 1) {
+            $firstCharge = resolve(FirstChargeService::class)->firstCharge($uid, $tradeNo);
+
+            if (!$firstCharge) {
+                Log::error('贈送首充禮錯誤');
+            }
+        }
+
+        resolve(UserAttrService::class)->set('is_first_gift', 1);
 
         $data = [
             'first_charge_time' => date('Y-m-d H:i:s'),
-            'rich' => $userRich + 500,
-            'lv_rich' => $newUserRichLv
+            'rich'              => $userRich + 500,
+            'lv_rich'           => $newUserRichLv
         ];
-        $rs = Users::query()->whereRaw('uid='.$uid.'  and first_charge_time is NULL')->update($data);
+
+        $rs = Users::query()->whereRaw('uid=' . $uid . '  and first_charge_time is NULL')->update($data);
         $rs && resolve(UserService::class)->cacheUserInfo($uid, $data);
     }
 
@@ -310,6 +328,7 @@ class ChargeService extends Service
 
         return $res;
     }
+}
 
     // 檢查是否達到暫存的每日上限
     // 這邊不能直接檢查 DB 的原因是希望後台可以解除黑名單後，用戶馬上可用
