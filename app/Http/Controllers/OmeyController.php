@@ -122,7 +122,11 @@ class OmeyController extends Controller
         ];
         $qs = http_build_query($q);
 
-        $v2Host = str_replace(['v1.', 'kdncjbw.space'], ['v2.', 'ymrenn.com'], $host);
+        $v2Host = str_replace(
+            ['v1.', 'kdncjbw.space', 'bzvfsfwde.info'],
+            ['v2.', 'ymrenn.com',    's09th.info'],
+            $host,
+        );
         $v2URL =  $v2Host .'/recvSskey?'. $qs;
         return $v2URL;
     }
