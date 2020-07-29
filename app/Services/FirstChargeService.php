@@ -14,6 +14,7 @@ use App\Repositories\UserItemRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use function Psy\debug;
 
 class FirstChargeService
 {
@@ -37,34 +38,35 @@ class FirstChargeService
     public function firstCharge($uid, $trendNo = '')
     {
         $user = $this->userService->getUserInfo($uid);
+        debug("取得user資訊: " . json_encode($user));
+
         $gift = [
             ['item_id' => '1', 'uid' => $uid, 'status' => 0],
             ['item_id' => '2', 'uid' => $uid, 'status' => 0]
         ];
 
-        DB::beginTransaction();
 
         //贈送首充禮
         $insertGift = $this->userItemRepository->insertGift($gift);
 
         if (!$insertGift) {
             Log::error('贈送首充禮錯誤');
-            DB::rollBack();
             return false;
         }
 
         //更新用戶資訊
         $data = [
             'rich'    => (int)$user['rich'] + 500,
-            'lv_rich' => LvRich::calcul($user->rich + 500),
+            'lv_rich' => LvRich::calcul($user['rich'] + 500),
             'points'  => (int)$user['points'] + 50
         ];
+
+        debug("更新用戶資訊: " . json_encode($data));
 
         $updateUser = $this->userService->updateUserInfo($uid, $data);
 
         if (!$updateUser) {
             Log::error('更新用戶資訊錯誤');
-            DB::rollBack();
             return false;
         }
 
@@ -84,10 +86,8 @@ class FirstChargeService
 
         if (!$rechargeRecord) {
             Log::error('新增充值紀錄(首充禮)');
-            DB::rollBack();
             return false;
         }
-        DB::commit();
 
         return true;
     }

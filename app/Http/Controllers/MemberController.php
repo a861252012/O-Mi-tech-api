@@ -328,6 +328,7 @@ class MemberController extends Controller
                 $firstCharge = resolve(FirstChargeService::class)->firstCharge($username, $trendNo);
 
                 if (!$firstCharge) {
+                    DB::rollBack();
                     Log::error('贈送首充禮錯誤');
                 }
             }

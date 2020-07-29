@@ -46,14 +46,25 @@ class LvRich
 
     public static function calcul($exp)
     {
-        foreach (self::LIST as $k => $v) {
-            if ($exp >= $v) {
-                $newLevel = $k;
-                break;
-            }
-            continue;
+//        foreach (self::LIST as $k => $v) {
+//            if ($exp >= $v) {
+//                $newLevel = $k;
+//                break;
+//            }
+//
+//            continue;
+//        }
+//
+//        return $newLevel;
+
+        if (in_array($exp, self::LIST)) {
+            return array_search($exp, self::LIST);
         }
 
-        return $newLevel;
+        $arr = array_values(self::LIST);
+
+        $arr[] = $exp;
+        sort($arr);
+        return array_search($exp, $arr);
     }
 }

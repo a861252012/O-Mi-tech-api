@@ -254,11 +254,15 @@ class ChargeService extends Service
 
         //驗證是否符合首充豪禮條件
         if (resolve(UserAttrService::class)->get('is_first_gift') != 1) {
+            DB::beginTransaction();
             $firstCharge = resolve(FirstChargeService::class)->firstCharge($uid, $tradeNo);
 
             if (!$firstCharge) {
+                \DB::rollBack();
                 Log::error('贈送首充禮錯誤');
             }
+
+            \DB::commit();
         }
 
         resolve(UserAttrService::class)->set('is_first_gift', 1);
