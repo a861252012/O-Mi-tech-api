@@ -38,7 +38,7 @@ class FirstChargeService
     public function firstCharge($uid, $trendNo = '')
     {
         $user = $this->userService->getUserInfo($uid);
-        debug("取得user資訊: " . json_encode($user));
+        info('用戶資訊: ' . json_encode($user));
 
         $gift = [
             ['item_id' => '1', 'uid' => $uid, 'status' => 0],
@@ -61,7 +61,7 @@ class FirstChargeService
             'points'  => (int)$user['points'] + 50
         ];
 
-        debug("更新用戶資訊: " . json_encode($data));
+        info("首充更新用戶資訊: " . json_encode($data));
 
         $updateUser = $this->userService->updateUserInfo($uid, $data);
 
