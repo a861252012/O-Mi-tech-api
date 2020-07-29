@@ -35,7 +35,7 @@ class FirstChargeService
         $this->userAttrService = $userAttrService;
     }
 
-    public function firstCharge($uid, $trendNo = '')
+    public function firstCharge($uid, $trendNo = '', $points = 0)
     {
         $user = $this->userService->getUserInfo($uid);
         info('用戶資訊: ' . json_encode($user));
@@ -58,7 +58,7 @@ class FirstChargeService
         $data = [
             'rich'    => (int)$user['rich'] + 500,
             'lv_rich' => LvRich::calcul($user['rich'] + 500),
-            'points'  => (int)$user['points'] + 50
+            'points'  => (int)$user['points'] + 50 + $points
         ];
 
         info("首充更新用戶資訊: " . json_encode($data));

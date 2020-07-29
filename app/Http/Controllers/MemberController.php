@@ -315,7 +315,7 @@ class MemberController extends Controller
             DB::table((new Users)->getTable())->where('uid', $uid)->decrement('points', $points);
             //update(array('points' => $this->userInfo['points'] - $points));
 
-            DB::table((new Users)->getTable())->where('uid', $userTo['uid'])->increment('points', $points);
+//            DB::table((new Users)->getTable())->where('uid', $userTo['uid'])->increment('points', $points);
             //update(array('points' => $user['points'] + $points));
 
             //本次紀錄時間
@@ -325,13 +325,16 @@ class MemberController extends Controller
             $trendNo = 'transfer_' . $uid . '_to_' . $userTo['uid'] . '_' . uniqid();
 
             if (resolve(UserAttrService::class)->get('is_first_gift') != 1) {
-                $firstCharge = resolve(FirstChargeService::class)->firstCharge($username, $trendNo);
+                $firstCharge = resolve(FirstChargeService::class)->firstCharge($username, $trendNo, $points);
 
                 if (!$firstCharge) {
                     DB::rollBack();
                     Log::error('贈送首充禮錯誤');
                 }
+            } else {
+                DB::table((new Users)->getTable())->where('uid', $userTo['uid'])->increment('points', $points);
             }
+
 
             //记录转帐
             DB::table((new Transfer)->getTable())->insert([
