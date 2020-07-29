@@ -328,7 +328,6 @@ class ChargeService extends Service
 
         return $res;
     }
-}
 
     // 檢查是否達到暫存的每日上限
     // 這邊不能直接檢查 DB 的原因是希望後台可以解除黑名單後，用戶馬上可用
