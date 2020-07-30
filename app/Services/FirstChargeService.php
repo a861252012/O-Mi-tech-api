@@ -9,6 +9,7 @@ namespace App\Services;
 use App\Constants\LvRich;
 use App\Facades\SiteSer;
 use App\Models\Recharge;
+use App\Services\Message\MessageService;
 use App\Services\User\userService;
 use App\Repositories\UserItemRepository;
 use Illuminate\Support\Facades\Auth;
@@ -86,7 +87,22 @@ class FirstChargeService
         ]);
 
         if (!$rechargeRecord) {
-            Log::error('新增充值紀錄(首充禮)');
+            Log::error('新增充值紀錄(首充禮)錯誤');
+            return false;
+        }
+
+        //新增手機端首充訊息
+        $UserFirstChargeMsg = [
+            'mail_type' => 3,
+            'rec_uid' => $uid,
+            'content' => '恭喜你获得首充豪礼，贵族体验券、等级积分、反馈钻石、飞频均已发送，若有问题请洽客服人员。',
+            'site_id' => $user['site_id']
+        ];
+
+        $sendMsg = resolve(MessageService::class)->sendSystemtranslate($UserFirstChargeMsg);
+        dd($sendMsg);
+        if (!$sendMsg) {
+            Log::error('新增手機端首充訊息錯誤');
             return false;
         }
 
