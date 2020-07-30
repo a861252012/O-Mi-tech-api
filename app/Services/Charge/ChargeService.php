@@ -253,7 +253,7 @@ class ChargeService extends Service
         $newUserRichLv = LvRich::calcul($userRich + 500);
 
         //驗證是否符合首充豪禮條件
-        if (resolve(UserAttrService::class)->get('is_first_gift') != 1) {
+        if (resolve(UserAttrService::class)->get($uid, 'is_first_gift') != 1) {
             DB::beginTransaction();
             $firstCharge = resolve(FirstChargeService::class)->firstCharge($uid, $tradeNo);
 
@@ -265,7 +265,7 @@ class ChargeService extends Service
             \DB::commit();
         }
 
-        resolve(UserAttrService::class)->set('is_first_gift', 1);
+        resolve(UserAttrService::class)->set($uid, 'is_first_gift', 1);
 
         $data = [
             'first_charge_time' => date('Y-m-d H:i:s'),

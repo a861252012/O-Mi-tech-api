@@ -120,8 +120,8 @@ class ChargeController extends Controller
         $var['recharge_money'] = json_encode($temp);
         $var['token'] = $token;
         $var['pay'] = 1;
-        $var['giftShow'] = resolve(FirstChargeService::class)->isShowFirstGiftIcon();
-        $var['giftRemainingTime'] = resolve(FirstChargeService::class)->countRemainingTime();
+        $var['giftShow'] = resolve(FirstChargeService::class)->isShowFirstGiftIcon($uid);
+        $var['giftRemainingTime'] = resolve(FirstChargeService::class)->countRemainingTime($uid);
 
         return SuccessResponse::create($var);
     }
@@ -337,7 +337,7 @@ class ChargeController extends Controller
         Log::channel('charge')->info($rtn);
 
         //將首充禮包icon改回不顯示
-        resolve(UserAttrService::class)->set('first_gift', 1);
+        resolve(UserAttrService::class)->set($uid, 'first_gift', 1);
 
         return new JsonResponse(array('status' => 0, 'data' => $rtn, 'msg' => $msg ?? ''));
     }
@@ -842,12 +842,14 @@ class ChargeController extends Controller
             )
         ));
 
+        //透過訂單號取得uid
+        $uid = Recharge::where('order_id', $data['trade_no'])->value('uid');
+
         if ($data['status'] == 200) {
             unset($data['status']);
         } else {
             //如充值失敗,則將首充禮包icon改回不顯示
-            resolve(UserAttrService::class)->set('first_gift', 0);
-
+            resolve(UserAttrService::class)->set($uid, 'first_gift', 0);
             $this->setStatus($data['status'], $data['msg']);
             return $this->jsonOutput();
         }
@@ -864,8 +866,8 @@ class ChargeController extends Controller
         );
 
         //確認first_charge_gift_start_time是否存在
-        if (!resolve(UserAttrService::class)->get('first_charge_gift_start_time')) {
-            resolve(UserAttrService::class)->set('first_charge_gift_start_time', round(microtime(true) * 1000));
+        if (!resolve(UserAttrService::class)->get($uid, 'first_charge_gift_start_time')) {
+            resolve(UserAttrService::class)->set($uid, 'first_charge_gift_start_time', round(microtime(true) * 1000));
         }
 
         if ($payType === 'onepay') {

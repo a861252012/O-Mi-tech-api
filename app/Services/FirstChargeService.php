@@ -93,13 +93,13 @@ class FirstChargeService
     }
 
     //計算用戶首充禮剩餘秒數
-    public function countRemainingTime(): int
+    public function countRemainingTime($uid): int
     {
-        $milliSecondTimeStamp = $this->userAttrService->get('first_charge_gift_start_time');
+        $milliSecondTimeStamp = $this->userAttrService->get($uid, 'first_charge_gift_start_time');
 
         //確認first_charge_gift_start_time是否存在
         if (!$milliSecondTimeStamp) {
-            $this->userAttrService->set('first_charge_gift_start_time', round(microtime(true) * 1000));
+            $this->userAttrService->set($uid, 'first_charge_gift_start_time', round(microtime(true) * 1000));
         }
 
         $firstChargeGiftTime = (int)substr($milliSecondTimeStamp, 0, -3);
@@ -110,23 +110,25 @@ class FirstChargeService
     }
 
     //是否顯示首充好禮icon (1:顯示/0：不顯示)
-    public function isShowFirstGiftIcon(): int
+    public function isShowFirstGiftIcon($uid): int
     {
+        $user = $this->userService->getUserInfo($uid);
+
         //非首充
-        $isFirstGift = $this->userAttrService->get('first_gift');
+        $isFirstGift = $this->userAttrService->get($uid, 'first_gift');
 
         if ($isFirstGift != null) {
             return $isFirstGift;
         }
 
         //first_gift如為空,則判斷剩餘秒數及用戶是否充值過
-        if ($this->countRemainingTime() > 0 && Auth::user()->first_charge_time === null) {
-            $this->userAttrService->set('first_gift', 1);
+        if ($this->countRemainingTime($uid) > 0 && $user['first_charge_time'] === null) {
+            $this->userAttrService->set($uid, 'first_gift', 1);
 
             return 1;
         }
 
-        $this->userAttrService->set('first_gift', 0);
+        $this->userAttrService->set($uid, 'first_gift', 0);
 
         return 0;
     }
