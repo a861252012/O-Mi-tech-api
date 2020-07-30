@@ -99,7 +99,11 @@ class FirstChargeService
 
         //確認first_charge_gift_start_time是否存在
         if (!$milliSecondTimeStamp) {
-            $this->userAttrService->set($uid, 'first_charge_gift_start_time', round(microtime(true) * 1000));
+            $milliSecondTimeStamp = $this->userAttrService->set(
+                $uid,
+                'first_charge_gift_start_time',
+                round(microtime(true) * 1000)
+            );
         }
 
         $firstChargeGiftTime = (int)substr($milliSecondTimeStamp, 0, -3);
