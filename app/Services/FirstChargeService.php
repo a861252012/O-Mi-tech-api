@@ -100,7 +100,7 @@ class FirstChargeService
         ];
 
         $sendMsg = resolve(MessageService::class)->sendSystemtranslate($UserFirstChargeMsg);
-        dd($sendMsg);
+
         if (!$sendMsg) {
             Log::error('新增手機端首充訊息錯誤');
             return false;
