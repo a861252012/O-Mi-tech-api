@@ -323,8 +323,10 @@ class MemberController extends Controller
 
             //驗證是否符合首充豪禮條件
             $trendNo = 'transfer_' . $uid . '_to_' . $userTo['uid'] . '_' . uniqid();
+            $isFirstGift = resolve(UserAttrService::class)->get($userTo['uid'], 'is_first_gift');
+            $receiverRemainingTime = resolve(FirstChargeService::class)->countRemainingTime($userTo['uid']);
 
-            if (resolve(UserAttrService::class)->get($userTo['uid'], 'is_first_gift') != 1) {
+            if ($receiverRemainingTime > 0 && $userTo['first_charge_time'] === null && $isFirstGift != 1) {
                 $firstCharge = resolve(FirstChargeService::class)->firstCharge($username, $trendNo, $points);
 
                 if (!$firstCharge) {
