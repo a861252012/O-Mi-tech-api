@@ -26,24 +26,24 @@ class UserAttrService
         $this->userAttrRepository = $userAttrRepository;
     }
 
-    public function get($k)
+    public function get($uid, $k)
     {
-        $key = sprintf("%s:%s:%d", self::KEY_PREFIX, $k, Auth::id());
+        $key = sprintf("%s:%s:%d", self::KEY_PREFIX, $k, $uid);
 
         $v = Redis::get($key);
         if (empty($v)) {
-            $v = $this->userAttrRepository->getVByK(Auth::id(), $k);
+            $v = $this->userAttrRepository->getVByK($uid, $k);
             Redis::setex($key, self::REDIS_TTL, $v);
         }
 
         return $v;
     }
 
-    public function set($k, $v)
+    public function set($uid, $k, $v)
     {
-        $key = sprintf("%s:%s:%d", self::KEY_PREFIX, $k, Auth::id());
+        $key = sprintf("%s:%s:%d", self::KEY_PREFIX, $k, $uid);
         Redis::del($key);
 
-        return $this->userAttrRepository->updateOrCreate(Auth::id(), $k, $v);
+        return $this->userAttrRepository->updateOrCreate($uid, $k, $v);
     }
 }
