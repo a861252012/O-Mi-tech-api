@@ -1185,7 +1185,7 @@ class UserService extends Service
 
     public function updateUserInfo($uid, array $user)
     {
-        if (Users::where('uid', $uid)->update($user) === false) {
+        if (Users::allSites()->where('uid', $uid)->update($user) === false) {
             return false;
         };
         return $this->cacheUserInfo($uid, $user);

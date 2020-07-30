@@ -56,6 +56,7 @@ class FirstChargeService
 
         //更新用戶資訊
         $data = [
+            'first_charge_time' => date('Y-m-d H:i:s'),
             'rich'    => (int)$user['rich'] + 500,
             'lv_rich' => LvRich::calcul($user['rich'] + 500),
             'points'  => (int)$user['points'] + 50 + $points

@@ -326,17 +326,18 @@ class MemberController extends Controller
             $isFirstGift = resolve(UserAttrService::class)->get($userTo['uid'], 'is_first_gift');
             $receiverRemainingTime = resolve(FirstChargeService::class)->countRemainingTime($userTo['uid']);
 
-            if ($receiverRemainingTime > 0 && $userTo['first_charge_time'] === null && $isFirstGift != 1) {
+            if ($receiverRemainingTime > 0 && empty($userTo['first_charge_time']) && empty($isFirstGift)) {
                 $firstCharge = resolve(FirstChargeService::class)->firstCharge($username, $trendNo, $points);
 
                 if (!$firstCharge) {
                     DB::rollBack();
                     Log::error('贈送首充禮錯誤');
+
+                    return new JsonResponse(['status' => 0, 'msg' => '对不起！转帐失败!']);
                 }
             } else {
                 DB::table((new Users)->getTable())->where('uid', $userTo['uid'])->increment('points', $points);
             }
-
 
             //记录转帐
             DB::table((new Transfer)->getTable())->insert([
@@ -365,21 +366,6 @@ class MemberController extends Controller
                 'site_id' => $userTo['site_id']
             ]);
 
-            $userRich = (int) resolve(UserService::class)->getUserInfo($uid, 'rich');
-
-            $data = [
-                'first_charge_time' => $S_update_time,
-                'rich'              => $userRich + 500,
-                'lv_rich'           => LvRich::calcul($userRich + 500)
-            ];
-
-            DB::table((new Users)->getTable())
-                ->where('uid', $userTo['uid'])
-                ->whereNull('first_charge_time')
-                ->update($data);
-
-            resolve(UserService::class)->cacheUserInfo($uid, $data);
-
             //发送成功消息给转帐人
             $from_user_transfer_message = [
                 'mail_type' => 3,
@@ -407,6 +393,11 @@ class MemberController extends Controller
             $userService = resolve(UserService::class);
             $userService->cacheUserInfo($uid, null);
             $userService->cacheUserInfo($userTo['uid'], null);
+
+            //first_gift,is_first_gift 改為已領取首充禮包
+            resolve(UserAttrService::class)->set($userTo['uid'], 'first_gift', 1);
+            resolve(UserAttrService::class)->set($userTo['uid'], 'is_first_gift', 1);
+
 
             return new JsonResponse(['status' => 1, 'msg' => '您成功转出' . $points . '钻石']);
         } catch (\Exception $e) {
