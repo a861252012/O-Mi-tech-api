@@ -72,7 +72,7 @@ class BackPackService
     public function useVip($id)
     {
         //檢查用戶是否有貴族身份
-        if (Auth::user()->vip) {
+        if (strtotime(Auth::user()->vip_end) >=time()) {
             return ['status' => 102, 'msg' => '目前已是贵族身份，无法使用喔！'];
         }
 
