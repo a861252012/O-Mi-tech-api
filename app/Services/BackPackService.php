@@ -73,7 +73,7 @@ class BackPackService
     {
         //檢查用戶是否有貴族身份
         if (Auth::user()->vip) {
-            return false;
+            return ['status' => 102, 'msg' => '目前已是贵族身份，无法使用喔！'];
         }
 
         $level = $this->levelRichRepository->getLevelByGid(30);
@@ -84,14 +84,14 @@ class BackPackService
             'vip'     => $level->level_id,
             'vip_end' => date('Y-m-d H:i:s', strtotime("+8 day")),
         ];
-
         //賦予用戶貴族身份
         $updateUser = $this->userService->updateUserInfo(Auth::id(), $updateVip);
 
         if (!$updateUser) {
             Log::error('異動用戶資料錯誤');
             DB::rollBack();
-            return false;
+
+            return ['status' => 0, 'msg' => '使用失敗'];
         }
 
         //新增貴族開通紀錄
@@ -116,7 +116,7 @@ class BackPackService
         if (!$insertGroupRecord) {
             Log::error('新增貴族紀錄錯誤');
             DB::rollBack();
-            return false;
+            return ['status' => 0, 'msg' => '使用失敗'];
         }
 
         $message = [
@@ -134,7 +134,7 @@ class BackPackService
         if (!$insertMsgRecord) {
             Log::error('新增系統訊息錯誤');
             DB::rollBack();
-            return false;
+            return ['status' => 0, 'msg' => '使用失敗'];
         }
 
         //更改物品狀態為使用
@@ -143,11 +143,11 @@ class BackPackService
         if (!$res) {
             Log::error('更新物品狀態錯誤');
             DB::rollBack();
-            return false;
+            return ['status' => 0, 'msg' => '使用失敗'];
         }
 
         DB::commit();
 
-        return true;
+        return ['status' => 1, 'msg' => 'OK'];
     }
 }

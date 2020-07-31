@@ -32,7 +32,13 @@ class UserItemRepository
 
     public function updateItemStatus($id, $status)
     {
-        return $this->userItem->where('id', $id)->update(['status' => $status]);
+        $res = $this->userItem->where('id', $id)->update(['status' => $status]);
+
+        if ($res) {
+            return ['status' => 1, 'msg' => 'OK'];
+        }
+
+        return ['status' => 0, 'msg' => '使用失敗'];
     }
 
     public function insertGift($gift)

@@ -6,6 +6,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BackPack\UseItem;
 use App\Services\BackPackService;
 
 class BackPackController extends Controller
@@ -65,25 +66,33 @@ class BackPackController extends Controller
     }
 
     /**
-     * @api {get} /user/item/use/:id 使用背包物品
+     * @api {post} /user/item/use 使用背包物品
      * @apiGroup UserItem
      * @apiName 使用背包物品
      * @apiVersion 1.0.0
      *
      * @apiParam {Int} id 商品流水號
      *
+     * @apiSuccess {Int} status 開通執行狀態(1為開通成功,1以外為執行失敗)
+     * @apiSuccess {String} msg 執行結果敘述
+     *
      * @apiError (Error Status) 999 API執行錯誤
+     * @apiError (Error Status) 102 目前已是贵族身份，无法使用喔！
      * @apiError (Error Status) 0 使用失敗
+     *
+     * @apiSuccessExample {json} 成功回應
+     * {
+     * "status": 1,
+     * "msg": "OK",
+     * "data": {}
+     * }
      */
-    public function useItem($id)
+    public function useItem(UseItem $request)
     {
         try {
-            $res = $this->backPackService->useItem($id);
-            if ($res) {
-                $this->setStatus(1, 'OK');
-            } else {
-                $this->setStatus(0, '使用失敗');
-            }
+            $res = $this->backPackService->useItem($request->id);
+
+            $this->setStatus($res['status'], $res['msg']);
             return $this->jsonOutput();
         } catch (\Exception $e) {
             report($e);
