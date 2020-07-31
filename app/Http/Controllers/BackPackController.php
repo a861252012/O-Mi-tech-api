@@ -92,8 +92,15 @@ class BackPackController extends Controller
         try {
             $res = $this->backPackService->useItem($request->id);
 
-            $this->setStatus($res['status'], $res['msg']);
+            if ($res['status'] != 1) {
+                $this->setStatus($res['status'], $res['msg']);
+                return $this->jsonOutput();
+            }
+
+            $this->setStatus(1, 'OK');
+
             return $this->jsonOutput();
+
         } catch (\Exception $e) {
             report($e);
             $this->setStatus(999, 'API執行錯誤');

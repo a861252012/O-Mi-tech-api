@@ -64,7 +64,7 @@ class BackPackService
                 $res = $this->useVip($id);
                 break;
             default:
-                $res = $this->UserItemRepository->updateItemStatus($id, 1);
+                $res['status'] = $this->UserItemRepository->updateItemStatus($id, 1);
         }
         return $res;
     }
