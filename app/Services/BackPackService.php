@@ -82,7 +82,7 @@ class BackPackService
 
         $updateVip = [
             'vip'     => $level->level_id,
-            'vip_end' => date('Y-m-d H:i:s', strtotime("+8 day")),
+            'vip_end' => date('Y-m-d H:i:s', strtotime("+7 day")),
         ];
         //賦予用戶貴族身份
         $updateUser = $this->userService->updateUserInfo(Auth::id(), $updateVip);
@@ -124,7 +124,7 @@ class BackPackService
             'mail_type' => 3,
             'rec_uid'   => Auth::id(),
             'content'   => '亲爱的用户，您的白尊体验将从 ' . date('Y-m-d') . '至' .
-                date('Y-m-d', strtotime('-1 day', strtotime($updateVip['vip_end']))),
+                date('Y-m-d', strtotime($updateVip['vip_end'])),
             'site_id'   => SiteSer::siteId(),
         ];
 
