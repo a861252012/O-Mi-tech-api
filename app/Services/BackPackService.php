@@ -101,7 +101,7 @@ class BackPackService
             'uid'        => Auth::id(),
             'gid'        => 30,
             'level_id'   => $level->level_id,
-            'type'       => 3,//操作类型:1 开通,2保级,3赠送
+            'type'       => 4,//操作类型:1 开通,2保级,3赠送 4.首充好禮物-貴族體驗券
             'create_at'  => date("Y-m-d H:i:s"),
             'rid'        => 0,
             'status'     => 1,
