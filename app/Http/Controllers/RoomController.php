@@ -155,7 +155,10 @@ class RoomController extends Controller
 //                    }
 //                    break;
                 case 8: //一对多
-//                    $handle = $user ? $pwd_cmd . 'room_one_to_many' : 'login';
+                    // 直接用新欄位給「已購票人數」
+                    $one2more = resolve('one2more')->getRunningData();
+                    $room['one2more_nums'] = $one2more['nums'];
+
                     $handle = $user ? 'room_one_to_many' : 'login';
                     if (!$roomService->whiteList()) {
                         if ($h5 === 'h5hls') {
@@ -177,12 +180,6 @@ class RoomController extends Controller
                             $logger->info("user exchange:  user id:$uid  origin:$origin ");
                             $hplat_user = $this->getMoney($uid, $rid, $origin);
                         }
-
-                        // fix online data
-                        $one2more = resolve('one2more')->getRunningData();
-                        $room['users'] = $one2more['nums'];
-                        $room['guests'] = "0";
-                        $room['total'] = $one2more['nums'];
 
                         return JsonResponse::create(['data' => [
                             //房间信息
