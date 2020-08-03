@@ -178,6 +178,12 @@ class RoomController extends Controller
                             $hplat_user = $this->getMoney($uid, $rid, $origin);
                         }
 
+                        // fix online data
+                        $one2more = resolve('one2more')->getRunningData();
+                        $room['users'] = $one2more['nums'];
+                        $room['guests'] = "0";
+                        $room['total'] = $one2more['nums'];
+
                         return JsonResponse::create(['data' => [
                             //房间信息
                             'room' => &$room,
