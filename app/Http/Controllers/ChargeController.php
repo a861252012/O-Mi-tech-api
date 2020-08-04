@@ -848,7 +848,7 @@ class ChargeController extends Controller
         if ($data['status'] == 200) {
             unset($data['status']);
         } else {
-            //如充值失敗,則將首充禮包icon改回不顯示
+            //如充值失敗,則將首充禮包icon改回顯示
             resolve(UserAttrService::class)->set($uid, 'first_gift', 0);
             $this->setStatus($data['status'], $data['msg']);
             return $this->jsonOutput();

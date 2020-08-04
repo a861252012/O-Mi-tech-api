@@ -132,27 +132,29 @@ class FirstChargeService
         return ($remainingTime < 0) ? 0 : $remainingTime;
     }
 
-    //是否顯示首充好禮icon (1:顯示/0：不顯示)
+    //是否顯示首充好禮icon (return: 1:顯示/0：不顯示)
     public function isShowFirstGiftIcon($uid): int
     {
         $user = $this->userService->getUserInfo($uid);
 
-        //非首充
-        $isFirstGift = $this->userAttrService->get($uid, 'first_gift');
+        //取得首充顯示旗標
+        $firstGift = $this->userAttrService->get($uid, 'first_gift');
 
-        if ($isFirstGift != null) {
-            return $isFirstGift;
+        if (!empty($firstGift)) {
+            if ($firstGift == 0 && $this->countRemainingTime($uid) > 0) {
+                return 1;
+            }
+
+            return 0;
         }
 
         //first_gift如為空,則判斷剩餘秒數及用戶是否充值過
-        if ($this->countRemainingTime($uid) > 0 && $user['first_charge_time'] === null) {
-            $this->userAttrService->set($uid, 'first_gift', 1);
-
+        if ($this->countRemainingTime($uid) > 0 && empty($user['first_charge_time'])) {
+            $this->userAttrService->set($uid, 'first_gift', 0);
             return 1;
         }
 
-        $this->userAttrService->set($uid, 'first_gift', 0);
-
+        $this->userAttrService->set($uid, 'first_gift', 1);
         return 0;
     }
 }
