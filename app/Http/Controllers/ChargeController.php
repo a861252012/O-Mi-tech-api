@@ -19,8 +19,10 @@ use App\Models\RechargeMoney;
 use App\Models\Users;
 use App\Services\Charge\OnePayService;
 use App\Services\Charge\ChargeService;
+use App\Services\FirstChargeService;
 use App\Services\User\UserService;
 use App\Traits\Commons;
+use App\Services\UserAttrService;
 use DB;
 use Hashids\Hashids;
 use Illuminate\Http\JsonResponse;
@@ -114,9 +116,13 @@ class ChargeController extends Controller
                 array_push($temp, $value);
             }
         }
+
         $var['recharge_money'] = json_encode($temp);
         $var['token'] = $token;
         $var['pay'] = 1;
+        $var['giftShow'] = resolve(FirstChargeService::class)->isShowFirstGiftIcon($uid);
+        $var['giftRemainingTime'] = resolve(FirstChargeService::class)->countRemainingTime($uid);
+
         return SuccessResponse::create($var);
     }
 
@@ -329,6 +335,10 @@ class ChargeController extends Controller
         );
 
         Log::channel('charge')->info($rtn);
+
+        //將首充禮包icon改回不顯示
+        resolve(UserAttrService::class)->set($uid, 'first_gift', 1);
+
         return new JsonResponse(array('status' => 0, 'data' => $rtn, 'msg' => $msg ?? ''));
     }
 
@@ -747,7 +757,7 @@ class ChargeController extends Controller
 
         //首次充值时间
         if ($chargeStatus) {
-            resolve('charge')->chargeAfter($stmt['uid']);
+            resolve('charge')->chargeAfter($stmt['uid'], $tradeno = '');
         }
 
         //第二步，更新数据
@@ -832,9 +842,14 @@ class ChargeController extends Controller
             )
         ));
 
+        //透過訂單號取得uid
+        $uid = Recharge::where('order_id', $data['trade_no'])->value('uid');
+
         if ($data['status'] == 200) {
             unset($data['status']);
         } else {
+            //如充值失敗,則將首充禮包icon改回顯示
+            resolve(UserAttrService::class)->set($uid, 'first_gift', 0);
             $this->setStatus($data['status'], $data['msg']);
             return $this->jsonOutput();
         }
@@ -849,6 +864,11 @@ class ChargeController extends Controller
             $data['channel'],
             $data['complate_time']
         );
+
+        //確認first_charge_gift_start_time是否存在
+        if (!resolve(UserAttrService::class)->get($uid, 'first_charge_gift_start_time')) {
+            resolve(UserAttrService::class)->set($uid, 'first_charge_gift_start_time', round(microtime(true) * 1000));
+        }
 
         if ($payType === 'onepay') {
             return 'OK';

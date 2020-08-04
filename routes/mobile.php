@@ -89,6 +89,12 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
 
         /* 用戶隱身 */
         Route::get('set_hidden/{status?}', 'UserController@setHidden');
+
+        /* - 取得用戶背包物品列表 */
+        Route::get('items', 'BackPackController@getItemList');
+
+        /* 使用背包物品 */
+        Route::post('item/use', 'BackPackController@useItem');
     });
 
     //关注

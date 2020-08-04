@@ -37,6 +37,7 @@ use App\Models\Users;
 use App\Models\UserSignin;
 use App\Models\Usersall;
 use App\Models\WithDrawalList;
+use App\Services\FirstChargeService;
 use App\Services\I18n\PhoneNumber;
 use App\Services\Message\MessageService;
 use App\Services\Room\RoomService;
@@ -45,6 +46,7 @@ use App\Services\Sms\SmsService;
 use App\Services\System\SystemService;
 use App\Services\User\UserService;
 use App\Services\User\SigninService;
+use App\Services\UserAttrService;
 use App\Services\UserGroup\UserGroupService;
 use DB;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -313,11 +315,29 @@ class MemberController extends Controller
             DB::table((new Users)->getTable())->where('uid', $uid)->decrement('points', $points);
             //update(array('points' => $this->userInfo['points'] - $points));
 
-            DB::table((new Users)->getTable())->where('uid', $userTo['uid'])->increment('points', $points);
+//            DB::table((new Users)->getTable())->where('uid', $userTo['uid'])->increment('points', $points);
             //update(array('points' => $user['points'] + $points));
 
             //本次紀錄時間
             $S_update_time = date('Y-m-d H:i:s');
+
+            //驗證是否符合首充豪禮條件
+            $trendNo = 'transfer_' . $uid . '_to_' . $userTo['uid'] . '_' . uniqid();
+            $isFirstGift = resolve(UserAttrService::class)->get($userTo['uid'], 'is_first_gift');
+            $receiverRemainingTime = resolve(FirstChargeService::class)->countRemainingTime($userTo['uid']);
+
+            if ($receiverRemainingTime > 0 && empty($userTo['first_charge_time']) && empty($isFirstGift)) {
+                $firstCharge = resolve(FirstChargeService::class)->firstCharge($username, $trendNo, $points);
+
+                if (!$firstCharge) {
+                    DB::rollBack();
+                    Log::error('贈送首充禮錯誤');
+
+                    return new JsonResponse(['status' => 0, 'msg' => '对不起！转帐失败!']);
+                }
+            } else {
+                DB::table((new Users)->getTable())->where('uid', $userTo['uid'])->increment('points', $points);
+            }
 
             //记录转帐
             DB::table((new Transfer)->getTable())->insert([
@@ -338,28 +358,13 @@ class MemberController extends Controller
                 'points' => $points,
                 'paymoney' => round($points / 10, 2),
                 'created' => $S_update_time,
-                'order_id' => 'transfer_' . $uid . '_to_' . $userTo['uid'] . '_' . uniqid(),
+                'order_id' => $trendNo,
                 'del' => 0,//190418stanly添加
                 'pay_type' => 7,
                 'pay_status' => 2,
                 'nickname' => $userTo['nickname'],
                 'site_id' => $userTo['site_id']
             ]);
-
-            $userRich = (int) resolve(UserService::class)->getUserInfo($uid, 'rich');
-
-            $data = [
-                'first_charge_time' => $S_update_time,
-                'rich'              => $userRich + 500,
-                'lv_rich'           => LvRich::calcul($userRich + 500)
-            ];
-
-            DB::table((new Users)->getTable())
-                ->where('uid', $userTo['uid'])
-                ->whereNull('first_charge_time')
-                ->update($data);
-
-            resolve(UserService::class)->cacheUserInfo($uid, $data);
 
             //发送成功消息给转帐人
             $from_user_transfer_message = [
@@ -388,6 +393,11 @@ class MemberController extends Controller
             $userService = resolve(UserService::class);
             $userService->cacheUserInfo($uid, null);
             $userService->cacheUserInfo($userTo['uid'], null);
+
+            //first_gift,is_first_gift 改為已領取首充禮包
+            resolve(UserAttrService::class)->set($userTo['uid'], 'first_gift', 1);
+            resolve(UserAttrService::class)->set($userTo['uid'], 'is_first_gift', 1);
+
 
             return new JsonResponse(['status' => 1, 'msg' => '您成功转出' . $points . '钻石']);
         } catch (\Exception $e) {
@@ -3070,7 +3080,6 @@ class MemberController extends Controller
             $qr_path = '/api/';
         }
 
-        $blockList = json_decode(Redis::get('sBarCodeRechargeSuspendUids'));
         $orders = $this->_getOrders();
 
         $list = Redis::get('home_all_' . $flashVer. ':'.SiteSer::siteId());
@@ -3085,7 +3094,7 @@ class MemberController extends Controller
             $userex = Usersall::select('uid', 'nickname as nick', 'headimg', 'headimg_sagent', 'qrcode_image')
                 ->where('transfer', 1)->where('qrcode_image', '<>', '')->find($O_list['uid']);
 
-            if (empty($userex) || in_array($userex['uid'], $blockList)) {
+            if (empty($userex)) {
                 continue;
             }
 
@@ -3613,6 +3622,8 @@ class MemberController extends Controller
      * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
      *
      * @apiParam {String} roomInfo 房間暱稱，範例: 我的房間暱稱
+     * @apiParam {String} feature 特色標籤
+     * @apiParam {String} content 內容標籤
      *
      * @apiSuccess {int} status 狀態<br>
      *                   <code>0</code>: 錯誤<br>
@@ -3644,11 +3655,24 @@ class MemberController extends Controller
 
         $roomService = resolve('roomService');
         if ($req->isMethod('post') || $req->get('postRoomInfo')) {
-            $rtn = $roomService->setInfo($rid, $req->get('roomInfo'));
+            $rtn = $roomService->setInfo(
+                $rid,
+                $req->get('roomInfo'),
+                $req->get('feature'),
+                $req->get('content')
+            );
+
+            if ($rtn) {
+                $this->setStatus(1, 'OK');
+            } else {
+                $this->setStatus(-1, '最多10个字');
+            }
         } else {
             $rtn = $roomService->getInfo($rid);
+            $this->setStatus(1, 'OK');
+            $this->setRootData('data', $rtn);
         }
 
-        return new JsonResponse($rtn);
+        return $this->jsonOutput();
     }
 }
