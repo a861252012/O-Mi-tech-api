@@ -323,21 +323,8 @@ class MemberController extends Controller
 
             //驗證是否符合首充豪禮條件
             $trendNo = 'transfer_' . $uid . '_to_' . $userTo['uid'] . '_' . uniqid();
-            $isFirstGift = resolve(UserAttrService::class)->get($userTo['uid'], 'is_first_gift');
-            $receiverRemainingTime = resolve(FirstChargeService::class)->countRemainingTime($userTo['uid']);
 
-            if ($receiverRemainingTime > 0 && empty($userTo['first_charge_time']) && empty($isFirstGift)) {
-                $firstCharge = resolve(FirstChargeService::class)->firstCharge($username, $trendNo, $points);
-
-                if (!$firstCharge) {
-                    DB::rollBack();
-                    Log::error('贈送首充禮錯誤');
-
-                    return new JsonResponse(['status' => 0, 'msg' => '对不起！转帐失败!']);
-                }
-            } else {
-                DB::table((new Users)->getTable())->where('uid', $userTo['uid'])->increment('points', $points);
-            }
+            DB::table((new Users)->getTable())->where('uid', $userTo['uid'])->increment('points', $points);
 
             //记录转帐
             DB::table((new Transfer)->getTable())->insert([
@@ -389,15 +376,13 @@ class MemberController extends Controller
             //检查收款人用户VIP保级状态 一定要在事务之后进行验证
             $this->checkUserVipStatus($userTo);
 
+            //驗證首充資格及贈送首充禮物
+            resolve(FirstChargeService::class)->firstCharge($username);
+
             // remove cache
             $userService = resolve(UserService::class);
             $userService->cacheUserInfo($uid, null);
             $userService->cacheUserInfo($userTo['uid'], null);
-
-            //first_gift,is_first_gift 改為已領取首充禮包
-            resolve(UserAttrService::class)->set($userTo['uid'], 'first_gift', 1);
-            resolve(UserAttrService::class)->set($userTo['uid'], 'is_first_gift', 1);
-
 
             return new JsonResponse(['status' => 1, 'msg' => '您成功转出' . $points . '钻石']);
         } catch (\Exception $e) {

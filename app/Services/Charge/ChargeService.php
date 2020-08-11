@@ -247,25 +247,10 @@ class ChargeService extends Service
         return $this->priviteKey;
     }
 
-    public function chargeAfter($uid, $tradeNo = ''): void
+    public function chargeAfter($uid): void
     {
         $userRich = (int)$this->userService->getUserInfo($uid, 'rich');
         $newUserRichLv = LvRich::calcul($userRich + 500);
-
-        //驗證是否符合首充豪禮條件
-        if (resolve(UserAttrService::class)->get($uid, 'is_first_gift') != 1) {
-            DB::beginTransaction();
-            $firstCharge = resolve(FirstChargeService::class)->firstCharge($uid, $tradeNo);
-
-            if (!$firstCharge) {
-                \DB::rollBack();
-                Log::error('贈送首充禮錯誤');
-            }
-
-            \DB::commit();
-        }
-
-        resolve(UserAttrService::class)->set($uid, 'is_first_gift', 1);
 
         $data = [
             'first_charge_time' => date('Y-m-d H:i:s'),
