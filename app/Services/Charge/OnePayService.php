@@ -166,7 +166,7 @@ class OnePayService
             return $res;
         }
 
-        if ($chargeResult != 00) {
+        if ($chargeResult != '00') {
             $chargeResult = 3;
         } else {
             $chargeResult = 2;
