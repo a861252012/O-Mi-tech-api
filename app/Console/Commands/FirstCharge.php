@@ -5,24 +5,16 @@
  */
 namespace App\Console\Commands;
 
-use App\Constants\LvRich;
-use App\Entities\UserItem;
 use App\Models\Recharge;
-use App\Repositories\UserItemRepository;
-use App\Services\Message\MessageService;
-use App\Services\User\UserService;
+use App\Services\FirstChargeService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class FirstCharge extends Command
 {
-    protected $userService;
-    protected $userItem;
-    protected $userItemRepository;
     protected $recharge;
-    protected $messageService;
-
+    protected $firstChargeService;
 
     /**
      * The name and signature of the console command.
@@ -45,18 +37,12 @@ class FirstCharge extends Command
      */
     public function __construct(
         Recharge $recharge,
-        UserItem $userItem,
-        UserItemRepository $userItemRepository,
-        UserService $userService,
-        MessageService $messageService
+        FirstChargeService $firstChargeService
     ) {
         parent::__construct();
 
         $this->recharge = $recharge;
-        $this->userItem = $userItem;
-        $this->userItemRepository = $userItemRepository;
-        $this->userService = $userService;
-        $this->messageService = $messageService;
+        $this->firstChargeService = $firstChargeService;
     }
 
     /**
@@ -76,97 +62,18 @@ class FirstCharge extends Command
         if($users->isNotEmpty()) {
             $this->info("需處理用戶數: " . $users->count());
 
-            DB::beginTransaction();
-
             foreach($users as $uid) {
-                $result = $this->firstCharge($uid);
-                if(-1 == $result) {
-                    $this->info("UID({$uid})不為首充用戶，略過");
+                $result = $this->firstChargeService->firstCharge($uid);
+
+                if(empty($result)) {
+                    $this->info("UID({$uid})補首充失敗，略過");
                     continue;
                 }
 
-                if(empty($result)) {
-                    DB::rollBack();
-                }
-
-                $this->info("用戶ID({$uid})補首充 : {$result}");
-                exit;
+                $this->info("用戶ID({$uid})補首充成功");
             }
-
-            DB::commit();
         } else {
             $this->info("無用戶需處理");
         }
-    }
-
-    private function firstCharge($uid)
-    {
-        $user = $this->userService->getUserInfo($uid);
-        $this->info('用戶資訊: ' . json_encode($user));
-        if(!empty($user->first_charge_time)) {
-            return -1;
-        }
-
-        //贈送首充禮
-        $insertGift = $this->userItem->firstuOrNew(['uid' => $uid, 'item_id' => '1'], ['status' => 0]);
-        $insertGift2 = $this->userItem->firstuOrNew(['uid' => $uid, 'item_id' => '2'], ['status' => 0]);
-
-        if (!$insertGift || !$insertGift2) {
-            Log::error('贈送首充禮錯誤');
-            return false;
-        }
-
-        //更新用戶資訊
-        $data = [
-            'first_charge_time' => date('Y-m-d H:i:s'),
-            'rich'              => (int)$user['rich'] + 500,
-            'lv_rich'           => LvRich::calcul($user['rich'] + 500),
-            'points'            => (int)$user['points'] + 50
-        ];
-
-        info("首充更新用戶資訊: " . json_encode($data));
-
-        $updateUser = $this->userService->updateUserInfo($uid, $data);
-
-        if (!$updateUser) {
-            Log::error('更新用戶資訊錯誤');
-            return false;
-        }
-
-        //新增充值紀錄(首充禮)
-        $rechargeRecord = $this->recharge->insert([
-            'uid'        => $uid,
-            'points'     => 50,
-            'paymoney'   => 0,
-            'created'    => date('Y-m-d H:i:s'),
-            'order_id'   => '_',
-            'pay_type'   => 5,
-            'pay_status' => 2,
-            'del'        => 0,
-            'nickname'   => $user['nickname'],
-            'site_id'    => (int)$user['site_id'],
-        ]);
-
-        if (!$rechargeRecord) {
-            Log::error('新增充值紀錄(首充禮)錯誤');
-            return false;
-        }
-
-        //新增手機端首充訊息
-        $UserFirstChargeMsg = [
-            'mail_type' => 3,
-            'rec_uid' => $uid,
-            'content' => '恭喜你获得首充豪礼，贵族体验券、等级积分、反馈钻石、飞频均已发送，若有问题请洽客服人员。',
-            'site_id' => $user['site_id']
-        ];
-
-        $sendMsg = $this->messageService->sendSystemtranslate($UserFirstChargeMsg);
-
-        if (!$sendMsg) {
-            Log::error('新增手機端首充訊息錯誤');
-            return false;
-        }
-
-        return true;
     }
 }
