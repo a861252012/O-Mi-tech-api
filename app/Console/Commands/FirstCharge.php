@@ -69,37 +69,47 @@ class FirstCharge extends Command
         /* 取得時間區間充值用戶 */
         $users = $this->recharge->where('pay_status', 2)
                 ->whereIn('pay_type',[1,4,7])
-                ->whereBetween('created', ['2020-08-06', date('Y-m-d')])
+                ->where('created', '>=', '2020-08-06 00:00:00')
+                ->where('created', '<=', date('Y-m-d H:i:s'))
                 ->pluck('uid');
 
         if($users->isNotEmpty()) {
+            $this->info("需處理用戶數: " . $users->count());
+
             DB::beginTransaction();
 
             foreach($users as $uid) {
                 $result = $this->firstCharge($uid);
+                if(-1 == $result) {
+                    $this->info("UID({$uid})不為首充用戶，略過");
+                    continue;
+                }
+
                 if(empty($result)) {
                     DB::rollBack();
                 }
 
-                Log::debug("用戶ID({$uid})補首充 : {$result}");
+                $this->info("用戶ID({$uid})補首充 : {$result}");
                 exit;
             }
 
             DB::commit();
+        } else {
+            $this->info("無用戶需處理");
         }
     }
 
     private function firstCharge($uid)
     {
         $user = $this->userService->getUserInfo($uid);
-        info('用戶資訊: ' . json_encode($user));
-        if(empty($user)) {
-            return false;
+        $this->info('用戶資訊: ' . json_encode($user));
+        if(!empty($user->first_charge_time)) {
+            return -1;
         }
 
         //贈送首充禮
-        $insertGift = $this->userItem->firstuOrCreate(['uid' => $uid, 'item_id' => '1'], ['status' => 0]);
-        $insertGift2 = $this->userItem->firstuOrCreate(['uid' => $uid, 'item_id' => '2'], ['status' => 0]);
+        $insertGift = $this->userItem->firstuOrNew(['uid' => $uid, 'item_id' => '1'], ['status' => 0]);
+        $insertGift2 = $this->userItem->firstuOrNew(['uid' => $uid, 'item_id' => '2'], ['status' => 0]);
 
         if (!$insertGift || !$insertGift2) {
             Log::error('贈送首充禮錯誤');
@@ -107,41 +117,39 @@ class FirstCharge extends Command
         }
 
         //更新用戶資訊
-        if(empty($user->first_charge_time)) {
-            $data = [
-                'first_charge_time' => date('Y-m-d H:i:s'),
-                'rich'    => (int)$user['rich'] + 500,
-                'lv_rich' => LvRich::calcul($user['rich'] + 500),
-                'points'  => (int)$user['points'] + 50
-            ];
+        $data = [
+            'first_charge_time' => date('Y-m-d H:i:s'),
+            'rich'              => (int)$user['rich'] + 500,
+            'lv_rich'           => LvRich::calcul($user['rich'] + 500),
+            'points'            => (int)$user['points'] + 50
+        ];
 
-            info("首充更新用戶資訊: " . json_encode($data));
+        info("首充更新用戶資訊: " . json_encode($data));
 
-            $updateUser = $this->userService->updateUserInfo($uid, $data);
+        $updateUser = $this->userService->updateUserInfo($uid, $data);
 
-            if (!$updateUser) {
-                Log::error('更新用戶資訊錯誤');
-                return false;
-            }
+        if (!$updateUser) {
+            Log::error('更新用戶資訊錯誤');
+            return false;
+        }
 
-            //新增充值紀錄(首充禮)
-            $rechargeRecord = $this->recharge->insert([
-                'uid'        => $uid,
-                'points'     => 50,
-                'paymoney'   => 0,
-                'created'    => date('Y-m-d H:i:s'),
-                'order_id'   => '_',
-                'pay_type'   => 5,
-                'pay_status' => 2,
-                'del'        => 0,
-                'nickname'   => $user['nickname'],
-                'site_id'    => (int)$user['site_id'],
-            ]);
+        //新增充值紀錄(首充禮)
+        $rechargeRecord = $this->recharge->insert([
+            'uid'        => $uid,
+            'points'     => 50,
+            'paymoney'   => 0,
+            'created'    => date('Y-m-d H:i:s'),
+            'order_id'   => '_',
+            'pay_type'   => 5,
+            'pay_status' => 2,
+            'del'        => 0,
+            'nickname'   => $user['nickname'],
+            'site_id'    => (int)$user['site_id'],
+        ]);
 
-            if (!$rechargeRecord) {
-                Log::error('新增充值紀錄(首充禮)錯誤');
-                return false;
-            }
+        if (!$rechargeRecord) {
+            Log::error('新增充值紀錄(首充禮)錯誤');
+            return false;
         }
 
         //新增手機端首充訊息
