@@ -46,7 +46,7 @@ class FirstChargeService
             !empty($user['first_charge_time']) ||
             !empty($this->userAttrService->get($user['uid'], 'is_first_gift'))
         ) {
-            return false;
+            return -1;
         }
 
         $gift = [
@@ -61,7 +61,8 @@ class FirstChargeService
 
         if (!$insertGift) {
             DB::rollBack();
-            Log::error('贈送首充禮錯誤');
+            Log::error($uid . '贈送首充禮錯誤');
+            return 0;
         }
 
         //更新用戶資訊
@@ -78,7 +79,8 @@ class FirstChargeService
 
         if (!$updateUser) {
             DB::rollBack();
-            Log::error('更新用戶資訊錯誤');
+            Log::error($uid . '更新用戶資訊錯誤');
+            return 0;
         }
 
         //新增充值紀錄(首充禮)
@@ -97,7 +99,8 @@ class FirstChargeService
 
         if (!$rechargeRecord) {
             DB::rollBack();
-            Log::error('新增充值紀錄(首充禮)錯誤');
+            Log::error($uid . '新增充值紀錄(首充禮)錯誤');
+            return 0;
         }
 
         DB::commit();
@@ -114,6 +117,8 @@ class FirstChargeService
 
         $this->userAttrService->set($uid, 'is_first_gift', 1);
         $this->userAttrService->set($uid, 'first_gift', 1);
+
+        return 1;
     }
 
     //計算用戶首充禮剩餘秒數
