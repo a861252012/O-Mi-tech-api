@@ -842,6 +842,10 @@ class ChargeController extends Controller
         //记录下日志
         Log::info('传输的数据记录: ' . $requestData);
 
+        if ($data['status'] === 1 || $data['status'] === 999) {
+            return new JsonResponse(['msg' => $data['msg'], 'status' => $data['status']]);
+        }
+
         //透過訂單號取得uid
         $uid = Recharge::where('order_id', $data['trade_no'])->value('uid');
 
