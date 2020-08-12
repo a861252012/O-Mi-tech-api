@@ -59,18 +59,26 @@ class FirstCharge extends Command
             ->pluck('uid');
 
         if ($users->isNotEmpty()) {
+            $success = 0;
+
             $this->info("需處理用戶數: " . $users->count());
 
             foreach ($users as $uid) {
                 $result = $this->firstChargeService->firstCharge($uid);
 
-                if (empty($result)) {
+                if (1 === $result) {
+                    $success++;
+                    $this->info("用戶ID({$uid})補首充成功");
+                } elseif (-1 === $result) {
+                    /* 不符合首充條件 */
+                    continue;
+                } else {
                     $this->info("UID({$uid})補首充失敗，略過");
                     continue;
                 }
-
-                $this->info("用戶ID({$uid})補首充成功");
             }
+
+            $this->info("完成補首充用戶數: {$success}");
         } else {
             $this->info("無用戶需處理");
         }
