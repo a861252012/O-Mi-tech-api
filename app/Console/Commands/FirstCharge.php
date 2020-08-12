@@ -3,13 +3,12 @@
  * 首充補資料
  * @date 2020-08-10
  */
+
 namespace App\Console\Commands;
 
 use App\Models\Recharge;
 use App\Services\FirstChargeService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class FirstCharge extends Command
 {
@@ -54,18 +53,18 @@ class FirstCharge extends Command
     {
         /* 取得時間區間充值用戶 */
         $users = $this->recharge->where('pay_status', 2)
-                ->whereIn('pay_type',[1,4,7])
-                ->where('created', '>=', '2020-08-06 00:00:00')
-                ->where('created', '<=', date('Y-m-d H:i:s'))
-                ->pluck('uid');
+            ->whereIn('pay_type', [1, 4, 7])
+            ->where('created', '>=', '2020-08-06 00:00:00')
+            ->where('created', '<=', date('Y-m-d H:i:s'))
+            ->pluck('uid');
 
-        if($users->isNotEmpty()) {
+        if ($users->isNotEmpty()) {
             $this->info("需處理用戶數: " . $users->count());
 
-            foreach($users as $uid) {
+            foreach ($users as $uid) {
                 $result = $this->firstChargeService->firstCharge($uid);
 
-                if(empty($result)) {
+                if (empty($result)) {
                     $this->info("UID({$uid})補首充失敗，略過");
                     continue;
                 }
