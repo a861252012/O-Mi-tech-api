@@ -36,23 +36,33 @@ class FirstChargeService
         $this->userAttrService = $userAttrService;
     }
 
-    public function firstCharge($uid, $trendNo = '', $points = 0)
+    public function firstCharge($uid, $skipTimeCheck = false)
     {
+        $this->userService->cacheUserInfo($uid);
         $user = $this->userService->getUserInfo($uid);
         info('用戶資訊: ' . json_encode($user));
+        //驗證是否符合首充豪禮條件
+        if (($this->countRemainingTime($user['uid']) === 0 && !$skipTimeCheck) ||
+            !empty($user['first_charge_time']) ||
+            !empty($this->userAttrService->get($user['uid'], 'is_first_gift'))
+        ) {
+            return -1;
+        }
 
         $gift = [
             ['item_id' => '1', 'uid' => $uid, 'status' => 0],
             ['item_id' => '2', 'uid' => $uid, 'status' => 0]
         ];
 
+        DB::beginTransaction();
 
         //贈送首充禮
         $insertGift = $this->userItemRepository->insertGift($gift);
 
         if (!$insertGift) {
-            Log::error('贈送首充禮錯誤');
-            return false;
+            DB::rollBack();
+            Log::error($uid . '贈送首充禮錯誤');
+            return 0;
         }
 
         //更新用戶資訊
@@ -60,7 +70,7 @@ class FirstChargeService
             'first_charge_time' => date('Y-m-d H:i:s'),
             'rich'    => (int)$user['rich'] + 500,
             'lv_rich' => LvRich::calcul($user['rich'] + 500),
-            'points'  => (int)$user['points'] + 50 + $points
+            'points'  => (int)$user['points'] + 50,
         ];
 
         info("首充更新用戶資訊: " . json_encode($data));
@@ -68,8 +78,9 @@ class FirstChargeService
         $updateUser = $this->userService->updateUserInfo($uid, $data);
 
         if (!$updateUser) {
-            Log::error('更新用戶資訊錯誤');
-            return false;
+            DB::rollBack();
+            Log::error($uid . '更新用戶資訊錯誤');
+            return 0;
         }
 
         //新增充值紀錄(首充禮)
@@ -78,7 +89,7 @@ class FirstChargeService
             'points'     => 50,
             'paymoney'   => 0,
             'created'    => date('Y-m-d H:i:s'),
-            'order_id'   => $trendNo,
+            'order_id'   => 'EX' . hexdec(uniqid()),
             'pay_type'   => 5,
             'pay_status' => 2,
             'del'        => 0,
@@ -87,9 +98,12 @@ class FirstChargeService
         ]);
 
         if (!$rechargeRecord) {
-            Log::error('新增充值紀錄(首充禮)錯誤');
-            return false;
+            DB::rollBack();
+            Log::error($uid . '新增充值紀錄(首充禮)錯誤');
+            return 0;
         }
+
+        DB::commit();
 
         //新增手機端首充訊息
         $UserFirstChargeMsg = [
@@ -99,14 +113,12 @@ class FirstChargeService
             'site_id' => $user['site_id']
         ];
 
-        $sendMsg = resolve(MessageService::class)->sendSystemtranslate($UserFirstChargeMsg);
+        resolve(MessageService::class)->sendSystemtranslate($UserFirstChargeMsg);
 
-        if (!$sendMsg) {
-            Log::error('新增手機端首充訊息錯誤');
-            return false;
-        }
+        $this->userAttrService->set($uid, 'is_first_gift', 1);
+        $this->userAttrService->set($uid, 'first_gift', 1);
 
-        return true;
+        return 1;
     }
 
     //計算用戶首充禮剩餘秒數
@@ -156,5 +168,26 @@ class FirstChargeService
 
         $this->userAttrService->set($uid, 'first_gift', 1);
         return 0;
+    }
+
+
+    //驗證首充資格 (return: true:首充用戶/false：非首充用戶)
+    //$skipTimeCheck 如為 true 則 不驗證用戶剩餘時間
+    public function checkFirstChargeQualifications($uid, $skipTimeCheck = false): bool
+    {
+        $this->userService->cacheUserInfo($uid);
+
+        $isFirstGift = $this->userAttrService->get($uid, 'is_first_gift');
+        $receiverRemainingTime = $this->countRemainingTime($uid);
+        $userFirstChargeTime = $this->userService->getUserInfo($uid, 'first_charge_time');
+        if ($skipTimeCheck) {
+            return $receiverRemainingTime > 0 && empty($isFirstGift);
+        }
+
+        if ($receiverRemainingTime > 0 && empty($userFirstChargeTime) && empty($isFirstGift)) {
+            return true;
+        }
+
+        return false;
     }
 }

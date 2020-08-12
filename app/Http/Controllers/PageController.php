@@ -122,12 +122,14 @@ class PageController extends Controller
             if ($domain->exists) {
                 //通过域名查询对应的代理列表（did为对应的domain id）
                 $agent = Agents::where('did', $domain->id)->where('status', 0)->first();
-                $img = QrCode::format('png')->size(200)->generate($agent->download_url);
-                $img = gzencode($img);
-                return Response::create($img)->header('Content-Type', 'image/png')
-                    ->setMaxAge(300)
-                    ->setSharedMaxAge(300)
-                    ->header('Content-Encoding', 'gzip');
+                if ($agent->download_url) {
+                    $img = QrCode::format('png')->size(200)->generate($agent->download_url);
+                    $img = gzencode($img);
+                    return Response::create($img)->header('Content-Type', 'image/png')
+                        ->setMaxAge(300)
+                        ->setSharedMaxAge(300)
+                        ->header('Content-Encoding', 'gzip');
+                }
             }
         }
 
