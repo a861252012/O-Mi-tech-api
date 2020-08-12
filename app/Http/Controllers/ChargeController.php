@@ -755,10 +755,8 @@ class ChargeController extends Controller
             return new JsonResponse(array('status' => 1, 'msg' => '程序内部异常'));
         }
 
-        //首次充值时间
-        if ($chargeStatus) {
-            resolve('charge')->chargeAfter($stmt['uid'], $tradeno = '');
-        }
+        //驗證首充資格及贈送首充禮物
+        resolve(FirstChargeService::class)->firstCharge($stmt['uid']);
 
         //第二步，更新数据
         $loginfo .= "订单号：" . $tradeno . " 数据处理成功！\n";
@@ -821,26 +819,28 @@ class ChargeController extends Controller
                 $request->sign,
                 $request->route('one_pay_token')
             );
+
+            $requestData = json_encode(
+                $request->only(
+                    'memberid',
+                    'orderid',
+                    'merchant_order',
+                    'amount',
+                    'datetime',
+                    'returncode',
+                    'pay_ext',
+                    'sign'
+                )
+            );
         } else {
             //获取下数据
-            $ucPostResult = file_get_contents("php://input");
+            $requestData = file_get_contents("php://input");
 
-            $data = resolve(ChargeService::class)->updateOrder($ucPostResult);
+            $data = resolve(ChargeService::class)->updateOrder($requestData);
         }
 
         //记录下日志
-        Log::info('传输的数据记录: ' . json_encode(
-            $request->only(
-                'memberid',
-                'orderid',
-                'merchant_order',
-                'amount',
-                'datetime',
-                'returncode',
-                'pay_ext',
-                'sign'
-            )
-        ));
+        Log::info('传输的数据记录: ' . $requestData);
 
         //透過訂單號取得uid
         $uid = Recharge::where('order_id', $data['trade_no'])->value('uid');
@@ -850,8 +850,6 @@ class ChargeController extends Controller
         } else {
             //如充值失敗,則將首充禮包icon改回顯示
             resolve(UserAttrService::class)->set($uid, 'first_gift', 0);
-            $this->setStatus($data['status'], $data['msg']);
-            return $this->jsonOutput();
         }
 
         $res = $this->orderHandler(
@@ -864,11 +862,6 @@ class ChargeController extends Controller
             $data['channel'],
             $data['complate_time']
         );
-
-        //確認first_charge_gift_start_time是否存在
-        if (!resolve(UserAttrService::class)->get($uid, 'first_charge_gift_start_time')) {
-            resolve(UserAttrService::class)->set($uid, 'first_charge_gift_start_time', round(microtime(true) * 1000));
-        }
 
         if ($payType === 'onepay') {
             return 'OK';
