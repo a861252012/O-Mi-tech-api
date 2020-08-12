@@ -60,8 +60,7 @@ class FirstCharge extends Command
 
         if ($users->isNotEmpty()) {
             $success = 0;
-
-            $this->info("需處理用戶數: " . $users->count());
+            $failed = 0;
 
             foreach ($users as $uid) {
                 $result = $this->firstChargeService->firstCharge($uid);
@@ -73,14 +72,14 @@ class FirstCharge extends Command
                     /* 不符合首充條件 */
                     continue;
                 } else {
+                    $failed++;
                     $this->info("UID({$uid})補首充失敗，略過");
                     continue;
                 }
             }
 
-            $this->info("完成補首充用戶數: {$success}");
-        } else {
-            $this->info("無用戶需處理");
+            $this->info("補首充用戶數成功: {$success}");
+            $this->info("補首充用戶數失敗: {$failed}");
         }
     }
 }
