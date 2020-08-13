@@ -309,32 +309,50 @@ class RoomController extends Controller
      * @apiError (Error Status) 1
      *
      * @apiSuccess {String} room_name 房間名稱
-     * @apiSuccess {String} header_pic
-     * @apiSuccess {String} room_pic
-     * @apiSuccess {String} live_status
-     * @apiSuccess {String} live_device_type
-     * @apiSuccess {String} tid
-     * @apiSuccess {String} is_password
-     * @apiSuccess {String} start_time
-     * @apiSuccess {String} end_time
-     * @apiSuccess {String} user_num
-     * @apiSuccess {String} room_price
+     * @apiSuccess {String} header_pic 主播大頭照
+     * @apiSuccess {String} room_pic 主播海報
+     * @apiSuccess {String} live_status 是否在線 (hvediosKtv:{rid} status)
+     * @apiSuccess {String} live_device_type 裝置類型 (hvediosKtv:{rid} origin)
+     * @apiSuccess {String} tid 当前房间时间点状态，有优化级，順序如下<br>
+     *                      <code>4</code>: 一对一<br>
+     *                      <code>8</code>: 一对多<br>
+     *                      <code>6</code>: 时长房(限制房间)、已廢除<br>
+     *                      <code>1</code>: 普通房
+     * @apiSuccess {String} is_password 是否為密碼房 (0, 1)
+     * @apiSuccess {String} start_time 「一对一」或「一对多」開始時間
+     * @apiSuccess {String} end_time 「一对一」或「一对多」結束時間
+     * @apiSuccess {String} user_num 普通房時顯示房間總人數 (hvediosKtv:{rid} total) ，但這個值不準確，目前也沒用途<br>
+     *                      <hr>
+     *                      一對多後改成「已購票人數」
+     *                      <hr>
+     *                      一對一後改成抓 hroom_duration:{rid}:4 的值，邏輯如下：<br>
+     *                      <code>key.tickets ?: key.reuid ? 1 : 0</code>
+     * @apiSuccess {String} room_price 房間價格
      * @apiSuccess {String} room_price_sale 守護身份優惠價
-     * @apiSuccess {String} room_info 房間額外文字
-     * @apiSuccess {String} time_length
-     * @apiSuccess {String} room_id
-     * @apiSuccess {String} class_id
-     * @apiSuccess {String} authority_in 是否有权限进入房间
-     * (1 是/302 尚未购买一对多/303 尚未预约一对一/304 一对一已被其他人预约/305 余额不足 ，不能进入时长房间/306 密码房间，请输入密码/307 用户不合法/308 房间状态异常)
-     * @apiSuccess {String} host
-     * @apiSuccess {String} ip
-     * @apiSuccess {String} port
+     * @apiSuccess {String} room_info 房間描述
+     * @apiSuccess {String} time_length 開始時間到結束時間的秒數
+     * @apiSuccess {String} room_id rid
+     * @apiSuccess {String} class_id 一對多是房間編號<br>
+     *                      一對一是抓 hroom_duration:{rid}:4 的 id，內容不詳
+     * @apiSuccess {String} authority_in 是否有权限进入房间<br>
+     *                      <code>1</code>: 是<br>
+     *                      <code>302</code>: 尚未购买一对多<br>
+     *                      <code>303</code>: 尚未预约一对一<br>
+     *                      <code>304</code>: 一对一已被其他人预约<br>
+     *                      <code>305</code>: 余额不足，不能进入时长房间<br>
+     *                      <code>306</code>: 密码房间，请输入密码<br>
+     *                      <code>307</code>: 用户不合法<br>
+     *                      <code>308</code>: 房间状态异常<br>
+     *                      <code>309</code>: 游客进特殊房间<br>
+     * @apiSuccess {String} host socket 連線資訊，挑出在線人數最少的 channel
+     * @apiSuccess {String} ip socket 連線資訊，挑出在線人數最少的 channel
+     * @apiSuccess {String} port socket 連線資訊，挑出在線人數最少的 channel
      *
      * @apiSuccessExample {json} 成功回應
      *{
     "data": {
     "room_name": "ted",
-    "header_pic": "a8193c14a4d0568096a920825defba39",
+    "header_pic": "a8193c14a4d0568096a920825defba39.jpg",
     "room_pic": "",
     "live_status": "0",
     "live_device_type": "11",
@@ -350,9 +368,9 @@ class RoomController extends Controller
     "room_id": "9493275",
     "class_id": 0,
     "authority_in": 1,
-    "host": "192.168.0.2",
-    "ip": null,
-    "port": null
+    "host": "10.2.121.15,10.2.121.240",
+    "ip": "10.2.121.100",
+    "port": "1057"
     },
     "msg": "",
     "status": 1
