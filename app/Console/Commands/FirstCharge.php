@@ -6,14 +6,18 @@
 
 namespace App\Console\Commands;
 
+use App\Constants\LvRich;
+use App\Entities\UserItem;
+use App\Facades\UserSer;
 use App\Models\Recharge;
-use App\Services\FirstChargeService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class FirstCharge extends Command
 {
     protected $recharge;
-    protected $firstChargeService;
+    protected $userItem;
 
     /**
      * The name and signature of the console command.
@@ -36,12 +40,12 @@ class FirstCharge extends Command
      */
     public function __construct(
         Recharge $recharge,
-        FirstChargeService $firstChargeService
+        UserItem $userItem
     ) {
         parent::__construct();
 
         $this->recharge = $recharge;
-        $this->firstChargeService = $firstChargeService;
+        $this->userItem = $userItem;
     }
 
     /**
@@ -51,35 +55,115 @@ class FirstCharge extends Command
      */
     public function handle()
     {
-        /* 取得時間區間充值用戶 */
-        $users = $this->recharge->where('pay_status', 2)
+        /* 補50鑽人數 */
+        $addPointCount = 0;
+
+        /* 補首充禮包人數 */
+        $addFirstGiftCount = 0;
+
+        /* 補經驗人數 */
+        $addExpCount = 0;
+
+        /* 取得8/6後充值訂單 */
+        $orders = $this->recharge->where('pay_status', 2)
             ->whereIn('pay_type', [1, 4, 7])
             ->where('created', '>=', '2020-08-06 00:00:00')
             ->where('created', '<=', date('Y-m-d H:i:s'))
-            ->pluck('uid');
+            ->orderBy('created', 'asc')
+            ->get();
 
-        if ($users->isNotEmpty()) {
-            $success = 0;
-            $failed = 0;
+        foreach ($orders as $order) {
+            /* 判斷uid在目前訂單時間前是否有充值訂單 */
+            $isDeposited = $this->recharge->where('uid', $order->uid)
+                ->whereIn('pay_type', [1, 4, 7])
+                ->where('pay_status', 2)
+                ->where('created', '<', $order->created)
+                ->get();
 
-            foreach ($users as $uid) {
-                $result = $this->firstChargeService->firstCharge($uid);
-
-                if (1 === $result) {
-                    $success++;
-                    $this->info("用戶ID({$uid})補首充成功");
-                } elseif (-1 === $result) {
-                    /* 不符合首充條件 */
-                    continue;
-                } else {
-                    $failed++;
-                    $this->info("UID({$uid})補首充失敗，略過");
-                    continue;
-                }
+            if ($isDeposited->count() > 0) {
+                /* 過去有成功充值訂單，故略過 */
+                continue;
             }
 
-            $this->info("補首充用戶數成功: {$success}");
-            $this->info("補首充用戶數失敗: {$failed}");
+            $firstChargeTime = $order->created;
+
+            /* 更新用戶首充時間 */
+            UserSer::updateUserInfo($order->uid, ['first_charge_time' => $firstChargeTime]);
+
+            /* 用戶是否有pay_type = 5(充值贈送)的訂單 */
+            $payType5Order = $this->recharge->where('uid', $order->uid)
+                ->where('pay_type', 5)
+                ->where('pay_status', 2)
+                ->where('created', '>=', '2020-08-06 00:00:00')
+                ->where('points', 50)
+                ->orderBy('id')
+                ->first();
+
+            /* 取得user */
+            $user = DB::table('video_user')->where('uid', $order->uid)->first();
+
+            /* 補經驗旗標 */
+            $expFlag = false;
+
+            if (empty($payType5Order)) {
+                /* 無充值贈送訂單，則新增一筆，並將新增時間設定為8/6之後的最早充值訂單的時間 */
+                $insertId = $this->recharge->insertGetId([
+                    'uid'        => $order->uid,
+                    'points'     => 50,
+                    'paymoney'   => 0,
+                    'created'    => $firstChargeTime,
+                    'ttime'      => $firstChargeTime,
+                    'order_id'   => 'EX' . hexdec(uniqid()),
+                    'pay_type'   => 5,
+                    'pay_status' => 2,
+                    'nickname'   => $order->nickname,
+                    'message'    => '補首充command',
+                    'del'        => 0,
+                    'site_id'    => $order->site_id,
+                ]);
+
+                /* 補50鑽 */
+                if (!empty($insertId)) {
+                    UserSer::updateUserInfo($order->uid, ['points'  => (int)$user->points + 50]);
+                    $addPointCount++;
+                    $expFlag = true;
+                    $this->info("用戶UID({$order->uid}) 補50鑽成功");
+                }
+
+            } else {
+                /* 有充值贈送訂單，將新增時間設定為8/6之後的最早充值訂單的時間 */
+                $payType5Order->created = $firstChargeTime;
+                $payType5Order->save();
+            }
+
+            /* 取得用戶物品數量 */
+            $itemsCount = $this->userItem->where('uid', $order->uid)->count();
+
+            /* 如無禮包，則補 */
+            if ($itemsCount == 0) {
+                $this->userItem->insert([
+                    ['item_id' => '1', 'uid' => $order->uid, 'status' => 0],
+                    ['item_id' => '2', 'uid' => $order->uid, 'status' => 0],
+                ]);
+
+                $addFirstGiftCount++;
+                $expFlag = true;
+                $this->info("用戶UID({$order->uid}) 補禮包成功");
+            }
+
+            /* 補經驗 */
+            if ($expFlag) {
+                UserSer::updateUserInfo($order->uid, [
+                    'rich'    => (int)$user->rich + 500,
+                    'lv_rich' => LvRich::calcul($user->rich + 500),
+                ]);
+
+                $addExpCount++;
+            }
         }
+
+        $this->info("補50鑽人數: {$addPointCount}");
+        $this->info("補禮包人數: {$addFirstGiftCount}");
+        $this->info("補經驗人數: {$addExpCount}");
     }
 }
