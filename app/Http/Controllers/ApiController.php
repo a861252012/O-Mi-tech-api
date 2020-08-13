@@ -32,6 +32,7 @@ use App\Services\Sms\SmsService;
 use App\Services\System\SystemService;
 use App\Services\User\RegService;
 use App\Services\User\UserService;
+use App\Services\UserAttrService;
 use App\Traits\Commons;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -203,6 +204,7 @@ class ApiController extends Controller
      * @apiParam {Int} origin 来源：11 ,12,21,22,31,32，第一位（1网页，2安卓，3IOS，4蜜情 5XO），第二位（1直播间，2前台，3后台）
      * @apiParam {String} [client] 手機系統(android/ios)
      * @apiParam {String} [scode] 分享碼
+     * @apiParam {String} [locale] 語系(EX: zh)
      *
      * @apiParamExample {json} Request-Example:
      * /api/reg/6U90DC24
@@ -220,7 +222,8 @@ class ApiController extends Controller
     "password2":"test123456",
     "origin":22,
     "client":"android"
-    "scode":"aaa"
+    "scode":"aaa",
+    "locale":"en"
     }
      *
      * @apiError (Error Status) 999 API執行錯誤
@@ -287,7 +290,8 @@ class ApiController extends Controller
     "cover": "",
     "qrcode_image": "",
     "guard_id": 0,
-    "guard_end": null
+    "guard_end": null,
+    "locale": "en"
     }
     },
     "msg": "",
@@ -298,12 +302,14 @@ class ApiController extends Controller
     {
         $regService = resolve(RegService::class);
         $shareService = resolve(ShareService::class);
+        $userAttrService = resolve(UserAttrService::class);
         $useMobile = $request->post('use_mobile', 0) == '1';
         $scode = $request->scode ?? null;
 
         $status = $regService->status();
         if ($status == RegService::STATUS_BLOCK) {
-            return $this->msg('来自您当前 IP 的注册数量过多，已暂停注册功能，请联系客服处理。');
+            $this->setStatus(0, 'messages.Api.reg.ip_block');
+            return $this->jsonOutput();
         }
 
         $site_id = SiteSer::siteId();
@@ -314,13 +320,15 @@ class ApiController extends Controller
             $mobile = $request->post('mobile', '');
             $code = $request->post('code', '');
             if (empty($cc) || empty($mobile) || empty($code)) {
-                return $this->msg('Invalid request');
+                $this->setStatus(0, 'messages.Api.reg.invalid_request');
+                return $this->jsonOutput();
             }
             $mobile = PhoneNumber::formatMobile($cc, $mobile);
 
             $cc_mobile = $cc . $mobile;
             if ($redis->hExists('hcc_mobile_to_id:' . $site_id, $cc_mobile)) {
-                return $this->msg('对不起, 该手机号已被使用!');
+                $this->setStatus(0, 'messages.Api.reg.mobile_is_used');
+                return $this->jsonOutput();
             }
 
             $result = SmsService::verify(SmsService::ACT_REG, $cc, $mobile, $code);
@@ -332,10 +340,8 @@ class ApiController extends Controller
         $skipCaptcha = SiteSer::config('skip_captcha_reg');
         $needCaptcha = !$skipCaptcha && $status == RegService::STATUS_NEED_CAPTCHA;
         if (!$useMobile && $needCaptcha && !Captcha::check($request->get('captcha'))) {
-            return JsonResponse::create([
-                "status" => 0,
-                "msg"    => "验证码错误!",
-            ]);
+            $this->setStatus(0, 'messages.Api.reg.captcha_error');
+            return $this->jsonOutput();
         }
 
         $username = $request->get('username');
@@ -344,10 +350,8 @@ class ApiController extends Controller
         } else {
             if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/',
                     $username) || strlen($username) < 5 || strlen($username) > 30) {
-                return JsonResponse::create([
-                    "status" => 0,
-                    "msg"    => "注册邮箱不符合格式！(5-30位的邮箱)",
-                ]);
+                $this->setStatus(0, 'messages.Api.reg.username_wrong_format');
+                return $this->jsonOutput();
             }
         }
 
@@ -361,10 +365,8 @@ class ApiController extends Controller
 
         //昵称不能使用/:;\空格,换行等符号。
         if ($len < 2 || $len > 11 || !preg_match("/^[^\s\/\:;]+$/", $nickname)) {
-            return JsonResponse::create([
-                "status" => 0,
-                "msg"    => "注册昵称不能使用/:;\空格,换行等符号！(2-11位的昵称)",
-            ]);
+            $this->setStatus(0, 'messages.Api.reg.nickname_wrong_format');
+            return $this->jsonOutput();
         }
 
         // 关键字过滤
@@ -374,10 +376,8 @@ class ApiController extends Controller
                 foreach ($query as $v) {
                     $v['keyword'] = addcslashes($v['keyword'], '.^$*+?()[]{}|\\');
                     if (preg_match("/{$v['keyword']}/i", $nickname)) {
-                        return JsonResponse::create([
-                            "status" => 0,
-                            "msg"    => "昵称中含有非法字符，请修改后再提交!",
-                        ]);
+                        $this->setStatus(0, 'messages.Api.reg.nickname_is_lawbreaking');
+                        return $this->jsonOutput();
                     }
                 }
             }
@@ -385,10 +385,8 @@ class ApiController extends Controller
 
         $password2 = $request->get('password2');
         if (!empty($password2) && $request->get('password1') != $password2) {
-            return JsonResponse::create([
-                "status" => 0,
-                "msg"    => "两次密码输入不一致!",
-            ]);
+            $this->setStatus(0, 'messages.Api.reg.password_is_not_the_same');
+            return $this->jsonOutput();
         }
 
         $password1 = $request->get('password1');
@@ -399,23 +397,17 @@ class ApiController extends Controller
         }
         $passlen = strlen($password);
         if ($passlen < 6 || $passlen > 22 || preg_match('/^\d{6,22}$/', $password)) {
-            return JsonResponse::create([
-                "status" => 0,
-                "msg"    => "注册密码不符合格式!",
-            ]);
+            $this->setStatus(0, 'messages.Api.reg.password_wrong_format');
+            return $this->jsonOutput();
         }
 
         if ($redis->hExists('husername_to_id:' . SiteSer::siteId(), $username)) {
-            return JsonResponse::create([
-                "status" => 0,
-                "msg"    => "对不起, 该帐号已被使用!",
-            ]);
+            $this->setStatus(0, 'messages.Api.reg.username_is_used');
+            return $this->jsonOutput();
         }
         if ($redis->hExists('hnickname_to_id:' . SiteSer::siteId(), $nickname)) {
-            return JsonResponse::create([
-                "status" => 0,
-                "msg"    => "对不起, 该昵称已被使用!",
-            ]);
+            $this->setStatus(0, 'messages.Api.reg.nickname_is_used');
+            return $this->jsonOutput();
         }
 
         /* 解碼分享碼 */
@@ -451,9 +443,15 @@ class ApiController extends Controller
 
         $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
         if (!$uid) {
-            return JsonResponse::create(['status' => 0, 'msg' => '昵称已被注册或注册失败']);
+            $this->setStatus(0, 'messages.Api.reg.nickname_repeat');
+            return $this->jsonOutput();
         }
+
         $user = Users::find($uid);
+        $locale = $request->{locale} ?? 'zh';
+
+        /* 註冊用戶語系 */
+        $userAttrService->set($user->uid, 'locale', $locale);
 
         $this->checkAgent($uid);
 
@@ -480,7 +478,7 @@ class ApiController extends Controller
             //添加是否写入sid判断
             $sidUser = resolve(RedisCacheService::class)->sid($uid);
             if (empty($sidUser)) {
-                $this->setStatus(0, 'token 寫入redis失敗，請重新登錄');
+                $this->setStatus(0, 'messages.Api.reg.redis_token_error');
                 return $this->jsonOutput();
             }
 
@@ -490,9 +488,12 @@ class ApiController extends Controller
                 'jwt'  => (string)$guard->getToken(),
                 'user' => $user,
             ];
+
+            $return['data']['user']['locale'] = $userAttrService->get($user->uid, 'locale');
         } else {
             if (empty($user)) {
-                return JsonResponse::create(['status' => 0, 'msg' => '请重新登陆!']);
+                $this->setStatus(0, 'messages.Api.reg.please_login');
+                return $this->jsonOutput();
             }
             $guard = Auth::guard('pc');
             $guard->login($user);

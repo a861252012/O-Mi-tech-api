@@ -123,6 +123,9 @@ Route::group(['prefix' => 'user'], function () {
 
         /* 使用背包物品 */
         Route::post('item/use', 'BackPackController@useItem');
+
+        /* 用戶設定語系 */
+        Route::post('set_locale', 'UserController@setLocale');
     });
 });
 

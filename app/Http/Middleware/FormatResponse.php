@@ -2,10 +2,13 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\UserAttrService;
 use Closure;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class FormatResponse
@@ -20,6 +23,19 @@ class FormatResponse
      */
     public function handle($request, Closure $next)
     {
+        /* 設定多國語系 */
+//        $userAttrService = resolve(UserAttrService::class);
+//        $userLocale = $userAttrService->get(Auth::id(), 'locale');
+//        if (!empty($userLocale)) {
+//            $locale = $userLocale;
+//        } elseif (!empty($request->query('locale'))) {
+//            $locale = $request->query('locale');
+//        } else {
+//            $locale = 'zh';
+//        }
+//
+//        App::setLocale($locale);
+
         $response = $next($request);
 
         if ($response instanceof Response) {

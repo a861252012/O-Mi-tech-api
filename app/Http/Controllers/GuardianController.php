@@ -16,6 +16,7 @@ use App\Services\GuardianService;
 use App\Services\Message\MessageService;
 use App\Services\User\UserService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -153,19 +154,23 @@ class GuardianController extends Controller
         try {
             $data = $this->guardianService->getSetting();
             if (empty($data)) {
-                $this->setStatus(0, '設定為空');
+                $this->setStatus(0, 'messages.Guardian.getSetting.setting_is_empty');
                 return $this->jsonOutput();
             }
 
-            $faq = SiteSer::config('cdn_host') . '/' . SiteSer::config('publish_version') . '/static/faq/guardian.html';
+            $faq = sprintf('%s/%d/static/faq/guardian%s.html',
+                SiteSer::config('cdn_host'),
+                SiteSer::config('publish_version'),
+                empty(App::getLocale()) ? '' : '-' . App::getLocale()
+            );
 
-            $this->setStatus(1, '成功');
+            $this->setStatus(1, 'messages.success');
             $this->setData('faq', $faq);
             $this->setData('guard_settiings', $data);
             return $this->jsonOutput();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            $this->setStatus(999, 'api執行失敗');
+            $this->setStatus(999, 'messages.apiError');
             return $this->jsonOutput();
         }
     }
@@ -245,12 +250,12 @@ class GuardianController extends Controller
         try {
             $data = $this->guardianService->getMyInfo();
 
-            $this->setStatus(1, '成功');
+            $this->setStatus(1, 'messages.success');
             $this->setRootData('data', $data);
             return $this->jsonOutput();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            $this->setStatus(999, 'api執行失敗');
+            $this->setStatus(999, 'messages.apiError');
             return $this->jsonOutput();
         }
     }
@@ -303,13 +308,13 @@ class GuardianController extends Controller
             $request->rid);
 
         if ($data['status'] != 200) {
-            $this->setStatus($data['status'], $data['msg']);
+            $this->setStatus($data['status'], $data['msg'], $data['msgParam']);
             return $this->jsonOutput();
         } else {
             unset($data['status']);
         }
 
-        $this->setStatus(1, '开通守护执行成功');
+        $this->setStatus(1, 'messages.success');
         $this->setRootData('data', $data);
 
         return $this->jsonOutput();
@@ -376,13 +381,13 @@ class GuardianController extends Controller
     public function history()
     {
         try {
-            $this->setStatus(1, 'OK');
+            $this->setStatus(1, 'messages.success');
             $this->setData('list', $this->guardianService->getGuardianHistory());
             $this->setData('type', 'guardian');
             return $this->jsonOutput();
         } catch (\Exception $e) {
             report($e);
-            $this->setStatus(999, 'api執行失敗');
+            $this->setStatus(999, 'messages.apiError');
             return $this->jsonOutput();
         }
     }

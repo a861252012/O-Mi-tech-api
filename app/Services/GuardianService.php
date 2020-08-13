@@ -208,31 +208,36 @@ class GuardianService
 
         //檢核方案是否有開啟
         if (!$price['final']) {
-            return ['status' => 101, 'msg' => '守护系统' . self::VALID_DAY_ARR[$daysType] . '天方案未啟用'];
+//            return ['status' => 101, 'msg' => '守护系统' . self::VALID_DAY_ARR[$daysType] . '天方案未啟用'];
+            return [
+                'status' => 101,
+                'msg' => 'messages.Guardian.buy.class_not_active',
+                'msgParam' => ['day' => self::VALID_DAY_ARR[$daysType]]
+            ];
         }
 
         //檢核用戶鑽石是否足夠，不足返回資訊
         if (!($user->points >= $price['final'])) {
-            return ['status' => 102, 'msg' => '您的钻石不足'];
+            return ['status' => 102, 'msg' => 'messages.Guardian.buy.user_point_not_enough'];
         }
 
         //檢核續費還是新開通，是否有符合規定
         if ($user->guard_end >= Carbon::now()) {//如有開通且未過期
             if ($user->guard_id > $guardId) {
-                return ['status' => 103, 'msg' => '您现在的级别已大於您要开通/续费的等级'];
+                return ['status' => 103, 'msg' => 'messages.Guardian.buy.level_is_high'];
             } else {
                 if ($user->guard_id == $guardId && $payType != 2) {
-                    return ['status' => 104, 'msg' => '您已开通该级别守护，仅能续费该守护等级'];
+                    return ['status' => 104, 'msg' => 'messages.Guardian.buy.only_renewal'];
                 } else {
                     if ($user->guard_id < $guardId && $payType != 1) {
                         //(原守護等級 < 開通/續約等級 && 不是新開通)
-                        return ['status' => 105, 'msg' => '您尚未开通该级别守护，无法续费'];
+                        return ['status' => 105, 'msg' => 'messages.Guardian.buy.only_active'];
                     }
                 }
             }
         } else {
             if ($payType == 2) {
-                return ['status' => 105, 'msg' => '您尚未开通该级别守护，无法续费'];
+                return ['status' => 105, 'msg' => 'messages.Guardian.buy.only_active'];
             }
         }
 
