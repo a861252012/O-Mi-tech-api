@@ -308,9 +308,9 @@ class RoomController extends Controller
      *
      * @apiError (Error Status) 1
      *
-     * @apiSuccess {String} room_name 房間名稱
-     * @apiSuccess {String} header_pic 主播大頭照
-     * @apiSuccess {String} room_pic 主播海報
+     * @apiSuccess {String} room_name 主播 user.nickname
+     * @apiSuccess {String} header_pic 主播大頭照 user.headimg.jpg
+     * @apiSuccess {String} room_pic 主播海報 user.cover
      * @apiSuccess {String} live_status 是否在線 (hvediosKtv:{rid} status)
      * @apiSuccess {String} live_device_type 裝置類型 (hvediosKtv:{rid} origin)
      * @apiSuccess {String} tid 当前房间时间点状态，有优化级，順序如下<br>
@@ -319,15 +319,15 @@ class RoomController extends Controller
      *                      <code>6</code>: 时长房(限制房间)、已廢除<br>
      *                      <code>1</code>: 普通房
      * @apiSuccess {String} is_password 是否為密碼房 (0, 1)
-     * @apiSuccess {String} start_time 「一对一」或「一对多」開始時間
-     * @apiSuccess {String} end_time 「一对一」或「一对多」結束時間
+     * @apiSuccess {String} start_time 「一对一」或「一对多」開始時間，沒有則回傳 <code>null</code>
+     * @apiSuccess {String} end_time 「一对一」或「一对多」結束時間，沒有則回傳 <code>null</code>
      * @apiSuccess {String} user_num 普通房時顯示房間總人數 (hvediosKtv:{rid} total) ，但這個值不準確，目前也沒用途<br>
      *                      <hr>
      *                      一對多後改成「已購票人數」
      *                      <hr>
      *                      一對一後改成抓 hroom_duration:{rid}:4 的值，邏輯如下：<br>
      *                      <code>key.tickets ?: key.reuid ? 1 : 0</code>
-     * @apiSuccess {String} room_price 房間價格
+     * @apiSuccess {String} room_price 房間價格，無值時回傳數字 <code>0</code>，有值時回傳字串！
      * @apiSuccess {String} room_price_sale 守護身份優惠價
      * @apiSuccess {String} room_info 房間描述
      * @apiSuccess {String} time_length 開始時間到結束時間的秒數
@@ -353,15 +353,15 @@ class RoomController extends Controller
     "data": {
     "room_name": "ted",
     "header_pic": "a8193c14a4d0568096a920825defba39.jpg",
-    "room_pic": "",
+    "room_pic": "9494029_1596703403.jpeg",
     "live_status": "0",
     "live_device_type": "11",
     "tid": 1,
     "is_password": 0,
-    "start_time": null,
-    "end_time": null,
+    "start_time": "2020-08-13 17:10:00",
+    "end_time": "2020-08-13 17:40:00",
     "user_num": "0",
-    "room_price": 0,
+    "room_price": "399",
     "room_price_sale": 0,
     "room_info": "",
     "time_length": 0,
