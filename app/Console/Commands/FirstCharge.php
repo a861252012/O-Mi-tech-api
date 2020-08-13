@@ -66,7 +66,7 @@ class FirstCharge extends Command
 
         /* 取得8/6後充值訂單 */
         $orders = $this->recharge->where('pay_status', 2)
-            ->whereIn('pay_type', [1, 4, 7])
+            ->whereIn('pay_type', [1, 7])
             ->where('created', '>=', '2020-08-06 00:00:00')
             ->where('created', '<=', date('Y-m-d H:i:s'))
             ->orderBy('created', 'asc')
