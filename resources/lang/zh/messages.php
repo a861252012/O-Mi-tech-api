@@ -23,4 +23,13 @@ return [
     'Api.reg.nickname_repeat' => '昵称已被注册或注册失败',
     'Api.reg.redis_token_error' => 'token 寫入redis失敗，請重新登錄',
     'Api.reg.please_login' => '请重新登陆!',
+    'Activity.activity.wrong_url' => '找不到该页面!',
+    'Activity.activityUrl.wrong_activity_url' => '找不到该页面!',
+    'Activity.activityUrl.right_activity_url' => '获取成功',
+    'Activity.detailtype.wrong_id' => '活动id错误',
+    'Activity.detailtype.empty_page' => '找不到页面',
+    'Activity.detailtype.empty_url' => '未设置url路径',
+    'Activity.detailtype.wrong_type' => '配置的链接错误或者type类型错误',
+    'Activity.detailtype.success_msg' => '获取成功',
+    'Activity.detailtype.error_msg' => '找不到页面',
 ];
