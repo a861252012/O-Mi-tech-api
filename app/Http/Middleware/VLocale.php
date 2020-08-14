@@ -4,6 +4,7 @@
  * @author Weine
  * @date 2020-08-06
  */
+
 namespace App\Http\Middleware;
 
 use App\Services\UserAttrService;
@@ -18,14 +19,15 @@ class VLocale
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)
     {
+        $uid = Auth::guard('mobile')->id() ?? Auth::guard()->id() ?? 0;
         $userAttrService = resolve(UserAttrService::class);
-        $userLocale = $userAttrService->get(Auth::id(), 'locale');
+        $userLocale = $userAttrService->get($uid, 'locale');
 
         if (!empty($userLocale)) {
             $locale = $userLocale;
@@ -40,8 +42,6 @@ class VLocale
         } else {
             $locale = 'zh';
         }
-
-//        dd($locale);
 
         App::setLocale($locale);
 
