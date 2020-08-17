@@ -25,6 +25,7 @@ use App\Models\UserModNickName;
 use App\Services\AnnouncementService;
 use App\Services\I18n\PhoneNumber;
 use App\Services\LoginService;
+use App\Services\Message\MessageService;
 use App\Services\RedisCacheService;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
@@ -252,6 +253,9 @@ class MobileController extends Controller
             $userinfo->guard_id = "0";
         }
 
+        /* 取得新消息數量 */
+        $mails = resolve(MessageService::class)->getMessageNotReadCount($uid, $userinfo->lv_rich);
+
         return JsonResponse::create([
             'status' => 1,
             'data'   => [
@@ -272,8 +276,9 @@ class MobileController extends Controller
                 'gender'            => $userinfo->sex,
                 'follows'           => $userfollow,
                 'fansCount'         => $by_atttennums,
-                'system_tip_count'  => Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status',
-                    0)->count(),
+//                'system_tip_count'  => Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status',
+//                    0)->count(),
+                'system_tip_count'  => $mails,
                 'transfer'          => $userinfo->transfer,
                 'birthday'          => $userinfo->birthday,
                 'province'          => $userinfo->province,
@@ -1030,11 +1035,15 @@ class MobileController extends Controller
         if(!$list->isEmpty()){
             Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status', 0)->update(['status' => 1]);
         }
-        return JsonResponse::create([
-            'status' => 1,
-            'data' => $list,
-            'msg' => '成功'
-        ]);
+
+        $this->setStatus(1, 'messages.success');
+        $this->setRootData('data', $list);
+        return $this->jsonOutput();
+//        return JsonResponse::create([
+//            'status' => 1,
+//            'data' => $list,
+//            'msg' => '成功'
+//        ]);
     }
 
     /**
