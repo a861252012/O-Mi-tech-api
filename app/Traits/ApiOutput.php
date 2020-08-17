@@ -20,15 +20,10 @@ trait ApiOutput
 
     private $_msgParam;
 
-    protected function setStatus($status, $msg = '', $msgParam = null)
+    protected function setStatus($status, $msg = '')
     {
         $this->_status = $status;
-
-        if (empty($msgParam)) {
-            $this->_msg = __($msg);
-        } else {
-            $this->_msg = __($msg, $msgParam);
-        }
+        $this->_msg = $msg;
     }
 
     protected function setData($name, $data)
