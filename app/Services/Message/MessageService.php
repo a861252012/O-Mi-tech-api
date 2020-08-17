@@ -169,7 +169,7 @@ class MessageService extends Service
         $msgs = Messages::where('rec_uid', 0)->where('category', self::SYSTEM_MESSAGE)
             ->where('lv_flag', $user->lv_rich)
             ->where('logicflag', 1)
-            ->where('locale', $userAttrService->get($uid, 'locale'))
+            ->whereIn('locale', [$userAttrService->get($uid, 'locale'), '_'])
             ->where('created', '>', date('Y-m-d H:i:s', time() - 30 * 24 * 60 * 60))// 一个月的过期
             ->get();
 
@@ -200,7 +200,7 @@ class MessageService extends Service
         $systemMsg = Messages::where('rec_uid', 0)->where('category', 1)
             ->where('lv_flag', $lv_flag)        //BUG 系统消息未接收者未作等级过滤
             ->where('logicflag', 1)
-            ->where('locale', $userAttrService->get($uid, 'locale'))
+            ->whereIn('locale', [$userAttrService->get($uid, 'locale'), '_'])
             ->where('created', '>', date('Y-m-d H:i:s', time() - 30 * 24 * 60 * 60))
             ->get();
 
