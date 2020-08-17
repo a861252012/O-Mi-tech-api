@@ -1027,23 +1027,37 @@ class MobileController extends Controller
      */
     public function msglist()
     {
-        $page_size = intval($this->request()->get('page_size'));
+        $page_size = (int)$this->request()->get('page_size');
         $page_size = $page_size ? $page_size : 15;
-        $uid = Auth::id();
-        $list = Messages::where('rec_uid', $uid)->where('send_uid', 0)->orderBy('created', 'desc')->paginate($page_size);
-        //更新消息为已读状态
-        if(!$list->isEmpty()){
-            Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status', 0)->update(['status' => 1]);
-        }
+//        $uid = Auth::id();
 
-        $this->setStatus(1, 'messages.success');
-        $this->setRootData('data', $list);
-        return $this->jsonOutput();
-//        return JsonResponse::create([
-//            'status' => 1,
-//            'data' => $list,
-//            'msg' => '成功'
-//        ]);
+//        $list = Messages::where('rec_uid', $uid)
+//            ->where('send_uid', 0)
+//            ->orderBy('created', 'desc')
+//            ->paginate($page_size);
+//
+//        //更新消息为已读状态
+//        if (!$list->isEmpty()) {
+//            Messages::where('rec_uid', $uid)
+//                ->where('send_uid', 0)
+//                ->where('status', 0)
+//                ->update(['status' => 1]);
+//        }
+
+        // 调用消息服务
+        $msg = resolve(MessageService::class);
+
+        // 根据用户登录的uid或者用户消息的分页数据
+        $list = $msg->getMessageByUidAndType(Auth::id(), 1, $page_size, Auth::user()->lv_rich);
+
+        // 更新读取的状态
+        $msg->updateMessageStatus(Auth::id());
+
+        return JsonResponse::create([
+            'status' => 1,
+            'data'   => $list,
+            'msg'    => __('messages.success'),
+        ]);
     }
 
     /**
