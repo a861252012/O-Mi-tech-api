@@ -42,4 +42,6 @@ return [
     'Api.platform.uuid_does_not_exist' => '接入方uuid不存在',
     'Api.platform.empty_nickename' => '接入方用户名为空',
     'Api.platform.user_does_not_exist' => '用户不存在 :user  :uid  :res',
+    'BackPack.use_item_failed' => '使用失敗',
+    'BackPack.useItem.is_vip' => '目前已是贵族身份，无法使用喔！',
 ];
