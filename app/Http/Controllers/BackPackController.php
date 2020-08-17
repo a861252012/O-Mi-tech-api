@@ -60,7 +60,7 @@ class BackPackController extends Controller
             return $this->jsonOutput();
         } catch (\Exception $e) {
             report($e);
-            $this->setStatus(999, 'api執行失敗');
+            $this->setStatus(999, __('messages.apiError'));
             return $this->jsonOutput();
         }
     }
@@ -100,10 +100,9 @@ class BackPackController extends Controller
             $this->setStatus(1, 'OK');
 
             return $this->jsonOutput();
-
         } catch (\Exception $e) {
             report($e);
-            $this->setStatus(999, 'API執行錯誤');
+            $this->setStatus(999, __('messages.apiError'));
             return $this->jsonOutput();
         }
     }
