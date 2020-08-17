@@ -94,7 +94,8 @@ class ActivityController extends Controller
         if ($action != $active['url']) {
             $active = ActivePage::where('url', $action)->first();
             if (empty($active)) {
-                return ['status' => 0, 'msg' => 'Activity.activity.wrong_url'];
+                $this->setStatus(0, __('messages.page_not_found'));
+                return $this->jsonOutput();
             } else {
                 $active = json_decode($active, true);
             }
@@ -271,11 +272,11 @@ class ActivityController extends Controller
 
         $active = ActivePage::where('url', $action)->first();
         if (empty($active)) {
-            return new jsonresponse(['status' => 0, 'msg' => 'Activity.activityUrl.wrong_activity_url']);
+            return new jsonresponse(['status' => 0, 'msg' => __('messages.page_not_found')]);
         } else {
             return new jsonresponse([
                 'status' => 1,
-                'msg'    => 'Activity.activityUrl.right_activity_url',
+                'msg'    => __('messages.successfully_obtained'),
                 'data'   => ['url' => 'activity/' . $active->toArray()['url']]
             ]);
         }
@@ -286,15 +287,15 @@ class ActivityController extends Controller
         //根据id获取对应的url
         $id = intval($_GET['id']);
         if (!$id) {
-            return new JsonResponse(['status' => 0, 'msg' => 'Activity.detailtype.wrong_id']);
+            return new JsonResponse(['status' => 0, 'msg' => __('messages.Activity.detailtype.wrong_id')]);
         }
         $activepage = ActivityPag::where('img_text_id', $id)->where('dml_flag', '!=', 3)->first();
         if (empty($activepage)) {
-            return new JsonResponse(['status' => 0, 'msg' => 'Activity.detailtype.empty_page']);
+            return new JsonResponse(['status' => 0, 'msg' => __('messages.page_not_found')]);
         }
         $url = $activepage->toArray()['url'];
         if (empty($url)) {
-            return new JsonResponse(['status' => 0, 'msg' => 'Activity.detailtype.empty_url']);
+            return new JsonResponse(['status' => 0, 'msg' => __('messages.Activity.detailtype.empty_url')]);
         }
         //根据url匹配以下三种情况 nac ; /activity/cde + /CharmStar;/activity/cde + /paihang
         $url_type = explode('/', $url);
@@ -307,7 +308,7 @@ class ActivityController extends Controller
             if (isset($data['activity']['type'])) {
                 $data['type'] = $data['activity']['type'];
             } else {
-                return new JsonResponse(['status' => 0, 'msg' => 'Activity.detailtype.wrong_type']);
+                return new JsonResponse(['status' => 0, 'msg' => __('messages.Activity.detailtype.wrong_type')]);
             }
 
             //单双页排行区分
@@ -317,9 +318,9 @@ class ActivityController extends Controller
             if ($data['activity']['type'] == 2) {
                 $data['paihang'] = $this->mulitRank();
             }
-            return new jsonresponse(['status' => 1, 'data' => $data, 'msg' => 'Activity.detailtype.success_msg']);
+            return new jsonresponse(['status' => 1, 'data' => $data, 'msg' => __('messages.successfully_obtained')]);
         }
-        return new JsonResponse(['status' => 0, 'msg' => 'Activity.detailtype.error_msg']);
+        return new JsonResponse(['status' => 0, 'msg' => __('messages.page_not_found')]);
     }
 
 

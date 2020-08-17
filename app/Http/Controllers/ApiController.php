@@ -105,7 +105,7 @@ class ApiController extends Controller
 
         //获取用户信息失败返回
         if (!$userInfo) {
-            return new JsonResponse(['status' => 0, 'msg' => '无效用户']);
+            return new JsonResponse(['status' => 0, 'msg' => __('messages.Api.getUserByDes.invalid_user')]);
         }
 
         $data = $this->getOutputUser($userInfo, 40, false);
@@ -130,7 +130,7 @@ class ApiController extends Controller
         }
         //加密输出结果
 //        $desData = $userService->get3Des($data, app(SiteService::class)->config('DES_ENCRYT_KEY'));
-        return new JsonResponse(['status' => 1, 'data' => $data, 'msg' => '获取成功']);
+        return new JsonResponse(['status' => 1, 'data' => $data, 'msg' => __('messages.successfully_obtained')]);
     }
 
     /**
@@ -308,7 +308,7 @@ class ApiController extends Controller
 
         $status = $regService->status();
         if ($status == RegService::STATUS_BLOCK) {
-            $this->setStatus(0, 'messages.Api.reg.ip_block');
+            $this->setStatus(0, __('messages.Api.reg.ip_block'));
             return $this->jsonOutput();
         }
 
@@ -320,14 +320,14 @@ class ApiController extends Controller
             $mobile = $request->post('mobile', '');
             $code = $request->post('code', '');
             if (empty($cc) || empty($mobile) || empty($code)) {
-                $this->setStatus(0, 'messages.Api.reg.invalid_request');
+                $this->setStatus(0, __('messages.Api.reg.invalid_request'));
                 return $this->jsonOutput();
             }
             $mobile = PhoneNumber::formatMobile($cc, $mobile);
 
             $cc_mobile = $cc . $mobile;
             if ($redis->hExists('hcc_mobile_to_id:' . $site_id, $cc_mobile)) {
-                $this->setStatus(0, 'messages.Api.reg.mobile_is_used');
+                $this->setStatus(0, __('messages.Api.reg.mobile_is_used'));
                 return $this->jsonOutput();
             }
 
@@ -340,7 +340,7 @@ class ApiController extends Controller
         $skipCaptcha = SiteSer::config('skip_captcha_reg');
         $needCaptcha = !$skipCaptcha && $status == RegService::STATUS_NEED_CAPTCHA;
         if (!$useMobile && $needCaptcha && !Captcha::check($request->get('captcha'))) {
-            $this->setStatus(0, 'messages.Api.reg.captcha_error');
+            $this->setStatus(0, __('messages.Api.reg.captcha_error'));
             return $this->jsonOutput();
         }
 
@@ -350,7 +350,7 @@ class ApiController extends Controller
         } else {
             if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/',
                     $username) || strlen($username) < 5 || strlen($username) > 30) {
-                $this->setStatus(0, 'messages.Api.reg.username_wrong_format');
+                $this->setStatus(0, __('messages.Api.reg.username_wrong_format'));
                 return $this->jsonOutput();
             }
         }
@@ -365,7 +365,7 @@ class ApiController extends Controller
 
         //昵称不能使用/:;\空格,换行等符号。
         if ($len < 2 || $len > 11 || !preg_match("/^[^\s\/\:;]+$/", $nickname)) {
-            $this->setStatus(0, 'messages.Api.reg.nickname_wrong_format');
+            $this->setStatus(0, __('messages.Api.reg.nickname_wrong_format'));
             return $this->jsonOutput();
         }
 
@@ -376,7 +376,7 @@ class ApiController extends Controller
                 foreach ($query as $v) {
                     $v['keyword'] = addcslashes($v['keyword'], '.^$*+?()[]{}|\\');
                     if (preg_match("/{$v['keyword']}/i", $nickname)) {
-                        $this->setStatus(0, 'messages.Api.reg.nickname_is_lawbreaking');
+                        $this->setStatus(0, __('messages.Api.reg.nickname_is_lawbreaking'));
                         return $this->jsonOutput();
                     }
                 }
@@ -385,7 +385,7 @@ class ApiController extends Controller
 
         $password2 = $request->get('password2');
         if (!empty($password2) && $request->get('password1') != $password2) {
-            $this->setStatus(0, 'messages.Api.reg.password_is_not_the_same');
+            $this->setStatus(0, __('messages.Api.reg.password_is_not_the_same'));
             return $this->jsonOutput();
         }
 
@@ -397,16 +397,16 @@ class ApiController extends Controller
         }
         $passlen = strlen($password);
         if ($passlen < 6 || $passlen > 22 || preg_match('/^\d{6,22}$/', $password)) {
-            $this->setStatus(0, 'messages.Api.reg.password_wrong_format');
+            $this->setStatus(0, __('messages.Api.reg.password_wrong_format'));
             return $this->jsonOutput();
         }
 
         if ($redis->hExists('husername_to_id:' . SiteSer::siteId(), $username)) {
-            $this->setStatus(0, 'messages.Api.reg.username_is_used');
+            $this->setStatus(0, __('messages.Api.reg.username_is_used'));
             return $this->jsonOutput();
         }
         if ($redis->hExists('hnickname_to_id:' . SiteSer::siteId(), $nickname)) {
-            $this->setStatus(0, 'messages.Api.reg.nickname_is_used');
+            $this->setStatus(0, __('messages.Api.reg.nickname_is_used'));
             return $this->jsonOutput();
         }
 
@@ -443,7 +443,7 @@ class ApiController extends Controller
 
         $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
         if (!$uid) {
-            $this->setStatus(0, 'messages.Api.reg.nickname_repeat');
+            $this->setStatus(0, __('messages.Api.reg.nickname_repeat'));
             return $this->jsonOutput();
         }
 
@@ -478,7 +478,7 @@ class ApiController extends Controller
             //添加是否写入sid判断
             $sidUser = resolve(RedisCacheService::class)->sid($uid);
             if (empty($sidUser)) {
-                $this->setStatus(0, 'messages.Api.reg.redis_token_error');
+                $this->setStatus(0, __('messages.Api.reg.redis_token_error'));
                 return $this->jsonOutput();
             }
 
@@ -492,7 +492,7 @@ class ApiController extends Controller
             $return['data']['user']['locale'] = $userAttrService->get($user->uid, 'locale');
         } else {
             if (empty($user)) {
-                $this->setStatus(0, 'messages.Api.reg.please_login');
+                $this->setStatus(0, __('messages.Api.reg.please_login'));
                 return $this->jsonOutput();
             }
             $guard = Auth::guard('pc');
@@ -610,16 +610,16 @@ class ApiController extends Controller
         $hplat_user = $redis->exists("hplat_user:$uid") ? $redis->hgetall("hplat_user:" . $uid) : [];
         if (isset($hplat_user['exchange'])) {
             if ($hplat_user['exchange'] == 1) {
-                return JsonResponse::create(['status' => 1, 'msg' => '兑换成功']);
+                return JsonResponse::create(['status' => 1, 'msg' => __('messages.Api.platExchange.success')]);
             } elseif ($hplat_user['exchange'] == 2) {
-                return JsonResponse::create(['status' => 0, 'msg' => '已送出，请耐心等待审核']);
+                return JsonResponse::create(['status' => 0, 'msg' => __('messages.Api.platExchange.processing')]);
             } elseif ($hplat_user['exchange'] == 3) {
-                return JsonResponse::create(['status' => 0, 'msg' => '已存在审核中的订单']);
+                return JsonResponse::create(['status' => 0, 'msg' => __('messages.Api.platExchange.Already_exist')]);
             } else {
-                return JsonResponse::create(['status' => 0, 'msg' => '兑换失败']);
+                return JsonResponse::create(['status' => 0, 'msg' => __('messages.Api.platExchange.exchanged_failed')]);
             }
         } else {
-            return JsonResponse::create(['status' => 0, 'msg' => '兑换失败']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Api.platExchange.exchanged_failed')]);
         }
 
     }
@@ -637,14 +637,14 @@ class ApiController extends Controller
             return new JsonResponse([
                 'status'  => 1,
                 'data'    => ['vip' => 0, 'vipName' => '', 'discount' => 10],
-                'message' => '非贵族'
+                'message' => __('messages.Api.getTimeCountRoomDiscountInfo.not_vip'),
             ]);
         }
         if (!$userGroup->permission) {
             return new JsonResponse([
                 'status'  => 1,
                 'data'    => ['vip' => $vip, 'vipName' => '', 'discount' => 10],
-                'message' => '无权限组'
+                'message' => __('messages.Api.getTimeCountRoomDiscountInfo.permission_denied'),
             ]);
         }
         $info = [
@@ -652,7 +652,7 @@ class ApiController extends Controller
             'vipName'  => $userGroup->level_name,
             'discount' => $userGroup->permission->discount,
         ];
-        return new JsonResponse(['status' => 1, 'data' => $info, 'msg' => '获取成功']);
+        return new JsonResponse(['status' => 1, 'data' => $info, 'msg' => __('messages.successfully_obtained')]);
     }
 
     public function getLog()
@@ -674,8 +674,10 @@ class ApiController extends Controller
 
     public function aa()
     {
-
-        throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '您的账号已经被禁止登录，请联系客服！']));
+        throw new HttpResponseException(JsonResponse::create([
+            'status' => 0,
+            'msg'    => __('messages.aa.login_permission_denied')
+        ]));
         return true;
     }
 
@@ -716,8 +718,8 @@ class ApiController extends Controller
             'httphost' => ':attribute不能为空',
         ], $attributes);
         if ($validator->fails()) {
-            return new Response($validator->errors()->all());         //显示所有错误组成的数组
-            return new Response("1002 接入方提供参数不对");
+//            return new Response($validator->errors()->all());         //显示所有错误组成的数组
+            return new Response(__('messages.Api.platform.wrong_param', ['num' => 1002]));
         }
 
         $sskey = $request->get("sskey");
@@ -726,14 +728,16 @@ class ApiController extends Controller
         $httphost = $request->get("httphost", 0);
         $origin = $request->get("origin", 0);
         if (!$this->make("redis")->exists("hplatforms:$origin")) {
-            return new Response("1001 接入方提供参数不对");
+            return new Response(__('messages.Api.platform.wrong_param', ['num' => 1001]));
+
         }
 
         $platforms = $this->make("redis")->hgetall("hplatforms:$origin");
         $open = isset($platforms['open']) ? $platforms['open'] : 1;
         $plat_code = $platforms['code'];
         if (!$open) {
-            return new Response("接入已关闭");
+            return new Response(__('messages.Api.platform.closed'));
+
         }
         //if (empty($sskey) || empty($callback) || empty($sign) || empty($httphost)) return new Response("1002 接入方提供参数不对");
 
@@ -741,13 +745,13 @@ class ApiController extends Controller
         Log::channel('plat')->info("$plat_code 项目 dealSign:sskey=$sskey, callback=$callback, sign=$sign, httphost=$httphost");
         $sign_data = [$sskey, $callback, $key];
         if (!$this->checkSign($sign_data, $sign) && config('app.debug') == false) {
-            return new Response("接入方校验失败");
+            return new Response(__('messages.Api.platform.wrong_sign'));
         }
 //        if ($estimatedSign != $sign) return new Response("接入方校验失败");
 //    $callback = 2650010;
         $room = $callback;
         if (!resolve(UserService::class)->getUserByUid($room)) {
-            return new Response("房间不存在");
+            return new Response(__('messages.Api.platform.room_does_not_exist'));
         }
 
         //TODO PHP端 注册并登录用户 跳转到callback参数指定的直播间
@@ -774,13 +778,20 @@ class ApiController extends Controller
 
         $data = isset($temp_data['data']) ? $temp_data['data'] : 0;
         if (empty($data)) {
-            return new Response("接入方数据获取失败" . $url . " $data" . "  返回：$res");
+//            return new Response("接入方数据获取失败" . $url . " $data" . "  返回：$res");
+            return new Response(__('messages.Api.platform.data_acquisition_failed',
+                [
+                    'url'  => $url,
+                    'data' => $data,
+                    'res'  => $res
+                ]
+            ));
         }
         if (empty($data['uuid'])) {
-            return new Response("接入方uuid不存在");
+            return new Response(__('messages.Api.platform.uuid_does_not_exist'));
         }
         if (empty($data['nickename'])) {
-            return new Response("接入方用户名为空");
+            return new Response(__('messages.Api.platform.empty_nickename'));
         }
 
 
@@ -804,7 +815,12 @@ class ApiController extends Controller
             $uid = resolve(UserService::class)->register($user);
             Log::channel('plat')->info("$plat_code 项目 注册:" . json_encode($user) . '-' . (string)$uid);
             if (!$uid) {
-                return new Response("用户不存在" . json_encode($user) . $uid . $res);
+//                return new Response("用户不存在" . json_encode($user) . $uid . $res);
+                return new Response(__("messages.Api.platform.user_does_not_exist", [
+                    'user' => json_encode($user),
+                    'uid'  => $uid,
+                    'res'  => $res
+                ]));
             }
 
             AgentsRelationship::create([
