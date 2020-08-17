@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Auth;
 
 class VLocale
 {
-    const LANGS = ['zh', 'en', 'zh_TW'];
+    const LANGS = ['zh', 'en', 'zh_TW', 'zh_HK'];
 
     /**
      * Handle an incoming request.

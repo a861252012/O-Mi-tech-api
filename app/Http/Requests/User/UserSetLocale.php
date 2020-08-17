@@ -4,6 +4,7 @@ namespace App\Http\Requests\User;
 
 
 use App\Http\Requests\VRequest;
+use Illuminate\Validation\Rule;
 
 class UserSetLocale extends VRequest
 {
@@ -15,7 +16,7 @@ class UserSetLocale extends VRequest
     public function rules()
     {
         return [
-            'loc' => 'string|nullable',
+            'loc' => ['string', 'nullable', Rule::in(['zh', 'zh_TW', 'zh_HK', 'en'])],
         ];
     }
 
