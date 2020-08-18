@@ -60,13 +60,13 @@ class SocketController extends Controller
             $result = $this->socketProxyService->proxyList();
             $socketDesc = SiteSer::globalSiteConfig('socket_desc');
 
-            $this->setStatus('1', 'OK');
+            $this->setStatus('1', __('messages.success'));
             $this->setData('proxy_list', $result);
             $this->setData('socket_desc', $socketDesc);
             return $this->jsonOutput();
         } catch (\Exception $e) {
             report($e);
-            $this->setStatus('999', 'API執行錯誤');
+            $this->setStatus('999', __('messages.apiError'));
             return $this->jsonOutput();
         }
     }

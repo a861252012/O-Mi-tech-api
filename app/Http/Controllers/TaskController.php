@@ -54,9 +54,9 @@ class TaskController extends Controller
         $flag = $taskService->billTask($task_id);
 
         if ($flag) {
-            return new JsonResponse(['status' => 1, 'msg' => '领取成功！']);
+            return new JsonResponse(['status' => 1, 'msg' => __('messages.Task.billTask.receive_success')]);
         } else {
-            return new JsonResponse(['status' => 0, 'msg' => '领取失败！请查看任务是否完成或已经领取过了！']);
+            return new JsonResponse(['status' => 0, 'msg' => __('messages.Task.billTask.receive_failed')]);
         }
     }
 

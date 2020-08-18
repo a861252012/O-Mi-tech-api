@@ -275,7 +275,7 @@ class LoginController extends Controller
             $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
             // freeze check
             if ($member->status==2) {
-                return $this->msg('您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq);
+                return $this->msg(__('messages.Login.solveMobileLogin.account_block_30days_no_show', ['S_qq' => $S_qq]));
             }
             // platform user check
             if ($member->origin >= 50) {
@@ -285,7 +285,7 @@ class LoginController extends Controller
 
         $open_pwd_change = SiteSer::config('pwd_change') ?: false;
         if ($open_pwd_change && (!$this->checkPwdChanged($uid))) {
-            return $this->msg('密码修改', 101);
+            return $this->msg(__('messages.Login.solveMobileLogin.password_modify'), 101);
         }
 
         //取uid
@@ -294,7 +294,7 @@ class LoginController extends Controller
 
         $resp = [
             'status' => 1,
-            'msg' => '登录成功',
+            'msg' => __('messages.success'),
             'data'=> [
                Session::getName() => Session::getId(),
             ]
@@ -323,7 +323,7 @@ class LoginController extends Controller
         }
         $request->session()->invalidate();
         // 清除redis
-        return JsonResponse::create(['status' => 1, 'msg' => '您已退出登录']);
+        return JsonResponse::create(['status' => 1, 'msg' => __('messages.Login.solveMobileLogin.is_logout')]);
     }
 
     /**

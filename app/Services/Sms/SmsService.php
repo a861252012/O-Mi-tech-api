@@ -62,10 +62,10 @@ class SmsService
     {
         $act = self::ACT_PWD_RESET_SEND;
         if (!PhoneNumber::checkFormat($cc, $mobile)) {
-            return self::ERR_INVALID_FORMAT;
+            return __('messages.Password.pwdResetByMobile.err_invalid_format');
         }
         if (self::exists($act, $cc, $mobile)) {
-            return self::ERR_ALREADY_SEND;
+            return __('messages.Password.pwdResetByMobile.err_verify_failed');
         }
 
         // send
@@ -140,14 +140,14 @@ class SmsService
     public static function verify($act, $cc, $mobile, $code, $checkFormat = true)
     {
         if ($checkFormat && !PhoneNumber::checkFormat($cc, $mobile)) {
-            return self::ERR_INVALID_FORMAT;
+            return __('messages.Password.pwdResetByMobile.err_invalid_format');
         }
 
         // read redis
         $send_code = self::readCode($act, $cc, $mobile);
 
         if (empty($send_code) || $send_code != $code) {
-            return self::ERR_VERIFY_FAILED;
+            return __('messages.Password.pwdResetByMobile.err_verify_failed');
         }
 
         return true;

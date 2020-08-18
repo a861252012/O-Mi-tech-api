@@ -66,24 +66,24 @@ class GameController extends Controller
 		try {
 			if(!$this->gameService->checkSetting()) {
 				info('設置狀態為關閉');
-				$this->setStatus(103, '服务器连接失败');
+				$this->setStatus(103, __('messages.Game.entry.connect_failed'));
 				return $this->jsonOutput();
 			}
 
 			$result = $this->gameService->login($request->game_code);
 			if(empty($result)) {
 				Log::error('執行遊戲失敗');
-				$this->setStatus(102, '服务器连接失败');
+				$this->setStatus(102, __('messages.Game.entry.connect_failed'));
 				return $this->jsonOutput();
 			}
 
-			$this->setStatus(1, '成功');
+			$this->setStatus(1, __('messages.success'));
 			$this->setData('game_url', $result['result']);
 			return $this->jsonOutput();
 
 		} catch (\Exception $e) {
 			Log::error($e->getMessage());
-			$this->setStatus(999, '服务器连接失败');
+			$this->setStatus(999, __('messages.Game.entry.connect_failed'));
 			return $this->jsonOutput();
 		}
 	}
@@ -116,27 +116,27 @@ class GameController extends Controller
 	{
 		try {
 			if(!$this->gameService->checkSetting()) {
-				$this->setStatus(103, '設置狀態為關閉');
+				$this->setStatus(103, __('messages.Game.deposit.status_down'));
 				return $this->jsonOutput();
 			}
 
 			if(!$request->get('amount')) {
-				$this->setStatus(104, '無儲值金額');
+				$this->setStatus(104, __('messages.Game.deposit.amount_required'));
 				return $this->jsonOutput();
 			}
 
 			$result = $this->gameService->deposit($request->amount);
 			if(empty($result)) {
-				$this->setStatus(102, '儲值失敗');
+				$this->setStatus(102, __('messages.Game.deposit.failed'));
 				return $this->jsonOutput();
 			}
 
-			$this->setStatus(1, '成功');
+			$this->setStatus(1, __('messages.success'));
 			return $this->jsonOutput();
 
 		} catch (\Exception $e) {
 			Log::error($e->getMessage());
-			$this->setStatus(999, 'API執行錯誤');
+			$this->setStatus(999, __('messages.apiError'));
 			return $this->jsonOutput();
 		}
 	}
@@ -204,22 +204,22 @@ class GameController extends Controller
         try {
             if(!$this->gameService->checkSetting()) {
                 info('設置狀態為關閉');
-                $this->setStatus(201, '小遊戲目前維修中');
+                $this->setStatus(201, __('messages.Game.gameList.maintained'));
                 return $this->jsonOutput();
             }
 
             $result = $this->gameListService->getList();
             if ($result->isEmpty()) {
-                $this->setStatus(201, '小遊戲目前維修中');
+                $this->setStatus(201, __('messages.Game.gameList.maintained'));
                 return $this->jsonOutput();
             }
 
-            $this->setStatus(1, 'OK');
+            $this->setStatus(1, __('messages.success'));
             $this->setData('game_list', $result);
             return $this->jsonOutput();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            $this->setStatus(999, 'API執行錯誤');
+            $this->setStatus(999, __('messages.apiError'));
             return $this->jsonOutput();
         }
     }
