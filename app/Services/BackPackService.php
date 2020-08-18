@@ -73,7 +73,7 @@ class BackPackService
     {
         //檢查用戶是否有貴族身份
         if (strtotime(Auth::user()->vip_end) >=time()) {
-            return ['status' => 102, 'msg' => __('messages.BackPack.useItem.is_vip')];
+            return ['status' => 102, 'msg' => __('messages.is_vip')];
         }
 
         $level = $this->levelRichRepository->getLevelByGid(30);

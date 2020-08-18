@@ -610,16 +610,16 @@ class ApiController extends Controller
         $hplat_user = $redis->exists("hplat_user:$uid") ? $redis->hgetall("hplat_user:" . $uid) : [];
         if (isset($hplat_user['exchange'])) {
             if ($hplat_user['exchange'] == 1) {
-                return JsonResponse::create(['status' => 1, 'msg' => __('messages.Api.platExchange.success')]);
+                return JsonResponse::create(['status' => 1, 'msg' => __('messages.exchanged_successful')]);
             } elseif ($hplat_user['exchange'] == 2) {
                 return JsonResponse::create(['status' => 0, 'msg' => __('messages.Api.platExchange.processing')]);
             } elseif ($hplat_user['exchange'] == 3) {
                 return JsonResponse::create(['status' => 0, 'msg' => __('messages.Api.platExchange.Already_exist')]);
             } else {
-                return JsonResponse::create(['status' => 0, 'msg' => __('messages.Api.platExchange.exchanged_failed')]);
+                return JsonResponse::create(['status' => 0, 'msg' => __('messages.exchanged_failed')]);
             }
         } else {
-            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Api.platExchange.exchanged_failed')]);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.exchanged_failed')]);
         }
 
     }
