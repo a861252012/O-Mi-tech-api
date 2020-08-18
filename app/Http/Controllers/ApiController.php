@@ -830,7 +830,11 @@ class ApiController extends Controller
 
             $this->userInfo = resolve(UserService::class)->getUserByUid($uid);
             if (empty($this->userInfo)) {
-                return new Response("获取用户信息失败" . json_encode($user) . $uid . $res);
+                return new Response(__("messages.Api.platform.failed_to_get_userInfo", [
+                    'user' => json_encode($user),
+                    'uid'  => $uid,
+                    'res'  => $res
+                ]));
             }
         } else {
             $this->userInfo = $users;
@@ -858,7 +862,7 @@ class ApiController extends Controller
                 return JsonResponse::create([
                     'status' => 0,
                     'data'   => $this->userInfo['uid'].' '.$this->userInfo['username'],
-                    'msg'    => '用户名密码错误'
+                    'msg'    => __('messages.Api.platform.wrong_username_or_pwd')
                 ]);
             };
         }
@@ -889,7 +893,7 @@ class ApiController extends Controller
         //get certificate
         $certificate = resolve(SafeService::class)->getLcertificate("socket");
         if (!$certificate) {
-            return new JsonResponse(['status' => 0, 'msg' => "票据用完或频率过快"]);
+            return new JsonResponse(['status' => 0, 'msg' => __('messages.Api.get_lcertificate.out_of_ticket')]);
         }
         return ['status' => 1, 'data' => ['datalist' => $certificate], 'msg' => __('messages.success')];
     }
@@ -944,25 +948,29 @@ class ApiController extends Controller
                 $O->status = $userService->checkFollow($uid, $S_pid) - 0;
                 array_push($A_data, $O);
             }
-            return new JsonResponse(['status' => 1, 'data' => $A_data, 'msg' => '关注查詢']);
+            return new JsonResponse([
+                'status' => 1,
+                'data'   => $A_data,
+                'msg'    => __('messages.Api.Follow.search_following')
+            ]);
         } else {
             if (!$pid) {
                 return JsonResponse::create([
                     'status' => 0,
-                    'msg'    => '参数错误',
+                    'msg'    => __('messages.Mobile.statistic.param_error'),
                 ]);
             };
             if (!in_array($ret, [0, 1, 2]) || !$pid) {
                 return JsonResponse::create([
                     'status' => 0,
-                    'msg'    => '请求参数错误1',
+                    'msg'    => __('messages.Mobile.statistic.param_error'),
                 ]);
             };
             //不能关注自己
             if (($ret != 0) && ($uid == $pid)) {
                 return JsonResponse::create([
                     'status' => 0,
-                    'msg'    => '请勿关注自己',
+                    'msg'    => __('messages.Api.Follow.can_not_follow_yourself'),
                 ]);
             }
             $userService = resolve(UserService::class);
@@ -971,16 +979,16 @@ class ApiController extends Controller
             if (!$userInfo) {
                 return JsonResponse::create([
                     'status' => 0,
-                    'msg'    => '用户不存在',
+                    'msg'    => __('messages.unknown_user'),
                 ]);
             }
 
             //查询关注操作
             if ($ret == 0) {
                 if ($userService->checkFollow($uid, $pid)) {
-                    return new JsonResponse(['status' => 1, 'msg' => '已关注']);
+                    return new JsonResponse(['status' => 1, 'msg' => __('messages.Api.Follow.already_followed')]);
                 } else {
-                    return new JsonResponse(['status' => 0, 'msg' => '未关注']);
+                    return new JsonResponse(['status' => 0, 'msg' => __('messages.Api.Follow.not_followed')]);
                 }
             }
 
@@ -989,22 +997,22 @@ class ApiController extends Controller
             if ($ret == 1) {
                 $follows = intval($this->getUserAttensCount($uid));
                 if ($follows >= 1000) {
-                    return new JsonResponse(['status' => 3, 'msg' => '您已经关注了1000人了，已达上限，请清理一下后再关注其他人吧']);
+                    return new JsonResponse(['status' => 3, 'msg' => __('messages.Api.Follow.limit')]);
                 }
 
                 if ($userService->setFollow($uid, $pid)) {
-                    return new JsonResponse(['status' => 1, 'msg' => '关注成功']);
+                    return new JsonResponse(['status' => 1, 'msg' =>  __('messages.Api.Follow.followed_success')]);
                 } else {
-                    return new JsonResponse(['status' => 0, 'msg' => '请勿重复关注']);
+                    return new JsonResponse(['status' => 0, 'msg' => __('messages.Api.Follow.can_not_repeat_follow')]);
                 }
             }
 
             //取消关注操作
             if ($ret == 2) {
                 if ($userService->delFollow($uid, $pid)) {
-                    return new JsonResponse(['status' => 1, 'msg' => '取消关注成功']);
+                    return new JsonResponse(['status' => 1, 'msg' => __('messages.Api.Follow.unfollowed_success')]);
                 } else {
-                    return new JsonResponse(['status' => 0, 'msg' => '取消关注失败']);
+                    return new JsonResponse(['status' => 0, 'msg' => __('messages.Api.Follow.unfollowed_failed')]);
                 }
             }
         }
@@ -1031,27 +1039,27 @@ class ApiController extends Controller
         //判断用户是否存在
         $userInfo = resolve(UserService::class)->getUserByUid($rid);
         if (!$userInfo) {
-            return new JsonResponse(['status' => 0, 'msg' => '该用户不存在']);
+            return new JsonResponse(['status' => 0, 'msg' => __('messages.unknown_user')]);
         }
 
         //发送内容检测
         $msg = $request->get('msg');
         $len = $this->count_chinese_utf8($msg);
         if ($len < 1 || $len > 200) {
-            return new JsonResponse(['status' => 0, 'msg' => '内容不能为空且字符长度限制200字符以内!']);
+            return new JsonResponse(['status' => 0, 'msg' => __('messages.Api.letter.word_limit')]);
         }
 
 
         //判断级别发送资格
         if ($userInfo['roled'] == 0 && $userInfo['lv_rich'] < 3) {
-            return new JsonResponse(['status' => 0, 'msg' => '财富等级达到二富才能发送私信哦，请先去给心爱的主播送礼物提升财富等级吧.']);
+            return new JsonResponse(['status' => 0, 'msg' => __('messages.Api.letter.lv_rich_limit')]);
         }
 
         //判断私信发送数量限制
         $userService = resolve(UserService::class);
 
         if (!$userService->checkUserSmsLimit($sid, 1000, 'video_mail')) {
-            return new JsonResponse(['status' => 0, 'msg' => '本日发送私信数量已达上限，请明天再试！']);
+            return new JsonResponse(['status' => 0, 'msg' => __('messages.Api.letter.mail_amount_limit')]);
         }
 
         //发送私信
@@ -1067,10 +1075,10 @@ class ApiController extends Controller
 
         //更新发送次数统计
         if (!$send || !$userService->updateUserSmsTotal($sid, 1, 'video_mail')) {
-            return new JsonResponse(['status' => 0, '发送失败']);
+            return new JsonResponse(['status' => 0, __('messages.sent_failed')]);
         }
 
-        return new JsonResponse(['status' => 1, 'msg' => '发送成功！']);
+        return new JsonResponse(['status' => 1, 'msg' =>  __('messages.sent_successful')]);
     }
 
 
@@ -1326,7 +1334,7 @@ EOT;
         $uid = Auth::id();
         $imageContent = file_get_contents('php://input');
         if (empty($imageContent)) {
-            return JsonResponse::create(['msg' => '封面图不能为空']);
+            return JsonResponse::create(['msg' => __('messages.Api.coverUpload.empty_img')]);
         } else {
             $fileName = $uid . '_' . time() . '.jpg';
             if (Storage::put('uploads/s88888/anchor/' . $fileName, $imageContent)) {
@@ -1341,15 +1349,15 @@ EOT;
                 fclose($fo);
 
                 if (empty($imgData['ret'])) {
-                    JsonResponse::create(['msg' => 'zimg上传失败']);
+                    JsonResponse::create(['msg' => __('messages.Api.coverUpload.zimg_upload_failed')]);
                 }
 
                 /* 更新主播海報資訊 */
                 resolve(GuardianService::class)->coverTrans($imgData['info']['md5']);
 
-                return JsonResponse::create(['msg' => '上传成功']);
+                return JsonResponse::create(['msg' => __('messages.Api.coverUpload.upload_success')]);
             } else {
-                return JsonResponse::create(['msg' => '上传失败']);
+                return JsonResponse::create(['msg' => __('messages.Api.coverUpload.upload_failed')]);
             }
         }
     }
@@ -1545,7 +1553,7 @@ EOT;
     {
         $uid = $this->make('request')->get('uid');
         if (!$uid) {
-            return new JsonResponse(['data' => '', 'status' => 0, '请输入会员id']);
+            return new JsonResponse(['data' => '', 'status' => 0, __('messages.Api.rankListGift.empty_uid')]);
         }
         $score = $this->make('redis')->zscore('zvideo_live_times', $uid);
 //lvideo_live_list:2653776:103
@@ -1573,7 +1581,7 @@ EOT;
          */
         $uid = $this->make('request')->get('uid');
         if (!$uid) {
-            return new JsonResponse(['data' => '', 'status' => 0, 'msg' => '请输入会员id']);
+            return new JsonResponse(['data' => '', 'status' => 0, 'msg' =>  __('messages.Api.rankListGift.empty_uid')]);
         }
 
         /**
@@ -1584,7 +1592,7 @@ EOT;
         $score = $this->make('redis')->ZREVRANGEBYSCORE($zrange_key, '+inf', '-inf',
             ['limit' => ['offset' => 0, 'count' => 30], 'withscores' => true]);
         if (empty($score)) {
-            return new JsonResponse(['data' => '', 'status' => 0, 'msg' => '数据为空']);
+            return new JsonResponse(['data' => '', 'status' => 0, 'msg' => __('messages.Api.rankListGift.empty_data')]);
         }
         /**
          * 格式化数据返回，获取用户的信息
@@ -1658,7 +1666,7 @@ EOT;
     {
         $res = [
             'status' => 0,
-            'msg'    => '获取失败',
+            'msg'    => __('messages.failed_to_obtained'),
         ];
 
         if (Auth::check()) {
