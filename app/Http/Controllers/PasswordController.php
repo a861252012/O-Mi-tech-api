@@ -157,7 +157,7 @@ class PasswordController extends Controller
         $sCode = $this->make('request')->get('captcha');
 
         if (!Captcha::check($sCode)) {
-            return new JsonResponse(array('status' => 0, 'msg' => '验证码错误'));;
+            return new JsonResponse(array('status' => 0, 'msg' => __('messages.captcha_error')));;
         }
         return $this->doChangePwd($request);
     }
@@ -304,7 +304,7 @@ class PasswordController extends Controller
     {
         $sCode = $this->make('request')->get('captcha');
         if (!Captcha::check($sCode)) {
-            return $this->msg('验证码错误');
+            return $this->msg(__('messages.captcha_error'));
         }
 
         $mail = $request->get('email');

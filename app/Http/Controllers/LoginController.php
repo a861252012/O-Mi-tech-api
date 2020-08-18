@@ -208,7 +208,7 @@ class LoginController extends Controller
             }
             // platform user check
             if ($member->origin >= 50) {
-                return ['status' => 0, 'msg' => '请由平台网站登入'];
+                return ['status' => 0, 'msg' => __('messages.must_login_on_platform')];
             }
         }
 
@@ -279,7 +279,7 @@ class LoginController extends Controller
             }
             // platform user check
             if ($member->origin >= 50) {
-                return $this->msg(['status' => 0, 'msg' => '请由平台网站登入']);
+                return $this->msg(['status' => 0, 'msg' => __('messages.must_login_on_platform')]);
             }
         }
 

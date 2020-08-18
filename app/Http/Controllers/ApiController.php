@@ -891,7 +891,7 @@ class ApiController extends Controller
         if (!$certificate) {
             return new JsonResponse(['status' => 0, 'msg' => "票据用完或频率过快"]);
         }
-        return ['status' => 1, 'data' => ['datalist' => $certificate], 'msg' => '获取成功'];
+        return ['status' => 1, 'data' => ['datalist' => $certificate], 'msg' => __('messages.success')];
     }
 
 
@@ -1530,7 +1530,7 @@ EOT;
                 $result['status'] = 1;
             }
         }
-        $result['msg'] = '获取成功';
+        $result['msg'] = __('messages.success');
         $result['data']['key_word'] = $key_words;
 
         return JsonResponse::create($result)->setEncodingOptions(JSON_UNESCAPED_UNICODE);
@@ -1555,7 +1555,7 @@ EOT;
             return new JsonResponse(['data' => '', 'status' => 0]);
         }
         $data = $this->_formatLiveList($lrange);
-        return new JsonResponse(['data' => $data, 'msg' => '获取成功']);
+        return new JsonResponse(['data' => $data, 'msg' => __('messages.success')]);
     }
 
 
@@ -1601,7 +1601,7 @@ EOT;
             $arr['name'] = $user['nickname'];
             $data[] = $arr;
         }
-        return new JsonResponse(['data' => ['list' => $data], 'msg' => '获取成功']);
+        return new JsonResponse(['data' => ['list' => $data], 'msg' => __('messages.success')]);
 
     }
 
@@ -1664,7 +1664,7 @@ EOT;
         if (Auth::check()) {
             $res['status'] = 1;
             $res['data']['sid'] = resolve(RedisCacheService::class)->sid(Auth::id());
-            $res['msg'] = '获取成功';
+            $res['msg'] = __('messages.success');
         } else {
             $res['msg'] = session_id();
         }

@@ -520,7 +520,7 @@ class IndexController extends Controller
                 $temp = json_decode($value);
                 array_push($result, $temp);
             }
-            return new JsonResponse(['status' => 1, 'data' => $result, 'msg' => '获取成功']);
+            return new JsonResponse(['status' => 1, 'data' => $result, 'msg' => __('messages.success')]);
         }
         return new JsonResponse(['status' => 0, 'data' => $result, 'msg' => '获取失败']);
     }

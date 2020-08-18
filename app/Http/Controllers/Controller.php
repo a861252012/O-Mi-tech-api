@@ -1534,7 +1534,7 @@ class Controller extends BaseController
         $res = array(
             'status' => 1,
             'data' => $arr ?: [],
-            'msg' => '获取成功'
+            'msg' => __('messages.success')
         );
         return $res;
 

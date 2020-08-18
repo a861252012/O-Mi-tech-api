@@ -159,11 +159,11 @@ class UserController extends Controller
 
             Redis::del('huser_info:' . $user->uid);
 
-            $this->setStatus(1, 'messages.success');
+            $this->setStatus(1, __('messages.success'));
             return $this->jsonOutput();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            $this->setStatus(999, 'messages.apiError');
+            $this->setStatus(999, __('messages.apiError'));
             return $this->jsonOutput();
         }
     }
@@ -183,11 +183,11 @@ class UserController extends Controller
         try {
             $locale = $request->loc ?? 'zh';
             $this->userAttrService->set(Auth::id(), 'locale', $locale);
-            $this->setStatus(1, 'messages.success');
+            $this->setStatus(1, __('messages.success'));
             return $this->jsonOutput();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            $this->setStatus('999', 'messages.apiError');
+            $this->setStatus('999', __('messages.apiError'));
             return $this->jsonOutput();
         }
     }

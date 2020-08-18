@@ -618,7 +618,7 @@ class RoomController extends Controller
             'in_limit_safemail' => $redis->hget('hsite_config'.SiteSer::siteId(), 'in_limit_safemail') ?: 0,   //1开，0关
             'certificate' => resolve(SafeService::class)->getLcertificate(),
         ];
-        return JsonResponse::create(['msg'=>'获取成功','status'=>1,'data'=>$data]);
+        return JsonResponse::create(['msg'=>__('messages.success'),'status'=>1,'data'=>$data]);
     }
 
     protected function isHost($rid)
@@ -805,7 +805,7 @@ class RoomController extends Controller
         }
         $getinfo['list'] = $liveinfo;
         $getinfo['duration_total'] = $duration_total;
-        return SuccessResponse::create($getinfo, $msg = '获取成功', $status = 1);
+        return SuccessResponse::create($getinfo, $msg = __('messages.success'), $status = 1);
 
 
     }
@@ -852,7 +852,7 @@ class RoomController extends Controller
             ->toArray();
 
 
-        return JsonResponse::create(['status' => 1, 'data' => $result,'msg'=>'获取成功']);
+        return JsonResponse::create(['status' => 1, 'data' => $result,'msg'=>__('messages.success')]);
 
 
     }

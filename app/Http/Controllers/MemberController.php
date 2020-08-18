@@ -445,7 +445,7 @@ class MemberController extends Controller
                 $O->marks=(string) $transfersval['content'];
                 array_push($transfersall, $O);
             }
-            return new JsonResponse(['status' => 1, 'data' => ['list' => $transfersall,'total_amount'=>$total_amount],'msg'=>'获取成功']);
+            return new JsonResponse(['status' => 1, 'data' => ['list' => $transfersall,'total_amount'=>$total_amount],'msg'=>__('messages.success')]);
         /*return new JsonResponse(['status' => 123]);*/
         /*}else{
             return new JsonResponse(['status' => 1, 'data' => [],'msg'=>'未登录']);
@@ -577,7 +577,7 @@ class MemberController extends Controller
             $group = LevelRich::where('level_id', $user->vip)->first();
 
             if (!$group) {
-                return SuccessResponse::create('', $status = 1, $msg = '获取成功');// 用户组都不在了没保级了
+                return SuccessResponse::create('', $status = 1, $msg = __('messages.success'));// 用户组都不在了没保级了
                 //return true;// 用户组都不在了没保级了
             }
 
@@ -616,7 +616,7 @@ class MemberController extends Controller
         }
         $data = [];
         $data['item'] = $log;
-        return SuccessResponse::create($data, $status = 1, $msg = '获取成功');
+        return SuccessResponse::create($data, $status = 1, $msg = __('messages.success'));
     }
 
     /**
@@ -1012,7 +1012,7 @@ class MemberController extends Controller
         $result['roomStatus'] = $roomStatus;
         $res['data'] = $result;
         $res['status'] = 1;
-        $res['msg'] = '获取成功';
+        $res['msg'] = __('messages.success');
         return new JsonResponse($res);
 
     }
@@ -1087,7 +1087,7 @@ class MemberController extends Controller
             $user = $userService->getUserByUid($item->uid);
             $item->nickname = isset($user['nickname']) ? $user['nickname'] : '';
         });
-        return new JsonResponse(['status' => 1, 'data' => $buyOneToMore, 'msg' => '获取成功']);
+        return new JsonResponse(['status' => 1, 'data' => $buyOneToMore, 'msg' => __('messages.success')]);
     }
 
     /**
@@ -2029,7 +2029,7 @@ class MemberController extends Controller
 
             //}
 
-            return new JsonResponse(['status' => 1, 'data' => ['list' => $giftsall],'msg'=>'获取成功']);
+            return new JsonResponse(['status' => 1, 'data' => ['list' => $giftsall],'msg'=>__('messages.success')]);
         /*return new JsonResponse(['status' => 123]);*/
         /*}else{
             return new JsonResponse(['status' => 1, 'data' => [],'msg'=>'未登录']);
