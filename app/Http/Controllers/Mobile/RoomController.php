@@ -187,8 +187,8 @@ class RoomController extends Controller
         $password = $this->request()->get('password');
         $rid = $this->request()->get('rid');
         $type = $this->getAnchorRoomType($rid);
-        if ($type != 2) return new JsonResponse(['status' => 0, 'msg' => '密码房异常,请联系运营重新开启一下密码房间的开关']);
-        if (empty($rid)) return new JsonResponse(['status' => 0, 'msg' => '房间号错误!']);
+        if ($type != 2) return new JsonResponse(['status' => 0, 'msg' => __('messages.MobileRoom.checkPwd.unknown_error')]);
+        if (empty($rid)) return new JsonResponse(['status' => 0, 'msg' => __('messages.MobileRoom.checkPwd.room_id_is_wrong')]);
         if (empty($password)) {
             return $this->geterrorsAction();
         }
@@ -203,15 +203,15 @@ class RoomController extends Controller
         if ($times >= 5) {
             $captcha = $this->request()->get('captcha');
             if (empty($captcha)) {
-                return new JsonResponse(['status' => 0, 'msg' => '请输入验证码!', 'data' => ['times' => $times, 'cmd' => 'showCaptcha']]);
+                return new JsonResponse(['status' => 0, 'msg' => __('messages.MobileRoom.checkPwd.captcha_required'), 'data' => ['times' => $times, 'cmd' => 'showCaptcha']]);
             }
-            if (!Captcha::check($captcha)) return new JsonResponse(['status' => 0, 'msg' => '验证码错误!', 'data' => ['times' => $times]]);;
+            if (!Captcha::check($captcha)) return new JsonResponse(['status' => 0, 'msg' => __('messages.MobileRoom.checkPwd.captcha_error'), 'data' => ['times' => $times]]);;
         }
         if (strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
             $this->make('redis')->setex($keys_room, 3600, $times + 1);
             return new JsonResponse([
                 'status' => 0,
-                'msg' => "密码格式错误!",
+                'msg' => __('messages.MobileRoom.checkPwd.password_format_wrong'),
                 'data' => ['times' => $times + 1],
             ]);
         }
@@ -219,12 +219,12 @@ class RoomController extends Controller
             $this->make('redis')->setex($keys_room, 3600, $times + 1);
             return new JsonResponse([
                 'status' => 0,
-                'msg' => "密码错误!",
+                'msg' => __('messages.MobileRoom.checkPwd.password_is_wrong'),
                 'data' => ['times' => $times + 1],
             ]);
         }
         $this->make('redis')->hset('keys_room_passwd:' . $rid . ':' . $jwt[0], 'status', 1);
-        return new JsonResponse(['status' => 1, 'msg' => '验证成功']);
+        return new JsonResponse(['status' => 1, 'msg' => __('messages.MobileRoom.checkPwd.validation_success')]);
     }
 
     /**
@@ -236,7 +236,7 @@ class RoomController extends Controller
     public function geterrorsAction()
     {
         $rid = $this->request()->get('roomid');
-        if (empty($rid)) return new JsonResponse(['status' => 0, 'msg' => '房间号错误!']);
+        if (empty($rid)) return new JsonResponse(['status' => 0, 'msg' => __('messages.MobileRoom.geterrorsAction.room_id_wrong')]);
 //        $this->get('session')->start();
         $session_name = Session::getName();
         if (isset($_POST[$session_name])) {
@@ -603,7 +603,7 @@ class RoomController extends Controller
             if ($this->isHost($rid)) {
                 $room = $roomService->addRoom($rid, $rid, Auth::id());
             } else {
-                return JsonResponse::create(['status' => 0, 'msg' => '房间不存在']);
+                return JsonResponse::create(['status' => 0, 'msg' => __('messages.MobileRoom.getRoomConf.room_is_not_exist')]);
             }
         }
         try {
@@ -819,7 +819,7 @@ class RoomController extends Controller
             $data['origin']=21;
         }
         if ($data['points'] < 2000) {
-            return new JsonResponse(['status' => 0, 'msg' => '手动设置的钻石数必须大于2000钻石']);
+            return new JsonResponse(['status' => 0, 'msg' => __('messages.MobileRoom.roomSetDuration.more_than_2000_points')]);
         }
         $roomservice = resolve(RoomService::class);
         $result = $roomservice->addOnetoOne($data);
