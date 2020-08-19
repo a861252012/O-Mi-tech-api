@@ -107,14 +107,14 @@ class IndexController extends Controller
     public function setInRoomStat()
     {
         $roomid = $this->make('request')->get('roomid');
-        if (!$roomid) return new JsonResponse(['status' => 2, 'msg' => '无效的参数']);
+        if (!$roomid) return new JsonResponse(['status' => 2, 'msg' => __('messages.Index.setInRoomStat.invalid_param')]);
 
         $data = RoomStatus::where('uid', $roomid)
             ->where('tid', 6)->where('status', 1)->first();
-        if (!$data) return new JsonResponse(['status' => 3, 'msg' => '不是时长房间']);
+        if (!$data) return new JsonResponse(['status' => 3, 'msg' => __('messages.Index.setInRoomStat.not_time_room')]);
 
         Redis::hset('htimecost_watch:' . $roomid, Auth::id(), $roomid);
-        return new JsonResponse(['status' => 1, 'msg' => '设置状态成功']);
+        return new JsonResponse(['status' => 1, 'msg' => __('messages.Index.setInRoomStat.set_success')]);
     }
 
     /**
@@ -126,7 +126,7 @@ class IndexController extends Controller
         $limitData = ['username', 'nickname'];
         if (!in_array($type, $limitData)) {
             return new Response(json_encode([
-                'msg' => '传递的参数非法！',
+                'msg' => __('messages.Index.checkUniqueName.invalid_param'),
                 'data' => 0,
             ]));
         }
@@ -135,11 +135,11 @@ class IndexController extends Controller
             if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $username) || strlen($username) < 5 || strlen($username) > 30) {
                 return new Response(json_encode([
                     "data" => 0,
-                    "msg" => "注册邮箱不符合格式！(5-30位的邮箱)",
+                    "msg" => __('messages.Index.checkUniqueName.invalid_email'),
                 ]));
             }
-            $msg0 = '该邮箱已被使用，请换一个试试！';
-            $msg1 = '恭喜该邮箱可以使用。';
+            $msg0 = __('messages.Index.checkUniqueName.email_had_been_use');
+            $msg1 = __('messages.Index.checkUniqueName.email_can_be_use');
             $userArr = [];
             $userArr = explode("@", $username);
             if (Redis::hExists('husername_to_id:' . SiteSer::siteId(), (count($userArr) == 2) ? $userArr[0] . "@" . strtolower($userArr[1]) : $username)) {
@@ -158,11 +158,11 @@ class IndexController extends Controller
             if ($len < 2 || $len > 11 || !preg_match("/^[^\s\/\:;]+$/", $username)) {
                 return new Response(json_encode([
                     "data" => 0,
-                    "msg" => "注册昵称不能使用/:;\空格,换行等符号！(2-11位的昵称)",
+                    "msg" => __('messages.Index.checkUniqueName.nickname_format_error'),
                 ]));
             }
-            $msg0 = '该昵称已被使用，请换一个试试！';
-            $msg1 = '恭喜该昵称可以使用。';
+            $msg0 = __('messages.Index.checkUniqueName.nickname_had_been_use');
+            $msg1 = __('messages.Index.checkUniqueName.nickname_can_be_use');
         }
         $row = UserSer::getUserByUsername($username);
         if (!!$row) {
@@ -200,7 +200,7 @@ class IndexController extends Controller
         $myfav = [];
         if ($uid) {
             //主播列表
-           // $arr = include Storage::path('cache/anchor-search-data.php');
+            // $arr = include Storage::path('cache/anchor-search-data.php');
             //通过redis获取主播信息
             $userServer = resolve(UserService::class);
             $arr = $userServer->anchorlist();
@@ -308,7 +308,7 @@ class IndexController extends Controller
         return JsonResponse::create(
             [
                 'data' =>$data,
-                'msg' => '获取成功 '.$publish,
+                'msg' => __('messages.Index.getIndexInfo.success') . $publish,
                 'status' => 1,
             ]
         );
@@ -453,7 +453,7 @@ class IndexController extends Controller
             if ($times >= 10) return JsonResponse::create([
                 'status' => 0,
                 'data' => ['times' => $times],
-                'msg' => '处理成功！',
+                'msg' => __('messages.Index.complaints.success'),
             ]);
             Redis::set($hname, $times + 1);
         }
@@ -469,14 +469,14 @@ class IndexController extends Controller
             return JsonResponse::create([
                 'status' => 0,
                 'data' => ['times' => $times],
-                'msg' => '缺少投诉内容',
+                'msg' => __('messages.Index.complaints.content_required'),
             ]);
         }
         Complaints::create($data);
         return JsonResponse::create([
             'status' => 1,
             'data' => ['times' => $times],
-            'msg' => '处理成功',
+            'msg' => __('messages.Index.complaints.success'),
         ]);
     }
 
@@ -522,6 +522,6 @@ class IndexController extends Controller
             }
             return new JsonResponse(['status' => 1, 'data' => $result, 'msg' => __('messages.success')]);
         }
-        return new JsonResponse(['status' => 0, 'data' => $result, 'msg' => '获取失败']);
+        return new JsonResponse(['status' => 0, 'data' => $result, 'msg' => __('messages.Index.anchor_join.failed')]);
     }
 }
