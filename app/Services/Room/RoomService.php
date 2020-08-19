@@ -623,15 +623,21 @@ class RoomService extends Service
     {
 
         $room = RoomDuration::find($data);
-        if (!$room) return ['status' => 0, 'msg' => '房间不存在'];
-        if ($room->uid != Auth::id()) return ['status' => 0, 'msg' => '只能删除自己房间'];//只能删除自己房间
-        if ($room->status == 1) return ['status' => 0, 'msg' => '房间已经删除'];
+        if (!$room) {
+            return ['status' => 0, 'msg' => __('messages.Room.index.the_room_is_not_exist')];
+        }
+        if ($room->uid != Auth::id()) {
+            return ['status' => 0, 'msg' => __('messages.Member.delRoomDuration.del_yourself_only')];
+        }//只能删除自己房间
+        if ($room->status == 1) {
+            return ['status' => 0, 'msg' => __('messages.Member.delRoomOne2Many.room_deleted')];
+        }
         if ($room->reuid != 0) {
-            return ['status' => 0, 'msg' => '房间已经被预定，不能删除！'];
+            return ['status' => 0, 'msg' => __('messages.Member.delRoomOne2Many.room_already_reserved')];
         }
         $this->make('redis')->hdel('hroom_duration:' . $room->uid . ':' . $room->roomtid, $room->id);//删除对应的redis
         $room->delete();
-        return ['status' => 1, 'msg' => '删除成功'];
+        return ['status' => 1, 'msg' => __('messages.Charge.del.success')];
     }
 
     /*
