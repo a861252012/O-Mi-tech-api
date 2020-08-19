@@ -228,7 +228,7 @@ class MobileController extends Controller
         if (!$userinfo) {
             return JsonResponse::create([
                 'status' => 0,
-                'msg' => '无效的用户',
+                'msg' => __('messages.Mobile.userInfo.invalid_user'),
                 'data' => $remote_js_url,
             ]);
         }
@@ -983,9 +983,6 @@ class MobileController extends Controller
     {
         $uid = Auth::id();
         $post = $this->request()->all();
-//        if (empty($post['captcha']) || !Captcha::check($post['captcha'])) {
-//            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '对不起，验证码错误!']);
-//        }
         $post['original_password'] = $this->decode($post['original_password']);
         $post['new_password'] = $this->decode($post['new_password']);
         $post['re_new_password'] = $this->decode($post['re_new_password']);
@@ -1189,35 +1186,5 @@ class MobileController extends Controller
             $this->setStatus(999, __('messages.Mobile.loginmsg.no_data'));
             return $this->jsonOutput();
         }
-
-//        $data = json_decode(Redis::hget('hloginmsg:' .SiteSer::siteId(),'list'));
-//
-//        $A_data = array();
-//        if(isset($data)){
-//
-//            foreach($data as $key => $val){
-//                $O = (object)array();
-//                if($val->device==$device){
-//                    if(isset($_GET['blank'])&&($val->blank==$_GET['blank'])||!isset($_GET['blank'])){
-//                        $O->id = count($A_data)+1;
-//                        $O->type = $val->type;
-//                        $O->interval = $val->between;
-//                        $O->title = $val->title;
-//                        $O->content = $val->content;
-//                        $O->img = $val->image;
-//                        $O->url = $val->link;
-//                        $O->blank = $val->blank;
-//                        $O->create_time = $key;
-//                        array_push($A_data,$O);
-//                    }
-//                }
-//            }
-//        }
-//
-//        return response()->json([
-//            'status' => 1,
-//            'data' => $A_data,
-//            'msg' => '成功'
-//        ]);
     }
 }

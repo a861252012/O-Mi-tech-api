@@ -29,7 +29,7 @@ class LoginAuth
             config()->set('auth.defaults.guard', $guard);
         }
         if (Auth::guest()) {
-            return JsonResponse::create(['status' => 10000, 'msg' => '未登录']);
+            return JsonResponse::create(['status' => 10000, 'msg' => __('messages.not_logged_in')]);
         }
         if (Auth::user()->banned()) {
             Auth::logout();

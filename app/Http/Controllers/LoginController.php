@@ -177,7 +177,7 @@ class LoginController extends Controller
         if (empty($username) || (empty($password) && !$skipPassword)) {
             return [
                 'status' => 0,
-                'msg' => '用户名或密码不能为空',
+                'msg' => __('messages.Login.solveUserLogin.account_password_required'),
             ];
         }
 
@@ -187,7 +187,7 @@ class LoginController extends Controller
         if (!$skipCaptcha && !Captcha::check(request('captcha'))) {
             return [
                 "status" => 0,
-                "msg" => "验证码错误，请重新输入！",
+                "msg" => __('messages.Login.solveUserLogin.captcha_wrong'),
             ];
         }
 
@@ -203,7 +203,7 @@ class LoginController extends Controller
                 $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
                 return [
                     'status' => 0,
-                    'msg' => '您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq
+                    'msg' => __('messages.Login.solveUserLogin.account_block_30days_no_show', ['S_qq' => $S_qq])
                 ];
             }
             // platform user check
@@ -215,8 +215,8 @@ class LoginController extends Controller
 
         if($open_pwd_change && (!$this->checkPwdChanged($uid))){
             return array(
-                'status'=>101,
-                'msg'=>'密码修改',
+                'status' => 101,
+                'msg' => __('messages.Login.solveUserLogin.password_modify'),
             );
         }
 
@@ -228,7 +228,7 @@ class LoginController extends Controller
         ], request('remember'))) {
             return [
                 'status' => 0,
-                'msg' => '用户名密码错误！',
+                'msg' => __('messages.Login.solveUserLogin.account_password_wrong'),
             ];
         };
 
@@ -236,7 +236,7 @@ class LoginController extends Controller
 
         return [
             'status' => 1,
-            'msg' => '登录成功',
+            'msg' => __('messages.Login.solveUserLogin.success'),
             'data'=>[
                Session::getName() => Session::getId(),
             ]
