@@ -359,22 +359,37 @@ class RoomService extends Service
      */
     public function addOnetomore($data)
     {
+        if (empty($data['origin'])) {
+            $data['origin'] = 11;
+        }
+        if (!in_array($data['duration'], [20, 25, 30, 35, 40, 45, 50, 55, 60])) {
+            return ['status' => 9, 'msg' => __('messages.request_error')];
+        }
+        if ($data['points'] > 99999 || $data['points'] <= 0) {
+            return ['status' => 3, 'msg' => __('messages.Member.roomSetDuration.max_setting')];
+        }
+        if ($data['points'] < 399) {
+            return ['status' => 4, 'msg' => __('messages.Member.roomOneToMore.room_min_limit')];
+        }
+        if (empty($data['mintime']) || empty($data['duration'])) {
+            return ['status' => 5, 'msg' => __('messages.request_error')];
+        }
+        $start_time = date("Y-m-d H:i:s",
+            strtotime($data['mintime'] . ' ' . $data['hour'] . ':' . $data['minute'] . ':00'));
 
-        if (empty($data['origin'])) $data['origin'] = 11;
-        if (!in_array($data['duration'], [20, 25, 30, 35, 40, 45, 50, 55, 60])) return ['status' => 9, 'msg' => '请求错误'];
-        if ($data['points'] > 99999 || $data['points'] <= 0) return ['status' => 3, 'msg' => '金额超出范围,不能大于99999钻石'];
-        if ($data['points'] < 399) return ['status' => 4, 'msg' => '钻石数不能少于399钻石'];
-        if (empty($data['mintime']) || empty($data['duration'])) return ['status' => 5, 'msg' => '请求错误'];
-        $start_time = date("Y-m-d H:i:s", strtotime($data['mintime'] . ' ' . $data['hour'] . ':' . $data['minute'] . ':00'));
-
-        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return ['status' => 6, 'msg' => '不能设置过去的时间'];
+        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) {
+            return ['status' => 6, 'msg' => __('messages.Member.roomUpdateDuration.set_min_limit')];
+        }
         $beforthree = date('Y-m-d H:i:s', strtotime('3 hour', time()));
         //  dd($beforthree<date("Y-m-d H:i:s", strtotime($start_time)));
-        if ($beforthree < date("Y-m-d H:i:s", strtotime($start_time))) return ['status' => 7, 'msg' => '只能设置基于当前时间 3小时内的一对多房间'];
+        if ($beforthree < date("Y-m-d H:i:s", strtotime($start_time))) {
+            return ['status' => 7, 'msg' => __('messages.Member.roomOneToMore.setting_limit')];
+        }
         $endtime = date('Y-m-d H:i:s', strtotime($start_time) + $data['duration'] * 60);
 
-        if (!$this->notSetRepeat($start_time, $endtime)) return ['status' => 2, 'msg' => '你这段时间和一对一或一对多有重复的房间'];
-
+        if (!$this->notSetRepeat($start_time, $endtime)) {
+            return ['status' => 2, 'msg' => __('messages.Member.roomOneToMore.time_repeat')];
+        }
 
         $redis = $this->make('redis');
 
@@ -422,7 +437,7 @@ class RoomService extends Service
         }
         $enable_threshold = SiteSer::globalSiteConfig('enable_one2more_threshold') == "1";
         if ($enable_threshold && empty($uids)) {
-            return ['status' => 2, 'msg' => '没有用户满足送礼数，不允许创建房间'];
+            return ['status' => 2, 'msg' => __('messages.Room.roomSetDuration.no_audience')];
         }
 
 
@@ -475,8 +490,7 @@ class RoomService extends Service
         $rs = $this->make('redis')->hmset('hroom_whitelist:' . $duroom['uid'] . ':' . $duroom->id, $temp);
 
         Log::channel('room')->info('OneToMore' . $duroom->toJson());
-        return ['status' => 1, 'msg' => '添加成功'];
-
+        return ['status' => 1, 'msg' => __('messages.Member.addOneToManyRoomUser.success')];
     }
 
     /**
@@ -564,13 +578,20 @@ class RoomService extends Service
     public function addOnetoOne($data)
     {
 
-        if (empty($data['tid']) || empty($data['mintime']) || empty($data['duration']) || empty($data['points'])) return ['status' => 0, 'msg' => '请求错误'];
-        $start_time = date("Y-m-d H:i:s", strtotime($data['mintime'] . ' ' . $data['hour'] . ':' . $data['minute'] . ':00'));
+        if (empty($data['tid']) || empty($data['mintime']) || empty($data['duration']) || empty($data['points'])) {
+            return ['status' => 0, 'msg' => __('messages.request_error')];
+        }
+        $start_time = date("Y-m-d H:i:s",
+            strtotime($data['mintime'] . ' ' . $data['hour'] . ':' . $data['minute'] . ':00'));
         $theday = date("Y-m-d H:i:s", mktime(23, 59, 59, date("m"), date("d") + 7, date("Y")));
 
-        if ($theday < date("Y-m-d H:i:s", strtotime($start_time))) return ['status' => 0, 'msg' => '只能设置未来七天以内'];
+        if ($theday < date("Y-m-d H:i:s", strtotime($start_time))) {
+            return ['status' => 0, 'msg' => __('messages.Member.roomUpdateDuration.set_max_limit')];
+        }
 
-        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) return ['status' => 0, 'msg' => '不能设置过去的时间'];
+        if (date("Y-m-d H:i:s") > date("Y-m-d H:i:s", strtotime($start_time))) {
+            return ['status' => 0, 'msg' => __('messages.Member.roomUpdateDuration.set_min_limit')];
+        }
 
         $endtime = date('Y-m-d H:i:s', strtotime($start_time) + $data['duration'] * 60);
         $durationRoom = new RoomDuration();
@@ -587,17 +608,17 @@ class RoomService extends Service
 
         $isonly = $this->checkonlyone($start_time, $endtime);
 
-        if ($isonly == false) return ['status' => 0, 'msg' => '当前时间还有未开播或者正在开播的一对一'];
+        if ($isonly == false) {
+            return ['status' => 0, 'msg' => __('messages.Room.roomSetDuration.room_limit')];
+        }
 
         if ($this->notSetRepeat($start_time, $endtime)) {
             $durationRoom->save();
             $this->set_durationredis($durationRoom);
-            return ['status' => 1, 'msg' => '添加成功'];
+            return ['status' => 1, 'msg' => __('messages.Member.addOneToManyRoomUser.success')];
         } else {
-            return ['status' => 0, 'msg' => '你这段时间有重复的房间'];
+            return ['status' => 0, 'msg' => __('messages.Room.roomSetDuration.time_repeat')];
         }
-
-
     }
 
 

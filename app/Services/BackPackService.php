@@ -134,7 +134,7 @@ class BackPackService
         if (!$insertMsgRecord) {
             Log::error('新增系統訊息錯誤');
             DB::rollBack();
-            return ['status' => 0, 'msg' => '使用失敗'];
+            return ['status' => 0, 'msg' => __('messages.BackPack.use_item_failed')];
         }
 
         //更改物品狀態為使用
