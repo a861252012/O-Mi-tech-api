@@ -39,6 +39,14 @@ class VLocale
             } elseif (in_array($localeArr[0], self::LANGS)) {
                 $locale = $localeArr[0];
             }
+        } elseif (!empty($request->header('Accept-Language'))) {
+            $localeArr = explode('_', $request->header('Accept-Language'));
+
+            if (in_array($request->header('Accept-Language'), self::LANGS)) {
+                $locale = $request->header('Accept-Language');
+            } elseif (in_array($localeArr[0], self::LANGS)) {
+                $locale = $localeArr[0];
+            }
         } else {
             $locale = 'zh';
         }
