@@ -286,7 +286,7 @@ class ChargeService extends Service
 
         //验证下签名
         if (!resolve('charge')->checkSign($jsondatas)) {
-            $signError = "订单号：" . $tradeno . "\n签名没有通过！\n";
+            $signError = __('messages.Charge.notice.sign_wrong', ['tradeno' => $tradeno]);
 
             Log::info($signError);
             return ['status' => 1, 'msg' => date('Y-m-d H:i:s') . " \n" . $postResult . "\n" . $signError];
