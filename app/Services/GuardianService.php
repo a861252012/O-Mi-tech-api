@@ -208,7 +208,6 @@ class GuardianService
 
         //檢核方案是否有開啟
         if (!$price['final']) {
-//            return ['status' => 101, 'msg' => '守护系统' . self::VALID_DAY_ARR[$daysType] . '天方案未啟用'];
             return [
                 'status' => 101,
                 'msg' => __('messages.Guardian.buy.class_not_active', ['day' => self::VALID_DAY_ARR[$daysType]]),
