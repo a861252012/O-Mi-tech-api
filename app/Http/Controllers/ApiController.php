@@ -676,7 +676,7 @@ class ApiController extends Controller
     {
         throw new HttpResponseException(JsonResponse::create([
             'status' => 0,
-            'msg'    => __('messages.aa.login_permission_denied')
+            'msg'    => __('messages.Api.aa.login_permission_denied')
         ]));
         return true;
     }
@@ -791,7 +791,7 @@ class ApiController extends Controller
             return new Response(__('messages.Api.platform.uuid_does_not_exist'));
         }
         if (empty($data['nickename'])) {
-            return new Response(__('messages.Api.platform.empty_nickename'));
+            return new Response(__('messages.Api.platform.empty_nickname'));
         }
 
 

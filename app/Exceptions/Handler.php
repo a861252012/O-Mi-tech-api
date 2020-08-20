@@ -110,7 +110,11 @@ class Handler extends ExceptionHandler
         }
 
         if ($exception instanceof ValidationException) {
-            return JsonResponse::create(['status' => 0, 'msg' => '参数错误', 'errors' => $exception->errors()]);
+            return JsonResponse::create([
+                'status' => 0,
+                'msg'    => __('messages.Room.roommid.param_is_wrong'),
+                'errors' => $exception->errors()
+            ]);
         }
 
         if ((int)Redis::get('log') === 1) {

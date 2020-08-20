@@ -452,11 +452,6 @@ class MemberController extends Controller
             'data'   => ['list' => $transfersall, 'total_amount' => $total_amount],
             'msg'    => __('messages.success')
         ]);
-        /*return new JsonResponse(['status' => 123]);*/
-        /*}else{
-            return new JsonResponse(['status' => 1, 'data' => [],'msg'=>'未登录']);
-        }*/
-
     }
 
     /**
@@ -2073,11 +2068,6 @@ class MemberController extends Controller
         //}
 
         return new JsonResponse(['status' => 1, 'data' => ['list' => $giftsall],'msg'=>__('messages.success')]);
-        /*return new JsonResponse(['status' => 123]);*/
-        /*}else{
-            return new JsonResponse(['status' => 1, 'data' => [],'msg'=>'未登录']);
-        }*/
-
     }
 
     /**
@@ -3060,11 +3050,6 @@ class MemberController extends Controller
                 }
 
             }
-            /*
-            if (!$this->make('captcha')->Verify($post['captcha'])) {
-                return new JsonResponse(array('code' => 300, 'msg' => '验证码错误!'));
-            }
-            */
 
             if (empty($post['password'])) {
                 return new JsonResponse(array(

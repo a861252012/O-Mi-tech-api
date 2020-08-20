@@ -609,7 +609,7 @@ class RoomService extends Service
         $isonly = $this->checkonlyone($start_time, $endtime);
 
         if ($isonly == false) {
-            return ['status' => 0, 'msg' => __('messages.Room.roomSetDuration.room_limit')];
+            return ['status' => 0, 'msg' => __('messages.RoomService.addOnetoOne.room_repeat')];
         }
 
         if ($this->notSetRepeat($start_time, $endtime)) {
@@ -617,7 +617,7 @@ class RoomService extends Service
             $this->set_durationredis($durationRoom);
             return ['status' => 1, 'msg' => __('messages.Member.addOneToManyRoomUser.success')];
         } else {
-            return ['status' => 0, 'msg' => __('messages.Room.roomSetDuration.time_repeat')];
+            return ['status' => 0, 'msg' => __('messages.RoomService.addOnetoOne.room_repeat_in_time')];
         }
     }
 

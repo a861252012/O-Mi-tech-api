@@ -275,7 +275,7 @@ class Controller extends BaseController
                 $username) || strlen($username) < 5 || strlen($username) > 30) {
             return json_encode(array(
                 "status" => 0,
-                "msg"    => "用户名不合法",
+                "msg"    => __('messages.Password.changePwd.illegal_username'),
             ));
         }
 
