@@ -2406,7 +2406,10 @@ class MemberController extends Controller
                 $message = [
                     'mail_type' => 3,
                     'rec_uid' => $user->uid,
-                    'content' => '您首次开通 ' . $userGroup['level_name'] . ' 贵族，获得了赠送礼包的' . $userGroup['system']['gift_money'] . '钻石',
+                    'content' => __('messages.Member.buyVip.first', [
+                        'level_name' => $userGroup['level_name'],
+                        'gift_money' => $userGroup['system']['gift_money'],
+                    ]),
                 ];
 
                 // $this->make('messageServer')->sendSystemToUsersMessage($message);
@@ -2452,7 +2455,7 @@ class MemberController extends Controller
                 'category' => 2,
                 'mail_type' => 3,
                 'rec_uid' => $user->uid,
-                'content' => '贵族开通成功提醒：您已成功开通 ' . $userGroup['level_name'] . ' 贵族，到期日：' . $exp,
+                'content' => __('Member.buyVip.pass', ['level_name' => $userGroup['level_name'], 'exp' => $exp]),
             ];
             // $this->make('messageServer')->sendSystemToUsersMessage($message);
             $messageService = resolve(MessageService::class);

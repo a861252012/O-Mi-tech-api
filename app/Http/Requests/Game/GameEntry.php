@@ -23,8 +23,8 @@ class GameEntry extends VRequest
     public function messages()
     {
         return [
-            'gp_id.*'     => '輸入遊戲商ID不正確',
-            'game_code.*' => '輸入遊戲代碼不正確',
+            'gp_id.*'     => __('messages.GameEntryRequest.gp_id'),
+            'game_code.*' => __('messages.GameEntryRequest.game_code'),
         ];
     }
 }

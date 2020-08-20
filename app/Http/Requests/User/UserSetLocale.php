@@ -23,7 +23,7 @@ class UserSetLocale extends VRequest
     public function messages()
     {
         return [
-            'loc.*' => '輸入語系不正確',
+            'loc.*' => __('messages.UserSetLocaleRequest.loc'),
         ];
     }
 }
