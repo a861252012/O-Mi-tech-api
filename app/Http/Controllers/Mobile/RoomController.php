@@ -332,7 +332,7 @@ class RoomController extends Controller
      * @apiSuccess {String} room_info 房間描述
      * @apiSuccess {String} time_length 開始時間到結束時間的秒數
      * @apiSuccess {String} room_id rid
-     * @apiSuccess {String} class_id 一對多是房間編號<br>
+     * @apiSuccess {String} class_id 一對多是場次編號<br>
      *                      一對一是抓 hroom_duration:{rid}:4 的 id，內容不詳
      * @apiSuccess {String} authority_in 是否有权限进入房间<br>
      *                      <code>1</code>: 是<br>
