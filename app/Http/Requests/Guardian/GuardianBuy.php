@@ -24,14 +24,14 @@ class GuardianBuy extends VRequest
     public function messages()
     {
         return [
-            'rid.numeric'       => ':attribute 參數類型不正確',
-            'uid.numeric'       => ':attribute 參數類型不正確',
-            'guardId.required'  => ':attribute 需必填',
-            'guardId.numeric'   => ':attribute 參數類型不正確',
-            'payType.required'  => ':attribute 需必填',
-            'payType.numeric'   => ':attribute 參數類型不正確',
-            'daysType.required' => ':attribute 需必填',
-            'daysType.numeric'  => ':attribute 參數類型不正確',
+            'rid.numeric'       => ':attribute ' . __('messages.Guardian_buy_request.type_error'),
+            'uid.numeric'       => ':attribute ' . __('messages.Guardian_buy_request.type_error'),
+            'guardId.required'  => ':attribute ' . __('messages.Guardian_buy_request.required'),
+            'guardId.numeric'   => ':attribute ' . __('messages.Guardian_buy_request.type_error'),
+            'payType.required'  => ':attribute ' . __('messages.Guardian_buy_request.required'),
+            'payType.numeric'   => ':attribute ' . __('messages.Guardian_buy_request.type_error'),
+            'daysType.required' => ':attribute ' . __('messages.Guardian_buy_request.required'),
+            'daysType.numeric'  => ':attribute ' . __('messages.Guardian_buy_request.type_error'),
         ];
     }
 }

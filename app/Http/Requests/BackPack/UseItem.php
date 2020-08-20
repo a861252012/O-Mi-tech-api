@@ -22,7 +22,7 @@ class UseItem extends VRequest
     public function messages()
     {
         return [
-            'id.numeric' => ':attribute 參數類型不正確',
+            'id.numeric' => ':attribute ' . __('messages.backpack_request.wrong_type'),
         ];
     }
 

@@ -87,10 +87,10 @@ class SmsService
     public static function send($act, $cc, $mobile, $checkFormat = true)
     {
         if ($checkFormat && !PhoneNumber::checkFormat($cc, $mobile)) {
-            return self::ERR_INVALID_FORMAT;
+            return __('messages.Password.pwdResetByMobile.err_invalid_format');
         }
         if (self::exists($act, $cc, $mobile)) {
-            return self::ERR_ALREADY_SEND;
+            return __('messages.SmsService.try_again_later');
         }
 
         // gen random number
@@ -100,22 +100,22 @@ class SmsService
         if ($cc != '999') {
             switch ($act) {
                 case self::ACT_REG:
-                    $tpl = self::TPL_REG;
+                    $tpl = __('messages.SmsService.register_msg_verify');
                     $msg = str_replace('{{code}}', $code, $tpl);
                     break;
 
                 case self::ACT_LOGIN:
-                    $tpl = self::TPL_LOGIN;
+                    $tpl = __('messages.SmsService.login_msg_verify');
                     $msg = str_replace('{{code}}', $code, $tpl);
                     break;
 
                 case self::ACT_PWD_RESET:
-                    $tpl = self::TPL_PWD_RESET;
+                    $tpl = __('messages.SmsService.reset_pwd_msg_verify');
                     $msg = str_replace('{{code}}', $code, $tpl);
                     break;
 
                 case self::ACT_MODIFY_MOBILE:
-                    $tpl = self::TPL_MODIFY_MOBILE;
+                    $tpl = __('messages.SmsService.reset_phone_msg_verify');
                     $msg = str_replace('{{code}}', $code, $tpl);
                     break;
             }
@@ -309,7 +309,7 @@ class SmsService
 //        dd(json_decode($result->getBody()->getContents()));
         if (200 != $result->getStatusCode()) {
             \Log::error("请求状态错误:  " . var_export($result, true));
-            return "请求状态错误，HTTP error:  " . $result->getStatusCode();
+            return __('messages.SmsService.curlPost_error') . $result->getStatusCode();
         }
 
         return $result->getBody()->getContents();
