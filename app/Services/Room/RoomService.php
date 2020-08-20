@@ -437,7 +437,7 @@ class RoomService extends Service
         }
         $enable_threshold = SiteSer::globalSiteConfig('enable_one2more_threshold') == "1";
         if ($enable_threshold && empty($uids)) {
-            return ['status' => 2, 'msg' => __('messages.Room.roomSetDuration.no_audience')];
+            return ['status' => 2, 'msg' => __('messages.RoomService.addOnetomore.unable_create')];
         }
 
 
