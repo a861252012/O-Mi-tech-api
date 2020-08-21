@@ -87,10 +87,10 @@ class SmsService
     public static function send($act, $cc, $mobile, $checkFormat = true)
     {
         if ($checkFormat && !PhoneNumber::checkFormat($cc, $mobile)) {
-            return __('messages.Password.pwdResetByMobile.err_invalid_format');
+            return self::ERR_INVALID_FORMAT;
         }
         if (self::exists($act, $cc, $mobile)) {
-            return __('messages.SmsService.try_again_later');
+            return self::ERR_ALREADY_SEND;
         }
 
         // gen random number
@@ -100,22 +100,22 @@ class SmsService
         if ($cc != '999') {
             switch ($act) {
                 case self::ACT_REG:
-                    $tpl = __('messages.SmsService.register_msg_verify');
+                    $tpl = self::TPL_REG;
                     $msg = str_replace('{{code}}', $code, $tpl);
                     break;
 
                 case self::ACT_LOGIN:
-                    $tpl = __('messages.SmsService.login_msg_verify');
+                    $tpl = self::TPL_LOGIN;
                     $msg = str_replace('{{code}}', $code, $tpl);
                     break;
 
                 case self::ACT_PWD_RESET:
-                    $tpl = __('messages.SmsService.reset_pwd_msg_verify');
+                    $tpl = self::TPL_PWD_RESET;
                     $msg = str_replace('{{code}}', $code, $tpl);
                     break;
 
                 case self::ACT_MODIFY_MOBILE:
-                    $tpl = __('messages.SmsService.reset_phone_msg_verify');
+                    $tpl = self::TPL_MODIFY_MOBILE;
                     $msg = str_replace('{{code}}', $code, $tpl);
                     break;
             }
