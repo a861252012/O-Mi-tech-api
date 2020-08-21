@@ -369,4 +369,9 @@ return [
     'UserSetLocaleRequest.loc' => '輸入語系不正確',
     'Api.platform.not_empty' => '不能为空',
     'Api.platform.wrong_length' => '长度（数值）不对',
+    'goods.category_id.1' => '热门',
+    'goods.category_id.2' => '贵族',
+    'goods.category_id.3' => '推荐',
+    'goods.category_id.4' => '高级',
+    'goods.category_id.5' => '奢华',
 ];

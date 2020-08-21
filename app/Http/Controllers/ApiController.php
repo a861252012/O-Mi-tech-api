@@ -1447,7 +1447,7 @@ EOT;
         $cate_id = [];// 用于下方查询时的条件使用
         foreach ($gift_category as $cate) {
             $cate_id[] = $cate['category_id'];
-            $data[$cate['category_id']]['name'] = $cate['category_name'];
+            $data[$cate['category_id']]['name'] =  __('messages.goods.category_id.' . $cate['category_id']);
             $data[$cate['category_id']]['category'] = $cate['category_id'];
             $data[$cate['category_id']]['items'] = [];
         }
