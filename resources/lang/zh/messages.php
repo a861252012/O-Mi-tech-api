@@ -25,6 +25,7 @@ return [
     'request_error' => '请求错误',
     'out_of_money' => '对不起！您的钻石余额不足!',
     'not_logged_in' => '未登录!',
+    'return_format_error' => '返回格式错误',
     'failed_to_get_userInfo' => '用户信息获取失败!',
     'Guardian.getSetting.setting_is_empty' => '设定為空',
     'Guardian.buy.class_not_active' => '守护系统 :day 天方案未啟用',

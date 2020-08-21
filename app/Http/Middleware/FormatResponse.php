@@ -43,7 +43,7 @@ class FormatResponse
 
                 $json = $response->getData();
                 if (!is_object($json)) {
-                    throw new \Error('返回格式错误');
+                    throw new \Error(__('messages.return_format_error'));
                 }
                 if (!isset($json->data)) {
                     $json->data = new \stdClass();
