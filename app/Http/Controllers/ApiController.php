@@ -1451,9 +1451,9 @@ EOT;
                 "category" => 1,
                 "items"    => []
             ],
-            2 => [
-                "name"     => __('messages.goods.category_id.2'),
-                "category" => 2,
+            3 => [
+                "name"     => __('messages.goods.category_id.3'),
+                "category" => 3,
                 "items"    => []
             ],
             4 => [

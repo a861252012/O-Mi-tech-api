@@ -370,8 +370,8 @@ return [
     'Api.platform.not_empty' => '不能為空',
     'Api.platform.wrong_length' => '長度（數值）不對',
     'goods.category_id.1' => '热门',
-    'goods.category_id.2' => '贵族',
-    'goods.category_id.3' => '推荐',
+    'goods.category_id.2' => '推荐',
+    'goods.category_id.3' => '贵族',
     'goods.category_id.4' => '高级',
     'goods.category_id.5' => '奢华',
 ];
