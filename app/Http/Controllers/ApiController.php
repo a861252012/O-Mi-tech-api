@@ -40,6 +40,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
@@ -1442,29 +1443,67 @@ EOT;
         $site = SiteSer::siteId();
         $isPC = strpos(request()->server('HTTP_REFERER'), '/h5');//HTTP_REFERER 如有/h5,則為二站pc
         $jumpEggArray = [];//把跳蛋禮物放到列表最後面
-        $gift_category = GiftCategory::all();
-        $data = [];
-        $cate_id = [];// 用于下方查询时的条件使用
-        foreach ($gift_category as $cate) {
-            $cate_id[] = $cate['category_id'];
-            $data[$cate['category_id']]['name'] =  __('messages.goods.category_id.' . $cate['category_id']);
-            $data[$cate['category_id']]['category'] = $cate['category_id'];
-            $data[$cate['category_id']]['items'] = [];
-        }
+
+        //禮物種類改為固定資訊,排除推薦禮物
+        $data = [
+            1 => [
+                "name"     => __('messages.goods.category_id.1'),
+                "category" => 1,
+                "items"    => []
+            ],
+            2 => [
+                "name"     => __('messages.goods.category_id.2'),
+                "category" => 2,
+                "items"    => []
+            ],
+            4 => [
+                "name"     => __('messages.goods.category_id.4'),
+                "category" => 4,
+                "items"    => []
+            ],
+            5 => [
+                "name"     => __('messages.goods.category_id.5'),
+                "category" => 5,
+                "items"    => []
+            ],
+        ];
+
         /**
          * 根据上面取出的分类的id获取对应的礼物
          * 然后格式化之后塞入到具体数据中
          * 如為二站且為PC,則不顯示跳蛋禮物
          */
         $gif = Goods::where('category', '!=', 1006)->where('is_show', '>', 0)
-            ->wherein('category', $cate_id)->orderBy('sort_order', 'asc')->get()->toarray();
+            ->wherein('category', [1, 3, 4, 5])
+            ->orderBy('sort_order', 'asc')
+            ->get()
+            ->toarray();
 
-        foreach ($gif as $item) {
+        //讀取redis禮物列表
+        $redis = $this->make('redis');
+
+        $getRedisGiftList = json_decode($redis->get('goods_list'), true);
+        if (!$getRedisGiftList) {
+            $redis->set('goods_list', json_encode($gif));
+            $redis->expire('goods_list', 600);//redis禮物列表 TTL十分鐘
+            $getRedisGiftList = $gif;
+        }
+
+        //判斷user對應的禮物名稱語系
+        $locale = App::getLocale();//zh, zh_TW, zh_HK, en
+
+        if (empty($locale) || $locale === 'zh') {
+            $itemName = 'name';
+        } else {
+            $itemName = 'name_' . strtolower($locale);
+        }
+
+        foreach ($getRedisGiftList as $item) {
             $good = [];
             $good['gid'] = $item['gid'];
             $good['price'] = $item['price'];
             $good['category'] = $item['category'];
-            $good['name'] = $item['name'];
+            $good['name'] = $item[$itemName];
             $good['desc'] = $item['desc'];
             $good['sort'] = $item['sort_order'];
             $good['time'] = $item['time'];
@@ -1502,7 +1541,8 @@ EOT;
         /**
          * 返回json给前台 用了一个array_values格式化为 0 开始的索引数组
          */
-        return new JsonResponse(['data' => ['list' => array_values($data)]]);
+        return JsonResponse::create(['data' => ['list' => array_values($data)]])
+            ->header('Cache-Control', ' private, max-age=60');
     }
 
     protected function isLuck($gid)
