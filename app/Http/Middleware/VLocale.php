@@ -33,10 +33,10 @@ class VLocale
         if (!empty($userLocale)) {
             Log::debug('用戶locale');
             App::setLocale($userLocale);
-        } elseif ($queryString = $this->checkQueryString()) {
+        } elseif ($queryString = $this->getQueryStringLocale()) {
             Log::debug('檢查Query String');
             App::setLocale($queryString);
-        } elseif ($header = $this->checkHeader()) {
+        } elseif ($header = $this->getHeaderLocale()) {
             Log::debug('檢查Header');
             App::setLocale($header);
         } else {
@@ -47,46 +47,35 @@ class VLocale
         return $next($request);
     }
 
-    private function checkQueryString()
+    private function getQueryStringLocale()
     {
-        if (empty(request()->query('locale'))) {
+        $locale = request()->query('locale');
+        if (empty($locale)) {
             return false;
         }
 
-        if (in_array(request()->query('locale'), self::LANGS)) {
-            return request()->query('locale');
-        }
-
-        $localeArr = explode('_', request()->query('locale'));
-        if (in_array($localeArr[0], self::LANGS)) {
-            return $localeArr[0];
-        }
-
-        return false;
+        return $this->checkLocale($locale);
     }
 
-    private function checkHeader()
+    private function getHeaderLocale()
     {
-        if (empty(request()->header('Accept-Language'))) {
+        $locale = request()->getLanguages();
+        if (count($locale) == 0) {
             return false;
         }
 
-        if (in_array(request()->header('Accept-Language'), self::LANGS)) {
-            return request()->header('Accept-Language');
+        return $this->checkLocale($locale[0]);
+    }
+
+    private function checkLocale($locale)
+    {
+        if (in_array($locale, self::LANGS)) {
+            return $locale;
         }
 
-        if (str_contains(request()->header('Accept-Language'), '-')) {
-            $localeArr = explode('-', request()->header('Accept-Language'));
-            if (in_array($localeArr[0] . '_' . $localeArr[1], self::LANGS)) {
-                return $localeArr[0] . '_' . $localeArr[1];
-            } elseif (in_array($localeArr[0], self::LANGS)) {
-                return $localeArr[0];
-            }
-        } else {
-            $localeArr = explode('_', request()->header('Accept-Language'));
-            if (in_array($localeArr[0], self::LANGS)) {
-                return $localeArr[0];
-            }
+        $localeArr = explode('_', $locale);
+        if (in_array($localeArr[0], self::LANGS)) {
+            return $localeArr[0];
         }
 
         return false;
