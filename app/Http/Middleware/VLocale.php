@@ -12,7 +12,6 @@ use Closure;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use function Psy\debug;
 
 class VLocale
 {
@@ -31,39 +30,65 @@ class VLocale
         $userAttrService = resolve(UserAttrService::class);
         $userLocale = $userAttrService->get($uid, 'locale');
 
-        $locale = 'zh';
         if (!empty($userLocale)) {
-            $locale = $userLocale;
-        } elseif (!empty($request->query('locale'))) {
-            if (str_contains($request->query('locale'), '-')) {
-                $localeArr = explode('-', $request->query('locale'));
-            }
+            Log::debug('用戶locale');
+            App::setLocale($userLocale);
+        } elseif ($queryString = $this->checkQueryString()) {
+            Log::debug('檢查Query String');
+            App::setLocale($queryString);
+        } elseif ($header = $this->checkHeader()) {
+            Log::debug('檢查Header');
+            App::setLocale($header);
+        } else {
+            Log::debug('預設語系');
+            App::setLocale('zh');
+        }
 
-            if (in_array($request->query('locale'), self::LANGS)) {
-                $locale = $request->query('locale');
-            } elseif (in_array($localeArr[0] . '_' . $localeArr[1], self::LANGS)) {
-                $locale = $localeArr[0] . '_' . $localeArr[1];
-            } elseif (in_array($localeArr[0], self::LANGS)) {
-                $locale = $localeArr[0];
-            }
-        } elseif (!empty($request->header('Accept-Language'))) {
-            if (str_contains($request->header('Accept-Language'), '-')) {
-                $localeArr = explode('-', $request->header('Accept-Language'));
-            }
+        return $next($request);
+    }
 
-            if (in_array($request->header('Accept-Language'), self::LANGS)) {
-                $locale = $request->header('Accept-Language');
-            } elseif (in_array($localeArr[0] . '_' . $localeArr[1], self::LANGS)) {
-                $locale = $localeArr[0] . '_' . $localeArr[1];
+    private function checkQueryString()
+    {
+        if (empty(request()->query('locale'))) {
+            return false;
+        }
+
+        if (in_array(request()->query('locale'), self::LANGS)) {
+            return request()->query('locale');
+        }
+
+        $localeArr = explode('_', request()->query('locale'));
+        if (in_array($localeArr[0], self::LANGS)) {
+            return $localeArr[0];
+        }
+
+        return false;
+    }
+
+    private function checkHeader()
+    {
+        if (empty(request()->header('Accept-Language'))) {
+            return false;
+        }
+
+        if (in_array(request()->header('Accept-Language'), self::LANGS)) {
+            return request()->header('Accept-Language');
+        }
+
+        if (str_contains(request()->header('Accept-Language'), '-')) {
+            $localeArr = explode('-', request()->header('Accept-Language'));
+            if (in_array($localeArr[0] . '_' . $localeArr[1], self::LANGS)) {
+                return $localeArr[0] . '_' . $localeArr[1];
             } elseif (in_array($localeArr[0], self::LANGS)) {
-                $locale = $localeArr[0];
+                return $localeArr[0];
+            }
+        } else {
+            $localeArr = explode('_', request()->header('Accept-Language'));
+            if (in_array($localeArr[0], self::LANGS)) {
+                return $localeArr[0];
             }
         }
 
-        Log::debug('用戶request語系: ' . $locale);
-
-        App::setLocale($locale);
-
-        return $next($request);
+        return false;
     }
 }
