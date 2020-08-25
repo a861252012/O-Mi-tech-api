@@ -125,7 +125,7 @@ Route::group(['prefix' => 'user'], function () {
         Route::post('item/use', 'BackPackController@useItem');
 
         /* 用戶設定語系 */
-        Route::post('set_locale', 'UserController@setLocale');
+        Route::post('locale', 'UserController@setLocale');
     });
 });
 

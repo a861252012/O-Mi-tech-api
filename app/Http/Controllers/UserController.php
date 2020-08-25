@@ -169,7 +169,7 @@ class UserController extends Controller
     }
 
     /**
-     * @api {post} /user/set_locale 設定用戶語系
+     * @api {post} /user/locale 設定用戶語系
      * @apiGroup User
      * @apiName set_locale
      * @apiVersion 1.0.0

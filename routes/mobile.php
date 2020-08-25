@@ -97,7 +97,7 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
         Route::post('item/use', 'BackPackController@useItem');
 
         /* 修改語系 */
-        Route::post('set_locale', 'UserController@setLocale');
+        Route::post('locale', 'UserController@setLocale');
     });
 
     //关注
