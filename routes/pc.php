@@ -152,8 +152,10 @@ Route::get('/rank_list_gift', ['name' => 'json_rank_list_gift', 'uses' => 'ApiCo
 // 获取主播房间内的礼物排行榜
 Route::get('/rank_list_gift_week', ['name' => 'json_rank_list_gift_week', 'uses' => 'ApiController@rankListGiftWeek']);
 Route::get('/get_head_image', ['name' => 'get_head_image', 'uses' => 'ApiController@getUserHeadImage']);
-// 目前房间内flash使用的获取商品的接口
-Route::get('/goods', ['name' => 'json_goods', 'uses' => 'ApiController@goods']);
+Route::group(['middleware' => 'cache.headers:public;max_age=60'], function () {
+    // 目前房间内flash使用的获取商品的接口
+    Route::get('/goods', ['name' => 'json_goods', 'uses' => 'ApiController@goods']);
+});
 // 关键字屏蔽
 Route::get('/kw', ['name' => 'json_kw', 'uses' => 'ApiController@kw']);
 // 贵族详情页面

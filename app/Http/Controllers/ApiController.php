@@ -1542,8 +1542,7 @@ EOT;
         /**
          * 返回json给前台 用了一个array_values格式化为 0 开始的索引数组
          */
-        return JsonResponse::create(['data' => ['list' => array_values($data)]])
-            ->header('Cache-Control', ' private, max-age=60');
+        return JsonResponse::create(['data' => ['list' => array_values($data)]]);
     }
 
     protected function isLuck($gid)
