@@ -1468,25 +1468,26 @@ EOT;
             ],
         ];
 
-        /**
-         * 根据上面取出的分类的id获取对应的礼物
-         * 然后格式化之后塞入到具体数据中
-         * 如為二站且為PC,則不顯示跳蛋禮物
-         */
-        $gif = Goods::where('category', '!=', 1006)->where('is_show', '>', 0)
-            ->wherein('category', [1, 3, 4, 5])
-            ->orderBy('sort_order', 'asc')
-            ->get()
-            ->toarray();
-
         //讀取redis禮物列表
         $redis = $this->make('redis');
+        $goodsRedisKey = 'goods_list';
 
-        $getRedisGiftList = json_decode($redis->get('goods_list'), true);
+        $getRedisGiftList = json_decode($redis->get($goodsRedisKey), true);
+
         if (!$getRedisGiftList) {
-            $redis->set('goods_list', json_encode($gif));
-            $redis->expire('goods_list', 600);//redis禮物列表 TTL十分鐘
-            $getRedisGiftList = $gif;
+            /**
+             * 根据上面取出的分类的id获取对应的礼物
+             * 然后格式化之后塞入到具体数据中
+             * 如為二站且為PC,則不顯示跳蛋禮物
+             */
+            $getRedisGiftList = Goods::where('category', '!=', 1006)->where('is_show', '>', 0)
+                ->wherein('category', [1, 3, 4, 5])
+                ->orderBy('sort_order', 'asc')
+                ->get()
+                ->toarray();
+
+            $redis->set($goodsRedisKey, json_encode($getRedisGiftList));
+            $redis->expire($goodsRedisKey, 600);//redis禮物列表 TTL十分鐘
         }
 
         //判斷user對應的禮物名稱語系
