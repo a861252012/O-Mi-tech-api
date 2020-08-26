@@ -11,6 +11,7 @@ use App\Services\I18n\PhoneNumber;
 use App\Services\RedisCacheService;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
+use App\Services\UserAttrService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -48,11 +49,12 @@ class LoginController extends Controller
 
         $username = $request->username ?? '';
         $password = $request->password ?? '';
+        $locale = $request->{locale} ?? '';
 
         if (!isset($_REQUEST['_m'])) {
             $password = $this->decode($password); // 密码传递解密
         }
-        $retval = $this->solveUserLogin($username, $password, app(SiteService::class)->config('skip_captcha_login'));
+        $retval = $this->solveUserLogin($username, $password, $locale, app(SiteService::class)->config('skip_captcha_login'));
 
 
         return JsonResponse::create($retval);
@@ -172,7 +174,7 @@ class LoginController extends Controller
      * @param  boolean $skipPassword 绕过密码，用于内部登录
      * @return array  数组格式提示信息
      */
-    public function solveUserLogin($username, $password, $skipCaptcha = false, $skipPassword = false)
+    public function solveUserLogin($username, $password, $locale = null, $skipCaptcha = false, $skipPassword = false)
     {
         if (empty($username) || (empty($password) && !$skipPassword)) {
             return [
@@ -230,7 +232,15 @@ class LoginController extends Controller
                 'status' => 0,
                 'msg' => __('messages.Login.solveUserLogin.account_password_wrong'),
             ];
-        };
+        }
+
+        $userAttrService = resolve(UserAttrService::class);
+
+        /* ---用戶locale處理--- */
+        if (!empty($locale)) {
+            $userAttrService->set($auth->id(), 'locale', $locale);
+        }
+        /* ---用戶locale處理 end--- */
 
         app('events')->dispatch(new Login(Auth::user(), true, 11));
 

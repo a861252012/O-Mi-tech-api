@@ -30,6 +30,7 @@ use App\Services\RedisCacheService;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
 use App\Services\User\UserService;
+use App\Services\UserAttrService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -541,6 +542,15 @@ class MobileController extends Controller
         if ($user->pwd_change === null || $user->cpwd_time === null) {
             $user = (object)UserSer::getUserReset($user->uid);
         }
+
+        /* ---用戶locale處理--- */
+        $locale = $request->{locale} ?? '';
+        $userAttrService = resolve(UserAttrService::class);
+        if (!empty($locale)) {
+            $userAttrService->set($user->uid, 'locale', $locale);
+        }
+        /* ---用戶locale處理 end--- */
+
         //更新最后的登录时间 & ip
 //        app('events')->dispatch(new \Illuminate\Auth\Events\Login($user, true));
         app('events')->dispatch(new Login($user, true, $request->origin));
