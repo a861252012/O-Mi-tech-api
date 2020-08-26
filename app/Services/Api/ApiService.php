@@ -20,6 +20,7 @@ class ApiService
     {
         $site = SiteSer::siteId();
         $isPC = strpos(request()->server('HTTP_REFERER'), '/h5');//HTTP_REFERER 如有/h5,則為二站pc
+        $jumpEggArray = [];//跳蛋禮物
 
         //判斷user對應的禮物名稱語系
         $locale = strtolower(App::getLocale());//zh, zh_TW, zh_HK, en
@@ -65,8 +66,9 @@ class ApiService
              */
             $getRedisGiftList = $this->goodsRepository->getList();
 
-            $itemName = 'name';
-            if (!empty($locale) || $locale !== 'zh') {
+            if (empty($locale) || $locale === 'zh') {
+                $itemName = 'name';
+            } else {
                 $itemName = 'name_' . $locale;
             }
 
@@ -92,8 +94,6 @@ class ApiService
                 } else {
                     $good['isNew'] = 0;
                 }
-
-                $jumpEggArray = [];//跳蛋禮物
 
                 //检查幸运礼物
                 $good['isLuck'] = $this->isLuck($item['gid']);
