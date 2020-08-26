@@ -1448,7 +1448,17 @@ EOT;
      */
     public function goods()
     {
-        return JsonResponse::create(['data' => ['list' => $this->apiService->getGoodsList()]]);
+        $isPC = strpos(request()->server('HTTP_REFERER'), '/h5');//HTTP_REFERER 如有/h5,則為二站pc
+        $locale = strtolower(App::getLocale());//判斷user對應的禮物名稱語系 zh, zh_TW, zh_HK, en
+        $sortJumpEgg = false;//跳蛋禮物是否放在最後排序
+
+        if (SiteSer::siteId() === 2 && $isPC) {
+            $sortJumpEgg = true;
+        }
+
+        $getGoodsList = $this->apiService->getGoodsList($sortJumpEgg, $locale);
+
+        return JsonResponse::create(['data' => ['list' => $getGoodsList]]);
     }
 
     /**

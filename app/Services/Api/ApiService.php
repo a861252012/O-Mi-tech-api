@@ -16,17 +16,12 @@ class ApiService
         $this->goodsRepository = $goodsRepository;
     }
 
-    public function getGoodsList()
+    public function getGoodsList($sortJumpEgg, $locale)
     {
-        $site = SiteSer::siteId();
-        $isPC = strpos(request()->server('HTTP_REFERER'), '/h5');//HTTP_REFERER 如有/h5,則為二站pc
         $jumpEggArray = [];//跳蛋禮物
 
-        //判斷user對應的禮物名稱語系
-        $locale = strtolower(App::getLocale());//zh, zh_TW, zh_HK, en
-
         //讀取redis禮物列表
-        if ($site === 2 && $isPC) {
+        if ($sortJumpEgg) {
             $goodsRedisKey = 'goods_list:2:' . $locale;
         } else {
             $goodsRedisKey = 'goods_list:' . $locale;
@@ -98,7 +93,7 @@ class ApiService
                 //检查幸运礼物
                 $good['isLuck'] = $this->isLuck($item['gid']);
 
-                if ($site == 2 && $isPC && $item['gid'] >= 200000 && $item['gid'] < 300000) {
+                if ($sortJumpEgg && $item['gid'] >= 200000 && $item['gid'] < 300000) {
                     $jumpEggArray[] = $good;
                 } else {
                     $data[$item['category']]['items'][] = $good;
