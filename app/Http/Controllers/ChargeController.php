@@ -289,17 +289,23 @@ class ChargeController extends Controller
 
         switch ($mode_type) {
             case self::CHANNEL_ONE_PAY:
-                $act = '3';
-                $onePayService = resolve(OnePayService::class);
-                $onePayService->genOrder();
-                $orderId = $onePayService->getOrderId();
-                $postdata = $onePayService->pay($request->price);
+                try {
+                    $act = '3';
+                    $onePayService = resolve(OnePayService::class);
+                    $onePayService->genOrder();
+                    $orderId = $onePayService->getOrderId();
+                    $postdata = $onePayService->pay($request->price);
 
-                if (!empty($onePayService->getStatus())) {
-                    $msg = __('messages.Charge.pay.one_pay_error', ['onePayError' => $onePayService->getStatus()]);
+                    if (!empty($onePayService->getStatus())) {
+                        $msg = __('messages.Charge.pay.one_pay_error', ['onePayError' => $onePayService->getStatus()]);
+                    }
+
+                    break;
+                } catch (\Exception $e) {
+                    report($e);
+                    $this->setStatus(0, _('messages.Charge.pay.pay_system_error'));
+                    return $this->jsonOutput();
                 }
-
-                break;
             default:
                 $charge = resolve('charge');
                 $orderId = $charge->getMessageNo();

@@ -117,6 +117,7 @@ return [
     'Charge.pay.please_select_top_up_way' => '请选择充值渠道',
     'Charge.pay.the_top_up_channel_is_not_open' => '充值渠道未开放',
     'Charge.pay.one_pay_error' => '请联系客服，错误代码  :onePayError',
+    'Charge.pay.pay_system_error' => '金流伺服器错误，请联系客服',
     'Charge_pay_request.wrong_price' => '请输入正确的金额!',
     'Charge_pay_request.wrong_vip_level' => '渠道輸入不正確',
     'Charge_pay_request.wrong_mode_type' => '支付類型輸入不正確',
