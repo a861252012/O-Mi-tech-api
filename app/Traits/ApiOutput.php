@@ -12,30 +12,37 @@ trait ApiOutput
 {
     private $response = ['status' => 999, 'msg' => ''];
 
-	private $_status;
+    private $_status;
 
-	private $_data = [];
+    private $_data = [];
 
-	private $_msg;
+    private $_msg;
 
-	protected function setStatus($status, $msg = '')
-	{
-		$this->_status = $status;
-		$this->_msg = $msg;
-	}
+    private $_msgParam;
 
-	protected function setData($name, $data)
-	{
+    protected function setStatus($status, $msg = '')
+    {
+        $this->_status = $status;
+        $this->_msg = $msg;
+    }
+
+    protected function setData($name, $data)
+    {
         $this->_data[$name] = $data;
-	}
+    }
 
-	protected function setRootData($name, $data)
+    protected function setRootData($name, $data)
     {
         $this->response[$name] = $data;
     }
 
-	protected function jsonOutput()
-	{
+    protected function setMsgParam($params = null)
+    {
+        $this->_msgParam = $params;
+    }
+
+    protected function jsonOutput()
+    {
         $this->response['status'] = $this->_status;
         $this->response['msg'] = $this->_msg;
 
@@ -43,7 +50,7 @@ trait ApiOutput
             $this->response['data'] = $this->_data ?? null;
         }
 
-		return response()->json($this->response);
-	}
+        return response()->json($this->response);
+    }
 
 }

@@ -23,6 +23,7 @@ use DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
@@ -1035,8 +1036,9 @@ class UserService extends Service
 
     public function getAllRank()
     {
-
-        return $this->redis->get('vrank_data:' . SiteSer::siteId());
+        $key = sprintf('vrank_data%s%s:%d', '-', App::getLocale(), SiteSer::siteId());
+        Log::debug('rank_data語系: ' . App::getLocale());
+        return Redis::get($key) ?? Redis::get('vrank_data:' . SiteSer::siteId());
     }
 
     /**

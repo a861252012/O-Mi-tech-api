@@ -124,11 +124,11 @@ class SystemService extends Service
      */
     public function upload($user, $file = 'Filedata')
     {
-        if (!$user) return ['status' => 0, 'msg' => '用户信息获取失败!'];
+        if (!$user) return ['status' => 0, 'msg' => __('messages.failed_to_get_userInfo')];
 
         //获取上传图片服务器地址
         if ($imgServer = SiteSer::config('img_host')) {
-            if (!$imgServer) return ['status' => 0, 'msg' => '获取图片服务器失败'];
+            if (!$imgServer) return ['status' => 0, 'msg' => __('messages.Api.coverUpload.upload_service_error')];
         }
         $imgServer = rtrim($imgServer, '/') . '/upload?src=1&tid=1&uid=' . $user['uid'] . '&pid=1';
 
@@ -143,24 +143,24 @@ class SystemService extends Service
             //兼容表单方式上传
         } else {
             $files = $request->files->get('Filedata');
-            if (!$files || !$files->getClientOriginalName()) return ['status' => 0, 'msg' => '上传图片错误'];
+            if (!$files || !$files->getClientOriginalName()) return ['status' => 0, 'msg' => __('messages.Api.coverUpload.upload_error')];
             $image_extension = $files->getClientOriginalExtension();
             $image_size = $files->getClientSize();
             $image = file_get_contents($files->getpathName());
         }
 
         //图片类型上传限制
-        if (!in_array($image_extension, ['jpg', 'png', 'gif', 'jpeg'])) return ['status' => 0, 'msg' => '图片格式错误'];
+        if (!in_array($image_extension, ['jpg', 'png', 'gif', 'jpeg'])) return ['status' => 0, 'msg' => __('messages.Api.coverUpload.wrong_format')];
 
         //单张照片大小1mb = 1000*1000
-        if ($image_size > 1000000) return ['status' => 0, 'msg' => '图片上传超过限制大小'];
+        if ($image_size > 1000000) return ['status' => 0, 'msg' => __('messages.Api.coverUpload.size_limit')];
 
         //个人空间剩余判断
-        if ($image_size > $user['pic_total_size'] - $user['pic_used_size']) return ['status' => 0, 'msg' => '你的个人相册空间不足！'];
+        if ($image_size > $user['pic_total_size'] - $user['pic_used_size']) return ['status' => 0, 'msg' => __('messages.Api.coverUpload.out_of_space')];
 
 
         //系统扩展判断
-        if (!function_exists('curl_init')) return ['status' => 0, 'msg' => '系统错误,不支持上传功能!'];
+        if (!function_exists('curl_init')) return ['status' => 0, 'msg' => __('messages.Api.coverUpload.system_error')];
 
         //自定义curl_file_create函数
         if (!function_exists('curl_file_create')) {

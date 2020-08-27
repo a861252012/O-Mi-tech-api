@@ -65,7 +65,7 @@ class PageController extends Controller
 
         }
 
-        return SuccessResponse::create($data, $msg = "获取成功", $status = 1);
+        return SuccessResponse::create($data, $msg = __('messages.success'), $status = 1);
 
     }
 

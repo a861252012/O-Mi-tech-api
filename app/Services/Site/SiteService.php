@@ -194,7 +194,7 @@ class SiteService
     public function checkDomainValidity(Collection $domain): bool
     {
         if (!$domain->has('site_id')) {
-            $this->errors->add('domain', '域名配置错误，请联系客服！');
+            $this->errors->add('domain', __('messages.SiteService.check_domain'));
             return false;
         }
 
@@ -214,7 +214,7 @@ class SiteService
     public function checkConfigValidity(): bool
     {
         if (!$this->config()->isValid()) {
-            $this->errors->add('config', '站点配置缺失，请联系客服！');
+            $this->errors->add('config', __('messages.SiteService.check_site_config'));
             return false;
         }
         return true;

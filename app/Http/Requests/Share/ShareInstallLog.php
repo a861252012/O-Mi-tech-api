@@ -15,7 +15,7 @@ class ShareInstallLog extends VRequest
     public function rules()
     {
         return [
-            'origin' => 'required|numeric',
+            'origin'  => 'required|numeric',
             'site_id' => 'required|numeric',
         ];
     }
@@ -23,8 +23,8 @@ class ShareInstallLog extends VRequest
     public function messages()
     {
         return [
-            'origin.*' => '輸入來源不正確',
-            'site_id.*' => '輸入站點ID不正確',
+            'origin.*'  => __('messages.ShareInstallLogRequest.origin'),
+            'site_id.*' => __('messages.ShareInstallLogRequest.site_id'),
         ];
     }
 }

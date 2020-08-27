@@ -38,7 +38,10 @@ class RedisUserProvider implements UserProvider
     {
         $user = resolve(UserService::class)->getUserByUid($identifier);
         if ($user && $user->banned()) {
-            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '您的账号已经被禁止登录，请联系客服！']));
+            throw new HttpResponseException(JsonResponse::create([
+                'status' => 0,
+                'msg'    => __('messages.Api.aa.login_permission_denied')
+            ]));
         }
         return $user;
     }
@@ -96,7 +99,10 @@ class RedisUserProvider implements UserProvider
         }
 
         if ($user && $user->banned()) {
-            throw new HttpResponseException(JsonResponse::create(['status' => 0, 'msg' => '您的账号已经被禁止登录，请联系客服！']));
+            throw new HttpResponseException(JsonResponse::create([
+                'status' => 0,
+                'msg'    => __('messages.Api.aa.login_permission_denied')
+            ]));
         }
         return $user;
     }

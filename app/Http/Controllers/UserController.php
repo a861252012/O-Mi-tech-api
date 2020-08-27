@@ -4,11 +4,14 @@
  */
 namespace App\Http\Controllers;
 
+use App\Http\Requests\User\UserSetLocale;
 use App\Models\Users;
 use App\Models\UserExtends;
 use App\Services\Message\MessageService;
 use App\Services\User\UserService;
+use App\Services\UserAttrService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +19,13 @@ use Illuminate\Support\Facades\Redis;
 
 class UserController extends Controller
 {
+    protected $userAttrService;
+
+    public function __construct(UserAttrService $userAttrService)
+    {
+        $this->userAttrService = $userAttrService;
+    }
+
     /**
      * @api {get} /user/check?rid={rid} 檢查用戶是否可停留
      * @apiGroup User
@@ -149,11 +159,35 @@ class UserController extends Controller
 
             Redis::del('huser_info:' . $user->uid);
 
-            $this->setStatus('1', 'OK');
+            $this->setStatus(1, __('messages.success'));
             return $this->jsonOutput();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            $this->setStatus('999', 'API執行錯誤');
+            $this->setStatus(999, __('messages.apiError'));
+            return $this->jsonOutput();
+        }
+    }
+
+    /**
+     * @api {post} /user/locale 設定用戶語系
+     * @apiGroup User
+     * @apiName set_locale
+     * @apiVersion 1.0.0
+     *
+     * @apiParam {Int} [loc] 語系
+     *
+     * @apiError (Error Status) 999 API執行錯誤
+     */
+    public function setLocale(UserSetLocale $request)
+    {
+        try {
+            $locale = $request->loc ?? 'zh';
+            $this->userAttrService->set(Auth::id(), 'locale', $locale);
+            $this->setStatus(1, __('messages.success'));
+            return $this->jsonOutput();
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            $this->setStatus('999', __('messages.apiError'));
             return $this->jsonOutput();
         }
     }

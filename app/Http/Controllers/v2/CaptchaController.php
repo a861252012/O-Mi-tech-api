@@ -24,15 +24,10 @@ class CaptchaController extends Controller
 
     const PRESHARED_KEY = '2fdb390824b7aaeaec9e5557dbbfaec1';
 
-    /* HTTP錯誤代碼  */
-    const HTTP_ERROR_401 = '未授权的请求，请重啟应用后再尝试';
-    const HTTP_ERROR_403 = '拒绝存取';
-    const HTTP_ERROR_410 = '验证码已逾期，请重啟应用后再尝试';
-
     private function _httpError($code)
     {
         $msg = [
-            'msg' => constant('self::HTTP_ERROR_' . $code)
+            'msg' => __("messages.Captcha.HTTP_ERROR_{$code}")
         ];
 
         $header = [

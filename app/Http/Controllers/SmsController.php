@@ -21,7 +21,7 @@ class SmsController extends Controller
 
         // input validation
         if (empty($cc) || empty($mobile) || empty($act)) {
-            return $this->msg('Invalid request');
+            return $this->msg(__('messages.Sms.send.invalid_request'));
         }
         $mobile = PhoneNumber::formatMobile($cc, $mobile);
 
@@ -32,17 +32,17 @@ class SmsController extends Controller
         $exists = $redis->hExists('hcc_mobile_to_id:' . $site_id, $cc_mobile);
 
         if ($act == SmsService::ACT_REG && $exists) {
-            return $this->msg('对不起, 该手机号已被使用!');
+            return $this->msg(__('messages.Sms.send.the_phone_has_been_use'));
         } else if ($act == SmsService::ACT_LOGIN && !$exists) {
-            return $this->msg('手机号尚未注册!');
+            return $this->msg(__('messages.Sms.send.not_registered'));
         } else if ($act == SmsService::ACT_PWD_RESET && !$exists) {
-            return $this->msg('手机号尚未注册!');
+            return $this->msg(__('messages.Sms.send.not_registered'));
         }
 
         $result = SmsService::send($act, $cc, $mobile);
         if ($result !== true) {
             return $this->msg($result);
         }
-        return $this->msg('成功发送', 1);
+        return $this->msg(__('messages.Sms.send.send_success'), 1);
     }
 }

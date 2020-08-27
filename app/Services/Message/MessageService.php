@@ -2,8 +2,10 @@
 
 namespace App\Services\Message;
 
+use App\Facades\UserSer;
 use App\Models\Messages;
 use App\Services\Service;
+use App\Services\UserAttrService;
 use DB;
 use App\Facades\SiteSer;
 
@@ -116,12 +118,14 @@ class MessageService extends Service
         if ($type == self::USER_MESSAGE) {
             $msg = Messages::where('rec_uid', $uid)->with('sendUser')
                 ->where('category', $type)
-                ->where('logicflag','!=',0)
+                ->where('logicflag', '!=', 0)
                 ->orderBy('id', 'desc')
                 ->paginate($num);
         } elseif ($type == self::SYSTEM_MESSAGE) {
+            $userAttrService = resolve(UserAttrService::class);
             $endtime = date('Y-m-d H:i:s');
-            $msg = Messages::with('sendUser')->whereRaw('(rec_uid = ? or (rec_uid=0 and lv_flag = ? and endtime>=?)) and category = ?', array($uid, $lv_flag,$endtime, $type))
+            $msg = Messages::with('sendUser')->whereRaw('(rec_uid = ? or (rec_uid=0 and lv_flag = ? and endtime >= ? and locale in (?,?))) and category = ?',
+                array($uid, $lv_flag, $endtime, '_', $userAttrService->get($uid, 'locale'), $type))
                 ->orderBy('id', 'desc')
                 ->paginate($num);
         }
@@ -152,6 +156,9 @@ class MessageService extends Service
         //if ($category == self::SYSTEM_MESSAGE) {
         // 首先修改单独发给用户的系统消息
 
+        $user = UserSer::getUserByUid($uid);
+        $userAttrService = resolve(UserAttrService::class);
+
         // update by Young status:1 已读。 status:0 未读
         Messages::where('rec_uid', $uid)->where('status', 0)
             ->where('category', self::SYSTEM_MESSAGE)
@@ -160,8 +167,12 @@ class MessageService extends Service
 
         // 再修改批量发送消息的状态的 此处用的redis修改
         $msgs = Messages::where('rec_uid', 0)->where('category', self::SYSTEM_MESSAGE)
+            ->where('lv_flag', $user->lv_rich)
+            ->where('logicflag', 1)
+            ->whereIn('locale', [$userAttrService->get($uid, 'locale'), '_'])
             ->where('created', '>', date('Y-m-d H:i:s', time() - 30 * 24 * 60 * 60))// 一个月的过期
             ->get();
+
         if (!$msgs) {
             return true;
         }
@@ -177,32 +188,37 @@ class MessageService extends Service
      */
     public function getMessageNotReadCount($uid, $lv_flag = 0)
     {
+        $userAttrService = resolve(UserAttrService::class);
+
         // 检查群发消息是否读过了---
         $res = Messages::where('rec_uid', $uid)
-            ->where('status',0)
-            ->where('category',1)
-            ->where('logicflag',1)
+            ->where('status', 0)
+            ->where('category', 1)
+            ->where('logicflag', 1)
             ->count();
 
-        $systemMsg= Messages::where('rec_uid',0)->where('category',1)
-            ->where('lv_flag',$lv_flag)		//BUG 系统消息未接收者未作等级过滤
-            ->where('logicflag',1)
-            ->where('created','>',date('Y-m-d H:i:s',time()-30*24*60*60))
+        $systemMsg = Messages::where('rec_uid', 0)->where('category', 1)
+            ->where('lv_flag', $lv_flag)        //BUG 系统消息未接收者未作等级过滤
+            ->where('logicflag', 1)
+            ->whereIn('locale', [$userAttrService->get($uid, 'locale'), '_'])
+            ->where('created', '>', date('Y-m-d H:i:s', time() - 30 * 24 * 60 * 60))
             ->get();
 
         $systemNum = 0;//未读群发消息的
-        if($systemMsg){
-            foreach($systemMsg as $id){
-                $status = $this->make('redis')->hGet('hmail:'.$id['id'],$uid);
-                if(!$status){
-                    $systemNum ++;
+        if ($systemMsg) {
+            foreach ($systemMsg as $id) {
+                $status = $this->make('redis')->hGet('hmail:' . $id['id'], $uid);
+                if (!$status) {
+                    $systemNum++;
                 }
             }
         }
+
         $res += $systemNum;
-        if($res>99){
+        if ($res > 99) {
             return '99';
         }
+
         return $res;
     }
 }

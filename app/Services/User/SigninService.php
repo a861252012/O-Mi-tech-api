@@ -33,7 +33,7 @@ class SigninService extends Service
         if (!$this->enabled) {
             $resp = [
                 'status' => -1,
-                'msg' => '签到功能已关闭',
+                'msg' => __('messages.Member.signin.close'),
             ];
             return $resp;
         }
@@ -71,7 +71,7 @@ class SigninService extends Service
         if (!$this->enabled) {
             $resp = [
                 'status' => 0,
-                'msg' => '签到功能已关闭',
+                'msg' => __('messages.Member.signin.close'),
             ];
             return $resp;
         }
@@ -85,7 +85,7 @@ class SigninService extends Service
         if ($userSignin->last_date >= $clientDate) {
             $resp = [
                 'status' => 0,
-                'msg' => '今日已签到',
+                'msg' => __('messages.Member.signin.already_sign'),
             ];
             return $resp;
         }
@@ -96,7 +96,7 @@ class SigninService extends Service
             if ($clientDate < $minDate || $clientDate > $maxDate) {
                 $resp = [
                     'status' => 0,
-                    'msg' => '日期错误，请检查您的系统日期',
+                    'msg' => __('messages.Member.signin.check_date'),
                 ];
                 return $resp;
             }
