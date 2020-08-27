@@ -196,24 +196,29 @@ class LoginController extends Controller
         $open_pwd_change = SiteSer::config('pwd_change') ?: false;
 
         $uid = UserSer::getUidByUsername($username);
-        if(!$uid){
+        if (!$uid) {
             $uid = UserSer::getUidByNickname($username);
         }
-        if($member = Users::find($uid)){
+
+        $member = Users::find($uid);
+
+        $auth = Auth::guard();
+
+        if ($member && $auth->validate(['username' => $username, 'password' => $password])) {
             // freeze check
-            if ($member->status==2) {
-                $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
+            if ($member->isFreeze()) {
+                $S_qq = Redis::hget('hsite_config:' . SiteSer::siteId(), 'qq_suspend');
                 return [
                     'status' => 0,
                     'msg' => __('messages.Login.solveUserLogin.account_block_30days_no_show', ['S_qq' => $S_qq])
                 ];
             }
+
             // platform user check
-            if ($member->origin >= 50) {
+            if ($member->wrongOrigin()) {
                 return ['status' => 0, 'msg' => __('messages.must_login_on_platform')];
             }
         }
-
 
         if($open_pwd_change && (!$this->checkPwdChanged($uid))){
             return array(
@@ -223,7 +228,6 @@ class LoginController extends Controller
         }
 
         //取uid
-        $auth = Auth::guard();
         if (!$auth->attempt([
             'username' => $username,
             'password' => $password,

@@ -501,20 +501,23 @@ class MobileController extends Controller
             }
         }
 
-        if ($member = Users::find($uid)) {
-            $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
+        $jwt = Auth::guard('mobile');
+
+        $member = Users::find($uid);
+
+        if ($member && $jwt->validate($credentials)) {
+            $S_qq = Redis::hget('hsite_config:' . SiteSer::siteId(), 'qq_suspend');
             // freeze check
-            if ($member->status==2) {
+            if ($member->isFreeze()) {
                 return JsonResponse::create(['status' => 0, 'msg' => __('Mobile.login.account_block_30days_no_show', ['S_qq' => $S_qq])]);
             }
             // platform user check
-            if ($member->origin >= 50) {
+            if ($member->wrongOrigin()) {
                 return JsonResponse::create(['status' => 0, 'msg' => __('messages.must_login_on_platform')]);
             }
         }
 
         $user = null;
-        $jwt = Auth::guard('mobile');
         if (!$jwt->attempt($credentials)) {
             return JsonResponse::create(['status' => 0, 'msg' => __('messages.login.password_error')]);
         }
