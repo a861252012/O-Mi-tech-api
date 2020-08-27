@@ -174,7 +174,7 @@ class UserController extends Controller
      * @apiName set_locale
      * @apiVersion 1.0.0
      *
-     * @apiParam {Int} [loc] 語系
+     * @apiParam {String} [loc] 語系
      *
      * @apiError (Error Status) 999 API執行錯誤
      */
