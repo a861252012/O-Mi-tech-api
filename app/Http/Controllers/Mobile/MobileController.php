@@ -495,20 +495,23 @@ class MobileController extends Controller
             }
         }
 
-        if ($member = Users::find($uid)) {
-            $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
+        $jwt = Auth::guard('mobile');
+
+        $member = Users::find($uid);
+
+        if ($member && $jwt->validate($credentials)) {
+            $S_qq = Redis::hget('hsite_config:' . SiteSer::siteId(), 'qq_suspend');
             // freeze check
-            if ($member->status==2) {
-                return JsonResponse::create(['status' => 0, 'msg' => '您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq]);
+            if ($member->isFreeze()) {
+                return JsonResponse::create(['status' => 0, 'msg' => '您超过30天未开播，账号已被冻结，请联系客服QQ:' . $S_qq]);
             }
             // platform user check
-            if ($member->origin >= 50) {
+            if ($member->wrongOrigin()) {
                 return JsonResponse::create(['status' => 0, 'msg' => '请由平台网站登入']);
             }
         }
 
         $user = null;
-        $jwt = Auth::guard('mobile');
         if (!$jwt->attempt($credentials)) {
             return JsonResponse::create(['status' => 0, 'msg' => '用户名密码错误']);
         }
