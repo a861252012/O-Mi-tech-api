@@ -371,7 +371,7 @@ return [
     'Api.platform.wrong_length' => 'The length (number) is incorrect',
     'goods.category_id.1' => 'Popular',
     'goods.category_id.2' => 'Recommends',
-    'goods.category_id.3' => 'Noble',
-    'goods.category_id.4' => 'Premium',
-    'goods.category_id.5' => 'Luxury',
+    'goods.category_id.3' => 'Premium',
+    'goods.category_id.4' => 'Luxury',
+    'goods.category_id.5' => 'Noble',
 ];

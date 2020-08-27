@@ -371,7 +371,7 @@ return [
     'Api.platform.wrong_length' => '长度（数值）不对',
     'goods.category_id.1' => '热门',
     'goods.category_id.2' => '推荐',
-    'goods.category_id.3' => '贵族',
-    'goods.category_id.4' => '高级',
-    'goods.category_id.5' => '奢华',
+    'goods.category_id.3' => '高级',
+    'goods.category_id.4' => '奢华',
+    'goods.category_id.5' => '贵族',
 ];
