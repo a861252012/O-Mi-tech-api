@@ -303,7 +303,7 @@ class ChargeController extends Controller
                     break;
                 } catch (\Exception $e) {
                     report($e);
-                    $this->setStatus(0, _('messages.Charge.pay.pay_system_error'));
+                    $this->setStatus(0, __('messages.Charge.pay.pay_system_error'));
                     return $this->jsonOutput();
                 }
             default:
