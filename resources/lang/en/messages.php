@@ -369,6 +369,7 @@ return [
     'UserSetLocaleRequest.loc' => 'Incorrect input language',
     'Api.platform.not_empty' => 'Can not be empty',
     'Api.platform.wrong_length' => 'The length (number) is incorrect',
+    'Charge.pay.pay_system_error' => '金流伺服器错误，请联系客服',
     'goods.category_id.1' => 'Popular',
     'goods.category_id.2' => 'Recommends',
     'goods.category_id.3' => 'Premium',

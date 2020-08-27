@@ -369,6 +369,7 @@ return [
     'UserSetLocaleRequest.loc' => '輸入語系不正確',
     'Api.platform.not_empty' => '不能為空',
     'Api.platform.wrong_length' => '長度（數值）不對',
+    'Charge.pay.pay_system_error' => '金流伺服器错误，请联系客服',
     'goods.category_id.1' => '熱門',
     'goods.category_id.2' => '推薦',
     'goods.category_id.3' => '高階',
