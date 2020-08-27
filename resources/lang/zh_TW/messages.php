@@ -371,7 +371,7 @@ return [
     'Api.platform.wrong_length' => '長度（數值）不對',
     'goods.category_id.1' => '熱門',
     'goods.category_id.2' => '推薦',
-    'goods.category_id.3' => '高級',
+    'goods.category_id.3' => '高階',
     'goods.category_id.4' => '奢華',
     'goods.category_id.5' => '貴族',
 ];
