@@ -1458,7 +1458,8 @@ EOT;
 
         $getGoodsList = $this->apiService->getGoodsList($sortJumpEgg, $locale);
 
-        return JsonResponse::create(['data' => ['list' => $getGoodsList]]);
+        return JsonResponse::create(['data' => ['list' => $getGoodsList]])
+            ->header('Cache-Control', 'max-age=60');
     }
 
     /**
