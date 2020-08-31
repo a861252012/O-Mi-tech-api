@@ -87,10 +87,10 @@ class SmsService
     public static function send($act, $cc, $mobile, $checkFormat = true)
     {
         if ($checkFormat && !PhoneNumber::checkFormat($cc, $mobile)) {
-            return self::ERR_INVALID_FORMAT;
+            return __('messages.Password.pwdResetByMobile.err_invalid_format');
         }
         if (self::exists($act, $cc, $mobile)) {
-            return self::ERR_ALREADY_SEND;
+            return __('messages.SmsService.try_again_later');
         }
 
         // gen random number
