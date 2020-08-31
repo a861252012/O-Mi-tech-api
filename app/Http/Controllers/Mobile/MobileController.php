@@ -287,7 +287,7 @@ class MobileController extends Controller
                 'nickcount'         => $nickcount,
                 'age'               => date('Y') - explode('-', $userinfo->birthday)[0],
                 'guard_id'          => $userinfo->guard_id,
-                'guard_name'        => $guardianInfo->name ?? '',
+                'guard_name'        => __('messages.Guardian.name.' . $userinfo->guard_id) ?? '',
                 'guard_end'         => $userinfo->guard_end ?? '',
                 'guard_vaild_day'   => $guardVaildDay ?? 0,
                 'guard_shot_border' => $guardianInfo->shot_border

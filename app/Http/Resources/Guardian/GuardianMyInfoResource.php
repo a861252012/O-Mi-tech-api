@@ -23,7 +23,7 @@ class GuardianMyInfoResource extends JsonResource
         return [
             'faq'                 => SiteSer::config('cdn_host') . '/' . SiteSer::config('publish_version') . '/static/faq/guardian.html',
             'guard_id'            => $this->guard_id,
-            'guardian_name'       => $this->guardianInfo->name,
+            'guardian_name'       => __('messages.Guardian.name.' . $this->guard_id),
             'last_activate_date'  => $this->guardian()->where('pay_type', 1)->max('pay_date'),
             'last_renewal_date'   => $this->guardian()->where('pay_type', 2)->max('pay_date'),
             'expire_date'         => date('Y-m-d', strtotime("-1 day", strtotime($this->guard_end))),
