@@ -2407,7 +2407,7 @@ class MemberController extends Controller
                     'mail_type' => 3,
                     'rec_uid' => $user->uid,
                     'content' => __('messages.Member.buyVip.first', [
-                        'level_name' => $userGroup['level_name'],
+                        'level_name' => __('messages.user.ViplevelName.' . $userGroup['vip']),
                         'gift_money' => $userGroup['system']['gift_money'],
                     ]),
                 ];
