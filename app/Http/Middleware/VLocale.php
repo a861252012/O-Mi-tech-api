@@ -31,16 +31,12 @@ class VLocale
         $userLocale = $userAttrService->get($uid, 'locale');
 
         if (!empty($userLocale)) {
-            Log::debug('用戶locale');
             App::setLocale($userLocale);
         } elseif ($queryString = $this->getQueryStringLocale()) {
-            Log::debug('檢查Query String');
             App::setLocale($queryString);
         } elseif ($header = $this->getHeaderLocale()) {
-            Log::debug('檢查Header');
             App::setLocale($header);
         } else {
-            Log::debug('預設語系');
             App::setLocale('zh');
         }
 
