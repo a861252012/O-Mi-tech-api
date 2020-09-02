@@ -378,4 +378,11 @@ return [
     'goods.category_id.3' => 'Premium',
     'goods.category_id.4' => 'Luxury',
     'goods.category_id.5' => 'Noble',
+    'user.ViplevelName.1101' => '7th Class White',
+    'user.ViplevelName.1102' => '6th Class Black',
+    'user.ViplevelName.1103' => '5th Class Green',
+    'user.ViplevelName.1104' => '4th Class Cyan',
+    'user.ViplevelName.1105' => '3rd Class Blue',
+    'user.ViplevelName.1106' => '2nd Class Red',
+    'user.ViplevelName.1107' => '1st Class Gold',
 ];

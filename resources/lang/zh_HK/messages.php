@@ -378,4 +378,11 @@ return [
     'goods.category_id.3' => '高階',
     'goods.category_id.4' => '奢華',
     'goods.category_id.5' => '貴族',
+    'user.ViplevelName.1101' => '七品白尊',
+    'user.ViplevelName.1102' => '六品墨尊',
+    'user.ViplevelName.1103' => '五品綠尊',
+    'user.ViplevelName.1104' => '四品青尊',
+    'user.ViplevelName.1105' => '三品藍尊',
+    'user.ViplevelName.1106' => '二品紅尊',
+    'user.ViplevelName.1107' => '一品金尊',
 ];
