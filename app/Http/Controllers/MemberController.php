@@ -3502,16 +3502,17 @@ class MemberController extends Controller
         foreach ($all_data as &$row) {
             switch ($row->status) {
                 case 0:
-                    $row->status = '延迟发送';
+                    $row->status = __('messages.Member.redEnvelopeSend.send_later');
                     break;
 
                 case 1:
                     $expired = (time() > ($row->create_time + $row->delay_time + $row->valid_time));
-                    $row->status = $expired ? '已结束待退钻' : '发送中';
+                    $row->status = $expired ? __('messages.Member.redEnvelopeSend.wait_for_refund') :
+                        __('messages.Member.redEnvelopeSend.is_sending');
                     break;
 
                 default:
-                    $row->status = '已结束';
+                    $row->status = __('messages.Member.redEnvelopeSend.done');
             }
             unset($row->create_time);
             unset($row->delay_time);
