@@ -351,7 +351,7 @@ class GuardianService
         $expireMsgDate = $guardEndTime->copy()->toDateString();
 
         $message = [
-            'category'  => 2,
+            'category'  => 1,
             'mail_type' => 3,
             'rec_uid'   => $user->uid,
             'content'   => '守护' . self::PAY_TYPE_CH[$payType] . '提醒：您已成功开通 ' . $guardName[$guardId] . ' ，到期日：' . $expireMsgDate
