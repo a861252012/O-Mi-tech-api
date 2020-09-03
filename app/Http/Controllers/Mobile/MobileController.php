@@ -509,7 +509,7 @@ class MobileController extends Controller
             $S_qq = Redis::hget('hsite_config:' . SiteSer::siteId(), 'qq_suspend');
             // freeze check
             if ($member->isFreeze()) {
-                return JsonResponse::create(['status' => 0, 'msg' => __('Mobile.login.account_block_30days_no_show', ['S_qq' => $S_qq])]);
+                return JsonResponse::create(['status' => 0, 'msg' => __('messages.Mobile.login.account_block_30days_no_show', ['S_qq' => $S_qq])]);
             }
             // platform user check
             if ($member->wrongOrigin()) {
