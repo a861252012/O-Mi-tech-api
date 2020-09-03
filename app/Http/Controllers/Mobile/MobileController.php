@@ -519,7 +519,7 @@ class MobileController extends Controller
 
         $user = null;
         if (!$jwt->attempt($credentials)) {
-            return JsonResponse::create(['status' => 0, 'msg' => __('messages.login.password_error')]);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Mobile.login.password_error')]);
         }
 
         $user = $jwt->user();
