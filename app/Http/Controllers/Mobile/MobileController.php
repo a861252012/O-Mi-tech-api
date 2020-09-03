@@ -528,7 +528,7 @@ class MobileController extends Controller
         $this->redisCacheService->setSidForMobile($uid, $token);
         $sidUser = $this->redisCacheService->sid($uid);
         if (empty($sidUser)) {
-            $this->setStatus(0, 'messages.login.token_error');
+            $this->setStatus(0, __('messages.Mobile.login.token_error'));
             return $this->jsonOutput();
         }
 
