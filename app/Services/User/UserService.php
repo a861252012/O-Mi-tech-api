@@ -116,13 +116,6 @@ class UserService extends Service
             }
 
             DB::commit();
-            //更新redis关联
-            $redis = $this->make('redis');
-            $redis->hset('husername_to_id:' . $site_id, $user['username'], $uid);
-            $redis->hset('hnickname_to_id:' . $site_id, $user['nickname'], $uid);
-            if (!empty($user['cc_mobile'])) {
-                $redis->hset(self::KEY_CC_MOBILE_TO_ID .':'. $site_id, $user['cc_mobile'], $uid);
-            }
 
             // cnt + 1
             $regService = resolve(RegService::class);
@@ -481,43 +474,15 @@ class UserService extends Service
 
     public function getUidByUsername($username)
     {
-        $uid = $this->redis->hget(static::KEY_USERNAME_TO_ID . ':' . SiteSer::siteId(), $username);
-
-        if (!$uid) {
-            $uid = Users::query()->where('username', $username)->first();
-            $uid = $uid ? $uid['uid'] : null;
-            if (!$uid) return null;
-            $uid = $this->redis->hset(static::KEY_USERNAME_TO_ID . ':' . SiteSer::siteId(), $username, $uid);
-
-        }
-        return $uid;
+        return Users::query()->where('username', $username)->where('site_id', SiteSer::siteId())->value('uid');
     }
     public function getUidByNickname($nickname)
     {
-        $uid = $this->redis->hget(static::KEY_NICKNAME_TO_ID . ':' . SiteSer::siteId(), $nickname);
-
-        if (!$uid) {
-            $uid = Users::query()->where('nickname', $nickname)->first();
-            $uid = $uid ? $uid['uid'] : null;
-            if (!$uid) return null;
-            $uid = $this->redis->hset(static::KEY_NICKNAME_TO_ID . ':' . SiteSer::siteId(), $nickname, $uid);
-
-        }
-        return $uid;
+        return Users::query()->where('nickname', $nickname)->where('site_id', SiteSer::siteId())->value('uid');
     }
     public function getUidByCCMobile($cc_mobile)
     {
-        $site_id = SiteSer::siteId();
-        $uid = $this->redis->hget(static::KEY_CC_MOBILE_TO_ID .':'. $site_id, $cc_mobile);
-
-        if (!$uid) {
-            $user = Users::query()->where('cc_mobile', $cc_mobile)->first();
-            if ($user && !empty($user['uid'])) {
-                $uid = $user['uid'];
-                $this->redis->hset(static::KEY_CC_MOBILE_TO_ID .':'. $site_id, $cc_mobile, $uid);
-            }
-        }
-        return $uid;
+        return Users::query()->where('cc_mobile', $cc_mobile)->where('site_id', SiteSer::siteId())->value('uid');
     }
 
     /**
@@ -1152,9 +1117,6 @@ class UserService extends Service
         $old_cc_mobile = $user->cc_mobile;
         $site_id = SiteSer::siteId();
 
-        // remove old mobile
-        Redis::hdel(self::KEY_CC_MOBILE_TO_ID .':'. $site_id, $old_cc_mobile);
-
         // update/add
         $data = [
             'cc_mobile' => $cc_mobile,
@@ -1169,8 +1131,6 @@ class UserService extends Service
             /* 全民代理推廣事件 */
             event(new ShareUser($user));
         }
-
-        Redis::hset(self::KEY_CC_MOBILE_TO_ID .':'. $site_id, $cc_mobile, $uid);
     }
 
     public function getUserInfo($uid, $field = null)

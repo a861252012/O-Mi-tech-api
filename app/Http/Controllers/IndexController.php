@@ -140,11 +140,16 @@ class IndexController extends Controller
             }
             $msg0 = '该邮箱已被使用，请换一个试试！';
             $msg1 = '恭喜该邮箱可以使用。';
-            $userArr = [];
+
             $userArr = explode("@", $username);
-            if (Redis::hExists('husername_to_id:' . SiteSer::siteId(), (count($userArr) == 2) ? $userArr[0] . "@" . strtolower($userArr[1]) : $username)) {
+
+            if (count($userArr) === 2) {
+                $username = $userArr[0] . "@" . strtolower($userArr[1]);
+            }
+
+            if (Users::where('username', $username)->where('site_id', SiteSer::siteId())->exists()) {
                 return new Response(json_encode([
-                    'msg' => $msg0,
+                    'msg'  => $msg0,
                     'data' => 0,
                 ]));
             } else {

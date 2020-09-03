@@ -307,7 +307,6 @@ class ApiController extends Controller
         }
 
         $site_id = SiteSer::siteId();
-        $redis = resolve('redis');
         $cc_mobile = '';
         if ($useMobile) {
             $cc = $request->post('cc', '');
@@ -319,7 +318,8 @@ class ApiController extends Controller
             $mobile = PhoneNumber::formatMobile($cc, $mobile);
 
             $cc_mobile = $cc . $mobile;
-            if ($redis->hExists('hcc_mobile_to_id:' . $site_id, $cc_mobile)) {
+
+            if (Users::where('cc_mobile', $cc_mobile)->where('site_id', SiteSer::siteId())->exists()) {
                 return $this->msg('对不起, 该手机号已被使用!');
             }
 
@@ -405,13 +405,14 @@ class ApiController extends Controller
             ]);
         }
 
-        if ($redis->hExists('husername_to_id:' . SiteSer::siteId(), $username)) {
+        if (Users::where('username', $username)->where('site_id', $site_id)->exists()) {
             return JsonResponse::create([
                 "status" => 0,
                 "msg"    => "对不起, 该帐号已被使用!",
             ]);
         }
-        if ($redis->hExists('hnickname_to_id:' . SiteSer::siteId(), $nickname)) {
+
+        if (Users::where('nickname', $nickname)->where('site_id', $site_id)->exists()) {
             return JsonResponse::create([
                 "status" => 0,
                 "msg"    => "对不起, 该昵称已被使用!",
