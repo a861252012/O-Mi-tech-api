@@ -55,6 +55,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Log;
@@ -550,17 +551,26 @@ class MemberController extends Controller
 
     public function vip_list()
     {
-
         //获取购买vip的所有信息
-        $data = UserBuyGroup::with('group')->where('uid', Auth::id())->where('status', 1)
-            ->orderBy('end_time', 'desc')->paginate();
+        $data = UserBuyGroup::with('group')
+            ->where('uid', Auth::id())
+            ->where('status', 1)
+            ->orderBy('end_time', 'desc')
+            ->paginate();
+
+        $list = $data->toArray();
+
+        $filtered = collect($list['data'])->map(function ($item, $key) {
+            $item['group']['level_name'] = __("messages.user.ViplevelName." . $item['group']['level_id']);
+            return $item;
+        });
+
+        $list['data'] = $filtered->all();
 
         return JsonResponse::create([
             'status' => 1,
-            'data' => ['list' => $data, 'type' => 'vip']
+            'data' => ['list' => $list, 'type' => 'vip']
         ]);
-
-
     }
 
     /**
@@ -914,12 +924,15 @@ class MemberController extends Controller
             ->where('video_mall_list.send_uid', $uid)
             ->where('video_mall_list.gid', '>', 0)
             ->where('video_goods.category', '=', 1002)
-            ->orderBy('video_mall_list.created', 'DESC')->paginate();
+            ->orderBy('video_mall_list.created', 'DESC')
+            ->paginate();
 
+        $list = $data->toArray();
+        $list['data'] = $this->langTransfer($list['data']);
 
         return JsonResponse::create([
             'status' => 1,
-            'data' => ['list' => $data],
+            'data' => ['list' => $list],
         ]);
     }
 
@@ -1982,7 +1995,6 @@ class MemberController extends Controller
          });
          $twig->addFunction($function);*/
 
-
         //todo author raby
         if ($type == "counttime") {
             $where_uid = ['send_uid' => Auth::id()];
@@ -2008,8 +2020,11 @@ class MemberController extends Controller
 
         $all_data->appends(['type' => $type, 'mintime' => $mint, 'maxtime' => $maxt]);
 
+        $list = $all_data->toArray();
+        $list['data'] = $this->langTransfer($list['data']);
+
         $var['type'] = $type;
-        $var['list'] = $all_data;
+        $var['list'] = $list;
         $var['mintime'] = $mint;
         $var['maxtime'] = $maxt;
         $var['sum_gift_num'] = $sum_gift_num;
@@ -2018,6 +2033,23 @@ class MemberController extends Controller
         $var = $this->format_jsoncode($var);
         return new JsonResponse(($var));
 
+    }
+
+    /* 消費紀錄多國語轉換 */
+    private function langTransfer($data)
+    {
+        $goodsName = 'name';
+        $locale = strtolower(App::getLocale()) ?? 'zh';
+        if ('zh' != $locale) {
+            $goodsName .= "_{$locale}";
+        }
+
+        $filtered = collect($data)->map(function ($item, $key) use ($goodsName) {
+            $item['name'] = $item[$goodsName];
+            return collect($item)->except(['name_zh_tw', 'name_zh_hk', 'name_en']);
+        });
+
+        return $filtered->all();
     }
 
     public function giftList(Request $request)
