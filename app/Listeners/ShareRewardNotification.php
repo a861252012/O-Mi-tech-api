@@ -38,7 +38,7 @@ class ShareRewardNotification
 
         $data = [
             'rec_uid' => $user->share_uid,
-            'content' => "恭喜你邀请的用户 ID {$event->user->uid}，完成了手机验证。获得了5个钻石奖励。",
+            'content' => __('messages.ShareRewardNotification.reminder_msg', ['invited_uid' => $event->user->uid]),
         ];
 
         if (empty($this->messageService->sendSystemToUsersMessage($data))) {

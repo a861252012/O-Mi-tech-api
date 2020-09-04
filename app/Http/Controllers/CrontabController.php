@@ -95,14 +95,18 @@ class CrontabController extends Controller
         if ($data) {
             $msg = array(
                 'rec_uid' => '',
-                'content' => '贵族保级即将失败提醒：您的贵族即将到期！请尽快充值保级！',
+                'content' => __('messages.Crontab.vipNearExpInfo'),
                 'category' => 1,
                 'created' => date('Y-m-d H:i:s')
             );
             foreach ($data as $key => $value) {
-                $level_name = $this->make('redis')->hGet('hgroups:special:' . $value['vip'], 'level_name'); //redis改键值里没有level_name字段
+                $level_name = __('messages.user.ViplevelName.' . $value['vip']);
                 $msg['rec_uid'] = $value['uid'];
-                $msg['content'] = '贵族保级即将失败提醒：您的' . $level_name . '贵族到期日：' . $value['vip_end'] . '！请尽快充值保级！';
+                $msg['content'] = __('messages.Crontab.vipNearExpInfo.reminder_msg', [
+                    'level_name' => $level_name,
+                    'vip_end'    => $value['vip_end'],
+                ]);
+
 
                 //发送私信给用户
                 Messages::create(array(
@@ -183,7 +187,8 @@ class CrontabController extends Controller
                             Messages::create(array(
                                 'send_uid' => 0,
                                 'rec_uid' => $room['uid'],
-                                'content' => '您开设的' . $room['starttime'] . '一对一约会房间快要开始了,请做好准备哦',
+                                'content'  => __('messages.Crontab.duraRoomMsgSend.host_please_ready',
+                                    ['room_starttime' => $room['starttime']]),
                                 'category' => 1,
                                 'status' => 0,
                                 'created' => date('Y-m-d H:i:s'),
@@ -192,7 +197,8 @@ class CrontabController extends Controller
                             Messages::create(array(
                                 'send_uid' => 0,
                                 'rec_uid' => $room['reuid'],
-                                'content' => '您预约的一对一预约房间' . $room['starttime'] . '快要开始了，请做好准备哦',
+                                'content'  => __('messages.Crontab.duraRoomMsgSend.user_please_ready',
+                                    ['room_starttime' => $room['starttime']]),
                                 'category' => 1,
                                 'status' => 0,
                                 'created' => date('Y-m-d H:i:s'),

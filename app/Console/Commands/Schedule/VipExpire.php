@@ -66,7 +66,7 @@ class VipExpire extends Command
         if($data){
             $msg = array(
                 'rec_uid'=>'',
-                'content'=>'贵族保级即将失败提醒：您的贵族即将到期！请尽快充值保级！',
+                'content'=>__('messages.Crontab.vipNearExpInfo'),
                 'category'=>1,
                 'created'=>date('Y-m-d H:i:s')
             );
@@ -74,7 +74,12 @@ class VipExpire extends Command
             foreach($data as $value){
                 $level_name = $_redisInstance->hGet('hgroups:special'.$value['vip'],'level_name');
                 $msg['rec_uid'] = $value['uid'];
-                $msg['content'] = '贵族保级即将失败提醒：您的'.$level_name.'贵族到期日：'.$value['vip_end'].'！请尽快充值保级！';
+                $msg['content'] = __('messages.Crontab.vipNearExpInfo.reminder_msg',
+                    [
+                        'level_name' => $level_name,
+                        'vip_end'    => $value['vip_end'],
+                    ]
+                );
                 // 发送消息
                 array_push($temp,$msg);
             }
