@@ -123,8 +123,8 @@ class BackPackService
             'category'  => 1,
             'mail_type' => 3,
             'rec_uid'   => Auth::id(),
-            'content'   => '亲爱的用户，您的白尊体验将从 ' . date('Y-m-d') . '至' .
-                date('Y-m-d', strtotime($updateVip['vip_end'])),
+            'content'   => __('messages.BackPackService.useVip.expire_remind',
+                ['start_date' => date('Y-m-d'), 'end_date' => date('Y-m-d', strtotime($updateVip['vip_end']))]),
             'site_id'   => SiteSer::siteId(),
         ];
 

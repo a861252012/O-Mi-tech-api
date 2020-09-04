@@ -356,18 +356,30 @@ class MemberController extends Controller
             //发送成功消息给转帐人
             $from_user_transfer_message = [
                 'mail_type' => 3,
-                'rec_uid' => $uid,
-                'content' => '您成功转出' . $points . '钻石到 ' . $username . ' 帐户',
-                'site_id' => $user['site_id']
+                'rec_uid'   => $uid,
+                'content'   => __(
+                    'messages.Member.transfer.send_reminder_msg',
+                    [
+                        'points' => $points,
+                        'username' => $username
+                    ]
+                ),
+                'site_id'   => $user['site_id']
             ];
             resolve(MessageService::class)->sendSystemtranslate($from_user_transfer_message);
 
             //发送成功消息给收帐人
             $to_user_transfer_message = [
                 'mail_type' => 3,
-                'rec_uid' => $userTo['uid'],
-                'content' => '您成功收到由 "' . $user['nickname'] . '" 转到您帐户' . $points . '钻石',
-                'site_id' => $userTo['site_id']
+                'rec_uid'   => $userTo['uid'],
+                'content'   => __(
+                    'messages.Member.transfer.receive_reminder_msg',
+                    [
+                        'sender' => $user['nickname'],
+                        'points' => $points
+                    ]
+                ),
+                'site_id'   => $userTo['site_id']
             ];
             resolve(MessageService::class)->sendSystemtranslate($to_user_transfer_message);
 

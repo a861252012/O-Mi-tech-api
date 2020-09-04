@@ -110,7 +110,7 @@ class FirstChargeService
             'category'  => 1,
             'mail_type' => 3,
             'rec_uid' => $uid,
-            'content' => '恭喜你获得首充豪礼，贵族体验券、等级积分、反馈钻石、飞频均已发送，若有问题请洽客服人员。',
+            'content' => __('messages.FirstChargeService.reminder_msg'),
             'site_id' => $user['site_id']
         ];
 
