@@ -231,7 +231,7 @@ return [
     'Member.transfer.transfer_success' => '您成功转出:points钻石',
     'Member.transfer.send_reminder_msg' => '您成功转出:points钻石到:username帐户',
     'Member.transfer.receive_reminder_msg' => '您成功收到由 :sender 转到您帐户 :points 钻石',
-    'Member.transfer.host_reminder_msg' => ':userNickName在您的房间 :time开通了什么 vipLevelName，您得到:hostMoney佣金！',
+    'Member.transfer.host_reminder_msg' => ':userNickName在您的房间 :time开通了什么 :vipLevelName，您得到:hostMoney佣金！',
     'Member._getEquipHandle.equipment_room_only' => '对不起！该道具限房间内使用,不能装备！',
     'Member._getEquipHandle.equip_success' => '装备成功',
     'Member.passwordChange.successfully_modified' => '修改成功!请重新登录',
