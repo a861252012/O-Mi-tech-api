@@ -38,7 +38,7 @@ class GuardianService
 
     const VALID_DAY_ARR = array(1 => 30, 2 => 90, 3 => 365);
     const GUARDIAN_GIFT_ID = array(1 => 700004, 2 => 700005, 3 => 700006);
-    const PAY_TYPE_CH = array(1 => __('messages.successfully_opened'), 2 => __('messages.renewal_successful'));
+//    const PAY_TYPE_CH = array(1 => __('messages.successfully_opened'), 2 => __('messages.renewal_successful'));
     const PAY_TYPE_EN = array(1 => 'activate', 2 => 'renewal');
 
     protected $guardianSettingRepository;
@@ -350,12 +350,13 @@ class GuardianService
 
         $expireMsgDate = $guardEndTime->copy()->toDateString();
 
+        $payTypeCH = array(1 => __('messages.successfully_opened'), 2 => __('messages.renewal_successful'));
         $message = [
             'category'  => 1,
             'mail_type' => 3,
             'rec_uid'   => $user->uid,
             'content'   => __('messages.GuardianService.remind_msg', [
-                'payType'    => self::PAY_TYPE_CH[$payType],
+                'payType'    => $payTypeCH[$payType],
                 'levelName'  => $guardName[$guardId],
                 'expireDate' => $expireMsgDate
             ])
@@ -466,7 +467,7 @@ class GuardianService
 
         $res['expireDate'] = $expireMsgDate;
         $res['guardianName'] = $guardName[$guardId];
-        $res['payTypeName'] = self::PAY_TYPE_CH[$payType];
+        $res['payTypeName'] = $payTypeCH[$payType];
         $res['status'] = 200;
 
         return $res;
