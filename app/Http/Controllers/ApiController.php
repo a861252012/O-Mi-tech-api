@@ -721,10 +721,10 @@ class ApiController extends Controller
             'httphost' => 'required',
             'callback' => 'required|max:15|min:5',
         ], [
-            'sskey'    => ':attribute' . __('Api.platform.not_empty'),
-            'sign'     => ':attribute' . __('Api.platform.not_empty'),
-            'callback' => ':attribute' . __('Api.platform.wrong_length'),
-            'httphost' => ':attribute' . __('Api.platform.not_empty'),
+            'sskey'    => ':attribute' . __('messages.Api.platform.not_empty'),
+            'sign'     => ':attribute' . __('messages.Api.platform.not_empty'),
+            'callback' => ':attribute' . __('messages.Api.platform.wrong_length'),
+            'httphost' => ':attribute' . __('messages.Api.platform.not_empty'),
         ], $attributes);
         if ($validator->fails()) {
 //            return new Response($validator->errors()->all());         //显示所有错误组成的数组

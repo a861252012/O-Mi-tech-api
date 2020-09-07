@@ -1002,7 +1002,7 @@ class MemberController extends Controller
         $user = Users::find($uid);
         $user->password = $new_password;
         if (!$user->save()) {
-            return JsonResponse::create(['status' => 0, 'msg' =>  __('Mobile.passwordChange.modify_failed')]);
+            return JsonResponse::create(['status' => 0, 'msg' =>  __('messages.Mobile.passwordChange.modify_failed')]);
         }
         resolve(UserService::class)->getUserReset($uid);
         Auth::logout();
@@ -1655,7 +1655,7 @@ class MemberController extends Controller
         // $fid = $this->get('request')->get('fid');
         $tid = $request->get('tid');
         if (Auth::id() == $tid) {
-            return JsonResponse::create(['status' => 0, 'msg' => __('Member.domsg.can_not_send_to_yourself')]);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Member.domsg.can_not_send_to_yourself')]);
         }
         if (empty($tid) || !UserSer::userExists($tid)) {
             return JsonResponse::create(['status' => 0, 'msg' => __('messages.Member.domsg.receiver_not_exist')]);

@@ -38,7 +38,7 @@ class GuardianService
 
     const VALID_DAY_ARR = array(1 => 30, 2 => 90, 3 => 365);
     const GUARDIAN_GIFT_ID = array(1 => 700004, 2 => 700005, 3 => 700006);
-    const PAY_TYPE_CH = array(1 => '开通成功', 2 => '续费成功');
+    const PAY_TYPE_CH = array(1 => __('messages.successfully_opened'), 2 => __('messages.renewal_successful'));
     const PAY_TYPE_EN = array(1 => 'activate', 2 => 'renewal');
 
     protected $guardianSettingRepository;
@@ -354,7 +354,11 @@ class GuardianService
             'category'  => 1,
             'mail_type' => 3,
             'rec_uid'   => $user->uid,
-            'content'   => '守护' . self::PAY_TYPE_CH[$payType] . '提醒：您已成功开通 ' . $guardName[$guardId] . ' ，到期日：' . $expireMsgDate
+            'content'   => __('messages.GuardianService.remind_msg', [
+                'payType'    => self::PAY_TYPE_CH[$payType],
+                'levelName'  => $guardName[$guardId],
+                'expireDate' => $expireMsgDate
+            ])
         ];
 
         $sendMsgToUser = $this->messageService->sendSystemToUsersMessage($message);

@@ -1187,7 +1187,7 @@ class MobileController extends Controller
             $result = $this->announcementService->getLoginMsgByDevice($device);
 
             if(empty($result)) {
-                $this->setStatus(0, __('messages.loginmsg.no_data'));
+                $this->setStatus(0, __('messages.Mobile.loginmsg.no_data'));
             } else {
                 $this->setStatus(1, __('messages.success'));
                 $this->setRootData('data', $result);
