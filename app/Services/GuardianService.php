@@ -346,7 +346,7 @@ class GuardianService
             return false;
         }
         /* 守护开通成功提醒 */
-        $guardName = $this->getSetting()->pluck('name', 'id');
+        $guardName = __('messages.Guardian.name.' . $guardId);
 
         $expireMsgDate = $guardEndTime->copy()->toDateString();
 
@@ -357,7 +357,7 @@ class GuardianService
             'rec_uid'   => $user->uid,
             'content'   => __('messages.GuardianService.remind_msg', [
                 'payType'    => $payTypeCH[$payType],
-                'levelName'  => $guardName[$guardId],
+                'levelName'  => $guardName,
                 'expireDate' => $expireMsgDate
             ])
         ];
@@ -466,7 +466,7 @@ class GuardianService
         }
 
         $res['expireDate'] = $expireMsgDate;
-        $res['guardianName'] = $guardName[$guardId];
+        $res['guardianName'] = $guardName;
         $res['payTypeName'] = $payTypeCH[$payType];
         $res['status'] = 200;
 
