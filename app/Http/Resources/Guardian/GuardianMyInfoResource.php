@@ -9,6 +9,7 @@ namespace App\Http\Resources\Guardian;
 
 use App\Facades\SiteSer;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\App;
 
 class GuardianMyInfoResource extends JsonResource
 {
@@ -21,7 +22,12 @@ class GuardianMyInfoResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'faq'                 => SiteSer::config('cdn_host') . '/' . SiteSer::config('publish_version') . '/static/faq/guardian.html',
+            'faq' => sprintf('%s/%d/static/faq/guardian%s.html',
+                SiteSer::config('cdn_host'),
+                SiteSer::config('publish_version'),
+                empty(App::getLocale()) ? '' : '-' . App::getLocale()
+            ),
+
             'guard_id'            => $this->guard_id,
             'guardian_name'       => __('messages.Guardian.name.' . $this->guard_id),
             'last_activate_date'  => $this->guardian()->where('pay_type', 1)->max('pay_date'),
