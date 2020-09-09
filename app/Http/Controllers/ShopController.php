@@ -112,6 +112,7 @@ class ShopController extends Controller
             if (!empty($permission)) {
                 $permission = $this->setHtmlText($permission[0]);
             }
+            $S_userGroup->level_name = __('messages.user.ViplevelName.' . $S_userGroup->level_id);
             $S_userGroup->haswelcome = $permission['haswelcome'];
             $S_userGroup->haschateffect = $permission['haschateffect'];
             $S_userGroup->hasvipseat = $permission['hasvipseat'];
