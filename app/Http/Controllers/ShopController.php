@@ -84,6 +84,8 @@ class ShopController extends Controller
             return new JsonResponse($msg);
         }
         $msg['data'] = $userGroup;
+        $msg['data']['level_name'] = __('messages.user.ViplevelName.' . $userGroup['level_id']);
+
         return new JsonResponse($msg);
     }
 
