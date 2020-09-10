@@ -365,7 +365,8 @@ class MemberController extends Controller
                         'username' => $username
                     ]
                 ),
-                'site_id'   => $user['site_id']
+                'site_id'   => $user['site_id'],
+                'locale'    => App::getLocale()
             ];
             resolve(MessageService::class)->sendSystemtranslate($from_user_transfer_message);
 
@@ -380,7 +381,8 @@ class MemberController extends Controller
                         'points' => $points
                     ]
                 ),
-                'site_id'   => $userTo['site_id']
+                'site_id'   => $userTo['site_id'],
+                'locale'    => App::getLocale()
             ];
             resolve(MessageService::class)->sendSystemtranslate($to_user_transfer_message);
 

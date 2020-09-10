@@ -12,6 +12,7 @@ use App\Models\Recharge;
 use App\Services\Message\MessageService;
 use App\Services\User\UserService;
 use App\Repositories\UserItemRepository;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -109,9 +110,10 @@ class FirstChargeService
         $UserFirstChargeMsg = [
             'category'  => 1,
             'mail_type' => 3,
-            'rec_uid' => $uid,
-            'content' => __('messages.FirstChargeService.reminder_msg'),
-            'site_id' => $user['site_id']
+            'rec_uid'   => $uid,
+            'content'   => __('messages.FirstChargeService.reminder_msg'),
+            'site_id'   => $user['site_id'],
+            'locale'    => App::getLocale(),
         ];
 
         resolve(MessageService::class)->sendSystemtranslate($UserFirstChargeMsg);
