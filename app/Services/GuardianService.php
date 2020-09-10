@@ -23,6 +23,7 @@ use App\Models\MallList;
 use App\Services\Message\MessageService;
 use Carbon\Carbon;
 use DB;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -359,7 +360,8 @@ class GuardianService
                 'payType'    => $payTypeCH[$payType],
                 'levelName'  => $guardName,
                 'expireDate' => $expireMsgDate
-            ])
+            ]),
+            'locale'    => App::getLocale(),
         ];
 
         $sendMsgToUser = $this->messageService->sendSystemToUsersMessage($message);
