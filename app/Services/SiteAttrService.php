@@ -7,7 +7,6 @@
 
 namespace App\Services;
 
-
 use App\Repositories\SiteAttrRepository;
 use Illuminate\Support\Facades\Redis;
 
@@ -25,7 +24,7 @@ class SiteAttrService
 
     public function get($k, $siteId = 0)
     {
-        $key = sprintf("%s:%s:%d", self::KEY_PREFIX, $k, $siteId);
+        $key = $this->key($k, $siteId);
 
         $v = Redis::get($key);
         if (empty($v)) {
@@ -38,9 +37,18 @@ class SiteAttrService
 
     public function set($k, $v, $siteId = 0)
     {
-        $key = sprintf("%s:%s:%d", self::KEY_PREFIX, $k, $siteId);
+        $key = $this->key($k, $siteId);
         Redis::del($key);
 
         return $this->siteAttrRepository->updateOrCreate($siteId, $k, $v);
+    }
+
+    private function key($k, $siteId)
+    {
+        if ($siteId == 0) {
+            return sprintf("%s:%s", self::KEY_PREFIX, $k);
+        }
+
+        return sprintf("%s:%s:%d", self::KEY_PREFIX, $k, $siteId);
     }
 }
