@@ -49,7 +49,7 @@ class ShopController extends Controller
         if (Auth::guest()) {
             return new JsonResponse(array(
                 'ret' => false,
-                'info' => '请前往首页登录!'
+                'info' => __('messages.Shop.getPropInfo.not_login')
             ));
         }
 
@@ -75,15 +75,17 @@ class ShopController extends Controller
         $gid = $this->make('request')->get('gid');
         $msg = array(
             'status' => 1,
-            'msg' => '数据获取成功'
+            'msg' => __('messages.Shop.getgroup.get_data_successfully')
         );
         $userGroup = resolve(UserGroupService::class)->getGroupById($gid);
         if (!$userGroup) {
             $msg['code'] = 1003;
-            $msg['msg'] = '数据获取失败';
+            $msg['msg'] = __('messages.Shop.getgroup.get_data_failed');
             return new JsonResponse($msg);
         }
         $msg['data'] = $userGroup;
+        $msg['data']['level_name'] = __('messages.user.ViplevelName.' . $userGroup['level_id']);
+
         return new JsonResponse($msg);
     }
 
@@ -97,12 +99,12 @@ class ShopController extends Controller
     {
         $msg = array(
             'status' => 1,
-            'msg' => '数据获取成功'
+            'msg' => __('messages.Shop.getgroup.get_data_successfully')
         );
         $userGroup = resolve(UserGroupService::class)->getPublicGroup();
         if (!$userGroup) {
             $msg['status'] = 1003;
-            $msg['msg'] = '数据获取失败';
+            $msg['msg'] = __('messages.Shop.getgroup.get_data_failed');
             return (new JsonResponse($msg));
         }
 
@@ -112,6 +114,7 @@ class ShopController extends Controller
             if (!empty($permission)) {
                 $permission = $this->setHtmlText($permission[0]);
             }
+            $S_userGroup->level_name = __('messages.user.ViplevelName.' . $S_userGroup->level_id);
             $S_userGroup->haswelcome = $permission['haswelcome'];
             $S_userGroup->haschateffect = $permission['haschateffect'];
             $S_userGroup->hasvipseat = $permission['hasvipseat'];

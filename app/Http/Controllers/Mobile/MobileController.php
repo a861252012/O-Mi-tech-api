@@ -25,10 +25,12 @@ use App\Models\UserModNickName;
 use App\Services\AnnouncementService;
 use App\Services\I18n\PhoneNumber;
 use App\Services\LoginService;
+use App\Services\Message\MessageService;
 use App\Services\RedisCacheService;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
 use App\Services\User\UserService;
+use App\Services\UserAttrService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -82,7 +84,7 @@ class MobileController extends Controller
                 $redis->set('m:index:list:' . $key, json_encode($list['data']), 180);
             }
         }
-        return JsonResponse::create(['data' => $lists, 'msg' => '获取成功']);
+        return JsonResponse::create(['data' => $lists, 'msg' => __('messages.success')]);
     }
 
     public function domains(Request $request)
@@ -227,7 +229,7 @@ class MobileController extends Controller
         if (!$userinfo) {
             return JsonResponse::create([
                 'status' => 0,
-                'msg' => '无效的用户',
+                'msg' => __('messages.Mobile.userInfo.invalid_user'),
                 'data' => $remote_js_url,
             ]);
         }
@@ -252,6 +254,9 @@ class MobileController extends Controller
             $userinfo->guard_id = "0";
         }
 
+        /* 取得新消息數量 */
+        $mails = resolve(MessageService::class)->getMessageNotReadCount($uid, $userinfo->lv_rich);
+
         return JsonResponse::create([
             'status' => 1,
             'data'   => [
@@ -272,8 +277,9 @@ class MobileController extends Controller
                 'gender'            => $userinfo->sex,
                 'follows'           => $userfollow,
                 'fansCount'         => $by_atttennums,
-                'system_tip_count'  => Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status',
-                    0)->count(),
+//                'system_tip_count'  => Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status',
+//                    0)->count(),
+                'system_tip_count'  => $mails,
                 'transfer'          => $userinfo->transfer,
                 'birthday'          => $userinfo->birthday,
                 'province'          => $userinfo->province,
@@ -281,7 +287,7 @@ class MobileController extends Controller
                 'nickcount'         => $nickcount,
                 'age'               => date('Y') - explode('-', $userinfo->birthday)[0],
                 'guard_id'          => $userinfo->guard_id,
-                'guard_name'        => $guardianInfo->name ?? '',
+                'guard_name'        => __('messages.Guardian.name.' . $userinfo->guard_id) ?? '',
                 'guard_end'         => $userinfo->guard_end ?? '',
                 'guard_vaild_day'   => $guardVaildDay ?? 0,
                 'guard_shot_border' => $guardianInfo->shot_border
@@ -354,7 +360,7 @@ class MobileController extends Controller
             return JsonResponse::create($handle);
 
         } else {
-            return JsonResponse::create(['status' => 101, 'msg' => '操作出现未知错误！']);
+            return JsonResponse::create(['status' => 101, 'msg' => __('messages.unknown_error')]);
         }
     }
 
@@ -385,7 +391,7 @@ class MobileController extends Controller
          */
         $goods = Goods::find($gid);
         if ($goods['gid'] < 120001 || $goods['gid'] > 121000) {
-            return ['status' => 2, 'msg' => '该道具限房间内使用,不能装备！'];
+            return ['status' => 2, 'msg' => __('messages.Mobile._getEquipHandle.use_in_room')];
         }
 
         /**
@@ -396,7 +402,7 @@ class MobileController extends Controller
         $redis = $this->make('redis');
         $redis->del('user_car:' . $uid);
         $redis->hset('user_car:' . $uid, $gid, $pack['expires']);
-        return ['status' => 1, 'msg' => '装备成功'];
+        return ['status' => 1, 'msg' => __('messages.success')];
     }
 
     /**
@@ -405,7 +411,7 @@ class MobileController extends Controller
     public function unmount()
     {
         $this->make('redis')->del('user_car:' . Auth::id());//检查过期直接删除对应的缓存key
-        return JsonResponse::create(['status' => 0, 'msg' => '操作成功']);
+        return JsonResponse::create(['status' => 0, 'msg' => __('messages.success')]);
     }
 
     /**
@@ -414,18 +420,18 @@ class MobileController extends Controller
     public function stealth($status)
     {
         $uid = Auth::id();
-        if (!$uid) return JsonResponse::create(['status' => 0, 'message' => '用户错误']);
+        if (!$uid) return JsonResponse::create(['status' => 0, 'message' => __('messages.unknown_user')]);
         $userServer = resolve(UserService::class);
         $user = $userServer->getUserByUid($uid);
         //判断用户是否有隐身权限
-        if (!$userServer->getUserHiddenPermission($user)) return JsonResponse::create(['status' => 0, 'msg' => '没有权限!']);
+        if (!$userServer->getUserHiddenPermission($user)) return JsonResponse::create(['status' => 0, 'msg' => __('messages.permission_denied')]);
 
         //更新数据库隐身状态
         Users::where('uid', $uid)->update(['hidden' => $status]);
         //更新用户redis
         $userServer->getUserReset($uid);
 
-        return JsonResponse::create(['status' => 1, 'msg' => '操作成功']);
+        return JsonResponse::create(['status' => 1, 'msg' => __('messages.success')]);
     }
 
     /**
@@ -475,16 +481,16 @@ class MobileController extends Controller
             $captcha = $request->get('captcha');
             if (!app(SiteService::class)->config('skip_captcha_login')) {
                 if (empty($captcha)) {
-                    return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
+                    return JsonResponse::create(['status' => 0, 'msg' => __('messages.captcha_error')]);
                 }
 
                 /* 檢查驗證碼或自動化測試驗證(主播機器人項目) */
                 if (!Captcha::check($captcha) && !app(LoginService::class)->autoCheck($captcha)) {
-                    return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
+                    return JsonResponse::create(['status' => 0, 'msg' => __('messages.captcha_error')]);
                 }
             }
             if (!$username || !$password) {
-                return JsonResponse::create(['status' => 0, 'msg' => '用户名密码不能为空']);
+                return JsonResponse::create(['status' => 0, 'msg' => __('messages.Mobile.login.password_required')]);
             }
 
             $credentials['username'] = $username;
@@ -495,22 +501,25 @@ class MobileController extends Controller
             }
         }
 
-        if ($member = Users::find($uid)) {
-            $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
+        $jwt = Auth::guard('mobile');
+
+        $member = Users::find($uid);
+
+        if ($member && $jwt->validate($credentials)) {
+            $S_qq = Redis::hget('hsite_config:' . SiteSer::siteId(), 'qq_suspend');
             // freeze check
-            if ($member->status==2) {
-                return JsonResponse::create(['status' => 0, 'msg' => '您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq]);
+            if ($member->isFreeze()) {
+                return JsonResponse::create(['status' => 0, 'msg' => __('messages.Mobile.login.account_block_30days_no_show', ['S_qq' => $S_qq])]);
             }
             // platform user check
-            if ($member->origin >= 50) {
-                return JsonResponse::create(['status' => 0, 'msg' => '请由平台网站登入']);
+            if ($member->wrongOrigin()) {
+                return JsonResponse::create(['status' => 0, 'msg' => __('messages.must_login_on_platform')]);
             }
         }
 
         $user = null;
-        $jwt = Auth::guard('mobile');
         if (!$jwt->attempt($credentials)) {
-            return JsonResponse::create(['status' => 0, 'msg' => '用户名密码错误']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Mobile.login.password_error')]);
         }
 
         $user = $jwt->user();
@@ -519,7 +528,7 @@ class MobileController extends Controller
         $this->redisCacheService->setSidForMobile($uid, $token);
         $sidUser = $this->redisCacheService->sid($uid);
         if (empty($sidUser)) {
-            $this->setStatus(0, 'token写入redis失败，请重新登录!');
+            $this->setStatus(0, __('messages.Mobile.login.token_error'));
             return $this->jsonOutput();
         }
 
@@ -536,6 +545,15 @@ class MobileController extends Controller
         if ($user->pwd_change === null || $user->cpwd_time === null) {
             $user = (object)UserSer::getUserReset($user->uid);
         }
+
+        /* ---用戶locale處理--- */
+        $locale = $request->{locale} ?? '';
+        $userAttrService = resolve(UserAttrService::class);
+        if (!empty($locale)) {
+            $userAttrService->set($user->uid, 'locale', $locale);
+        }
+        /* ---用戶locale處理 end--- */
+
         //更新最后的登录时间 & ip
 //        app('events')->dispatch(new \Illuminate\Auth\Events\Login($user, true));
         app('events')->dispatch(new Login($user, true, $request->origin));
@@ -601,10 +619,10 @@ class MobileController extends Controller
 
         if (!app(SiteService::class)->config('skip_captcha_login')) {
             if (empty($captcha)) {
-                return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
+                return JsonResponse::create(['status' => 0, 'msg' => __('messages.captcha_error')]);
             }
             if (!Captcha::check($captcha)) {
-                return JsonResponse::create(['status' => 0, 'msg' => '验证码错误']);
+                return JsonResponse::create(['status' => 0, 'msg' => __('messages.captcha_error')]);
             }
         }
         return $this->doChangePwd($request);
@@ -671,7 +689,7 @@ class MobileController extends Controller
         $list = ImagesText::where('dml_flag', '<>', 3)->where('pid', 0)->selectRaw('img_text_id id,title,temp_name,url,init_time')
             ->orderBy('sort')->orderBy('img_text_id', 'desc')->simplePaginate(static::ACTIVITY_LIST_PAGE_SIZE);
         $redis->set('image.text:activity.list:page:' . $page, $list->toJson(), 180);
-        return new JsonResponse(['data' => $list->toArray(), 'msg' => '获取成功']);
+        return new JsonResponse(['data' => $list->toArray(), 'msg' => __('messages.success')]);
     }
 
     /**
@@ -700,7 +718,7 @@ class MobileController extends Controller
         $redis->set('image.text:activity.detail:id:' . $id, $activity->toJson(), 180);
 
         //   return JsonResponse::create($activity);
-        return new JsonResponse(['data' => $activity, 'msg' => '获取成功']);
+        return new JsonResponse(['data' => $activity, 'msg' => __('messages.success')]);
     }
 
     /**
@@ -760,12 +778,12 @@ class MobileController extends Controller
         $ip = $request->input('ip') ?: '';
         if (!$imei) return JsonResponse::create([
             'status' => 0,
-            'msg' => '请求参数错误',
+            'msg' => __('messages.Mobile.statistic.param_error'),
         ]);
         if ($uid && !Users::find($uid)) {
             return JsonResponse::create([
                 'status' => 0,
-                'msg' => '请求参数错误',
+                'msg' => __('messages.Mobile.statistic.param_error'),
             ]);
         }
         $statis_date = date('Y-m-d');
@@ -775,7 +793,7 @@ class MobileController extends Controller
             'ip' => $ip,
             'statis_date' => $statis_date,
         ]);
-        return JsonResponse::create(['status' => 1, 'data' => '成功']);
+        return JsonResponse::create(['status' => 1, 'data' => __('messages.success')]);
     }
 
 
@@ -933,7 +951,7 @@ class MobileController extends Controller
         $page = $this->request()->input('page') ?: '1';
         $page_size = $this->request()->input('pageCount') ?: '1';
         $page_num = $page * $page_size;
-        if (!$uid) return JsonResponse::create(['status' => 0, 'msg' => '该主播id不存在！']);
+        if (!$uid) return JsonResponse::create(['status' => 0, 'msg' => __('messages.Mobile.getFans.host_id_not_exist')]);
         $keys = 'zuser_byattens:' . $uid;
         $redis = $this->make('redis');
         $zuser = $redis->zrange($keys, 0, -1);
@@ -968,7 +986,7 @@ class MobileController extends Controller
         /*
          *  一二站合并，原接口处理逻辑删掉，但保留该接口（防止移动端还有调用该接口导致报错）.
          */
-        return JsonResponse::create(['status' => 1, 'msg' => 'success']);
+        return JsonResponse::create(['status' => 1, 'msg' => __('messages.success')]);
     }
 
     /**
@@ -978,42 +996,39 @@ class MobileController extends Controller
     {
         $uid = Auth::id();
         $post = $this->request()->all();
-//        if (empty($post['captcha']) || !Captcha::check($post['captcha'])) {
-//            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '对不起，验证码错误!']);
-//        }
         $post['original_password'] = $this->decode($post['original_password']);
         $post['new_password'] = $this->decode($post['new_password']);
         $post['re_new_password'] = $this->decode($post['re_new_password']);
 
         if (empty($post['original_password'])) {
-            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '原始密码不能为空！']);
+            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => __('messages.Mobile.passwordChange.old_password_required')]);
         }
 
         if (strlen($post['new_password']) < 6 || strlen($post['re_new_password']) < 6) {
-            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '请输入大于或等于6位字符串长度']);
+            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => __('messages.Mobile.passwordChange.more_or_equal_than_six_char_length')]);
         }
 
         if ($post['new_password'] != $post['re_new_password']) {
-            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '新密码两次输入不一致!']);
+            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => __('messages.Mobile.passwordChange.new_password_is_not_the_same')]);
         }
 
         $old_password = resolve(UserService::class)->getUserInfo($uid, 'password');
         $new_password = md5($post['re_new_password']);
         if (md5($post['original_password']) != $old_password) {
-            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '原始密码错误!']);
+            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => __('messages.Mobile.passwordChange.old_password_is_wrong')]);
         }
         if ($old_password == $new_password) {
-            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '新密码和原密码相同']);
+            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => __('messages.Mobile.passwordChange.new_and_old_is_the_same')]);
         }
 
         $user = Users::find($uid);
         $user->password = $new_password;
         if (!$user->save()) {
-            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => '修改失败!']);
+            return JsonResponse::create(['status' => 0, 'data' => new \StdClass(), 'msg' => __('messages.Mobile.passwordChange.modify_failed')]);
         }
         resolve(UserService::class)->getUserReset($uid);
 //        Auth::logout();
-        return new JsonResponse(['status' => 1, 'data' => new \StdClass(), 'msg' => '修改成功']);
+        return new JsonResponse(['status' => 1, 'data' => new \StdClass(), 'msg' => __('messages.success')]);
     }
 
     /**
@@ -1022,18 +1037,36 @@ class MobileController extends Controller
      */
     public function msglist()
     {
-        $page_size = intval($this->request()->get('page_size'));
+        $page_size = (int)$this->request()->get('page_size');
         $page_size = $page_size ? $page_size : 15;
-        $uid = Auth::id();
-        $list = Messages::where('rec_uid', $uid)->where('send_uid', 0)->orderBy('created', 'desc')->paginate($page_size);
-        //更新消息为已读状态
-        if(!$list->isEmpty()){
-            Messages::where('rec_uid', $uid)->where('send_uid', 0)->where('status', 0)->update(['status' => 1]);
-        }
+//        $uid = Auth::id();
+
+//        $list = Messages::where('rec_uid', $uid)
+//            ->where('send_uid', 0)
+//            ->orderBy('created', 'desc')
+//            ->paginate($page_size);
+//
+//        //更新消息为已读状态
+//        if (!$list->isEmpty()) {
+//            Messages::where('rec_uid', $uid)
+//                ->where('send_uid', 0)
+//                ->where('status', 0)
+//                ->update(['status' => 1]);
+//        }
+
+        // 调用消息服务
+        $msg = resolve(MessageService::class);
+
+        // 根据用户登录的uid或者用户消息的分页数据
+        $list = $msg->getMessageByUidAndType(Auth::id(), 1, $page_size, Auth::user()->lv_rich);
+
+        // 更新读取的状态
+        $msg->updateMessageStatus(Auth::id());
+
         return JsonResponse::create([
             'status' => 1,
-            'data' => $list,
-            'msg' => '成功'
+            'data'   => $list,
+            'msg'    => __('messages.success'),
         ]);
     }
 
@@ -1090,7 +1123,7 @@ class MobileController extends Controller
         return JsonResponse::create([
             'status' => 1,
             'data' => $market,
-            'msg' => '成功'
+            'msg' => __('messages.success')
         ]);
     }
 
@@ -1104,7 +1137,7 @@ class MobileController extends Controller
         return JsonResponse::create([
             'status' => 1,
             'data' => $official,
-            'msg' => '成功'
+            'msg' => __('messages.success')
         ]);
     }
 
@@ -1138,7 +1171,7 @@ class MobileController extends Controller
         return JsonResponse::create([
             'status' => 1,
             'data' => $list,
-            'msg' => '成功'
+            'msg' => __('messages.success')
         ]);
     }
 
@@ -1154,47 +1187,17 @@ class MobileController extends Controller
             $result = $this->announcementService->getLoginMsgByDevice($device);
 
             if(empty($result)) {
-                $this->setStatus(0, '無資料');
+                $this->setStatus(0, __('messages.Mobile.loginmsg.no_data'));
             } else {
-                $this->setStatus(1, '成功');
+                $this->setStatus(1, __('messages.success'));
                 $this->setRootData('data', $result);
             }
 
             return $this->jsonOutput();
         } catch (\Exception $e) {
             \Log::error($e->getMessage());
-            $this->setStatus(999, 'API執行錯誤');
+            $this->setStatus(999, __('messages.Mobile.loginmsg.no_data'));
             return $this->jsonOutput();
         }
-
-//        $data = json_decode(Redis::hget('hloginmsg:' .SiteSer::siteId(),'list'));
-//
-//        $A_data = array();
-//        if(isset($data)){
-//
-//            foreach($data as $key => $val){
-//                $O = (object)array();
-//                if($val->device==$device){
-//                    if(isset($_GET['blank'])&&($val->blank==$_GET['blank'])||!isset($_GET['blank'])){
-//                        $O->id = count($A_data)+1;
-//                        $O->type = $val->type;
-//                        $O->interval = $val->between;
-//                        $O->title = $val->title;
-//                        $O->content = $val->content;
-//                        $O->img = $val->image;
-//                        $O->url = $val->link;
-//                        $O->blank = $val->blank;
-//                        $O->create_time = $key;
-//                        array_push($A_data,$O);
-//                    }
-//                }
-//            }
-//        }
-//
-//        return response()->json([
-//            'status' => 1,
-//            'data' => $A_data,
-//            'msg' => '成功'
-//        ]);
     }
 }

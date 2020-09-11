@@ -47,16 +47,16 @@ class PasswordController extends Controller
         $user = Auth::user();
         if ($user->safemail) {
             ThrottleRoutes::clear($request);
-            return JsonResponse::create(['status' => 0, 'msg' => '你已验证过安全邮箱,不用再次验证！']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.sendVerifyMail.already_validation')]);
         }
         $email = $request->get('mail');
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             ThrottleRoutes::clear($request);
-            return JsonResponse::create(['status' => 0, 'msg' => '安全邮箱地址格式不正确']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.sendVerifyMail.mail_invalid')]);
         }
         if (Users::where('safemail', $email)->exists()) {
             ThrottleRoutes::clear($request);
-            return JsonResponse::create(['status' => 0, 'msg' => '此安全邮件已被使用']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.sendVerifyMail.mail_is_been_use')]);
         }
 
         try {
@@ -102,10 +102,10 @@ class PasswordController extends Controller
 
         } catch (Exception $e) {
             Log::error($e->getTraceAsString());
-            return JsonResponse::create(['status' => 0, 'msg' => '发送失败！' . $e->getMessage()]);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.sendVerifyMail.send_failed') . $e->getMessage()]);
         }
 
-        return JsonResponse::create(['status' => 1, 'msg' => '发送成功！']);
+        return JsonResponse::create(['status' => 1, 'msg' => __('messages.Password.sendVerifyMail.send_success')]);
     }
     /*
      * ISHTTPS
@@ -157,7 +157,7 @@ class PasswordController extends Controller
         $sCode = $this->make('request')->get('captcha');
 
         if (!Captcha::check($sCode)) {
-            return new JsonResponse(array('status' => 0, 'msg' => '验证码错误'));;
+            return new JsonResponse(array('status' => 0, 'msg' => __('messages.captcha_error')));;
         }
         return $this->doChangePwd($request);
     }
@@ -171,30 +171,30 @@ class PasswordController extends Controller
         $errors = new MessageBag();
 
         if ($token && time() > $token['time'] + 86400) {
-            return JsonResponse::create(['status' => 0, 'msg' => '验证链接已过期！']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.VerifySafeMail.validate_link_invalid')]);
         }
 
         $user = resolve(UserService::class)->getUserByUid($token['uid']);
 
         if ($user->safemail) {
-            return JsonResponse::create(['status' => 0, 'msg' => '你已验证过安全邮箱！']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.VerifySafeMail.already_validation')]);
         }
 
         //$getMailStatus =  $this->getDoctrine()->getManager()->getRepository('Video\ProjectBundle\Entity\VideoUser')->findOneBy(array('safemail' => $email));
         $getMailStatus = Users::query()->where('safemail', $token['email'])->exists();
 
         if ($getMailStatus) {
-            return JsonResponse::create(['status' => 0, 'msg' => '对不起！该邮箱已绑定其他帐号！']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.VerifySafeMail.mail_is_been_link_account')]);
         }
 
         if (!Users::where('uid', $token['uid'])->update(['safemail' => $token['email'], 'safemail_at' => date('Y-m-d H:i:s')])) {
-            return JsonResponse::create(['status' => 0, 'msg' => '更新安全邮箱失败！']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.VerifySafeMail.update_failed')]);
         }
 
         resolve(UserService::class)->getUserReset($token['uid']);
         //赠送砖石奖励
         //$this->addUserPoints($uid,500, array('date'=>date('Y-m-d H:i:s'),'pay_type'=>5 ,'nickname'=>$user['nickname']?:$user['username']), array('mailcontent'=>'你通过“安全邮箱验证”获得500钻石奖励！','date'=>date('Y-m-d H:i:s')), $dm);
-        return JsonResponse::create(['status' => 1, 'msg' => '更新安全邮箱成功！']);
+        return JsonResponse::create(['status' => 1, 'msg' => __('messages.Password.VerifySafeMail.update_success')]);
     }
 
     /**
@@ -250,7 +250,7 @@ class PasswordController extends Controller
 
         $mail->setTemplateContent($templateContent);
         $sendcloud->sendTemplate($mail);
-        return JsonResponse::create(['status' => 1, 'msg' => '邮件发送成功']);exit;
+        return JsonResponse::create(['status' => 1, 'msg' => __('messages.Password.pwdreset.send_success')]);exit;
     }
 
     /**
@@ -273,7 +273,7 @@ class PasswordController extends Controller
         $mobile = $request->post('mobile', '');
         $code = $request->post('code', '');
         if (empty($cc) || empty($mobile) || empty($code)) {
-            return $this->msg('Invalid request');
+            return $this->msg(__('messages.Password.pwdResetByMobile.invalid_request'));
         }
         $mobile = PhoneNumber::formatMobile($cc, $mobile);
 
@@ -304,19 +304,19 @@ class PasswordController extends Controller
     {
         $sCode = $this->make('request')->get('captcha');
         if (!Captcha::check($sCode)) {
-            return $this->msg('验证码错误');
+            return $this->msg(__('messages.captcha_error'));
         }
 
         $mail = $request->get('email');
         if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
             ThrottleRoutes::clear($request);
-            return $this->msg('邮箱格式不正确');
+            return $this->msg(__('messages.Password.pwdResetSendFromMobile.mail_wrong_format'));
         }
 
         $user = Users::where('safemail', $mail)->first();
         if (!$user) {
             ThrottleRoutes::clear($request);
-            return $this->msg('该邮箱没有通过安全邮箱验证, 验证安全邮箱才能使用此功能。');
+            return $this->msg(__('messages.Password.pwdResetSendFromMobile.mail_not_validate'));
         }
 
         // email code
@@ -350,7 +350,7 @@ class PasswordController extends Controller
 
         $mail->setTemplateContent($templateContent);
         $sendcloud->sendTemplate($mail);
-        return JsonResponse::create(['status' => 1, 'msg' => '邮箱验证码发送成功']);
+        return JsonResponse::create(['status' => 1, 'msg' => __('messages.Password.pwdResetSendFromMobile.validate_code_send_success')]);
     }
 
     // 手機發送重置密碼請求 - Step2
@@ -359,19 +359,19 @@ class PasswordController extends Controller
         $mail = $request->get('email');
         if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
             ThrottleRoutes::clear($request);
-            return $this->msg('邮箱格式不正确');
+            return $this->msg(__('messages.Password.pwdResetConfirmFromMobile.mail_wrong_format'));
         }
 
         $userCode = $request->post('code');
         $code = Redis::get('pwdreset.mtoken:' . md5($mail));
         if (empty($userCode) || $userCode != $code) {
-            return $this->msg('邮箱验证码错误');
+            return $this->msg(__('messages.Password.pwdResetConfirmFromMobile.validate_code_is_wrong'));
         }
 
         $user = Users::where('safemail', $mail)->first();
         if (!$user) {
             ThrottleRoutes::clear($request);
-            return $this->msg('该邮箱没有通过安全邮箱验证, 验证安全邮箱才能使用此功能。');
+            return $this->msg(__('messages.Password.pwdResetConfirmFromMobile.mail_not_validate'));
         }
 
         // update password
@@ -408,7 +408,7 @@ class PasswordController extends Controller
 
         $mail->setTemplateContent($templateContent);
         $sendcloud->sendTemplate($mail);
-        return JsonResponse::create(['status' => 1, 'msg' => '邮件发送成功']);
+        return JsonResponse::create(['status' => 1, 'msg' => __('messages.Password.pwdResetConfirmFromMobile.send_success')]);
     }
 
     /**
@@ -420,13 +420,13 @@ class PasswordController extends Controller
         $mail = $request->get('email');
         if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
             ThrottleRoutes::clear($request);
-            return JsonResponse::create(['status' => 0, 'msg' => '邮箱格式不正确']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.pwdResetSubmit.mail_wrong_format')]);
         }
 
         $user = Users::where('safemail', $mail)->first();
         if (!$user) {
             ThrottleRoutes::clear($request);
-            return JsonResponse::create(['status' => 0, 'msg' => '该邮箱没有通过安全邮箱验证, 验证安全邮箱才能使用此功能。']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.pwdResetSubmit.mail_not_validate')]);
         }
         try {
 
@@ -435,7 +435,7 @@ class PasswordController extends Controller
             //Mail::send($mail);
         } catch (Exception $e) {
             Log::error($e->getTraceAsString());
-            return JsonResponse::create(['status' => 0, 'msg' => '发送失败！' . $e->getMessage()]);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.pwdResetSubmit.send_failed') . $e->getMessage()]);
         }
         return JsonResponse::create(['status' => 1]);
     }
@@ -445,25 +445,25 @@ class PasswordController extends Controller
 
         $token = $request->get('pwdreset_token');
         if (!$token || !Redis::exists('pwdreset.token:' . $token)) {
-            return JsonResponse::create(['status' => 0, 'msg' => '链接已过期']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.pwdResetSubmit.validate_link_invalid')]);
         }
         $tokenData = Crypt::decrypt($token);
         if (empty($uid = $tokenData['uid'])) {
-            return JsonResponse::create(['status' => 0, 'msg' => '链接已过期']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.pwdResetSubmit.validate_link_invalid')]);
         }
         $pwd = $request->get('password');
         $pwd_confirm = $request->get('password_confirmation');
         if (strlen($pwd) < 6) {
-            return JsonResponse::create(['status' => 0, 'msg' => '密码格式无效！']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.pwdResetSubmit.password_format_invalid')]);
         }
         if ($pwd !== $pwd_confirm) {
-            return JsonResponse::create(['status' => 0, 'msg' => '两次输入的密码不一致']);
+            return JsonResponse::create(['status' => 0, 'msg' => __('messages.Password.pwdResetSubmit.twice_enter_not_the_same')]);
         }
         $pwd = $this->decode($pwd);
         $hash = md5($pwd);
         resolve(UserService::class)->updateUserInfo($uid, ['password' => $hash]);
         Redis::del('pwdreset.token:' . $token);
-        return JsonResponse::create(['status' => 1, 'msg' => '密码修改成功']);
+        return JsonResponse::create(['status' => 1, 'msg' => __('messages.Password.pwdResetSubmit.modify_success')]);
     }
 
     public function pwdResetTest()

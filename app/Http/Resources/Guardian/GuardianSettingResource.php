@@ -21,7 +21,7 @@ class GuardianSettingResource extends JsonResource
     {
         return [
             "id"                => (int)$this->id,
-            "name"              => $this->name,
+            "name"              => __('messages.Guardian.name.' . $this->id),
             "activate"          => $this->activate,
             "renewal"           => $this->renewal,
             "activate_notify"   => (boolean)$this->activate_notify,

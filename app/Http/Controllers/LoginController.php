@@ -11,6 +11,7 @@ use App\Services\I18n\PhoneNumber;
 use App\Services\RedisCacheService;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
+use App\Services\UserAttrService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -48,11 +49,12 @@ class LoginController extends Controller
 
         $username = $request->username ?? '';
         $password = $request->password ?? '';
+        $locale = $request->{locale} ?? '';
 
         if (!isset($_REQUEST['_m'])) {
             $password = $this->decode($password); // 密码传递解密
         }
-        $retval = $this->solveUserLogin($username, $password, app(SiteService::class)->config('skip_captcha_login'));
+        $retval = $this->solveUserLogin($username, $password, $locale, app(SiteService::class)->config('skip_captcha_login'));
 
 
         return JsonResponse::create($retval);
@@ -172,12 +174,12 @@ class LoginController extends Controller
      * @param  boolean $skipPassword 绕过密码，用于内部登录
      * @return array  数组格式提示信息
      */
-    public function solveUserLogin($username, $password, $skipCaptcha = false, $skipPassword = false)
+    public function solveUserLogin($username, $password, $locale = null, $skipCaptcha = false, $skipPassword = false)
     {
         if (empty($username) || (empty($password) && !$skipPassword)) {
             return [
                 'status' => 0,
-                'msg' => '用户名或密码不能为空',
+                'msg' => __('messages.Login.solveUserLogin.account_password_required'),
             ];
         }
 
@@ -187,56 +189,68 @@ class LoginController extends Controller
         if (!$skipCaptcha && !Captcha::check(request('captcha'))) {
             return [
                 "status" => 0,
-                "msg" => "验证码错误，请重新输入！",
+                "msg" => __('messages.Login.solveUserLogin.captcha_wrong'),
             ];
         }
 
         $open_pwd_change = SiteSer::config('pwd_change') ?: false;
 
         $uid = UserSer::getUidByUsername($username);
-        if(!$uid){
+        if (!$uid) {
             $uid = UserSer::getUidByNickname($username);
         }
-        if($member = Users::find($uid)){
+
+        $member = Users::find($uid);
+
+        $auth = Auth::guard();
+
+        if ($member && $auth->validate(['username' => $username, 'password' => $password])) {
             // freeze check
-            if ($member->status==2) {
-                $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
+            if ($member->isFreeze()) {
+                $S_qq = Redis::hget('hsite_config:' . SiteSer::siteId(), 'qq_suspend');
                 return [
                     'status' => 0,
-                    'msg' => '您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq
+                    'msg' => __('messages.Login.solveUserLogin.account_block_30days_no_show', ['S_qq' => $S_qq])
                 ];
             }
+
             // platform user check
-            if ($member->origin >= 50) {
-                return ['status' => 0, 'msg' => '请由平台网站登入'];
+            if ($member->wrongOrigin()) {
+                return ['status' => 0, 'msg' => __('messages.must_login_on_platform')];
             }
         }
-
 
         if($open_pwd_change && (!$this->checkPwdChanged($uid))){
             return array(
-                'status'=>101,
-                'msg'=>'密码修改',
+                'status' => 101,
+                'msg' => __('messages.Login.solveUserLogin.password_modify'),
             );
         }
 
         //取uid
-        $auth = Auth::guard();
         if (!$auth->attempt([
             'username' => $username,
             'password' => $password,
         ], request('remember'))) {
             return [
                 'status' => 0,
-                'msg' => '用户名密码错误！',
+                'msg' => __('messages.Login.solveUserLogin.account_password_wrong'),
             ];
-        };
+        }
+
+        $userAttrService = resolve(UserAttrService::class);
+
+        /* ---用戶locale處理--- */
+        if (!empty($locale)) {
+            $userAttrService->set($auth->id(), 'locale', $locale);
+        }
+        /* ---用戶locale處理 end--- */
 
         app('events')->dispatch(new Login(Auth::user(), true, 11));
 
         return [
             'status' => 1,
-            'msg' => '登录成功',
+            'msg' => __('messages.Login.solveUserLogin.success'),
             'data'=>[
                Session::getName() => Session::getId(),
             ]
@@ -275,17 +289,17 @@ class LoginController extends Controller
             $S_qq = Redis::hget('hsite_config:'.SiteSer::siteId(), 'qq_suspend');
             // freeze check
             if ($member->status==2) {
-                return $this->msg('您超过30天未开播，账号已被冻结，请联系客服QQ:'.$S_qq);
+                return $this->msg(__('messages.Login.solveMobileLogin.account_block_30days_no_show', ['S_qq' => $S_qq]));
             }
             // platform user check
             if ($member->origin >= 50) {
-                return $this->msg(['status' => 0, 'msg' => '请由平台网站登入']);
+                return $this->msg(['status' => 0, 'msg' => __('messages.must_login_on_platform')]);
             }
         }
 
         $open_pwd_change = SiteSer::config('pwd_change') ?: false;
         if ($open_pwd_change && (!$this->checkPwdChanged($uid))) {
-            return $this->msg('密码修改', 101);
+            return $this->msg(__('messages.Login.solveMobileLogin.password_modify'), 101);
         }
 
         //取uid
@@ -294,7 +308,7 @@ class LoginController extends Controller
 
         $resp = [
             'status' => 1,
-            'msg' => '登录成功',
+            'msg' => __('messages.success'),
             'data'=> [
                Session::getName() => Session::getId(),
             ]
@@ -323,7 +337,7 @@ class LoginController extends Controller
         }
         $request->session()->invalidate();
         // 清除redis
-        return JsonResponse::create(['status' => 1, 'msg' => '您已退出登录']);
+        return JsonResponse::create(['status' => 1, 'msg' => __('messages.Login.solveMobileLogin.is_logout')]);
     }
 
     /**

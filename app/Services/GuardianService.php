@@ -23,6 +23,7 @@ use App\Models\MallList;
 use App\Services\Message\MessageService;
 use Carbon\Carbon;
 use DB;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -38,7 +39,7 @@ class GuardianService
 
     const VALID_DAY_ARR = array(1 => 30, 2 => 90, 3 => 365);
     const GUARDIAN_GIFT_ID = array(1 => 700004, 2 => 700005, 3 => 700006);
-    const PAY_TYPE_CH = array(1 => '开通成功', 2 => '续费成功');
+//    const PAY_TYPE_CH = array(1 => __('messages.successfully_opened'), 2 => __('messages.renewal_successful'));
     const PAY_TYPE_EN = array(1 => 'activate', 2 => 'renewal');
 
     protected $guardianSettingRepository;
@@ -208,31 +209,34 @@ class GuardianService
 
         //檢核方案是否有開啟
         if (!$price['final']) {
-            return ['status' => 101, 'msg' => '守护系统' . self::VALID_DAY_ARR[$daysType] . '天方案未啟用'];
+            return [
+                'status' => 101,
+                'msg' => __('messages.Guardian.buy.class_not_active', ['day' => self::VALID_DAY_ARR[$daysType]]),
+            ];
         }
 
         //檢核用戶鑽石是否足夠，不足返回資訊
         if (!($user->points >= $price['final'])) {
-            return ['status' => 102, 'msg' => '您的钻石不足'];
+            return ['status' => 102, 'msg' => __('messages.Guardian.buy.user_point_not_enough')];
         }
 
         //檢核續費還是新開通，是否有符合規定
         if ($user->guard_end >= Carbon::now()) {//如有開通且未過期
             if ($user->guard_id > $guardId) {
-                return ['status' => 103, 'msg' => '您现在的级别已大於您要开通/续费的等级'];
+                return ['status' => 103, 'msg' => __('messages.Guardian.buy.level_is_high')];
             } else {
                 if ($user->guard_id == $guardId && $payType != 2) {
-                    return ['status' => 104, 'msg' => '您已开通该级别守护，仅能续费该守护等级'];
+                    return ['status' => 104, 'msg' => __('messages.Guardian.buy.only_renewal')];
                 } else {
                     if ($user->guard_id < $guardId && $payType != 1) {
                         //(原守護等級 < 開通/續約等級 && 不是新開通)
-                        return ['status' => 105, 'msg' => '您尚未开通该级别守护，无法续费'];
+                        return ['status' => 105, 'msg' => __('messages.Guardian.buy.only_active')];
                     }
                 }
             }
         } else {
             if ($payType == 2) {
-                return ['status' => 105, 'msg' => '您尚未开通该级别守护，无法续费'];
+                return ['status' => 105, 'msg' => __('messages.Guardian.buy.only_active')];
             }
         }
 
@@ -343,15 +347,21 @@ class GuardianService
             return false;
         }
         /* 守护开通成功提醒 */
-        $guardName = $this->getSetting()->pluck('name', 'id');
+        $guardName = __('messages.Guardian.name.' . $guardId);
 
         $expireMsgDate = $guardEndTime->copy()->toDateString();
 
+        $payTypeCH = array(1 => __('messages.successfully_opened'), 2 => __('messages.renewal_successful'));
         $message = [
-            'category'  => 2,
+            'category'  => 1,
             'mail_type' => 3,
             'rec_uid'   => $user->uid,
-            'content'   => '守护' . self::PAY_TYPE_CH[$payType] . '提醒：您已成功开通 ' . $guardName[$guardId] . ' ，到期日：' . $expireMsgDate
+            'content'   => __('messages.GuardianService.remind_msg', [
+                'payType'    => $payTypeCH[$payType],
+                'levelName'  => $guardName,
+                'expireDate' => $expireMsgDate
+            ]),
+            'locale'    => App::getLocale(),
         ];
 
         $sendMsgToUser = $this->messageService->sendSystemToUsersMessage($message);
@@ -458,8 +468,8 @@ class GuardianService
         }
 
         $res['expireDate'] = $expireMsgDate;
-        $res['guardianName'] = $guardName[$guardId];
-        $res['payTypeName'] = self::PAY_TYPE_CH[$payType];
+        $res['guardianName'] = $guardName;
+        $res['payTypeName'] = $payTypeCH[$payType];
         $res['status'] = 200;
 
         return $res;

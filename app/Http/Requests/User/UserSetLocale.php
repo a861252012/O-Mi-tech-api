@@ -1,11 +1,12 @@
 <?php
 
+namespace App\Http\Requests\User;
 
-namespace App\Http\Requests\BackPack;
 
 use App\Http\Requests\VRequest;
+use Illuminate\Validation\Rule;
 
-class UseItem extends VRequest
+class UserSetLocale extends VRequest
 {
     /**
      * Get the validation rules that apply to the request.
@@ -15,15 +16,14 @@ class UseItem extends VRequest
     public function rules()
     {
         return [
-            'id' => 'numeric|nullable|min:1',
+            'loc' => ['string', 'nullable', Rule::in(['zh', 'zh_TW', 'zh_HK', 'en'])],
         ];
     }
 
     public function messages()
     {
         return [
-            'id.numeric' => ':attribute ' . __('messages.backpack_request.wrong_type'),
+            'loc.*' => __('messages.UserSetLocaleRequest.loc'),
         ];
     }
-
 }

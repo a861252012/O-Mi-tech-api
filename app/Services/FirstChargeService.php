@@ -12,6 +12,7 @@ use App\Models\Recharge;
 use App\Services\Message\MessageService;
 use App\Services\User\UserService;
 use App\Repositories\UserItemRepository;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -107,10 +108,12 @@ class FirstChargeService
 
         //新增手機端首充訊息
         $UserFirstChargeMsg = [
+            'category'  => 1,
             'mail_type' => 3,
-            'rec_uid' => $uid,
-            'content' => '恭喜你获得首充豪礼，贵族体验券、等级积分、反馈钻石、飞频均已发送，若有问题请洽客服人员。',
-            'site_id' => $user['site_id']
+            'rec_uid'   => $uid,
+            'content'   => __('messages.FirstChargeService.reminder_msg'),
+            'site_id'   => $user['site_id'],
+            'locale'    => App::getLocale(),
         ];
 
         resolve(MessageService::class)->sendSystemtranslate($UserFirstChargeMsg);

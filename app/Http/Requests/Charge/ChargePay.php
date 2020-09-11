@@ -25,10 +25,10 @@ class ChargePay extends VRequest
     public function messages()
     {
         return [
-            'price.*'     => '请输入正确的金额!',
-            'vipLevel.*'  => '渠道輸入不正確',
-            'mode_type.*' => '支付類型輸入不正確',
-            'name.*'      => '名稱輸入不正確',
+            'price.*'     => __('messages.Charge_pay_request.wrong_price'),
+            'vipLevel.*'  => __('messages.Charge_pay_request.wrong_vip_level'),
+            'mode_type.*' => __('messages.Charge_pay_request.wrong_mode_type'),
+            'name.*'      => __('messages.Charge_pay_request.wrong_name'),
         ];
     }
 }

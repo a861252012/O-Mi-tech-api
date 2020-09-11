@@ -63,7 +63,10 @@ class OtherController extends Controller
 
 
         $a = Redis::set('home_one_many_' . $flashVersion, $onetomanyStr);
-        return ['data' => $onetomanyStr, 'msg' => '创建直播间一对多数据成功'];
+        return [
+            'data' => $onetomanyStr,
+            'msg'  => __('messages.Other.createHomeOneToManyList.create_room_successfully')
+        ];
     }
 
     public function createHomeOneToOneList()

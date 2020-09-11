@@ -86,12 +86,12 @@ class SocketService extends Service
 
 //        if ($channelIDs->count() == 0) {
         if (!$minLoadChannel) {
-            throw new NoSocketChannelException('没有可用channel');
+            throw new NoSocketChannelException(__('messages.SocketService.out_of_channel'));
         }
 //        $idSelected = $channelIDs->get($uid % $channelIDs->count());
 //        $channelInfo = $redis->hgetall('channel_info:' . $idSelected);
         if (empty($minLoadChannel)) {
-            throw new NoSocketChannelException('获取Socket Channel失败');
+            throw new NoSocketChannelException(__('messages.SocketService.failed_tp_get_socket'));
         }
 
         return $minLoadChannel;
@@ -125,12 +125,12 @@ class SocketService extends Service
         });
 //        if ($channelIDs->count() == 0) {
         if (!$minLoadChannel) {
-            throw new NoSocketChannelException('没有可用channel');
+            throw new NoSocketChannelException(__('messages.SocketService.out_of_channel'));
         }
 //        $idSelected = $channelIDs->get($uid % $channelIDs->count());
 //        $channelInfo = $redis->hgetall('channel_info:' . $idSelected);
         if (empty($minLoadChannel)) {
-            throw new NoSocketChannelException('获取Socket Channel失败');
+            throw new NoSocketChannelException(__('messages.SocketService.failed_tp_get_socket'));
         }
 
 //        dd($minLoadChannel);

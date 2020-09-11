@@ -39,7 +39,7 @@ class ChargeController extends Controller
     const CHANNEL_GD_ALI = 7;
     const CHANNEL_GD_BANK = 8;
     const ORDER_REPEAT_LIMIT_GD = 60;
-    const BLOCK_MSG = '尊敬的用户，您好，您今日的充值申请已达上限，请点击在线客服，让我们协助您，感谢您的支持与理解！';
+//    const BLOCK_MSG = '尊敬的用户，您好，您今日的充值申请已达上限，请点击在线客服，让我们协助您，感谢您的支持与理解！';
 
     /* One Pay */
     const CHANNEL_ONE_PAY = 13;
@@ -74,11 +74,11 @@ class ChargeController extends Controller
 
         // 没有充值的权限
         if (resolve('chargeGroup')->close($uid)) {
-            return ErrorResponse::create(array('title' => self::BLOCK_MSG, 'msg' => ''));
+            return ErrorResponse::create(array('title' => __('messages.Charge.block_msg'), 'msg' => ''));
         }
 
         if (resolve('chargeGroup')->customer($uid)) {
-            return ErrorResponse::create(array('title' => '需要充值请联系客服！！！', 'msg' => ''));
+            return ErrorResponse::create(array('title' => __('messages.Charge.order.charge_error'), 'msg' => ''));
         }
 
         $var['active'] = GiftActivity::where('type', 2)->get();
@@ -153,15 +153,17 @@ class ChargeController extends Controller
 
         //判断下这条记录是不是这个用户的
         if (!$chargeObj) {
-            //return new ErrorResponse('这条记录不是你的');
-            return JsonResponse::create(['status' => 0, 'msg' => '这条记录不是你的']);
+            return JsonResponse::create([
+                'status' => 0,
+                'msg'    => __('messages.Charge.del.the_record_is_not_yours')
+            ]);
         }
         //执行删除操作
         $chargeObj->del = 1;
         $chargeObj->save();
 
         //return new SuccessResponse('删除成功');
-        return JsonResponse::create(['status' => 1, 'msg' => '删除成功']);
+        return JsonResponse::create(['status' => 1, 'msg' => __('messages.Charge.del.success')]);
     }
 
     /**
@@ -217,8 +219,7 @@ class ChargeController extends Controller
         Log::debug('金流支付request: ' . var_export($request->all(), true));
 
         if ($request->price < 1) {
-            $msg = '请输入正确的金额!';
-            return new JsonResponse(array('status' => 1, 'msg' => $msg));
+            return new JsonResponse(array('status' => 1, 'msg' => __('messages.Charge.pay.please_enter_right_price')));
         }
 
         $chargeService = resolve(ChargeService::class);
@@ -228,14 +229,14 @@ class ChargeController extends Controller
         if ($enable_block) {
             $ip = $this->getIp();
             if ($chargeService->isIpBlocked($ip)) {
-                return new JsonResponse(array('status' => 1, 'msg' => self::BLOCK_MSG));
+                return new JsonResponse(array('status' => 1, 'msg' => __('messages.Charge.block_msg')));
             }
         }
 
         // 擋掉没有充值的权限
         $uid = Auth::id();
         if (resolve('chargeGroup')->close($uid)) {
-            return new JsonResponse(array('status' => 1, 'msg' => self::BLOCK_MSG));
+            return new JsonResponse(array('status' => 1, 'msg' => __('messages.Charge.block_msg')));
         }
 
         $fee = 0;
@@ -249,19 +250,20 @@ class ChargeController extends Controller
         $mode_type = $this->request()->input('mode_type');
         //判断下渠道存不存在
         if (empty($channel)) {
-            $msg = '请选择充值渠道!';
-            return new JsonResponse(array('status' => 1, 'msg' => $msg));
+            return new JsonResponse(array('status' => 1, 'msg' => __('messages.Charge.pay.please_select_top_up_way')));
         }
         //判断下渠道是否開放
         $valid = resolve('chargeGroup')->validChannel($uid, $channel);
         if (!$valid) {
-            $msg = '充值渠道未开放!';
-            return new JsonResponse(array('status' => 1, 'msg' => $msg));
+            return new JsonResponse(array(
+                'status' => 1,
+                'msg'    => __('messages.Charge.pay.the_top_up_channel_is_not_open')
+            ));
         }
 
         // 檢查每日請求上限 (未完成訂單 < 5)
         if ($chargeService->isDailyLimitReached($uid)) {
-            return new JsonResponse(array('status' => 1, 'msg' => self::BLOCK_MSG));
+            return new JsonResponse(array('status' => 1, 'msg' => __('messages.Charge.block_msg')));
         }
 
         $origin = $this->getClient();
@@ -287,17 +289,23 @@ class ChargeController extends Controller
 
         switch ($mode_type) {
             case self::CHANNEL_ONE_PAY:
-                $act = '3';
-                $onePayService = resolve(OnePayService::class);
-                $onePayService->genOrder();
-                $orderId = $onePayService->getOrderId();
-                $postdata = $onePayService->pay($request->price);
+                try {
+                    $act = '3';
+                    $onePayService = resolve(OnePayService::class);
+                    $onePayService->genOrder();
+                    $orderId = $onePayService->getOrderId();
+                    $postdata = $onePayService->pay($request->price);
 
-                if (!empty($onePayService->getStatus())) {
-                    $msg = '请联系客服，错误代码 ' . $onePayService->getStatus();
+                    if (!empty($onePayService->getStatus())) {
+                        $msg = __('messages.Charge.pay.one_pay_error', ['onePayError' => $onePayService->getStatus()]);
+                    }
+
+                    break;
+                } catch (\Exception $e) {
+                    report($e);
+                    $this->setStatus(0, __('messages.Charge.pay.pay_system_error'));
+                    return $this->jsonOutput();
                 }
-
-                break;
             default:
                 $charge = resolve('charge');
                 $orderId = $charge->getMessageNo();
@@ -350,22 +358,22 @@ class ChargeController extends Controller
         //去除％和0x攻击
         $orderid = preg_replace('/%|0x|SELECT|FROM/', ' ', $orderid);
         if (!$orderid) {
-            return new JsonResponse(array('status' => 2, 'msg' => '没有订单号！'));
+            return new JsonResponse(array('status' => 2, 'msg' => __('messages.Charge.exchange.orderID_is_empty')));
         }
 
         //强制查询主库
         $ret = Recharge::where('order_id', $orderid)->where('pay_status', 4)->first();
 
         if (!$ret) {
-            return new JsonResponse(array('status' => 3, 'msg' => '该订单号不存在！'));
+            return new JsonResponse(array('status' => 3, 'msg' => __('messages.Charge.exchange.order_is_not_exist')));
         }
         if(empty($status)){
-            return new JsonResponse(array('status' => 2, 'msg' => '状态不正确！'));
+            return new JsonResponse(array('status' => 2, 'msg' => __('messages.Charge.exchange.empty_status')));
         }
         if($status!=2){
             $ret->pay_status=3;
             $ret->save();
-            return new JsonResponse(array('status' => 1, 'msg' => '兑换失败！'));
+            return new JsonResponse(array('status' => 1, 'msg' => __('messages.exchanged_failed')));
         }
         /*
         进入交易
@@ -405,11 +413,11 @@ class ChargeController extends Controller
 
             DB::commit();
             Log::channel('charge')->info($loginfo);
-            return new JsonResponse(array('status' => 0, 'msg' => '兑换成功！'));
+            return new JsonResponse(array('status' => 0, 'msg' => __('messages.exchanged_successful')));
         } catch (\Exception $e) {
             Log::channel('charge')->info("订单号：" . $orderid . " 事务结果：" . $e->getMessage() . "\n");
             DB::rollback();
-            return new JsonResponse(array('status' => 1, 'msg' => '程序内部异常'));
+            return new JsonResponse(array('status' => 1, 'msg' => __('messages.apiError')));
         }
         /*$tradeno = $orderid;
         $paytradeno = null;
@@ -457,7 +465,7 @@ class ChargeController extends Controller
         $uid = $data['uid'];
         if ($modeType == static::CHANNEL_GD_ALI && empty($comment)) {
             //支付宝转账需要输入名字
-            return JsonResponse::create(['status' => 1, 'msg' => '请输入名称']);
+            return JsonResponse::create(['status' => 1, 'msg' => __('messages.Charge.processGD.empty_name')]);
         } elseif ($modeType == static::CHANNEL_GD_BANK) {
             //银行转账生成唯一备注
             //$comment = (new Hashids($uid, 4, 'abcdefghijklmnopqrstuvwxyz1234567890'))
@@ -470,8 +478,7 @@ class ChargeController extends Controller
             ->orderBy('id','desc')
             ->first();
         if ($obj && strtotime($obj['created_at']) + static::ORDER_REPEAT_LIMIT_GD * 60 > time()) {
-            $err = "1小时内，不能提同一金额，同一姓名的订单";
-            return JsonResponse::create(['status' => 1, 'msg' => $err]);
+            return JsonResponse::create(['status' => 1, 'msg' => __('messages.Charge.processGD.limit')]);
         }
         $account = PayAccount::query()->orderByRaw('rand()')->first();
 
@@ -705,7 +712,7 @@ class ChargeController extends Controller
             $stmt = DB::select($sql);
 
             if (empty($stmt)) {
-                $dealOrCannotFind = $tradeno . "订单号：" . "\n数据已处理完毕，请查看'充值记录！'\n";
+                $dealOrCannotFind = __('messages.Charge.orderHandler.already_done', ['tradeno' => $tradeno]);
                 $loginfo .= $dealOrCannotFind;
                 Log::channel('charge')->info($loginfo);
                 return new JsonResponse(array('status' => 0, 'msg' => $dealOrCannotFind));
@@ -752,7 +759,7 @@ class ChargeController extends Controller
         } catch (\Exception $e) {
             Log::channel('charge')->info("订单号：" . $tradeno . " 事务结果：" . $e->getMessage() . "\n");
             DB::rollback();
-            return new JsonResponse(array('status' => 1, 'msg' => '程序内部异常'));
+            return new JsonResponse(array('status' => 1, 'msg' => __('messages.apiError')));
         }
 
         //驗證首充資格及贈送首充禮物
@@ -774,13 +781,13 @@ class ChargeController extends Controller
     {
         //数据统计好后，根据状态来返回结果
         if ($chargeResult == 0) {
-            $chargeResult2 = ' 已接受！';
+            $chargeResult2 = __('messages.Charge.back2Charge.accept');
         } elseif ($chargeResult == 1) {
-            $chargeResult2 = ' 处理中！';
+            $chargeResult2 = __('messages.Charge.back2Charge.dealing_with_it');
         } elseif ($chargeResult == 2 && !empty($paytradeno)) {
-            $chargeResult2 = ' 处理成功！';
+            $chargeResult2 = __('messages.Charge.back2Charge.success');
         } elseif ($chargeResult == 3) {
-            $chargeResult2 = ' 处理失败！';
+            $chargeResult2 = __('messages.Charge.back2Charge.failed');
         }
         return $tradeno . $chargeResult2 . $paytradeno;
     }
@@ -902,11 +909,11 @@ class ChargeController extends Controller
         $type = 2;
         Log::channel('charge')->info('charge_' . $type . ' :' . $payOrderJson);
         if (!$payOrderJson) {
-            return new JsonResponse(array('status' => 1, 'msg' => '传入的数据存在问题'));
+            return new JsonResponse(array('status' => 1, 'msg' => __('messages.Charge.callFailOrder.failed')));
         }
         $payOrderJson = json_decode($payOrderJson, true);
         if (!$this->verifyUidToken($payOrderJson['uid'], $payOrderJson['token'])) {
-            return new JsonResponse(array('status' => 1, 'msg' => '非法操作！'));
+            return new JsonResponse(array('status' => 1, 'msg' => __('messages.illegal_operation')));
         }
 
         $tradeno = $payOrderJson['orderId'];
@@ -924,7 +931,7 @@ class ChargeController extends Controller
         $msg = file_get_contents("php://input");
         Log::channel('charge')->info("checkKeepVip:" . $msg);
         if (!$msg) {
-            return new JsonResponse(array('status' => 1, 'msg' => '传入的数据存在问题'));
+            return new JsonResponse(array('status' => 1, 'msg' => __('messages.Charge.callFailOrder.failed')));
         }
         $msg = json_decode($msg, true);
         // 充钱成功后 检测用户的贵族状态
@@ -977,7 +984,7 @@ class ChargeController extends Controller
         //去除％和0x攻击
         $orderId = preg_replace('/%|0x|SELECT|FROM/', ' ', $orderId);
         if (!$orderId) {
-            return new JsonResponse(array('status' => 1, 'msg' => '该订单号不存在！'));
+            return new JsonResponse(array('status' => 1, 'msg' => __('messages.Charge.exchange.order_is_not_exist')));
         }
         $sql = 'SELECT * FROM `video_recharge` WHERE  order_id ="' . $orderId . '"';
         //强制查询主库
@@ -985,13 +992,13 @@ class ChargeController extends Controller
         //$ret = DB::select('/*' . MYSQLND_MS_MASTER_SWITCH . '*/' . $sql);
         $ret = (array)$ret[0]??'';// stdClass 转数组
         if (!$ret) {
-            return new JsonResponse(array('status' => 1, 'msg' => '该订单号不存在！'));
+            return new JsonResponse(array('status' => 1, 'msg' => __('messages.Charge.exchange.order_is_not_exist')));
         }
         if ($ret['pay_status'] == 2) {
-            return new JsonResponse(array('status' => 0, 'msg' => '该订单号已经成功支付,请返回会员中心的"充值记录"查看！'));
+            return new JsonResponse(array('status' => 0, 'msg' => __('messages.Charge.checkCharge.success')));
         }
         if ($ret['pay_status'] == 3) {
-            return new JsonResponse(array('status' => 0, 'msg' => '该订单号支付已经失败,请返回会员中心的"充值记录"查看！'));
+            return new JsonResponse(array('status' => 0, 'msg' => __('messages.Charge.checkCharge.failed')));
         }
         $POST_Array = resolve('charge')->getFindRequest($orderId);
 
@@ -1006,12 +1013,15 @@ class ChargeController extends Controller
 
         Log::channel('charge')->info($pay_call_url . PHP_EOL . 'output' . $output . PHP_EOL . 'error' . $errstr);
         if (!empty($errstr)) {
-            return new JsonResponse(array('status' => 1, 'msg' => '充提查询接口出问题：' . $errstr));
+            return new JsonResponse(array(
+                'status' => 1,
+                'msg'    => __('messages.Charge.checkCharge.error', ['errstr' => $errstr])
+            ));
         }
         $output = json_decode($output, true);
         $output = $output['data'];
         if (!isset($output['Datas'])) {
-            return new JsonResponse(array('status' => 1, 'msg' => '订单未成功支付！'));
+            return new JsonResponse(array('status' => 1, 'msg' => __('messages.Charge.checkCharge.top_up_failed')));
         }
         $len = count($output['Datas']);
         $payOrderJson = [];
@@ -1047,7 +1057,10 @@ class ChargeController extends Controller
         }
 
         // 更新订单状态
-        $msg = $this->codeMsg[$sts] ?? '失败';
-        return new JsonResponse(array('status' => 0, 'msg' => '该订单充值' . $msg . '！'));
+        $msg = $this->codeMsg[$sts] ?? __('messages.fail');
+        return new JsonResponse(array(
+            'status' => 0,
+            'msg'    => __('messages.Charge.checkCharge.result', ['msg' => $msg])
+        ));
     }
 }

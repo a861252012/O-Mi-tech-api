@@ -134,7 +134,7 @@ class UserGroupService extends Service
                 VideoMail::create(array(
                     'send_uid' => 0,
                     'rec_uid' => $user['uid'],
-                    'content' => '贵族保级成功提醒：您的' . $group->level_name . '贵族保级成功啦！到期日：' . date('Y-m-d H:i:s', $newTime),
+                    'content' => '贵族保级成功提醒：您的' . __('messages.user.ViplevelName.' . $user['vip']) . '贵族保级成功啦！到期日：' . date('Y-m-d H:i:s', $newTime),
                     'category' => 1,
                     'status' => 0,
                     'created' => date('Y-m-d H:i:s'),

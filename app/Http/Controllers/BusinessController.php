@@ -28,7 +28,7 @@ class BusinessController extends Controller
     public function index($act)
     {
         if (!in_array($act, array('joining', 'agreement','signup','join'))) {      //TODO 考虑删除'join'
-            return new JsonResponse(['status' => 0, 'msg' => '请求方法错误']);
+            return new JsonResponse(['status' => 0, 'msg' => __('messages.Business.index.request_error')]);
         }
         $var = array();
         if( $act == 'signup'){
@@ -37,7 +37,7 @@ class BusinessController extends Controller
        /* if( $act == 'agreement' ){
             $var['login'] = Auth::id();
         }*/
-        return new JsonResponse(['status' => 0, 'msg' => '申请失败']);
+        return new JsonResponse(['status' => 0, 'msg' => __('messages.Business.index.failed')]);
     }
 
     /**
@@ -48,14 +48,14 @@ class BusinessController extends Controller
      */
     public function signup(){
         if (Auth::guest())
-            return  ['status'=>0, 'msg'=>'请登录'];
+            return  ['status' => 0, 'msg' => __('messages.Business.signup.is_guest')];
 
         $user = Auth::user();
         if( $this->make('request')->IsMethod('POST') && $this->make('request')->get('handle') == 'signin' ){
 
             return $this->_ajaxSigninHandle($user);
         }
-        return new JsonResponse(['status' => 0, 'msg' => '申请失败']);
+        return new JsonResponse(['status' => 0, 'msg' => __('messages.Business.signup.failed')]);
     }
 
     /**
@@ -190,17 +190,17 @@ class BusinessController extends Controller
 
         //TODO 重复判断考虑删除
         if(!$user || $user['uid']<1){
-            return new JsonResponse( array('status'=>0,'msg'=>'对不起，你未登录，请登录后申请主播功能！') );
+            return new JsonResponse( array('status' => 0,'msg' => __('messages.Business._ajaxSigninHandle.unauthorized')) );
         }
 
         if ($user['roled']==3){
-            return new JsonResponse( array('status'=>0,'msg'=>'对不起，你已申请了主播功能！') );
+            return new JsonResponse( array('status'=>0,'msg'=>__('messages.Business._ajaxSigninHandle.has_been_apply')) );
         }
 
 
         //判断资料填写是否完整
         if( sizeof(array_filter(array_values($data))) <= sizeof(array_keys($data)) - 2 ){
-            return new JsonResponse( array('status'=>0,'msg'=>'请把资料填写完整!') );
+            return new JsonResponse( array('status' => 0,'msg' => __('messages.Business._ajaxSigninHandle.apply_data_empty')) );
         }
 
         //检查是否已申请过主播
@@ -211,15 +211,15 @@ class BusinessController extends Controller
 
             switch($VideoHostAudit->status){
                 case '0':
-                    return new JsonResponse( array('status'=>0,'msg'=>'对不起，你已申请了主播功能,请等待审核！') );
+                    return new JsonResponse( array('status' => 0,'msg' => __('messages.Business._ajaxSigninHandle.has_been_apply_for_wait')) );
                     break;
 
                 case '1':
-                    $Message = '你之前的主播身份已被取消，现在重新提交申请成功，请等待审核';
+                    $Message = __('messages.Business._ajaxSigninHandle.before_cancel_wait_pass');
                     break;
 
                 case '2':
-                    $Message = '你之前的申请已被驳回，现在重新提交申请，请等待审核！';
+                    $Message = __('messages.Business._ajaxSigninHandle.before_reject_wait_pass');
                     break;
             }
 
@@ -256,7 +256,7 @@ class BusinessController extends Controller
         if( isset($Message) ){
             return new JsonResponse( array('status'=>0,'msg'=>$Message) );
         }else{
-            return new JsonResponse( array('status'=>1,'msg'=>'提交申请成功，请耐心等待审核。') );
+            return new JsonResponse( array('status'=>1,'msg'=> __('messages.Business._ajaxSigninHandle.apply_success_wait_pass')) );
         }
     }
     /**

@@ -21,7 +21,7 @@ class RegController extends Controller
             ],
         ];
         if ($status === RegService::STATUS_BLOCK) {
-            $resp['data']['msg'] = '来自相同 IP 的注册数量过多，已暂停注册功能，请联系客服处理。';
+            $resp['data']['msg'] = __('messages.Reg.nickname.the_same_ip_too_many');
         }
         return new JsonResponse($resp);
     }

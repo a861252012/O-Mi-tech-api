@@ -267,14 +267,15 @@ class Controller extends BaseController
         if (empty($username) || empty($password1) || empty($password2)) {
             return json_encode(array(
                 "status" => 0,
-                "msg" => '用户名或密码不能为空',
+                "msg"    => __('messages.Controller.doChangePwd.account_password_required'),
             ));
         }
         //用户名规则限制
-        if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $username) || strlen($username) < 5 || strlen($username) > 30) {
+        if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/',
+                $username) || strlen($username) < 5 || strlen($username) > 30) {
             return json_encode(array(
                 "status" => 0,
-                "msg" => "用户名不合法",
+                "msg"    => __('messages.Password.changePwd.illegal_username'),
             ));
         }
 
@@ -282,49 +283,53 @@ class Controller extends BaseController
         if ($this->checkPasswordVaild($password1) || $this->checkPasswordVaild($password2)) {
             return json_encode(array(
                 "status" => 0,
-                "msg" => "密码不合法！"
+                "msg"    => __('messages.Controller.doChangePwd.invalid_password')
             ));
         }
 
         if ($password == $password1) {
             return json_encode(array(
                 "status" => 0,
-                "msg" => "新旧密码不能相同"
+                "msg"    => __('messages.Controller.doChangePwd.new_and_old_is_the_same')
             ));
         }
         if ($password1 != $password2) {
             return json_encode(array(
                 "status" => 0,
-                "msg" => "新密码两次输入不一致"
+                "msg"    => __('messages.Controller.doChangePwd.new_password_not_equal')
             ));
         }
         //用户名是否存在
         $uid = UserSer::getUidByUsername($username);
-        if (empty($uid)) return json_encode(array(
-            "status" => 0,
-            "msg" => "用户名不存在"
-        ));
+        if (empty($uid)) {
+            return json_encode(array(
+                "status" => 0,
+                "msg"    => __('messages.Controller.doChangePwd.account_not_exist')
+            ));
+        }
 
         //是否已修改过
         $user = UserSer::getUserByUid($uid);
 
         //旧密码是否正确
         $old_password = md5($password);
-        if ($user['password'] != $old_password) return json_encode(array(
-            "status" => 0,
-            "msg" => "旧密码验证失败"
-        ));
+        if ($user['password'] != $old_password) {
+            return json_encode(array(
+                "status" => 0,
+                "msg"    => __('messages.Controller.doChangePwd.old_password_invalid')
+            ));
+        }
 
         //修改新密码，更新状态及时间
         Users::query()->where('uid', $uid)->update([
-            'password' => md5($password1),
+            'password'   => md5($password1),
             'pwd_change' => 1,
-            'cpwd_time' => date('Y-m-d H:i:s'),
+            'cpwd_time'  => date('Y-m-d H:i:s'),
         ]);
         UserSer::getUserReset($uid);
         return json_encode(array(
             "status" => 1,
-            "msg" => "修改成功"
+            "msg"    => __('messages.success')
         ));
     }
 
@@ -1060,7 +1065,7 @@ class Controller extends BaseController
         if (empty($postData)) {
             return new JsonResponse([
                 'status' => 0,
-                'msg' => '非法提交',
+                'msg' => __('messages.Controller.editUserInfo.invalid_submit'),
             ]);
         }
 
@@ -1082,7 +1087,7 @@ class Controller extends BaseController
             //昵称不能使用/:;\空格,换行等符号。
             if ($len < 2 || $len > 11 || !preg_match("/^[^\s\/\:;]+$/", $postData['nickname'])) {
                 $msg = [
-                    'msg' => '注册昵称不能使用/:;\空格,换行等符号！(2-11位的昵称)',
+                    'msg' => __('messages.Controller.editUserInfo.nickname_format_error'),
                     'status' => 0,
                 ];
                 return new JsonResponse($msg);
@@ -1100,7 +1105,7 @@ class Controller extends BaseController
                 foreach ($query as $v) {
                     $v['keyword'] = addcslashes($v['keyword'], '.^$*+?()[]{}|\\');
                     if (preg_match("/{$v['keyword']}/i", $postData['nickname'])) {
-                        return new JsonResponse(['msg' => '昵称中含有非法字符，请修改后再提交!', 'status' => 0]);
+                        return new JsonResponse(['msg' => __('messages.Controller.editUserInfo.nickname_contain_invalid_char'), 'status' => 0]);
                     }
                 }
             }
@@ -1108,7 +1113,7 @@ class Controller extends BaseController
             // 判断昵称的唯一性
             if (!$userServer->checkNickNameUnique($postData['nickname'])) {
                 $msg = [
-                    'msg' => '昵称重复！',
+                    'msg' => __('messages.Controller.editUserInfo.nickname_repeat'),
                     'status' => 0,
                 ];
                 return new JsonResponse($msg);
@@ -1117,7 +1122,7 @@ class Controller extends BaseController
             //判断是否可以修改昵称 通过权限判断
             $status = $userServer->getModNickNameStatus();
             if ($status['num'] == 0) {
-                $msg['msg'] = '你已经不能修改昵称了！';
+                $msg['msg'] = __('messages.Controller.editUserInfo.unable_modify');
                 $msg['status'] = false;
                 return new JsonResponse($msg);
             }
@@ -1182,7 +1187,7 @@ class Controller extends BaseController
         $userServer->getUserReset($user->uid);
 
         $msg = [
-            'msg' => '更新成功！',
+            'msg' => __('messages.Controller.editUserInfo.update_success'),
             'status' => 1,
         ];
         return new JsonResponse($msg);
@@ -1534,7 +1539,7 @@ class Controller extends BaseController
         $res = array(
             'status' => 1,
             'data' => $arr ?: [],
-            'msg' => '获取成功'
+            'msg' => __('messages.success')
         );
         return $res;
 

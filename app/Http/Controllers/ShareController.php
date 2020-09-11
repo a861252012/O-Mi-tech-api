@@ -50,11 +50,11 @@ class ShareController extends Controller
         try {
             $this->shareService->addInstallLog($request->origin, $request->site_id);
 
-            $this->setStatus('1','OK');
+            $this->setStatus('1',__('messages.success'));
             return $this->jsonOutput();
         } catch (\Exception $e) {
             report($e);
-            $this->setStatus('999', 'API執行錯誤');
+            $this->setStatus('999', __('messages.apiError'));
             return $this->jsonOutput();
         }
     }

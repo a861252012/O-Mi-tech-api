@@ -40,7 +40,17 @@ class Users extends Authenticatable
 
     public function banned()
     {
-        return $this->status != 1;
+        return $this->status == 0;
+    }
+
+    public function isFreeze()
+    {
+        return $this->status == 2;
+    }
+
+    public function wrongOrigin()
+    {
+        return $this->origin >= 50;
     }
 
     public function isHost()
