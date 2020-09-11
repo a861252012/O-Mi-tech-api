@@ -449,6 +449,12 @@ Route::prefix('guardian')->group(function () {
     });
 });
 
+/* 輪盤遊戲 */
+Route::prefix('roulette')->group(function () {
+    /* 配置 */
+    Route::get('setting', 'RouletteController@setting');
+});
+
 Route::any('omey/v2/check', 'OmeyController@v2Check');
 Route::any('omey/v2/diamondGet', 'OmeyController@v2DiamondGet');
 Route::any('omey/v2/diamondExpend', 'OmeyController@v2DiamondExpend');

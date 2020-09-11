@@ -287,5 +287,11 @@ Route::prefix('guardian')->group(function () {
     });
 });
 
+/* 輪盤遊戲 */
+Route::prefix('roulette')->group(function () {
+    /* 配置 */
+    Route::get('setting', 'RouletteController@setting');
+});
+
 /* 測試用entry point */
 Route::any('omey', 'OmeyController@index');
