@@ -18,8 +18,6 @@ trait ApiOutput
 
     private $_msg;
 
-    private $_msgParam;
-
     protected function setStatus($status, $msg = '')
     {
         $this->_status = $status;
@@ -34,11 +32,6 @@ trait ApiOutput
     protected function setRootData($name, $data)
     {
         $this->response[$name] = $data;
-    }
-
-    protected function setMsgParam($params = null)
-    {
-        $this->_msgParam = $params;
     }
 
     protected function jsonOutput()
