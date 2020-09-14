@@ -10,6 +10,7 @@ namespace App\Services\Roulette;
 
 use App\Facades\SiteSer;
 use App\Probabilities\RouletteProbability;
+use App\Repositories\RouletteRepository;
 use App\Services\SiteAttrService;
 use App\Services\UserAttrService;
 use Illuminate\Support\Facades\Auth;
@@ -19,15 +20,18 @@ class RouletteService
     protected $siteAttrService;
     protected $userAttrService;
     protected $rouletteProbability;
+    protected $rouletteRepository;
 
     public function __construct(
         SiteAttrService $siteAttrService,
         UserAttrService $userAttrService,
-        RouletteProbability $rouletteProbability
+        RouletteProbability $rouletteProbability,
+        RouletteRepository $rouletteRepository
     ) {
         $this->siteAttrService = $siteAttrService;
         $this->userAttrService = $userAttrService;
         $this->rouletteProbability = $rouletteProbability;
+        $this->rouletteRepository = $rouletteRepository;
     }
 
     public function status()
@@ -86,5 +90,10 @@ class RouletteService
         }
 
         return $results;
+    }
+
+    public function getHistory($uid, $amount, $startTime, $endTime)
+    {
+        return $this->rouletteRepository->getHistory($uid, $amount, $startTime, $endTime);
     }
 }
