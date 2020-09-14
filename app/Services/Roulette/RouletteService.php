@@ -8,9 +8,10 @@
 namespace App\Services\Roulette;
 
 
+use App\Events\RouletteReward;
 use App\Facades\SiteSer;
 use App\Probabilities\RouletteProbability;
-use App\Repositories\RouletteRepository;
+use App\Repositories\RouletteHistoryRepository;
 use App\Services\SiteAttrService;
 use App\Services\UserAttrService;
 use Illuminate\Support\Facades\Auth;
@@ -20,18 +21,18 @@ class RouletteService
     protected $siteAttrService;
     protected $userAttrService;
     protected $rouletteProbability;
-    protected $rouletteRepository;
+    protected $rouletteHistoryRepository;
 
     public function __construct(
         SiteAttrService $siteAttrService,
         UserAttrService $userAttrService,
         RouletteProbability $rouletteProbability,
-        RouletteRepository $rouletteRepository
+        RouletteHistoryRepository $rouletteHistoryRepository
     ) {
         $this->siteAttrService = $siteAttrService;
         $this->userAttrService = $userAttrService;
         $this->rouletteProbability = $rouletteProbability;
-        $this->rouletteRepository = $rouletteRepository;
+        $this->rouletteHistoryRepository = $rouletteHistoryRepository;
     }
 
     public function status()
@@ -62,6 +63,11 @@ class RouletteService
 
     public function play($cnt = 1)
     {
+        // 抽獎資格判斷
+
+        // 扣鑽或扣票
+
+        // 中獎邏輯
         $rouletteItems = json_decode($this->siteAttrService->get('roulette_items'), true);
 
         // build item thresHold
@@ -89,11 +95,21 @@ class RouletteService
             }
         }
 
+        //新增個人中獎紀錄
+        $reward = [];
+
+        //送禮 加鑽 加經驗
+        //更新日排行
+        //更新中獎跑道
+        event(new RouletteReward(Auth::user(), $reward));
+
+        //發送廣播訊息(redis)
+
         return $results;
     }
 
     public function getHistory($uid, $amount, $startTime, $endTime)
     {
-        return $this->rouletteRepository->getHistory($uid, $amount, $startTime, $endTime);
+        return $this->rouletteHistoryRepository->getHistory($uid, $amount, $startTime, $endTime);
     }
 }

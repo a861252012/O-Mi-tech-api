@@ -196,9 +196,10 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
         Route::get('setting', 'RouletteController@setting');
 
         /* 用戶中獎紀錄 */
-        Route::group(['middleware' => ['login_auth:mobile']], function () {
-            Route::post('history', 'RouletteController@getHistory');
-        });
+        Route::post('history', 'RouletteController@getHistory');
+
+        /* 抽獎 */
+        Route::post('play', 'RouletteController@play');
     });
 });
 

@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Requests\Game;
+namespace App\Http\Requests\Roulette;
+
 
 use App\Http\Requests\VRequest;
 
-class GetRouletteHistory extends VRequest
+class RouletteGetHistory extends VRequest
 {
     /**
      * Get the validation rules that apply to the request.

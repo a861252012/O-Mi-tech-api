@@ -5,9 +5,11 @@
  * @date 2020-9-11
  * @apiDefine Roulette 輪盤遊戲
  */
+
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Game\GetRouletteHistory;
+use App\Http\Requests\Roulette\RouletteGetHistory;
+use App\Http\Requests\Roulette\RoulettePlay;
 use App\Services\Roulette\RouletteService;
 use Illuminate\Support\Facades\Auth;
 
@@ -40,69 +42,69 @@ class RouletteController extends Controller
      * @apiSuccess {Array} items
      * @apiSuccess {Int} items.type 獎品類型：
      * 1: 鑽<br>
-    2: 經驗值<br>
-    3: vip1 體驗卷<br>
-    4: vip2 體驗卷<br>
-    5: vip3 體驗卷<br>
-    6: vip4 體驗卷<br>
-    7: vip5 體驗卷<br>
-    8: vip6 體驗卷<br>
-    9: vip7 體驗卷<br>
-    10: 神秘大獎
+     * 2: 經驗值<br>
+     * 3: vip1 體驗卷<br>
+     * 4: vip2 體驗卷<br>
+     * 5: vip3 體驗卷<br>
+     * 6: vip4 體驗卷<br>
+     * 7: vip5 體驗卷<br>
+     * 8: vip6 體驗卷<br>
+     * 9: vip7 體驗卷<br>
+     * 10: 神秘大獎
      * @apiSuccess {Int} items.amount 數量
      * @apiSuccess {Int} free 免費次數
      * @apiSuccess {Int} points 用戶鑽石餘額
      *
      * @apiSuccessExample 成功回應
      *{
-    "status": 1,
-    "msg": "Successful",
-    "data": {
-    "cost": 10,
-    "items": [
-    {
-    "type": 2,
-    "amount": 500
-    },
-    {
-    "type": 1,
-    "amount": 9999
-    },
-    {
-    "type": 1,
-    "amount": 3000
-    },
-    {
-    "type": 1,
-    "amount": 1000
-    },
-    {
-    "type": 6,
-    "amount": 1
-    },
-    {
-    "type": 1,
-    "amount": 500
-    },
-    {
-    "type": 1,
-    "amount": 1000
-    },
-    {
-    "type": 1,
-    "amount": 1
-    }
-    ],
-    "free": 0,
-    "points": "2068"
-    }
-    }
+     * "status": 1,
+     * "msg": "Successful",
+     * "data": {
+     * "cost": 10,
+     * "items": [
+     * {
+     * "type": 2,
+     * "amount": 500
+     * },
+     * {
+     * "type": 1,
+     * "amount": 9999
+     * },
+     * {
+     * "type": 1,
+     * "amount": 3000
+     * },
+     * {
+     * "type": 1,
+     * "amount": 1000
+     * },
+     * {
+     * "type": 6,
+     * "amount": 1
+     * },
+     * {
+     * "type": 1,
+     * "amount": 500
+     * },
+     * {
+     * "type": 1,
+     * "amount": 1000
+     * },
+     * {
+     * "type": 1,
+     * "amount": 1
+     * }
+     * ],
+     * "free": 0,
+     * "points": "2068"
+     * }
+     * }
      */
     public function setting()
     {
         try {
             if (!$this->rouletteService->status()) {
-                $this->setStatus(0, 'messages.Roulette.setting.is_off');
+                $this->setStatus(0, __('messages.Roulette.setting.is_off'));
                 return $this->jsonOutput();
             }
 
@@ -175,7 +177,7 @@ class RouletteController extends Controller
      * "to": 15,
      * "total": 39
      */
-    public function getHistory(GetRouletteHistory $request)
+    public function getHistory(RouletteGetHistory $request)
     {
         try {
             $data = $this->rouletteService->getHistory(
@@ -195,4 +197,69 @@ class RouletteController extends Controller
         }
     }
 
+    /**
+     * @api {get} /roulette/play 取得配置
+     *
+     * @apiDescription mobile版URL前綴: /api/m
+     *
+     * pc版URL前綴: /api
+     * @apiGroup Roulette
+     * @apiName 取得配置
+     * @apiVersion 1.0.0
+     *
+     * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
+     * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
+     *
+     * @apiParam {Int} [count] 抽獎次數(預設為1次)
+     *
+     * @apiError (Error Status) 0 次数输入错误
+     * @apiError (Error Status) 999 API執行錯誤
+     *
+     * @apiSuccess {Array} reward 獎項
+     * @apiSuccess {Int} reward.type 類型
+     * @apiSuccess {Int} reward.amount 數量
+     * @apiSuccess {Int} roulette_switch 輪盤遊戲開關(0:關/1:開)
+     * @apiSuccess {Int} cost 單一次消費
+     * @apiSuccess {Int} free 免費次數
+     * @apiSuccess {Int} points 用戶鑽石餘額
+     *
+     *
+     * @apiSuccessExample {json} 成功回應
+     *{
+    "status": 1,
+    "msg": "Successful",
+    "data": {
+    "reward": [
+    {
+    "type": 1,
+    "amount": 1000
+    },
+    {
+    "type": 2,
+    "amount": 500
+    }
+    ],
+    "roulette_switch": 1,
+    "cost": 10,
+    "free": 0,
+    "points": 2068
+    }
+    }
+     */
+    public function play(RoulettePlay $request)
+    {
+        try {
+            $this->setStatus(1, __('messages.success'));
+            $this->setData('reward', []);
+            $this->setData('roulette_switch', $this->rouletteService->status());
+            $this->setData('cost', $this->rouletteService->cost());
+            $this->setData('free', $this->rouletteService->freeTicket());
+            $this->setData('points', (int)Auth::user()->points);
+            return $this->jsonOutput();
+        } catch (\Exception $e) {
+            report($e);
+            $this->setStatus(999, __('messages.apiError'));
+            return $this->jsonOutput();
+        }
+    }
 }
