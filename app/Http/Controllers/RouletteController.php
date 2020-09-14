@@ -37,21 +37,18 @@ class RouletteController extends Controller
      *
      * @apiSuccess {Int} cost 單次價格
      * @apiSuccess {Array} items
-     * @apiSuccess {Int} type 獎品類型
-     * (1: 鑽
-    2: 經驗值
-    3: vip1 體驗卷
-    4: vip2 體驗卷
-    5: vip3 體驗卷
-    6: vip4 體驗卷
-    7: vip5 體驗卷
-    8: vip6 體驗卷
-    9: vip7 體驗卷
+     * @apiSuccess {Int} items.type 獎品類型：
+     * 1: 鑽<br>
+    2: 經驗值<br>
+    3: vip1 體驗卷<br>
+    4: vip2 體驗卷<br>
+    5: vip3 體驗卷<br>
+    6: vip4 體驗卷<br>
+    7: vip5 體驗卷<br>
+    8: vip6 體驗卷<br>
+    9: vip7 體驗卷<br>
     10: 神秘大獎
-    )
-     * @apiSuccess {Int} amount 數量
-     * @apiSuccess {Int} rate 中獎機率
-     * @apiSuccess {Int} broadcast 是否有跑馬燈(0:否 / 1:是)
+     * @apiSuccess {Int} items.amount 數量
      *
      * @apiSuccessExample 成功回應
      *{
@@ -62,51 +59,35 @@ class RouletteController extends Controller
     "items": [
     {
     "type": 2,
-    "amount": 500,
-    "rate": 1,
-    "broadcast": 1
+    "amount": 500
     },
     {
     "type": 1,
-    "amount": 9999,
-    "rate": 0.01,
-    "broadcast": 1
+    "amount": 9999
     },
     {
     "type": 1,
-    "amount": 3000,
-    "rate": 0.03,
-    "broadcast": 1
+    "amount": 3000
     },
     {
     "type": 1,
-    "amount": 1000,
-    "rate": 0.05,
-    "broadcast": 1
+    "amount": 1000
     },
     {
     "type": 6,
-    "amount": 1,
-    "rate": 1,
-    "broadcast": 1
+    "amount": 1
     },
     {
     "type": 1,
-    "amount": 500,
-    "rate": 0.14,
-    "broadcast": 0
+    "amount": 500
     },
     {
     "type": 1,
-    "amount": 1000,
-    "rate": 0.05,
-    "broadcast": 1
+    "amount": 1000
     },
     {
     "type": 1,
-    "amount": 1,
-    "rate": 94.77,
-    "broadcast": 0
+    "amount": 1
     }
     ]
     }
