@@ -3,9 +3,21 @@
 namespace App\Services\Game;
 
 use App\Services\SiteAttrService;
+use App\Repositories\RouletteRepository;
 
 class RouletteService
 {
+    protected $siteAttrService;
+    protected $rouletteRepository;
+
+    public function __construct(
+        SiteAttrService $siteAttrService,
+        RouletteRepository $rouletteRepository
+    ) {
+        $this->siteAttrService = $siteAttrService;
+        $this->rouletteRepository = $rouletteRepository;
+    }
+
     public function play($cnt = 1)
     {
         $siteAttrService = resolve(SiteAttrService::class);
@@ -37,5 +49,21 @@ class RouletteService
         }
 
         return $results;
+    }
+
+    public function getSetting()
+    {
+        $cost = (int) $this->siteAttrService->get('roulette_cost');
+        $items = $this->siteAttrService->get('roulette_items');
+
+        return [
+            'cost' => $cost ?? 0,
+            'items' => $items ?? [],
+        ];
+    }
+
+    public function getHistory($uid, $amount, $startTime, $endTime)
+    {
+        return $this->rouletteRepository->getHistory($uid, $amount, $startTime, $endTime);
     }
 }

@@ -291,6 +291,11 @@ Route::prefix('guardian')->group(function () {
 Route::prefix('roulette')->group(function () {
     /* 配置 */
     Route::get('setting', 'RouletteController@setting');
+
+    /* 用戶中獎紀錄 */
+    Route::group(['middleware' => ['login_auth:mobile']], function () {
+        Route::post('history', 'RouletteController@getHistory');
+    });
 });
 
 /* 測試用entry point */
