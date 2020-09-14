@@ -36,7 +36,6 @@ class RouletteController extends Controller
      * @apiError (Error Status) 0 輪盤遊戲未開啟
      * @apiError (Error Status) 999 API執行錯誤
      *
-     * @apiSuccess {Int} switch 是否啟用(0:否/1:是)
      * @apiSuccess {Int} cost 單次價格
      * @apiSuccess {Array} items
      * @apiSuccess {Int} items.type 獎品類型：
