@@ -11,33 +11,49 @@ namespace App\Services\Roulette;
 use App\Facades\SiteSer;
 use App\Probabilities\RouletteProbability;
 use App\Services\SiteAttrService;
+use App\Services\UserAttrService;
+use Illuminate\Support\Facades\Auth;
 
 class RouletteService
 {
     protected $siteAttrService;
+    protected $userAttrService;
     protected $rouletteProbability;
 
     public function __construct(
         SiteAttrService $siteAttrService,
+        UserAttrService $userAttrService,
         RouletteProbability $rouletteProbability
     ) {
         $this->siteAttrService = $siteAttrService;
+        $this->userAttrService = $userAttrService;
         $this->rouletteProbability = $rouletteProbability;
     }
 
-    public function getSetting()
+    public function status()
+    {
+        return (int)SiteSer::globalSiteConfig('roulette_switch');
+    }
+
+    public function cost()
+    {
+        return (int)$this->siteAttrService->get('roulette_cost');
+    }
+
+    public function items()
     {
         $items = json_decode($this->siteAttrService->get('roulette_items'));
 
-        return [
-            'switch' => (int)SiteSer::globalSiteConfig('roulette_switch'),
-            'cost'   => (int)$this->siteAttrService->get('roulette_cost'),
-            'items'  => collect($items)->map(function ($value, $key) {
-                unset($value->rate);
-                unset($value->broadcast);
-                return $value;
-            }),
-        ];
+        return collect($items)->map(function ($value, $key) {
+            unset($value->rate);
+            unset($value->broadcast);
+            return $value;
+        });
+    }
+
+    public function freeTicket()
+    {
+        return (int)$this->userAttrService->get(Auth::id(), 'roulette_tickets');
     }
 
     public function play($cnt = 1)

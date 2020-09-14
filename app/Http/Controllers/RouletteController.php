@@ -8,7 +8,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Game\GetRouletteHistory;
-use App\Services\Game\RouletteService;
+use App\Services\Roulette\RouletteService;
 use Illuminate\Support\Facades\Auth;
 
 class RouletteController extends Controller
@@ -99,10 +99,17 @@ class RouletteController extends Controller
     public function setting()
     {
         try {
-            $setting = $this->rouletteService->getSetting();
+            if (!$this->rouletteService->status()) {
+                $this->setStatus(0, 'messages.Roulette.setting.is_off');
+                return $this->jsonOutput();
+            }
 
             $this->setStatus(1, __('messages.success'));
-            $this->setRootData('data', $setting);
+            $this->setData('cost', $this->rouletteService->cost());
+            $this->setData('items', $this->rouletteService->items());
+            $this->setData('free', $this->rouletteService->freeTicket());
+            $this->setData('points', Auth::user()->points);
+
             return $this->jsonOutput();
         } catch (\Exception $e) {
             report($e);

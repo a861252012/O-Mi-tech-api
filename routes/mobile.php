@@ -189,6 +189,17 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::prefix('socket')->group(function () {
         Route::get('proxy_list', 'SocketController@proxyList');
     });
+
+    /* 輪盤遊戲 */
+    Route::prefix('roulette')->group(function () {
+        /* 配置 */
+        Route::get('setting', 'RouletteController@setting');
+
+        /* 用戶中獎紀錄 */
+        Route::group(['middleware' => ['login_auth:mobile']], function () {
+            Route::post('history', 'RouletteController@getHistory');
+        });
+    });
 });
 
 /** 进房间 */
@@ -284,17 +295,6 @@ Route::prefix('guardian')->group(function () {
 
         /* 取得使用者消費紀錄 */
         Route::get('history', 'GuardianController@history');
-    });
-});
-
-/* 輪盤遊戲 */
-Route::prefix('roulette')->group(function () {
-    /* 配置 */
-    Route::get('setting', 'RouletteController@setting');
-
-    /* 用戶中獎紀錄 */
-    Route::group(['middleware' => ['login_auth:mobile']], function () {
-        Route::post('history', 'RouletteController@getHistory');
     });
 });
 
