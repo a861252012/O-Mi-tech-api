@@ -33,7 +33,7 @@ class RouletteController extends Controller
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
      * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
      *
-     * @apiError (Error Status) 1 成功
+     * @apiError (Error Status) 0 輪盤遊戲未開啟
      * @apiError (Error Status) 999 API執行錯誤
      *
      * @apiSuccess {Int} switch 是否啟用(0:否/1:是)
@@ -51,13 +51,14 @@ class RouletteController extends Controller
     9: vip7 體驗卷<br>
     10: 神秘大獎
      * @apiSuccess {Int} items.amount 數量
+     * @apiSuccess {Int} free 免費次數
+     * @apiSuccess {Int} points 用戶鑽石餘額
      *
      * @apiSuccessExample 成功回應
      *{
     "status": 1,
-    "msg": "成功",
+    "msg": "Successful",
     "data": {
-    "switch": 1,
     "cost": 10,
     "items": [
     {
@@ -92,7 +93,9 @@ class RouletteController extends Controller
     "type": 1,
     "amount": 1
     }
-    ]
+    ],
+    "free": 0,
+    "points": "2068"
     }
     }
      */
@@ -108,7 +111,7 @@ class RouletteController extends Controller
             $this->setData('cost', $this->rouletteService->cost());
             $this->setData('items', $this->rouletteService->items());
             $this->setData('free', $this->rouletteService->freeTicket());
-            $this->setData('points', Auth::user()->points);
+            $this->setData('points', (int)Auth::user()->points);
 
             return $this->jsonOutput();
         } catch (\Exception $e) {
