@@ -32,7 +32,7 @@ class SiteAttrService
             Redis::set($key, $v);
         }
 
-        return json_decode($v, true);
+        return $v;
     }
 
     public function set($k, $v, $siteId = 0)

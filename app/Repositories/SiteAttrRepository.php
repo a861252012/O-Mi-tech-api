@@ -21,7 +21,9 @@ class SiteAttrRepository
 
     public function getVByK($siteId, $k)
     {
-        return $this->siteAttr->where('site_id', $siteId)->where('k', $k)->value('v');
+        return $this->siteAttr->where('site_id', $siteId)
+            ->where('k', $k)
+            ->value('v');
     }
 
     public function updateOrCreate($siteId, $k, $v)

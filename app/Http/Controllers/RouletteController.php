@@ -7,7 +7,7 @@
  */
 namespace App\Http\Controllers;
 
-use App\Services\RouletteService;
+use App\Services\Roulette\RouletteService;
 use Illuminate\Http\Request;
 
 class RouletteController extends Controller
@@ -35,6 +35,7 @@ class RouletteController extends Controller
      * @apiError (Error Status) 1 成功
      * @apiError (Error Status) 999 API執行錯誤
      *
+     * @apiSuccess {Int} switch 是否啟用(0:否/1:是)
      * @apiSuccess {Int} cost 單次價格
      * @apiSuccess {Array} items
      * @apiSuccess {Int} items.type 獎品類型：
@@ -55,6 +56,7 @@ class RouletteController extends Controller
     "status": 1,
     "msg": "成功",
     "data": {
+    "switch": 1,
     "cost": 10,
     "items": [
     {
