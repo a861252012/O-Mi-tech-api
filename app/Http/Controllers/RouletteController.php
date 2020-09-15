@@ -135,37 +135,40 @@ class RouletteController extends Controller
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
      * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
      *
-     * @apiParam {String} startTime 起日 (手機端為必填參數)
-     * @apiParam {String} endTime 迄日 (手機端為必填參數)
+     * @apiParam {String} startTime 起日 (手機端為必填參數,預設為一週前)
+     * @apiParam {String} endTime 迄日  (手機端為必填參數,預設為當前時間)
      * @apiParam {int} page 第幾頁 (不帶則預設第一頁)
      * @apiParam {int} amount 一頁顯示幾筆 (必填參數 手機:15筆,PC:100筆)
      *
      * @apiError (Error Status) 999 API執行錯誤
      *
-     * @apiSuccess {Array} data 紀錄
-     * @apiSuccess {Int} data.id 流水號
-     * @apiSuccess {Int} data.uid 用戶uid
-     * @apiSuccess {Int} data.type 中獎道具種類
-     * @apiSuccess {Int} data.amount 中獎道具數量
-     * @apiSuccess {Int} data.rid 主播id
-     * @apiSuccess {Int} data.is_free 是否為免費次數（0:不是/1:是）
-     * @apiSuccess {String} data.created_at 創建時間
-     * @apiSuccess {Int} current_page 目前頁碼
-     * @apiSuccess {Int} first_page_url 第一頁url
-     * @apiSuccess {Int} from
-     * @apiSuccess {Int} last_page 最後一頁頁碼
-     * @apiSuccess {Int} last_page_url 最後一頁url
-     * @apiSuccess {Int} next_page_url 下一頁url
-     * @apiSuccess {Int} path
-     * @apiSuccess {Int} per_page 筆數
-     * @apiSuccess {Int} prev_page_url 前一頁url
-     * @apiSuccess {Int} to
-     * @apiSuccess {Int} total 總頁數
+     * @apiSuccess {Object} data 紀錄
+     * @apiSuccess {Int} data.current_page 目前頁碼
+     * @apiSuccess {Object[]} data.data
+     * @apiSuccess {Int} data.data.id 流水號
+     * @apiSuccess {Int} data.data.uid 用戶uid
+     * @apiSuccess {Int} data.data.type 中獎道具種類
+     * @apiSuccess {Int} data.data.amount 中獎道具數量
+     * @apiSuccess {Int} data.data.rid 主播id
+     * @apiSuccess {Int} data.data.is_free 是否為免費次數（0:不是/1:是）
+     * @apiSuccess {String} data.data.created_at 創建時間
+     * @apiSuccess {Int} data.first_page_url 第一頁url
+     * @apiSuccess {Int} data.from 從第幾頁換頁
+     * @apiSuccess {Int} data.last_page 最後一頁頁碼
+     * @apiSuccess {Int} data.last_page_url 最後一頁url
+     * @apiSuccess {Int} data.next_page_url 下一頁url
+     * @apiSuccess {Int} data.path
+     * @apiSuccess {Int} data.per_page 筆數
+     * @apiSuccess {Int} data.prev_page_url 前一頁url
+     * @apiSuccess {Int} data.to 跳轉到到第幾頁
+     * @apiSuccess {Int} data.total 總頁數
      *
      * @apiSuccessExample {json} 成功回應
      * {
     "status": 1,
     "msg": "Successful",
+    "data": {
+    "current_page": 1,
     "data": [
     {
     "id": 2,
@@ -186,7 +189,6 @@ class RouletteController extends Controller
     "created_at": "2020-08-15 09:47:42"
     }
     ],
-    "current_page": 1,
     "first_page_url": "http://localhost/api/m/roulette/history?page=1",
     "from": 1,
     "last_page": 1,
@@ -198,19 +200,20 @@ class RouletteController extends Controller
     "to": 1,
     "total": 1
     }
+    }
      */
     public function getHistory(RouletteGetHistory $request)
     {
         try {
             $data = $this->rouletteService->getHistory(
                 Auth::id(),
-                $request->amount,
+                (int)$request->amount,
                 $request->startTime,
                 $request->endTime
             );
 
             $this->setStatus(1, __('messages.success'));
-            $this->setData('roulette_history', $data);
+            $this->setRootData('data', $data);
             return $this->jsonOutput();
         } catch (\Exception $e) {
             report($e);
