@@ -243,11 +243,11 @@ class RouletteController extends Controller
      * @apiSuccess {Array} reward 獎項
      * @apiSuccess {Int} reward.type 類型
      * @apiSuccess {Int} reward.amount 數量
+     * @apiSuccess {Int} reward.broadcast 是否上跑道(0:否/1:是)
      * @apiSuccess {Int} roulette_switch 輪盤遊戲開關(0:關/1:開)
      * @apiSuccess {Int} cost 單一次消費
      * @apiSuccess {Int} free 免費次數
      * @apiSuccess {Int} points 用戶鑽石餘額
-     *
      *
      * @apiSuccessExample {json} 成功回應
      *{
@@ -256,26 +256,43 @@ class RouletteController extends Controller
     "data": {
     "reward": [
     {
-    "type": 1,
-    "amount": 1000
+    "type": 2,
+    "amount": 500,
+    "broadcast": 1
     },
     {
-    "type": 2,
-    "amount": 500
+    "type": 1,
+    "amount": 1,
+    "broadcast": 0
     }
     ],
     "roulette_switch": 1,
     "cost": 10,
     "free": 0,
-    "points": 2068
+    "points": 1938
     }
     }
      */
     public function play(RoulettePlay $request)
     {
         try {
+            $cnt = (int)$request->cnt;
+            if (empty($cnt)) {
+                $cnt = 1;
+            }
+
+            $rid = (int)$request->rid;
+
+            //檢查鑽石或免費票是否足夠
+            if ($this->rouletteService->checkPlay($cnt)) {
+                $this->setStatus(0, __('messages.Roulette.play.not_enough_free_or_points'));
+                return $this->jsonOutput();
+            }
+
+            $result = $this->rouletteService->play($rid, $cnt);
+
             $this->setStatus(1, __('messages.success'));
-            $this->setData('reward', []);
+            $this->setData('reward', $result);
             $this->setData('roulette_switch', $this->rouletteService->status());
             $this->setData('cost', $this->rouletteService->cost());
             $this->setData('free', $this->rouletteService->freeTicket());

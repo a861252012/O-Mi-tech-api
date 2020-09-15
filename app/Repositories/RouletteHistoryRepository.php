@@ -30,4 +30,9 @@ class RouletteHistoryRepository
 //
 //        return $query->orderBy('created_at', 'desc')->paginate($amount);
     }
+
+    public function insertData($data)
+    {
+        return $this->rouletteHistory->insert($data);
+    }
 }

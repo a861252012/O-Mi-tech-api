@@ -15,14 +15,16 @@ class RoulettePlay extends VRequest
     public function rules()
     {
         return [
-            'count' => 'nullable|integer',
+            'rid' => 'required|numeric',
+            'cnt' => 'nullable|integer',
         ];
     }
 
     public function messages()
     {
         return [
-            'count.*' => __('messages.Roulette.play.count_error'),
+            'rid.*' => __('messages.Roulette.play.room_id_error'),
+            'cnt.*' => __('messages.Roulette.play.count_error'),
         ];
     }
 }

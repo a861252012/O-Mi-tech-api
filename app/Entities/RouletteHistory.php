@@ -3,7 +3,9 @@
 
 namespace App\Entities;
 
-class RouletteHistory extends \Illuminate\Database\Eloquent\Model
+use Illuminate\Database\Eloquent\Model;
+
+class RouletteHistory extends Model
 {
     protected $table = 'video_roulette_history';
 }

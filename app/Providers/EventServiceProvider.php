@@ -20,9 +20,7 @@ class EventServiceProvider extends ServiceProvider
 
         /* 輪盤遊戲獎勵事件 */
         'App\Events\RouletteReward' => [
-            'App\Listeners\User\AddItem',
-            'App\Listeners\User\AddPoint',
-            'App\Listeners\User\AddExp',
+            'App\Listeners\Roulette\AddUserReward',
             'App\Listeners\Roulette\DailyRank',
             'App\Listeners\Roulette\News',
             'App\Listeners\Roulette\RewardNotification',
