@@ -55,50 +55,50 @@ class RouletteController extends Controller
      * @apiSuccess {Int} free 免費次數
      * @apiSuccess {Int} points 用戶鑽石餘額
      *
-     * @apiSuccessExample 成功回應
+     * @apiSuccessExample {json} 成功回應
      *{
-     * "status": 1,
-     * "msg": "Successful",
-     * "data": {
-     * "cost": 10,
-     * "items": [
-     * {
-     * "type": 2,
-     * "amount": 500
-     * },
-     * {
-     * "type": 1,
-     * "amount": 9999
-     * },
-     * {
-     * "type": 1,
-     * "amount": 3000
-     * },
-     * {
-     * "type": 1,
-     * "amount": 1000
-     * },
-     * {
-     * "type": 6,
-     * "amount": 1
-     * },
-     * {
-     * "type": 1,
-     * "amount": 500
-     * },
-     * {
-     * "type": 1,
-     * "amount": 1000
-     * },
-     * {
-     * "type": 1,
-     * "amount": 1
-     * }
-     * ],
-     * "free": 0,
-     * "points": "2068"
-     * }
-     * }
+    "status": 1,
+    "msg": "Successful",
+    "data": {
+    "cost": 10,
+    "items": [
+    {
+    "type": 2,
+    "amount": 500
+    },
+    {
+    "type": 1,
+    "amount": 9999
+    },
+    {
+    "type": 1,
+    "amount": 3000
+    },
+    {
+    "type": 1,
+    "amount": 1000
+    },
+    {
+    "type": 6,
+    "amount": 1
+    },
+    {
+    "type": 1,
+    "amount": 500
+    },
+    {
+    "type": 1,
+    "amount": 1000
+    },
+    {
+    "type": 1,
+    "amount": 1
+    }
+    ],
+    "free": 0,
+    "points": 2068
+    }
+    }
      */
     public function setting()
     {
@@ -138,44 +138,62 @@ class RouletteController extends Controller
      *
      * @apiError (Error Status) 999 API執行錯誤
      *
-     * @apiSuccess {Int} status 執行狀態(1為執行成功,1以外為執行失敗)
-     * @apiSuccess {String} msg 執行結果敘述
-     *
-     * @apiSuccess {Int} id 流水號
-     * @apiSuccess {Int} uid 用戶uid
-     * @apiSuccess {Int} type 中獎道具種類
-     * @apiSuccess {Int} amount 中獎道具數量
-     * @apiSuccess {Int} rid 主播id
-     * @apiSuccess {Int} is_free 是否為免費次數（0:不是/1:是）
-     * @apiSuccess {Date} created_at 創建時間
+     * @apiSuccess {Array} data 紀錄
+     * @apiSuccess {Int} data.id 流水號
+     * @apiSuccess {Int} data.uid 用戶uid
+     * @apiSuccess {Int} data.type 中獎道具種類
+     * @apiSuccess {Int} data.amount 中獎道具數量
+     * @apiSuccess {Int} data.rid 主播id
+     * @apiSuccess {Int} data.is_free 是否為免費次數（0:不是/1:是）
+     * @apiSuccess {String} data.created_at 創建時間
+     * @apiSuccess {Int} current_page 目前頁碼
+     * @apiSuccess {Int} first_page_url 第一頁url
+     * @apiSuccess {Int} from
+     * @apiSuccess {Int} last_page 最後一頁頁碼
+     * @apiSuccess {Int} last_page_url 最後一頁url
+     * @apiSuccess {Int} next_page_url 下一頁url
+     * @apiSuccess {Int} path
+     * @apiSuccess {Int} per_page 筆數
+     * @apiSuccess {Int} prev_page_url 前一頁url
+     * @apiSuccess {Int} to
+     * @apiSuccess {Int} total 總頁數
      *
      * @apiSuccessExample {json} 成功回應
-     * "status": 1,
-     * "msg": "成功",
-     * "data": {
-     * "roulette_history": [
      * {
-     * "id": 1,
-     * "uid": 9493318,
-     * "type": 1,
-     * "amount": 1,
-     * "rid": 0,
-     * "is_free": 1,
-     * "created_at": "2020-09-11 09:29:26"
-     * }
-     * ]
-     * }
-     * },
-     * "first_page_url": "http:\/\/localhost\/api\/m\/roulette\/history?page=1",
-     * "from": 1,
-     * "last_page": 3,
-     * "last_page_url": "http:\/\/localhost\/api\/m\/roulette\/history?page=3",
-     * "next_page_url": "http:\/\/localhost\/api\/m\/roulette\/history?page=2",
-     * "path": "http:\/\/localhost\/api\/m\/roulette\/history",
-     * "per_page": "15",
-     * "prev_page_url": null,
-     * "to": 15,
-     * "total": 39
+    "status": 1,
+    "msg": "Successful",
+    "data": [
+    {
+    "id": 2,
+    "uid": 9493580,
+    "type": 2,
+    "amount": 500,
+    "rid": 9491922,
+    "is_free": 0,
+    "created_at": "2020-08-15 09:51:37"
+    },
+    {
+    "id": 1,
+    "uid": 9493580,
+    "type": 1,
+    "amount": 1000,
+    "rid": 9491922,
+    "is_free": 0,
+    "created_at": "2020-08-15 09:47:42"
+    }
+    ],
+    "current_page": 1,
+    "first_page_url": "http://localhost/api/m/roulette/history?page=1",
+    "from": 1,
+    "last_page": 1,
+    "last_page_url": "http://localhost/api/m/roulette/history?page=1",
+    "next_page_url": null,
+    "path": "http://localhost/api/m/roulette/history",
+    "per_page": "15",
+    "prev_page_url": null,
+    "to": 1,
+    "total": 1
+    }
      */
     public function getHistory(RouletteGetHistory $request)
     {
