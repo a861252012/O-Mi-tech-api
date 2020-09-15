@@ -195,6 +195,9 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
         /* 配置 */
         Route::get('setting', 'RouletteController@setting');
 
+        /* 跑道 */
+        Route::get('trackList', 'RouletteController@getTrackList');
+
         /* 用戶中獎紀錄 */
         Route::post('history', 'RouletteController@getHistory');
 

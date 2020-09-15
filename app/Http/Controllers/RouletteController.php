@@ -304,4 +304,53 @@ class RouletteController extends Controller
             return $this->jsonOutput();
         }
     }
+
+    /**
+     * @api {post} /roulette/trackList
+     *
+     * @apiDescription mobile版URL前綴: /api/m
+     *
+     * pc版URL前綴: /api
+     * @apiGroup Roulette
+     * @apiName trackList
+     * @apiVersion 1.0.0
+     *
+     * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
+     * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
+     *
+     * @apiError (Error Status) 999 API執行錯誤
+     *
+     * @apiSuccess {Array} data 前十跑道用戶列表
+     * @apiSuccess {Int} data.uid 用戶uid
+     * @apiSuccess {Int} data.type 中獎道具類型
+     * @apiSuccess {Int} data.amount 中獎道具數量
+     *
+     * @apiSuccessExample {json} 成功回應
+     *
+    {
+    "status": 1,
+    "msg": "成功",
+    "data": [
+    {
+    "uid": 9493319,
+    "type": 2,
+    "amount": 2
+    }
+    ]
+    }
+     */
+    public function getTrackList()
+    {
+        try {
+            $data = $this->rouletteService->getTrackList();
+
+            $this->setStatus(1, __('messages.success'));
+            $this->setRootData('data', $data);
+            return $this->jsonOutput();
+        } catch (\Exception $e) {
+            report($e);
+            $this->setStatus(999, __('messages.apiError'));
+            return $this->jsonOutput();
+        }
+    }
 }

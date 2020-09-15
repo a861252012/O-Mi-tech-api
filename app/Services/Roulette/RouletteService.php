@@ -157,4 +157,16 @@ class RouletteService
     {
         return $this->rouletteHistoryRepository->getHistory($uid, $amount, $startTime, $endTime);
     }
+
+    //取得前十跑道用戶資訊
+    public function getTrackList()
+    {
+        $data = resolve('redis')->ZREVRANGE('zroulette_news', 0, 9);
+
+        foreach ($data as $k => $v) {
+            $data[$k] = json_decode($v);
+        }
+
+        return $data;
+    }
 }
