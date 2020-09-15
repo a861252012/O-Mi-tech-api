@@ -10,6 +10,7 @@ use App\Constants\LvRich;
 use App\Entities\UserItem;
 use App\Facades\UserSer;
 use App\Models\Recharge;
+use App\Services\User\UserService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +25,7 @@ class FirstCharge extends Command
      *
      * @var string
      */
-    protected $signature = 'first-charge:supplement';
+    protected $signature = 'first-charge {act?} {arg1?}';
 
     /**
      * The console command description.
@@ -54,6 +55,73 @@ class FirstCharge extends Command
      * @return mixed
      */
     public function handle()
+    {
+        $act = $this->argument('act');
+        if (method_exists($this, $act)) {
+            $this->$act();
+            exit;
+        }
+        echo 'Method not exists!';
+    }
+
+    // 檢查應有首充時間而未填
+    private function checkFirstChargeTime()
+    {
+        $this->info('checkFirstChargeTime');
+
+        // 取得8/6後充值訂單
+        $orders = $this->recharge->where('pay_status', 2)
+            ->whereIn('pay_type', [1, 7])
+            ->where('created', '>=', '2020-08-06 00:00:00')
+            ->where('created', '<=', date('Y-m-d H:i:s'))
+            ->orderBy('created', 'asc')
+            ->get();
+
+        // userService
+        $userService = resolve(UserService::class);
+
+        // check arg to see if update data or check only
+        $arg1 = $this->argument('arg1');
+
+        $cnt = 0;
+        foreach ($orders as $order) {
+            // 檢查用戶首充時間
+            $user = $userService->getUserByUid($order['uid']);
+            if ($user['first_charge_time'] != '') {
+                continue;
+            }
+
+            // 找出用戶首充時間
+            $firstCharge = $this->recharge
+                ->select('created')
+                ->where('uid', $user['uid'])
+                ->whereIn('pay_type', [1, 4, 7])
+                ->where('pay_status', 2)
+                ->orderby('created', 'ASC')
+                ->first();
+
+            // log
+            $this->warn($user['uid'].' '.$user['nickname'] .' => '. $firstCharge->created);
+
+            if ($arg1 == 'run') {
+                $rich = (int)$user['rich'] + 500;
+                UserSer::updateUserInfo($user['uid'], [
+                    'first_charge_time' => $firstCharge->created,
+                    'rich'    => $rich,
+                    'lv_rich' => LvRich::calcul($rich),
+                ]);
+            }
+            $cnt++;
+        }
+
+        if ($arg1 == 'run') {
+            $this->info("Update: {$cnt}");
+        }
+        $this->info("Total: {$cnt}");
+    }
+
+    // 首充補禮資料
+    private function supplement()
     {
         /* 補50鑽人數 */
         $addPointCount = 0;

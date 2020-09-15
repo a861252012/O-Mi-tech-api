@@ -42,9 +42,31 @@ class FirstChargeService
         $this->userService->cacheUserInfo($uid);
         $user = $this->userService->getUserInfo($uid);
         info('用戶資訊: ' . json_encode($user));
+        if (!empty($user['first_charge_time'])) {
+            return -1;
+        }
+
+        // 更新首充資訊
+        $firstCharge = $this->recharge
+            ->select('created')
+            ->where('uid', $uid)
+            ->whereIn('pay_type', [1, 4, 7])
+            ->where('pay_status', 2)
+            ->orderby('created', 'ASC')
+            ->first();
+
+        //更新用戶資訊
+        $rich = (int)$user['rich'] + 500;
+        $data = [
+            'first_charge_time' => $firstCharge->created,
+            'rich'    => $rich,
+            'lv_rich' => LvRich::calcul($rich),
+        ];
+        $this->userService->updateUserInfo($uid, $data);
+        info("首充更新用戶資訊: " . json_encode($data));
+
         //驗證是否符合首充豪禮條件
         if (($this->countRemainingTime($user['uid']) === 0 && !$skipTimeCheck) ||
-            !empty($user['first_charge_time']) ||
             !empty($this->userAttrService->get($user['uid'], 'is_first_gift'))
         ) {
             return -1;
@@ -66,21 +88,15 @@ class FirstChargeService
             return 0;
         }
 
-        //更新用戶資訊
+        //贈送 50 鑽
         $data = [
-            'first_charge_time' => date('Y-m-d H:i:s'),
-            'rich'    => (int)$user['rich'] + 500,
-            'lv_rich' => LvRich::calcul($user['rich'] + 500),
             'points'  => (int)$user['points'] + 50,
         ];
-
-        info("首充更新用戶資訊: " . json_encode($data));
-
         $updateUser = $this->userService->updateUserInfo($uid, $data);
 
         if (!$updateUser) {
             DB::rollBack();
-            Log::error($uid . '更新用戶資訊錯誤');
+            Log::error($uid . ' 首充禮贈送 50 鑽更新時發生錯誤');
             return 0;
         }
 
@@ -106,7 +122,7 @@ class FirstChargeService
 
         DB::commit();
 
-        //新增手機端首充訊息
+        //新增手機端首充禮訊息
         $UserFirstChargeMsg = [
             'category'  => 1,
             'mail_type' => 3,
