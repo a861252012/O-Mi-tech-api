@@ -21,17 +21,19 @@ class RouletteReward
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $user;
-    public $rouletteHistory;
+    public $reward;
+    public $rid;
 
     /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct(Users $user, RouletteHistory $rouletteHistory)
+    public function __construct(Users $user, $reward, $rid)
     {
         $this->user = $user;
-        $this->rouletteHistory = $rouletteHistory;
+        $this->reward = $reward;
+        $this->rid = $rid;
     }
 
     /**

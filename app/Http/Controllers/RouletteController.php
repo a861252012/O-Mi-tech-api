@@ -290,6 +290,10 @@ class RouletteController extends Controller
             }
 
             $result = $this->rouletteService->play($rid, $cnt);
+            if (false === $result) {
+                $this->setStatus(0, __('messages.Roulette.play.failed'));
+                return $this->jsonOutput();
+            }
 
             $this->setStatus(1, __('messages.success'));
             $this->setData('reward', $result);

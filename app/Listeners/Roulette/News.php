@@ -1,10 +1,15 @@
 <?php
-
+/**
+ * 加入獎勵跑道 事件
+ * @author Weine
+ * @date 2020-9-15
+ */
 namespace App\Listeners\Roulette;
 
 use App\Events\RouletteReward;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Redis;
 
 class News
 {
@@ -26,6 +31,17 @@ class News
      */
     public function handle(RouletteReward $event)
     {
-        //
+        $now = time();
+        foreach ($event->reward as $k => $item) {
+            if ($item['broadcast']) {
+                $newsData = [
+                    'uid'    => $event->user->uid,
+                    'type'   => $item['type'],
+                    'amount' => $item['amount'],
+                ];
+
+                Redis::zadd('zroulette_news', $now, json_encode($newsData));
+            }
+        }
     }
 }
