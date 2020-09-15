@@ -124,8 +124,12 @@ class RouletteController extends Controller
 
     /**
      * @api {post} /roulette/history 取得用戶中獎紀錄列表
-     * @apiGroup roulette
-     * @apiName 取得用戶中獎紀錄列表
+     *
+     * @apiDescription mobile版URL前綴: /api/m
+     *
+     * pc版URL前綴: /api
+     * @apiGroup Roulette
+     * @apiName history
      * @apiVersion 1.0.0
      *
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
