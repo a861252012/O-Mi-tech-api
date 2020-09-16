@@ -48,6 +48,7 @@ class FirstChargeService
 
         // 更新首充資訊
         $firstCharge = $this->recharge
+            ->allSites()
             ->select('created')
             ->where('uid', $uid)
             ->whereIn('pay_type', [1, 4, 7])
