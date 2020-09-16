@@ -66,46 +66,46 @@ class RouletteController extends Controller
     {
     "type": 2,
     "amount": 500,
-    "icon": ""
+    "icon": "http:\/\/zimg:4869\/3a9a06c1b7e961f1a917675c1b94d000.png"
+    },
+    {
+    "type": 10,
+    "amount": 1,
+    "icon": "http:\/\/zimg:4869\/6e91c040a26b1139122e82d3169604ed.png"
     },
     {
     "type": 1,
     "amount": 9999,
-    "icon": ""
+    "icon": "http:\/\/zimg:4869\/91a838c0ccff821e322c71dbb5fe74cf.png"
     },
     {
-    "type": 1,
-    "amount": 3000,
-    "icon": ""
-    },
-    {
-    "type": 1,
-    "amount": 1000,
-    "icon": ""
+    "type": 3,
+    "amount": 1,
+    "icon": "http:\/\/zimg:4869\/97dfcc3c9f508d18318c7f79cca3b7e2.png"
     },
     {
     "type": 6,
     "amount": 1,
-    "icon": ""
+    "icon": "http:\/\/zimg:4869\/a505da38bfd9a67e9f2b5ce33f3a86cc.png"
     },
     {
-    "type": 1,
-    "amount": 500,
-    "icon": ""
+    "type": 4,
+    "amount": 1,
+    "icon": "http:\/\/zimg:4869\/07af4cbeec9ae21bc1d27ea1e7dfe1a1.png"
     },
     {
-    "type": 1,
-    "amount": 1000,
-    "icon": ""
+    "type": 5,
+    "amount": 1,
+    "icon": "http:\/\/zimg:4869\/9cc8e9cf6c6f82e63fe225982b1ed621.png"
     },
     {
     "type": 1,
     "amount": 1,
-    "icon": ""
+    "icon": "http:\/\/zimg:4869\/91a838c0ccff821e322c71dbb5fe74cf.png"
     }
     ],
     "free": 0,
-    "points": 53156
+    "points": 91282
     }
     }
      */

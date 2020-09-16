@@ -57,6 +57,7 @@ class RouletteService
         return collect($items)->map(function ($value, $key) {
             unset($value->rate);
             unset($value->broadcast);
+            $value->icon = SiteSer::config('img_host') . '/' . $value->icon . '.png';
             return $value;
         });
     }
