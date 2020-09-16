@@ -19,7 +19,7 @@ class BackPackResource extends JsonResource
         return [
             'id'            => $this->id,
             'uid'           => (int)$this->uid,
-            'item_name'     => (string)$this->item->item_name,
+            'item_name'     => __('messages.item.' . $this->id),
             'item_icon'     => SiteSer::config('img_host') . '/' . $this->item->item_icon . '.png',
             'frontend_mode' => (int)$this->item->frontend_mode,
         ];

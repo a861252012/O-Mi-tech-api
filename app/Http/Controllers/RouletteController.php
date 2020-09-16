@@ -52,6 +52,7 @@ class RouletteController extends Controller
      * 9: vip7 體驗卷<br>
      * 10: 神秘大獎
      * @apiSuccess {Int} items.amount 數量
+     * @apiSuccess {String} items.icon 獎品圖示
      * @apiSuccess {Int} free 免費次數
      * @apiSuccess {Int} points 用戶鑽石餘額
      *
@@ -64,39 +65,47 @@ class RouletteController extends Controller
     "items": [
     {
     "type": 2,
-    "amount": 500
+    "amount": 500,
+    "icon": ""
     },
     {
     "type": 1,
-    "amount": 9999
+    "amount": 9999,
+    "icon": ""
     },
     {
     "type": 1,
-    "amount": 3000
+    "amount": 3000,
+    "icon": ""
     },
     {
     "type": 1,
-    "amount": 1000
+    "amount": 1000,
+    "icon": ""
     },
     {
     "type": 6,
-    "amount": 1
+    "amount": 1,
+    "icon": ""
     },
     {
     "type": 1,
-    "amount": 500
+    "amount": 500,
+    "icon": ""
     },
     {
     "type": 1,
-    "amount": 1000
+    "amount": 1000,
+    "icon": ""
     },
     {
     "type": 1,
-    "amount": 1
+    "amount": 1,
+    "icon": ""
     }
     ],
     "free": 0,
-    "points": 2068
+    "points": 53156
     }
     }
      */

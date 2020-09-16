@@ -408,4 +408,13 @@ return [
     'Roulette.play.count_error' => '次数输入错误',
     'Roulette.play.not_enough_free_or_points' => '免费票或钻石不足',
     'Roulette.play.failed' => '抽奖失败',
+    'item.1' => '贵族体验券 白尊+7天',
+    'item.2' => '火箭飞屏',
+    'item.3' => '金尊体验券',
+    'item.4' => '红尊体验券',
+    'item.5' => '蓝尊体验券',
+    'item.6' => '青尊体验券',
+    'item.7' => '绿尊体验券',
+    'item.8' => '墨尊体验券',
+    'item.9' => '白尊体验券',
 ];

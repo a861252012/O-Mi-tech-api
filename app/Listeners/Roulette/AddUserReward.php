@@ -8,6 +8,7 @@ namespace App\Listeners\Roulette;
 
 use App\Events\RouletteReward;
 use App\Facades\UserSer;
+use App\Repositories\UserItemRepository;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
@@ -20,14 +21,16 @@ class AddUserReward
     // 加經驗獎勵類型
     const ADD_EXP_TYPE = 2;
 
+    protected $userItemRepository;
+
     /**
      * Create the event listener.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(UserItemRepository $userItemRepository)
     {
-        //
+        $this->userItemRepository = $userItemRepository;
     }
 
     /**
@@ -46,18 +49,25 @@ class AddUserReward
 
             // 發放獎勵
             foreach ($reward as $type => $v) {
-                //加鑽
                 if ($type === self::ADD_POINT_TYPE) {
+                    //加鑽
                     UserSer::updateUserInfo($event->user->uid, ['points' => $event->user->points + $v->sum()]);
-                }
-
-                //加經驗
-                if ($type === self::ADD_EXP_TYPE) {
+                } elseif ($type === self::ADD_EXP_TYPE) {
+                    //加經驗
                     UserSer::updateUserInfo($event->user->uid, $data = ['exp' => $event->user->exp + $v->sum()]);
+                } else {
+                    // 加物品
+                    $addItems = [];
+                    foreach ($v as $itemId => $item) {
+                        $addItems[] = [
+                            'item_id' => $type,
+                            'uid'     => $event->user->uid,
+                            'status'  => 0,
+                        ];
+                    }
+
+                    $this->userItemRepository->insertGift($addItems);
                 }
-
-                // 加物品
-
             }
         } catch (\Exception $e) {
             report($e);
