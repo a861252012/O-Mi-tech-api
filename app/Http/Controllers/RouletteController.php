@@ -300,7 +300,7 @@ class RouletteController extends Controller
             $this->setData('roulette_switch', $this->rouletteService->status());
             $this->setData('cost', $this->rouletteService->cost());
             $this->setData('free', $this->rouletteService->freeTicket());
-            $this->setData('points', (int)Auth::user()->points);
+            $this->setData('points', (int)Auth::user()->refresh()->points);
             return $this->jsonOutput();
         } catch (\Exception $e) {
             report($e);

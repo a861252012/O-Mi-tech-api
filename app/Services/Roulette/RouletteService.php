@@ -20,12 +20,6 @@ use Illuminate\Support\Facades\DB;
 
 class RouletteService
 {
-    // 加鑽石獎勵類型
-    const ADD_POINT_TYPE = 1;
-
-    // 加經驗獎勵類型
-    const ADD_EXP_TYPE = 2;
-
     protected $siteAttrService;
     protected $userAttrService;
     protected $rouletteProbability;
@@ -86,6 +80,7 @@ class RouletteService
     public function play($rid, $cnt = 1)
     {
         $user = Auth::user();
+
         $freeTicket = $this->freeTicket();
 
         // 取得所有獎項配置
@@ -106,8 +101,6 @@ class RouletteService
 //            $item['thresHold'] = $thresHold;
 //            $items[] = $item;
 //        }
-//
-//        dd($items);
 
         $results = []; //回傳資料
         $insertData = []; //紀錄資料
@@ -141,49 +134,22 @@ class RouletteService
         }
         // ---中獎邏輯 END---
 
-        try {
-            // 新增個人中獎紀錄
-            $this->rouletteHistoryRepository->insertData($insertData);
+        // 新增個人中獎紀錄
+        $this->rouletteHistoryRepository->insertData($insertData);
 
-            // 先扣免費票，如無則扣鑽
-//        if ($freeTicket) {
-//            $this->userAttrService->set($user->uid, 'roulette_tickets', $freeTicket - 1);
-//        } else {
-//            UserSer::updateUserInfo($user->uid, ['points' => $user->points - $this->consumePoints]);
-//        }
-
-            // 獎項依類型歸類
-            $reward = collect($results)->mapToGroups(function ($item, $key) {
-                return [$item['type'] => $item['amount']];
-            })->toArray();
-
-            // 發放獎勵
-            $totalExp = 0;
-            $totalPoints = 0;
-            foreach ($reward as $type => $v) {
-                //加鑽
-                if ($type === self::ADD_POINT_TYPE) {
-                    $totalPoints = collect($v)->sum();
-                    UserSer::updateUserInfo($user->uid, ['points' => $user->points + $totalPoints]);
-                }
-
-                //加經驗
-                if ($type === self::ADD_EXP_TYPE) {
-                    $totalExp = collect($v)->sum();
-                    UserSer::updateUserInfo($user->uid, ['exp' => $user->exp + $totalExp]);
-                }
-            }
-
-            // 新增物品
-        } catch (\Exception $e) {
-            report($e);
-            return false;
+        // 先扣免費票，如無則扣鑽
+        if ($freeTicket) {
+            $this->userAttrService->set($user->uid, 'roulette_tickets', $freeTicket - 1);
+        } else {
+            UserSer::updateUserInfo($user->uid, ['points' => $user->points - $this->consumePoints]);
         }
 
-        //更新日排行
-        //更新中獎跑道
-        //發送廣播訊息(redis)
-        event(new RouletteReward($user, $results, $rid));
+        // 發放獎勵
+        // 更新日排行
+        // 更新中獎跑道
+        // 發送廣播訊息(redis)
+        event(new RouletteReward($user->refresh(), $results, $rid));
+
         return $results;
     }
 

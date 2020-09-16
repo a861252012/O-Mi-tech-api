@@ -4,6 +4,7 @@
  * @author Weine
  * @date 2020-9-14
  */
+
 namespace App\Events;
 
 use App\Entities\RouletteHistory;

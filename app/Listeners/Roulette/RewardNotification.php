@@ -31,17 +31,18 @@ class RewardNotification
      */
     public function handle(RouletteReward $event)
     {
+        $notification = [];
         foreach ($event->reward as $k => $item) {
             if ($item['broadcast']) {
-                $notification = [
+                $notification[] = [
                     'uid'    => $event->user->uid,
                     'rid'    => $event->rid,
                     'type'   => $item['type'],
                     'amount' => $item['amount'],
                 ];
-
-                Redis::publish('p2j_roulette_broadcast', json_encode($notification));
             }
         }
+
+        Redis::publish('p2j_roulette_broadcast', json_encode($notification));
     }
 }
