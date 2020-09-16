@@ -29,7 +29,7 @@ class RouletteController extends Controller
      *
      * pc版URL前綴: /api
      * @apiGroup Roulette
-     * @apiName 取得配置
+     * @apiName setting
      * @apiVersion 1.0.0
      *
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
