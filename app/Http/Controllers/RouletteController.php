@@ -336,6 +336,7 @@ class RouletteController extends Controller
      *
      * @apiSuccess {Array} data 前十跑道用戶列表
      * @apiSuccess {Int} data.uid 用戶uid
+     * @apiSuccess {Int} data.nickname 用戶暱稱
      * @apiSuccess {Int} data.type 中獎道具類型
      * @apiSuccess {Int} data.amount 中獎道具數量
      *
@@ -346,23 +347,15 @@ class RouletteController extends Controller
     "data": [
     {
     "uid": 9493580,
+    "nickname": "weinet90",
     "type": 6,
     "amount": 1
     },
     {
     "uid": 9493580,
-    "type": 2,
-    "amount": 500
-    },
-    {
-    "uid": 9493580,
-    "type": 1,
-    "amount": 3000
-    },
-    {
-    "uid": 9493580,
-    "type": 1,
-    "amount": 1000
+    "nickname": "weinet90",
+    "type": 3,
+    "amount": 1
     }
     ]
     }
