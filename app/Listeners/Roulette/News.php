@@ -35,9 +35,10 @@ class News
         foreach ($event->reward as $k => $item) {
             if ($item['broadcast']) {
                 $newsData = [
-                    'uid'    => $event->user->uid,
-                    'type'   => $item['type'],
-                    'amount' => $item['amount'],
+                    'uid'      => $event->user->uid,
+                    'nickname' => $event->user->nickname,
+                    'type'     => $item['type'],
+                    'amount'   => $item['amount'],
                 ];
 
                 Redis::zadd('zroulette_news', $now, json_encode($newsData));
