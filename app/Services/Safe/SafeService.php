@@ -119,9 +119,10 @@ class SafeService extends Service
         $hz = $redis->hExists('hsite_config'.SiteSer::siteId(),'certificate_hz') ? $redis->hget('hsite_config'.SiteSer::siteId(),'certificate_hz') :0;
 
         if(empty($hz)){
-            $lcertificate = $redis->rpop("lcdn_certi");
-            Log::channel('room')->info('lcertificate:' . $lcertificate);
-            return $lcertificate;
+//            $lcertificate = $redis->rpop("lcdn_certi");
+//            Log::channel('room')->info('lcertificate:' . $lcertificate);
+//            return $lcertificate;
+            return '';
         }
         $expire = SiteSer::config('hcertificate_start_expire');
 
@@ -136,7 +137,8 @@ class SafeService extends Service
         if( time()<=$hz+strtotime($start)) return $redis->hget("hcertificate_start:$ip",'certificate');
 
         //get
-        $data =  $redis->rpop("lcdn_certi");
+//        $data =  $redis->rpop("lcdn_certi");
+        $data = '';
         $redis->hmset("hcertificate_start:$ip",[
             'start_time'=>date('Y-m-d H:i:s'),
             'certificate'=>$data,

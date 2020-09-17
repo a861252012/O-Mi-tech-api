@@ -3272,8 +3272,7 @@ class MemberController extends Controller
         // check reg mobile exists
         $cc_mobile = $cc.$mobile;
         $site_id = SiteSer::siteId();
-        $redis = resolve('redis');
-        $exists = $redis->hExists('hcc_mobile_to_id:' . $site_id, $cc_mobile);
+        $exists = Users::where('cc_mobile', $cc_mobile)->where('site_id', $site_id)->exists();
         if ($exists) {
             return $this->msg(__('messages.Api.reg.mobile_is_used'));
         }
