@@ -247,7 +247,7 @@ class RouletteController extends Controller
      * @apiParam {Int} [count] 抽獎次數(預設為1次)
      *
      * @apiError (Error Status) 0 次数输入错误
-     * @apiError (Error Status) 0 免费票或钻石不足
+     * @apiError (Error Status) 102 免费票或钻石不足
      * @apiError (Error Status) 999 API執行錯誤
      *
      * @apiSuccess {Array} reward 獎項
@@ -295,7 +295,7 @@ class RouletteController extends Controller
 
             //檢查鑽石或免費票是否足夠
             if ($this->rouletteService->checkPlay($cnt)) {
-                $this->setStatus(0, __('messages.Roulette.play.not_enough_free_or_points'));
+                $this->setStatus(102, __('messages.Roulette.play.not_enough_free_or_points'));
                 return $this->jsonOutput();
             }
 
