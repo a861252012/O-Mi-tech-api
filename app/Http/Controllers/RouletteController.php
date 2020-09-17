@@ -319,13 +319,13 @@ class RouletteController extends Controller
     }
 
     /**
-     * @api {post} /roulette/trackList
+     * @api {get} /roulette/marquee 輪盤跑道
      *
      * @apiDescription mobile版URL前綴: /api/m
      *
      * pc版URL前綴: /api
      * @apiGroup Roulette
-     * @apiName trackList
+     * @apiName marquee
      * @apiVersion 1.0.0
      *
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
@@ -339,24 +339,37 @@ class RouletteController extends Controller
      * @apiSuccess {Int} data.amount 中獎道具數量
      *
      * @apiSuccessExample {json} 成功回應
-     *
-    {
+     *{
     "status": 1,
-    "msg": "成功",
+    "msg": "Successful",
     "data": [
     {
-    "uid": 9493319,
+    "uid": 9493580,
+    "type": 6,
+    "amount": 1
+    },
+    {
+    "uid": 9493580,
     "type": 2,
-    "amount": 2
+    "amount": 500
+    },
+    {
+    "uid": 9493580,
+    "type": 1,
+    "amount": 3000
+    },
+    {
+    "uid": 9493580,
+    "type": 1,
+    "amount": 1000
     }
     ]
     }
      */
-    public function getTrackList()
+    public function marquee()
     {
         try {
-            $data = $this->rouletteService->getTrackList();
-
+            $data = $this->rouletteService->getLastTenInfo();
             $this->setStatus(1, __('messages.success'));
             $this->setRootData('data', $data);
             return $this->jsonOutput();

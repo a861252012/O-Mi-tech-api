@@ -160,7 +160,7 @@ class RouletteService
     }
 
     //取得前十跑道用戶資訊
-    public function getTrackList()
+    public function getLastTenInfo()
     {
         $data = resolve('redis')->ZREVRANGE('zroulette_news', 0, 9);
 
