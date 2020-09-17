@@ -6,6 +6,7 @@
  */
 namespace App\Listeners\Roulette;
 
+use App\Constants\RouletteItem;
 use App\Events\RouletteReward;
 use App\Facades\UserSer;
 use App\Repositories\UserItemRepository;
@@ -60,7 +61,7 @@ class AddUserReward
                     $addItems = [];
                     foreach ($v as $itemId => $item) {
                         $addItems[] = [
-                            'item_id' => $type,
+                            'item_id' => RouletteItem::ITEM_MAP[$type],
                             'uid'     => $event->user->uid,
                             'status'  => 0,
                         ];
