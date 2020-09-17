@@ -1161,11 +1161,7 @@ class Controller extends BaseController
         // 修改用户表
         $user->update($postData);
 
-        //维护redis中的hnickname_to_id 用于注册时验证是否重名
         if (isset($postData['nickname']) && ($postData['nickname'] != $from_nickname)) {
-//            Redis::hset('hnickname_to_id:' . SiteSer::siteId(), $postData['nickname'], $user['uid']);
-//            Redis::hdel('hnickname_to_id:' . SiteSer::siteId(), $from_nickname);//删除旧昵称登入权限
-
             // 修改昵称成功后 就记录日志
                 $modNameLog = [
                     'uid'       => $user['uid'],

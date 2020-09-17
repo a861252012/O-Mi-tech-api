@@ -30,13 +30,8 @@ use Mockery\Exception;
 
 class UserService extends Service
 {
-
-    const KEY_USERNAME_TO_ID = 'husername_to_id';
-    const KEY_NICKNAME_TO_ID = 'hnickname_to_id';
-    const KEY_CC_MOBILE_TO_ID = 'hcc_mobile_to_id';
     const KEY_USER_INFO = 'huser_info:';
     const TTL_USER_INFO = 216000;
-
 
     public $user;
     protected $redis;
