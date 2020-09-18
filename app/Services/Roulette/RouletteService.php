@@ -81,8 +81,8 @@ class RouletteService
     public function play($rid, $cnt = 1)
     {
         $user = Auth::user();
-
-        $freeTicket = $this->freeTicket();
+        $freeTicket = $this->freeTicket(); // 取得用戶目前免費票卷
+        $cost = $this->cost(); // 取得目前單一次花費鑽石
 
         // 取得所有獎項配置
         $rouletteItems = json_decode($this->siteAttrService->get('roulette_items'), true);
@@ -124,6 +124,7 @@ class RouletteService
                     $insertData[] = [
                         'type'     => $item['type'],
                         'amount'   => $item['amount'],
+                        'cost'     => $freeTicket ? 0 : $cost,
                         'is_free'  => $freeTicket ? 1 : 0,
                         'rid'      => $rid,
                         'uid'      => $user->uid,
@@ -156,7 +157,12 @@ class RouletteService
 
     public function getHistory($uid, $amount, $startTime, $endTime)
     {
-        return $this->rouletteHistoryRepository->getHistory($uid, $amount, $startTime, $endTime);
+        $list = $this->rouletteHistoryRepository->getHistory($uid, $amount, $startTime, $endTime);
+        return $list->map(function ($value, $key) {
+            $value->name = __('messages.RouletteItem.type.' . $value->type);
+            return $value;
+        });
+
     }
 
     //取得前十跑道用戶資訊
