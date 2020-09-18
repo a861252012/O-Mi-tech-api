@@ -264,6 +264,12 @@ class RouletteController extends Controller
      * @apiParam {Int} rid 房間ID
      * @apiParam {Int} [cnt] 抽獎次數(預設為1次)
      *
+     * @apiParamExample {json} Request-Example:
+     * {
+    "rid":9491922,
+    "cnt":10
+    }
+     *
      * @apiError (Error Status) 0 次数输入错误
      * @apiError (Error Status) 102 免费票或钻石不足
      * @apiError (Error Status) 999 API執行錯誤
