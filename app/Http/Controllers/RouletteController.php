@@ -151,16 +151,20 @@ class RouletteController extends Controller
      *
      * @apiError (Error Status) 999 API執行錯誤
      *
-     * @apiSuccess {Object} data 紀錄
+     * @apiSuccess {Array} data 紀錄
      * @apiSuccess {Int} data.current_page 目前頁碼
-     * @apiSuccess {Object[]} data.data
+     *
+     * @apiSuccess {Array} data.data
      * @apiSuccess {Int} data.data.id 流水號
      * @apiSuccess {Int} data.data.uid 用戶uid
      * @apiSuccess {Int} data.data.type 中獎道具種類
      * @apiSuccess {Int} data.data.amount 中獎道具數量
      * @apiSuccess {Int} data.data.rid 主播id
+     * @apiSuccess {Int} data.data.cost 花費鑽石
      * @apiSuccess {Int} data.data.is_free 是否為免費次數（0:不是/1:是）
      * @apiSuccess {String} data.data.created_at 創建時間
+     * @apiSuccess {String} data.data.name 獎項名稱
+     *
      * @apiSuccess {Int} data.first_page_url 第一頁url
      * @apiSuccess {Int} data.from 從第幾頁換頁
      * @apiSuccess {Int} data.last_page 最後一頁頁碼
@@ -185,29 +189,35 @@ class RouletteController extends Controller
     "type": 2,
     "amount": 500,
     "rid": 9491922,
-    "is_free": 0,
-    "created_at": "2020-08-15 09:51:37"
+    "cost": 0,
+    "is_free": 1,
+    "group_id": 1600413711465977,
+    "created_at": "2020-09-18 15:21:51",
+    "name": "经验值"
     },
     {
     "id": 1,
     "uid": 9493580,
     "type": 1,
-    "amount": 1000,
+    "amount": 1,
     "rid": 9491922,
-    "is_free": 0,
-    "created_at": "2020-08-15 09:47:42"
+    "cost": 0,
+    "is_free": 1,
+    "group_id": 1600413601920142,
+    "created_at": "2020-09-18 15:20:01",
+    "name": "钻石"
     }
     ],
-    "first_page_url": "http://localhost/api/m/roulette/history?page=1",
+    "first_page_url": "http:\/\/localhost\/api\/m\/roulette\/history?page=1",
     "from": 1,
     "last_page": 1,
-    "last_page_url": "http://localhost/api/m/roulette/history?page=1",
+    "last_page_url": "http:\/\/localhost\/api\/m\/roulette\/history?page=1",
     "next_page_url": null,
-    "path": "http://localhost/api/m/roulette/history",
-    "per_page": "15",
+    "path": "http:\/\/localhost\/api\/m\/roulette\/history",
+    "per_page": 15,
     "prev_page_url": null,
-    "to": 1,
-    "total": 1
+    "to": 2,
+    "total": 2
     }
     }
      */

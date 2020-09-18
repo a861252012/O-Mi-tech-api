@@ -157,12 +157,12 @@ class RouletteService
 
     public function getHistory($uid, $amount, $startTime, $endTime)
     {
-        $list = $this->rouletteHistoryRepository->getHistory($uid, $amount, $startTime, $endTime);
-        return $list->map(function ($value, $key) {
-            $value->name = __('messages.RouletteItem.type.' . $value->type);
-            return $value;
-        });
+        $list = $this->rouletteHistoryRepository->getHistory($uid, $amount, $startTime, $endTime)->toArray();
+        foreach ($list['data'] as $k => &$v) {
+            $v['name'] = __('messages.RouletteItem.type.' . $v['type']);
+        }
 
+        return $list;
     }
 
     //取得前十跑道用戶資訊
