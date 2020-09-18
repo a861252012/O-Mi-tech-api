@@ -254,7 +254,8 @@ class RouletteController extends Controller
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
      * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
      *
-     * @apiParam {Int} [count] 抽獎次數(預設為1次)
+     * @apiParam {Int} rid 房間ID
+     * @apiParam {Int} [cnt] 抽獎次數(預設為1次)
      *
      * @apiError (Error Status) 0 次数输入错误
      * @apiError (Error Status) 102 免费票或钻石不足
