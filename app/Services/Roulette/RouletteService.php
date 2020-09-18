@@ -157,7 +157,14 @@ class RouletteService
 
     public function getHistory($uid, $amount, $startTime, $endTime)
     {
-        $list = $this->rouletteHistoryRepository->getHistory($uid, $amount, $startTime, $endTime)->toArray();
+        $start = date('Y-m-d 00:00:00', strtotime($startTime));
+        $end = date('Y-m-d 23:59:59', strtotime($endTime));
+
+        if (strtotime($start) > strtotime($end)) {
+            return [];
+        }
+
+        $list = $this->rouletteHistoryRepository->getHistory($uid, $amount, $start, $end)->toArray();
         foreach ($list['data'] as $k => &$v) {
             $v['name'] = __('messages.RouletteItem.type.' . $v['type']);
         }
