@@ -54,6 +54,7 @@ class Controller extends BaseController
     const  TOKEN_CONST = 'auth_key';
     const  WEB_SECRET_KEY = 'c5ff645187eb7245d43178f20607920e456';
     const TTL_USER_NICKNAME = 2678400;
+    const DEFAULT_LOCALE = 'zh';
 
     protected $_online; // 在线用户的uid
     protected $userInfo; // 在线用户的信息
@@ -1553,5 +1554,31 @@ class Controller extends BaseController
                 "msg" => $msg,
             ]
         );
+    }
+
+    protected function filterSupportedLocale($locale = null)
+    {
+        if ($locale == null) {
+            return self::DEFAULT_LOCALE;
+        }
+        $supportedLocales = ['zh_TW', 'zh_HK', 'en', 'zh'];
+
+        // perfect match
+        if (in_array($locale, $supportedLocales)) {
+            return $locale;
+        }
+
+        // lang match
+        if (strpos($locale, '_') !== false) {
+            list($lang, $region) = explode('_', $locale);
+        } else {
+            $lang = $locale;
+        }
+        if (in_array($lang, $supportedLocales)) {
+            return $lang;
+        }
+
+        // default
+        return self::DEFAULT_LOCALE;
     }
 }

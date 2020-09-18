@@ -876,6 +876,11 @@ class ApiController extends Controller
             };
         }
 
+        // locale
+        $locale = $this->filterSupportedLocale($data['locale']);
+        $userAttrService = resolve(UserAttrService::class);
+        $userAttrService->set($this->userInfo['uid'], 'locale', $locale);
+
         Session::put('httphost', $httphost);
 
         // 判斷手機版或 PC 版
