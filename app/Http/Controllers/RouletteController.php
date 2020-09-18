@@ -147,12 +147,13 @@ class RouletteController extends Controller
      * @apiParam {String} startTime 起日 (手機端為必填參數,預設為一週前)
      * @apiParam {String} endTime 迄日  (手機端為必填參數,預設為當前時間)
      * @apiParam {int} [page] 第幾頁 (不帶則預設第一頁)
-     * @apiParam {int} [amount] 一頁顯示幾筆 (必填參數 手機:15筆,PC:100筆)
+     * @apiParam {int} amount 一頁顯示幾筆 (必填參數 手機:15筆,PC:100筆)
      *
      * @apiParamExample {json} Request-Example:
      * {
-    "startTime":22,
-    "endTime":1
+    "startTime":"2020-9-18",
+    "endTime":"2020-9-18",
+    "amount":15
     }
      *
      * @apiError (Error Status) 999 API執行錯誤
