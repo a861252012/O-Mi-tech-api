@@ -414,7 +414,6 @@ return [
     'RouletteItem.type.8' => '墨尊体验券',
     'RouletteItem.type.9' => '白尊体验券',
     'RouletteItem.type.10' => '神秘大奖',
-    'Roulette.setting.type.10' => '轮盘游戏未开啟',
     'Roulette.play.room_id_error' => '房间ID输入错误',
     'Roulette.play.count_error' => '次数输入错误',
     'Roulette.play.not_enough_free_or_points' => '免费票或钻石不足',
