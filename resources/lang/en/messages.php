@@ -418,6 +418,7 @@ return [
     'Roulette.play.count_error' => '次数输入错误',
     'Roulette.play.not_enough_free_or_points' => '免费票或钻石不足',
     'Roulette.play.failed' => '抽奖失败',
+    'Roulette.getHistory.date_range_error' => '时间区间错误',
     'item.1' => '白尊体验券',
     'item.2' => '火箭飞屏',
     'item.3' => '金尊体验券',

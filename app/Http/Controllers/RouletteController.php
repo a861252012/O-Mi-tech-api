@@ -155,7 +155,7 @@ class RouletteController extends Controller
     "endTime":"2020-9-18",
     "amount":15
     }
-     *
+     * @apiError (Error Status) 0 时间区间错误
      * @apiError (Error Status) 999 API執行錯誤
      *
      * @apiSuccess {Array} data 紀錄
@@ -232,12 +232,17 @@ class RouletteController extends Controller
     {
         try {
             $data = $this->rouletteService->getHistory(
-                $request->header('origin'),
+                (int)$request->origin,
                 Auth::id(),
                 (int)$request->amount,
                 $request->startTime,
                 $request->endTime
             );
+
+            if (empty($data)) {
+                $this->setStatus(0, __('messages.Roulette.getHistory.date_range_error'));
+                return $this->jsonOutput();
+            }
 
             $this->setStatus(1, __('messages.success'));
             $this->setRootData('data', $data);
