@@ -232,6 +232,7 @@ class RouletteController extends Controller
     {
         try {
             $data = $this->rouletteService->getHistory(
+                $request->header('origin'),
                 Auth::id(),
                 (int)$request->amount,
                 $request->startTime,

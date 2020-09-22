@@ -155,13 +155,19 @@ class RouletteService
         return $results;
     }
 
-    public function getHistory($uid, $amount, $startTime, $endTime)
+    public function getHistory($origin, $uid, $amount, $startTime, $endTime)
     {
-        $start = date('Y-m-d 00:00:00', strtotime($startTime));
-        $end = date('Y-m-d 23:59:59', strtotime($endTime));
+        $start = date('Y-m-d 00:00:00', $startTime ? strtotime($startTime) : strtotime('-1 week'));
+        $end = date('Y-m-d 23:59:59', $endTime ? strtotime($endTime) : mktime(date(23), date(59), date(59)));
 
         if (strtotime($start) > strtotime($end)) {
             return [];
+        }
+
+        //如為PC,則不帶起訖時間
+        if ($origin == 11) {
+            $start = null;
+            $end = null;
         }
 
         $list = $this->rouletteHistoryRepository->getHistory($uid, $amount, $start, $end)->toArray();
