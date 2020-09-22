@@ -165,7 +165,7 @@ class RouletteService
         }
 
         //如為PC,則不帶起訖時間
-        if ($origin == 11) {
+        if (empty($origin) || $origin!= 11) {
             $start = null;
             $end = null;
         }
