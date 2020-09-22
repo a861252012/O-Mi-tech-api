@@ -4,8 +4,10 @@
  * @author Weine
  * @date 2020-9-16
  */
+
 namespace App\Listeners\Roulette;
 
+use App\Constants\LvRich;
 use App\Constants\RouletteItem;
 use App\Events\RouletteReward;
 use App\Facades\UserSer;
@@ -37,7 +39,7 @@ class AddUserReward
     /**
      * Handle the event.
      *
-     * @param  RouletteReward  $event
+     * @param RouletteReward $event
      * @return void
      */
     public function handle(RouletteReward $event)
@@ -55,7 +57,11 @@ class AddUserReward
                     UserSer::updateUserInfo($event->user->uid, ['points' => $event->user->points + $v->sum()]);
                 } elseif ($type === self::ADD_EXP_TYPE) {
                     //加經驗
-                    UserSer::updateUserInfo($event->user->uid, $data = ['exp' => $event->user->exp + $v->sum()]);
+                    $rich = $event->user->rich + $v->sum();
+                    UserSer::updateUserInfo($event->user->uid, $data = [
+                        'rich'    => $rich,
+                        'lv_rich' => LvRich::calcul($rich),
+                    ]);
                 } else {
                     // 加物品
                     $addItems = [];
