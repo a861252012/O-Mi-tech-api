@@ -144,8 +144,8 @@ class RouletteController extends Controller
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
      * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
      *
-     * @apiParam {String} startTime 起日 (手機端為必填參數,預設為一週前)
-     * @apiParam {String} endTime 迄日  (手機端為必填參數,預設為當前時間)
+     * @apiParam {String} [startTime] 起日 (手機端為必填參數,預設為一週前)
+     * @apiParam {String} [endTime] 迄日  (手機端為必填參數,預設為當前時間)
      * @apiParam {int} [page] 第幾頁 (不帶則預設第一頁)
      * @apiParam {int} amount 一頁顯示幾筆 (必填參數 手機:15筆,PC:100筆)
      *
