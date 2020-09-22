@@ -40,12 +40,12 @@ class RouletteService
         $this->rouletteHistoryRepository = $rouletteHistoryRepository;
     }
 
-    public function status() : int
+    public function status(): int
     {
         return (int)SiteSer::globalSiteConfig('roulette_switch');
     }
 
-    public function cost() : int
+    public function cost(): int
     {
         return (int)$this->siteAttrService->get('roulette_cost');
     }
@@ -62,12 +62,12 @@ class RouletteService
         });
     }
 
-    public function freeTicket() : int
+    public function freeTicket(): int
     {
         return (int)$this->userAttrService->get(Auth::id(), 'roulette_tickets');
     }
 
-    public function checkPlay($cnt = 1) : bool
+    public function checkPlay($cnt = 1): bool
     {
         $freeTicket = $this->freeTicket();
         if ($freeTicket) {
@@ -108,7 +108,7 @@ class RouletteService
         $mtimeStr = explode(' ', microtime());
 
         // 產生批號
-        $groupId = $mtimeStr[1] . substr($mtimeStr[0],2, -2);
+        $groupId = $mtimeStr[1] . substr($mtimeStr[0], 2, -2);
 
         // 計算中獎獎項
         for ($i = 0; $i < $cnt; ++$i) {
