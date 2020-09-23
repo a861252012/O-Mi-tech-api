@@ -96,13 +96,6 @@ class RouletteService
             return $value;
         })->all();
 
-//        $items = [];
-//        foreach ($rouletteItems as $item) {
-//            $thresHold += (int)($item['rate'] * 100);
-//            $item['thresHold'] = $thresHold;
-//            $items[] = $item;
-//        }
-
         $results = []; //回傳資料
         $insertData = []; //紀錄資料
         $mtimeStr = explode(' ', microtime());
@@ -124,6 +117,7 @@ class RouletteService
                     $insertData[] = [
                         'type'     => $item['type'],
                         'amount'   => $item['amount'],
+                        'icon'     => $item['icon'],
                         'cost'     => $freeTicket ? 0 : $cost,
                         'is_free'  => $freeTicket ? 1 : 0,
                         'rid'      => $rid,
@@ -187,9 +181,11 @@ class RouletteService
             return false;
         }
 
+        $imgHost = SiteSer::siteConfig('img_host', SiteSer::siteId());
         $list = $this->rouletteHistoryRepository->getHistory($uid, $amount, $start, $end)->toArray();
         foreach ($list['data'] as $k => &$v) {
             $v['name'] = __('messages.RouletteItem.type.' . $v['type']);
+            $v['icon'] = $imgHost . '/' . $v['icon'] . '.png';
         }
 
         return $list;

@@ -169,6 +169,7 @@ class RouletteController extends Controller
      * @apiSuccess {Int} data.data.rid 主播id
      * @apiSuccess {Int} data.data.cost 花費鑽石
      * @apiSuccess {Int} data.data.is_free 是否為免費次數（0:不是/1:是）
+     * @apiSuccess {Int} data.data.icon 獎項圖示
      * @apiSuccess {String} data.data.created_at 創建時間
      * @apiSuccess {String} data.data.name 獎項名稱
      *
@@ -191,28 +192,30 @@ class RouletteController extends Controller
     "current_page": 1,
     "data": [
     {
-    "id": 2,
-    "uid": 9493580,
-    "type": 2,
-    "amount": 500,
-    "rid": 9491922,
-    "cost": 0,
-    "is_free": 1,
-    "group_id": 1600413711465977,
-    "created_at": "2020-09-18 15:21:51",
-    "name": "经验值"
-    },
-    {
-    "id": 1,
+    "id": 10,
     "uid": 9493580,
     "type": 1,
     "amount": 1,
     "rid": 9491922,
-    "cost": 0,
-    "is_free": 1,
-    "group_id": 1600413601920142,
-    "created_at": "2020-09-18 15:20:01",
-    "name": "钻石"
+    "cost": 10,
+    "is_free": 0,
+    "icon": "http:\/\/zimg:4869\/91a838c0ccff821e322c71dbb5fe74cf.png",
+    "group_id": 1600855188361144,
+    "created_at": "2020-09-23 17:59:48",
+    "name": "Tokens"
+    },
+    {
+    "id": 9,
+    "uid": 9493580,
+    "type": 1,
+    "amount": 1,
+    "rid": 9491922,
+    "cost": 10,
+    "is_free": 0,
+    "icon": "http:\/\/zimg:4869\/91a838c0ccff821e322c71dbb5fe74cf.png",
+    "group_id": 1600855188361144,
+    "created_at": "2020-09-23 17:59:48",
+    "name": "Tokens"
     }
     ],
     "first_page_url": "http:\/\/localhost\/api\/m\/roulette\/history?page=1",
