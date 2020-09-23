@@ -75,7 +75,7 @@ class RouletteService
         }
 
         $this->consumePoints = $this->cost() * $cnt;
-        return Auth::user()->points < $this->cost();
+        return Auth::user()->points < $this->consumePoints;
     }
 
     public function play($rid, $cnt = 1)
