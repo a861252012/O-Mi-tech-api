@@ -141,7 +141,7 @@ class RouletteService
 
         // 先扣免費票，如無則扣鑽
         if ($freeTicket) {
-            $this->userAttrService->set($user->uid, 'roulette_tickets', $freeTicket - 1);
+            $this->userAttrService->set($user->uid, 'roulette_tickets', $freeTicket - $cnt);
         } else {
             UserSer::updateUserInfo($user->uid, ['points' => $user->points - $this->consumePoints]);
         }
