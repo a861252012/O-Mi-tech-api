@@ -117,7 +117,6 @@ class RouletteService
                     $insertData[] = [
                         'type'     => $item['type'],
                         'amount'   => $item['amount'],
-                        'icon'     => $item['icon'],
                         'cost'     => $freeTicket ? 0 : $cost,
                         'is_free'  => $freeTicket ? 1 : 0,
                         'rid'      => $rid,
