@@ -7,7 +7,7 @@
 
 namespace App\Services\Roulette;
 
-
+use App\Constants\RouletteItem;
 use App\Events\RouletteReward;
 use App\Facades\SiteSer;
 use App\Facades\UserSer;
@@ -182,9 +182,10 @@ class RouletteService
 
         $imgHost = SiteSer::siteConfig('img_host', SiteSer::siteId());
         $list = $this->rouletteHistoryRepository->getHistory($uid, $amount, $start, $end)->toArray();
+
         foreach ($list['data'] as $k => &$v) {
             $v['name'] = __('messages.RouletteItem.type.' . $v['type']);
-            $v['icon'] = $imgHost . '/' . $v['icon'] . '.png';
+            $v['icon'] = $imgHost . '/' . RouletteItem::ITEM_ICON[$v['type']] . '.png';
         }
 
         return $list;
