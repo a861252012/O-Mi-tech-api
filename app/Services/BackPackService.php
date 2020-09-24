@@ -6,6 +6,7 @@
 
 namespace App\Services;
 
+use App\Constants\BackPackItem;
 use App\Http\Resources\BackPack\BackPackResource;
 use App\Repositories\UserItemRepository;
 use App\Repositories\UserBuyGroupRepository;
@@ -61,7 +62,7 @@ class BackPackService
 
         switch ($userItem->item->item_type) {
             case 1:
-                $res = $this->useVip($id);
+                $res = $this->useVip($id, BackPackItem::ITEM_GID[$userItem->item_id]);
                 break;
             default:
                 $res['status'] = $this->UserItemRepository->updateItemStatus($id, 1);
@@ -69,14 +70,14 @@ class BackPackService
         return $res;
     }
 
-    public function useVip($id)
+    public function useVip($id, $gid)
     {
         //檢查用戶是否有貴族身份
         if (strtotime(Auth::user()->vip_end) >=time()) {
             return ['status' => 102, 'msg' => __('messages.is_vip')];
         }
 
-        $level = $this->levelRichRepository->getLevelByGid(30);
+        $level = $this->levelRichRepository->getLevelByGid($gid);
 
         DB::beginTransaction();
 
