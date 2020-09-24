@@ -151,7 +151,7 @@ class RouletteService
         // 更新日排行
         // 更新中獎跑道
         // 發送廣播訊息(redis)
-//        event(new RouletteReward($user->refresh(), $results, $rid));
+        event(new RouletteReward($user->refresh(), $results, $rid));
 
         return $results;
     }
