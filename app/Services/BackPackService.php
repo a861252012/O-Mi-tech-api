@@ -128,7 +128,7 @@ class BackPackService
                 [
                     'start_date' => date('Y-m-d'),
                     'end_date'   => date('Y-m-d', strtotime($updateVip['vip_end'])),
-                    'vip_name'   => __('messages.BackPackService.useVip.expire_remind' . $gid)
+                    'vip_name'   => __('messages.BackPackService.useVip.expire_remind.' . $gid)
                 ]
             ),
             'site_id'   => SiteSer::siteId(),

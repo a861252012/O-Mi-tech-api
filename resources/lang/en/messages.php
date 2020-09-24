@@ -402,7 +402,7 @@ return [
     'ShareRewardNotification.reminder_msg' => 'Congratulations to the:invited_uid you invited who completed the mobile phone verification. Received 5 tokens rewards.',
     'Crontab.duraRoomMsgSend.host_please_ready' => '您开设的:room_starttime一对一约会房间快要开始了,请做好准备哦',
     'Crontab.duraRoomMsgSend.user_please_ready' => '您预约的一对一预约房间:room_starttime快要开始了，请做好准备哦',
-    'BackPackService.useVip.expire_remind' => 'Dear user, your white noble will start from :start_date to :end_date',
+    'BackPackService.useVip.expire_remind' => 'Dear user, your :vip_name will start from :start_date to :end_date',
     'Roulette.setting.is_off' => 'Roulette not open yet.',
     'RouletteItem.type.1' => 'Tokens',
     'RouletteItem.type.2' => 'Exp',

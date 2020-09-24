@@ -402,7 +402,7 @@ return [
     'ShareRewardNotification.reminder_msg' => '恭喜你邀请的用户 ID :invited_uid，完成了手机验证。获得了5个钻石奖励。',
     'Crontab.duraRoomMsgSend.host_please_ready' => '您开设的:room_starttime一对一约会房间快要开始了,请做好准备哦',
     'Crontab.duraRoomMsgSend.user_please_ready' => '您预约的一对一预约房间:room_starttime快要开始了，请做好准备哦',
-    'BackPackService.useVip.expire_remind' => '亲爱的用户，您的白尊体验将从 :start_date 至 :end_date',
+    'BackPackService.useVip.expire_remind' => '亲爱的用户，您的 :vip_name 将从 :start_date 至 :end_date',
     'Roulette.setting.is_off' => '轮盘游戏未开啟',
     'RouletteItem.type.1' => '钻石',
     'RouletteItem.type.2' => '经验值',
