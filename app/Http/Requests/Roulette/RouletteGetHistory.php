@@ -15,7 +15,7 @@ class RouletteGetHistory extends VRequest
     public function rules()
     {
         return [
-            'amount'    => 'numeric|required',
+            'amount'    => 'numeric|nullable|min:15|max:100',
             'startTime' => 'date|nullable',
             'endTime'   => 'date|nullable',
             'page'      => 'numeric|nullable',

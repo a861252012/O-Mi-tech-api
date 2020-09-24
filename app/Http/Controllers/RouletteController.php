@@ -233,11 +233,14 @@ class RouletteController extends Controller
      */
     public function getHistory(RouletteGetHistory $request)
     {
+        $amt = (int)$request->get('amount', 15);
+        $amt = max(15, min(100, $amt));
+
         try {
             $data = $this->rouletteService->getHistory(
                 (int)$request->origin,
                 Auth::id(),
-                (int)$request->amount,
+                $amt,
                 $request->startTime,
                 $request->endTime
             );
