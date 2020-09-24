@@ -427,4 +427,11 @@ return [
     'item.6' => '青尊体验券',
     'item.7' => '绿尊体验券',
     'item.8' => '墨尊体验券',
+    'BackPackService.useVip.expire_remind.30' => '白尊体验',
+    'BackPackService.useVip.expire_remind.31' => '墨尊体验',
+    'BackPackService.useVip.expire_remind.32' => '绿尊体验',
+    'BackPackService.useVip.expire_remind.33' => '青尊体验',
+    'BackPackService.useVip.expire_remind.34' => '蓝尊体验',
+    'BackPackService.useVip.expire_remind.35' => '红尊体验',
+    'BackPackService.useVip.expire_remind.36' => '金尊体验',
 ];

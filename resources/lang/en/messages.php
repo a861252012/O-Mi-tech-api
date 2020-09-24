@@ -427,4 +427,11 @@ return [
     'item.6' => 'VIP 4 Trial',
     'item.7' => 'VIP 5 Trial',
     'item.8' => 'VIP 6 Trial',
+    'BackPackService.useVip.expire_remind.30' => 'VIP 7',
+    'BackPackService.useVip.expire_remind.31' => 'VIP 6',
+    'BackPackService.useVip.expire_remind.32' => 'VIP 5',
+    'BackPackService.useVip.expire_remind.33' => 'VIP 4',
+    'BackPackService.useVip.expire_remind.34' => 'VIP 3',
+    'BackPackService.useVip.expire_remind.35' => 'VIP 2',
+    'BackPackService.useVip.expire_remind.36' => 'VIP 1',
 ];

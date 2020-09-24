@@ -125,7 +125,12 @@ class BackPackService
             'mail_type' => 3,
             'rec_uid'   => Auth::id(),
             'content'   => __('messages.BackPackService.useVip.expire_remind',
-                ['start_date' => date('Y-m-d'), 'end_date' => date('Y-m-d', strtotime($updateVip['vip_end']))]),
+                [
+                    'start_date' => date('Y-m-d'),
+                    'end_date'   => date('Y-m-d', strtotime($updateVip['vip_end'])),
+                    'vip_name'   => __('messages.BackPackService.useVip.expire_remind' . $gid)
+                ]
+            ),
             'site_id'   => SiteSer::siteId(),
         ];
 
