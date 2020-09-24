@@ -70,11 +70,11 @@ class RouletteService
     public function checkPlay($cnt = 1): bool
     {
         $freeTicket = $this->freeTicket();
-        if ($freeTicket) {
-            return $freeTicket < $cnt;
+        if ($freeTicket >= $cnt) {
+            return false;
         }
 
-        $this->consumePoints = $this->cost() * $cnt;
+        $this->consumePoints = $this->cost() * ($cnt - $freeTicket);
         return Auth::user()->points < $this->consumePoints;
     }
 
@@ -132,10 +132,18 @@ class RouletteService
         // 新增個人中獎紀錄
         $this->rouletteHistoryRepository->insertData($insertData);
 
-        // 先扣免費票，如無則扣鑽
+        // 扣免費票
         if ($freeTicket) {
-            $this->userAttrService->set($user->uid, 'roulette_tickets', $freeTicket - $cnt);
-        } else {
+            $freeTicket -= $cnt;
+            if ($freeTicket < 0) {
+                $freeTicket = 0;
+            }
+
+            $this->userAttrService->set($user->uid, 'roulette_tickets', $freeTicket);
+        }
+
+        // 扣鑽
+        if ($this->consumePoints) {
             UserSer::updateUserInfo($user->uid, ['points' => $user->points - $this->consumePoints]);
         }
 
@@ -143,7 +151,7 @@ class RouletteService
         // 更新日排行
         // 更新中獎跑道
         // 發送廣播訊息(redis)
-        event(new RouletteReward($user->refresh(), $results, $rid));
+//        event(new RouletteReward($user->refresh(), $results, $rid));
 
         return $results;
     }
