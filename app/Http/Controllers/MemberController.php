@@ -641,6 +641,11 @@ class MemberController extends Controller
             if ($log) {
                 $log->charge = $charge;
             }
+
+            //貴族名稱做多語化字串處理
+            foreach ($charge as $v) {
+                $v->level_name = __('messages.user.ViplevelName.' . $v->level_id);
+            }
         }
         $data = [];
         $data['item'] = $log;
