@@ -118,11 +118,12 @@ class RouletteService
                         'type'     => $item['type'],
                         'amount'   => $item['amount'],
                         'cost'     => $freeTicket ? 0 : $cost,
-                        'is_free'  => $freeTicket ? 1 : 0,
+                        'is_free'  => (($freeTicket - ($i + 1)) < 0) ? 0 : 1,
                         'rid'      => $rid,
                         'uid'      => $user->uid,
                         'group_id' => $groupId,
                     ];
+
                     break;
                 }
             }
@@ -151,7 +152,7 @@ class RouletteService
         // 更新日排行
         // 更新中獎跑道
         // 發送廣播訊息(redis)
-        event(new RouletteReward($user->refresh(), $results, $rid));
+//        event(new RouletteReward($user->refresh(), $results, $rid));
 
         return $results;
     }
