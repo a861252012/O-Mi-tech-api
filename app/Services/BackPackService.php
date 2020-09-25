@@ -96,11 +96,11 @@ class BackPackService
         }
 
         //新增貴族開通紀錄
-        $levelRich = unserialize($this->userGroup->where('gid', 30)->first()->system, ['allowed_classes' => false]);
+        $levelRich = unserialize($this->userGroup->where('gid',  $gid)->first()->system, ['allowed_classes' => false]);
 
         $record = array(
             'uid'        => Auth::id(),
-            'gid'        => 30,
+            'gid'        => $gid,
             'level_id'   => $level->level_id,
             'type'       => 4,//操作类型:1 开通,2保级,3赠送 4.首充好禮物-貴族體驗券
             'create_at'  => date("Y-m-d H:i:s"),
