@@ -640,11 +640,7 @@ class MemberController extends Controller
             //dc修改容错处理
             if ($log) {
                 $log->charge = $charge;
-            }
-
-            //貴族名稱做多語化字串處理
-            foreach ($charge as $v) {
-                $v->level_name = __('messages.user.ViplevelName.' . $v->level_id);
+                $log->group->level_name = __('messages.user.ViplevelName.' . $user->vip);//貴族名稱做多語化字串處理
             }
         }
         $data = [];
