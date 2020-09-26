@@ -189,6 +189,21 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::prefix('socket')->group(function () {
         Route::get('proxy_list', 'SocketController@proxyList');
     });
+
+    /* 輪盤遊戲 */
+    Route::prefix('roulette')->group(function () {
+        /* 配置 */
+        Route::get('setting', 'RouletteController@setting');
+
+        /* 跑道 */
+        Route::get('marquee', 'RouletteController@marquee');
+
+        /* 用戶中獎紀錄 */
+        Route::post('history', 'RouletteController@getHistory');
+
+        /* 抽獎 */
+        Route::post('play', 'RouletteController@play');
+    });
 });
 
 /** 进房间 */

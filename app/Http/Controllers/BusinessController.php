@@ -293,9 +293,7 @@ class BusinessController extends Controller
             $updated = Users::where('uid','=',$uid)->update($criteria);
 
             resolve(UserService::class)->getUserReset($uid);
-            if( $nickname ){
-                $this->make('redis')->hSet('hnickname_to_id:'.SiteSer::siteId(),$nickname,$uid);
-            }
+
             if($updated){
                 return true;
             }else{

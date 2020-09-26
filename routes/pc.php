@@ -358,6 +358,21 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::prefix('socket')->group(function () {
         Route::get('proxy_list', 'SocketController@proxyList');
     });
+
+    /* 輪盤遊戲 */
+    Route::prefix('roulette')->group(function () {
+        /* 配置 */
+        Route::get('setting', 'RouletteController@setting');
+
+        /* 跑道 */
+        Route::get('marquee', 'RouletteController@marquee');
+
+        /* 用戶中獎紀錄 */
+        Route::post('history', 'RouletteController@getHistory');
+
+        /* 抽獎 */
+        Route::post('play', 'RouletteController@play');
+    });
 });
 
 // 充值类 TODO 登录验证
@@ -448,6 +463,7 @@ Route::prefix('guardian')->group(function () {
         Route::get('history', 'GuardianController@history');
     });
 });
+
 
 Route::any('omey/v2/check', 'OmeyController@v2Check');
 Route::any('omey/v2/diamondGet', 'OmeyController@v2DiamondGet');

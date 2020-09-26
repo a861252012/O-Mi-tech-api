@@ -322,7 +322,6 @@ class ApiController extends Controller
         }
 
         $site_id = SiteSer::siteId();
-        $redis = resolve('redis');
         $cc_mobile = '';
         if ($useMobile) {
             $cc = $request->post('cc', '');
@@ -335,7 +334,7 @@ class ApiController extends Controller
             $mobile = PhoneNumber::formatMobile($cc, $mobile);
 
             $cc_mobile = $cc . $mobile;
-            if ($redis->hExists('hcc_mobile_to_id:' . $site_id, $cc_mobile)) {
+            if (Users::where('cc_mobile', $cc_mobile)->exists()) {
                 $this->setStatus(0, __('messages.Api.reg.mobile_is_used'));
                 return $this->jsonOutput();
             }
@@ -410,11 +409,11 @@ class ApiController extends Controller
             return $this->jsonOutput();
         }
 
-        if ($redis->hExists('husername_to_id:' . SiteSer::siteId(), $username)) {
+        if (Users::where('username', $username)->exists()) {
             $this->setStatus(0, __('messages.Api.reg.username_is_used'));
             return $this->jsonOutput();
         }
-        if ($redis->hExists('hnickname_to_id:' . SiteSer::siteId(), $nickname)) {
+        if (Users::where('nickname', $nickname)->exists()) {
             $this->setStatus(0, __('messages.Api.reg.nickname_is_used'));
             return $this->jsonOutput();
         }

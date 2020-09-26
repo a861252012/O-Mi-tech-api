@@ -6,6 +6,7 @@
 
 namespace App\Services;
 
+use App\Constants\BackPackItem;
 use App\Http\Resources\BackPack\BackPackResource;
 use App\Repositories\UserItemRepository;
 use App\Repositories\UserBuyGroupRepository;
@@ -61,7 +62,7 @@ class BackPackService
 
         switch ($userItem->item->item_type) {
             case 1:
-                $res = $this->useVip($id);
+                $res = $this->useVip($id, BackPackItem::ITEM_GID[$userItem->item_id]);
                 break;
             default:
                 $res['status'] = $this->UserItemRepository->updateItemStatus($id, 1);
@@ -69,14 +70,14 @@ class BackPackService
         return $res;
     }
 
-    public function useVip($id)
+    public function useVip($id, $gid)
     {
         //檢查用戶是否有貴族身份
         if (strtotime(Auth::user()->vip_end) >=time()) {
             return ['status' => 102, 'msg' => __('messages.is_vip')];
         }
 
-        $level = $this->levelRichRepository->getLevelByGid(30);
+        $level = $this->levelRichRepository->getLevelByGid($gid);
 
         DB::beginTransaction();
 
@@ -95,11 +96,11 @@ class BackPackService
         }
 
         //新增貴族開通紀錄
-        $levelRich = unserialize($this->userGroup->where('gid', 30)->first()->system, ['allowed_classes' => false]);
+        $levelRich = unserialize($this->userGroup->where('gid',  $gid)->first()->system, ['allowed_classes' => false]);
 
         $record = array(
             'uid'        => Auth::id(),
-            'gid'        => 30,
+            'gid'        => $gid,
             'level_id'   => $level->level_id,
             'type'       => 4,//操作类型:1 开通,2保级,3赠送 4.首充好禮物-貴族體驗券
             'create_at'  => date("Y-m-d H:i:s"),
@@ -124,7 +125,12 @@ class BackPackService
             'mail_type' => 3,
             'rec_uid'   => Auth::id(),
             'content'   => __('messages.BackPackService.useVip.expire_remind',
-                ['start_date' => date('Y-m-d'), 'end_date' => date('Y-m-d', strtotime($updateVip['vip_end']))]),
+                [
+                    'start_date' => date('Y-m-d'),
+                    'end_date'   => date('Y-m-d', strtotime($updateVip['vip_end'])),
+                    'vip_name'   => __('messages.BackPackService.useVip.expire_remind.' . $gid)
+                ]
+            ),
             'site_id'   => SiteSer::siteId(),
         ];
 
