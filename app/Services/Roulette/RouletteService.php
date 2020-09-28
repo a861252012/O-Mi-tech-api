@@ -91,7 +91,7 @@ class RouletteService
         // build item thresHold
         $thresHold = 0;
         $items = collect($rouletteItems)->map(function ($value, $key) use (&$thresHold) {
-            $thresHold += $value['rate'] * 100;
+            $thresHold += $value['rate'] * 10000;
             $value['thresHold'] = $thresHold;
             return $value;
         })->all();
