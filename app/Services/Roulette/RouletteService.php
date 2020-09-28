@@ -114,11 +114,12 @@ class RouletteService
                         'broadcast' => $item['broadcast'] ? 1 : 0,
                     ];
 
+                    $isFree = (($freeTicket - ($i + 1)) < 0) ? 0 : 1;
                     $insertData[] = [
                         'type'     => $item['type'],
                         'amount'   => $item['amount'],
-                        'cost'     => $freeTicket ? 0 : $cost,
-                        'is_free'  => (($freeTicket - ($i + 1)) < 0) ? 0 : 1,
+                        'cost'     => $isFree ? 0 : $cost,
+                        'is_free'  => $isFree,
                         'rid'      => $rid,
                         'uid'      => $user->uid,
                         'group_id' => $groupId,
