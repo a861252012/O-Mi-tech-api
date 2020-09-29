@@ -74,6 +74,7 @@ class RtmpService extends Service
         if ($host == '') {
             return [];
         }
+        $hls_only = $redis->hget('hvediosKtv:' . $this->rid, 'hls_only') ?: 0;
 
         // 取得 rtmp (含 application path)
         $srtmp = $redis->sMembers('srtmp_server');
@@ -105,7 +106,7 @@ class RtmpService extends Service
         }
 
         $flv_down = $redis->smembers("srtmp_flv:$rtmp_up");
-        if (is_array($flv_down)) {
+        if (is_array($flv_down) && !$hls_only) {
             $rtn['flv'] = str_replace('{SID}', $sid, $flv_down[0]) . $params['flv'];
         }
 
