@@ -127,8 +127,17 @@ class MessageService extends Service
             $msg = Messages::with('sendUser')->whereRaw('(rec_uid = ? or (rec_uid=0 and lv_flag = ? and endtime >= ? and locale in (?,?))) and category = ?',
                 array($uid, $lv_flag, $endtime, '_', $userAttrService->get($uid, 'locale'), $type))
                 ->orderBy('id', 'desc')
-                ->paginate($num);
+                ->paginate($num)
+                ->toArray();
+
+            foreach ($msg['data'] as &$m) {
+                $status = $this->make('redis')->hexists('hmail:' . $m['id'], $uid);
+                if ($status) {
+                    $m['status'] = 1;
+                }
+            }
         }
+
         return $msg;
     }
 
