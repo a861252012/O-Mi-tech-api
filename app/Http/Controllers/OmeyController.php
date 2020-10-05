@@ -93,6 +93,14 @@ class OmeyController extends Controller
                 '</a>';
         }
 
+        echo '<h1>PC - Flash</h1>';
+        foreach ($liveHosts as $h) {
+            $v2URL = $this->v2GetEntryURL($h['rid']);
+            echo '<a href="', $v2URL, '">',
+                '<img width="100" src="', $cdnHost, '/storage/uploads/s88888/anchor/', $h['cover'], '">',
+                '</a>';
+        }
+
         echo '<h1>PC - iframe & Flash</h1>';
         foreach ($liveHosts as $h) {
             echo '<a href="/api/omey/v2/', $h['rid'], '">',
