@@ -26,9 +26,24 @@ class VLocale
      */
     public function handle($request, Closure $next)
     {
-        $uid = Auth::guard('mobile')->id() ?? Auth::guard()->id() ?? 0;
-        $userAttrService = resolve(UserAttrService::class);
-        $userLocale = $userAttrService->get($uid, 'locale');
+        $origin = (int)$request->origin;
+
+        try {
+            if (in_array($origin, [22, 32])) {
+                $uid = Auth::guard('mobile')->id();
+            } else {
+                $uid = Auth::guard()->id();
+            }
+
+            $userAttrService = resolve(UserAttrService::class);
+            $userLocale = $userAttrService->get($uid, 'locale');
+        } catch (\Exception $e){
+            $userLocale = null;
+        }
+
+//        $uid = Auth::guard('mobile')->id() ?? Auth::guard()->id() ?? 0;
+//        $userAttrService = resolve(UserAttrService::class);
+//        $userLocale = $userAttrService->get($uid, 'locale');
 
         if (!empty($userLocale)) {
             App::setLocale($userLocale);
