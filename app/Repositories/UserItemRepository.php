@@ -22,7 +22,7 @@ class UserItemRepository
     //取得user的背包列表
     public function getUserBackPack($uid)
     {
-        return $this->userItem->where('uid', $uid)->where('status', 0)->limit(100)->get();
+        return $this->userItem->where('uid', $uid)->where('status', 0)->limit(100)->orderBy('id', 'asc')->get();
     }
 
     public function getItemById($id)
