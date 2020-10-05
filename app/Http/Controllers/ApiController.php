@@ -886,6 +886,8 @@ class ApiController extends Controller
         $m = $request->get("m");
         if ($m === '1') {
             $url = "/m/live/$room?httphost=". urlencode($httphost);
+        } elseif ($m === '0') {
+            $url = "/room/$room?httphost=". urlencode($httphost);
         } else {
             $h5 = SiteSer::config('h5') ? "/h5" : "";
             $url = "/$room$h5?httphost=$httphost";
