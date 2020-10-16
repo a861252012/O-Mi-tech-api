@@ -79,7 +79,7 @@ class OmeyController extends Controller
 
         echo '<h1>PC</h1>';
         foreach ($liveHosts as $h) {
-            $v2URL = $this->v2GetEntryURL($h['rid']). '&m=0';
+            $v2URL = $this->v2GetEntryURL($h['rid']);
             echo '<a href="', $v2URL, '">',
                 '<img width="100" src="', $cdnHost, '/storage/uploads/s88888/anchor/', $h['cover'], '">',
                 '</a>';
@@ -95,7 +95,7 @@ class OmeyController extends Controller
 
         echo '<h1>PC - Flash</h1>';
         foreach ($liveHosts as $h) {
-            $v2URL = $this->v2GetEntryURL($h['rid']);
+            $v2URL = $this->v2GetEntryURL($h['rid']). '&m=-1';
             echo '<a href="', $v2URL, '">',
                 '<img width="100" src="', $cdnHost, '/storage/uploads/s88888/anchor/', $h['cover'], '">',
                 '</a>';
@@ -112,7 +112,7 @@ class OmeyController extends Controller
     private function v2Live($rid)
     {
         echo '<h1>蜜坊</h1>';
-        echo '<iframe src="', $this->v2GetEntryURL($rid), '" width="100%" height="90%"></iframe>';
+        echo '<iframe src="', $this->v2GetEntryURL($rid), '&m=-1" width="100%" height="90%"></iframe>';
     }
 
     private function v2GetEntryURL($rid)
