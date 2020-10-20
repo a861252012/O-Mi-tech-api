@@ -605,7 +605,7 @@ class ApiController extends Controller
                 'site_id' => $site_id,
             ]));
         /** 检查状态 */
-        $timeout = microtime(true) + 3;
+        $timeout = microtime(true) + 10;
         while (true) {
             if ($redis->exists("hplat_user:$uid")) {
                 break;
