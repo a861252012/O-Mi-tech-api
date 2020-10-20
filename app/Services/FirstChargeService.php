@@ -74,8 +74,8 @@ class FirstChargeService
         }
 
         $gift = [
-            ['item_id' => '1', 'uid' => $uid, 'status' => 0],
-            ['item_id' => '2', 'uid' => $uid, 'status' => 0]
+            ['item_id' => '1', 'uid' => $uid, 'status' => 0, 'get_type' => 1],
+            ['item_id' => '2', 'uid' => $uid, 'status' => 0, 'get_type' => 1]
         ];
 
         DB::beginTransaction();
