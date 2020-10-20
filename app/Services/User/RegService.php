@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 class RegService
 {
     const KEY_IP_DAILY_PREFIX = 'reg:ip_daily:';
-    const NO_CAPTCHA_QUOTA = 2;
+    const NO_CAPTCHA_QUOTA = 0;
     const BLOCK_CNTS = 10;
     const STATUS_OK = 0;
     const STATUS_NEED_CAPTCHA = 1;
