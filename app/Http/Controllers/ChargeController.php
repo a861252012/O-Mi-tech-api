@@ -18,6 +18,7 @@ use App\Models\Recharge;
 use App\Models\RechargeMoney;
 use App\Models\Users;
 use App\Services\Charge\OnePayService;
+use App\Services\Charge\PayPalService;
 use App\Services\Charge\ChargeService;
 use App\Services\FirstChargeService;
 use App\Services\User\UserService;
@@ -43,6 +44,9 @@ class ChargeController extends Controller
 
     /* One Pay */
     const CHANNEL_ONE_PAY = 13;
+
+    /* PAYPAL */
+    const CHANNEL_PAYPAL = 15;
 
     private $codeMsg = array(
         -1 => '未知',
@@ -306,6 +310,13 @@ class ChargeController extends Controller
                     $this->setStatus(0, __('messages.Charge.pay.pay_system_error'));
                     return $this->jsonOutput();
                 }
+            case self::CHANNEL_PAYPAL:
+                    $act = '3';
+                    $payPalService = resolve(PayPalService::class);
+                    $orderId = $payPalService->genOrderId();
+                    $postdata = $payPalService->getAccount();
+
+                    break;
             default:
                 $charge = resolve('charge');
                 $orderId = $charge->getMessageNo();
