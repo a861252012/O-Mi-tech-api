@@ -11,14 +11,6 @@ class PayPalService
 {
     const ORDER_PREFIX = 'PPL';
 
-    /* PayPal設定 */
-    private $payPalAccount;
-
-    public function __construct()
-    {
-        $this->payPalAccount = json_decode(SiteSer::globalSiteConfig('paypal_account'));
-    }
-
     /* 產生訂單id */
     public function genOrderId(): string
     {
@@ -33,6 +25,6 @@ class PayPalService
     /* 取得PayPal帳戶資訊 */
     public function getAccount()
     {
-        return json_encode($this->payPalAccount);
+        return SiteSer::globalSiteConfig('paypal_account');
     }
 }
