@@ -924,19 +924,162 @@ class MemberController extends Controller
     }
 
     /**
-     * 用户中心 消费记录
-     */
-    public function consume()
+     * @api {get} /api/[m]/consume 用户中心 消费记录
+     *
+     * @apiDescription mobile版URL前綴: /api/m
+     *
+     * pc版URL前綴: /api
+     * @apiGroup Member
+     * @apiName consume
+     * @apiVersion 1.1.0
+     *
+     * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
+     * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
+     *
+     * @apiParam {String} [startTime] 起日(不帶則預設一個月前) (Y-m-d)
+     * @apiParam {String} [endTime] 迄日(不帶則預設為當前時間) (Y-m-d)
+     * @apiParam {int} [page] 第幾頁 (不帶則預設第一頁)
+     *
+     * @apiError (Error Status) 0 时间区间错误
+     *
+     * @apiSuccess {int} status 執行狀態(1為成功,0為時間區間錯誤)
+     * @apiSuccess {Array} data
+     * @apiSuccess {Array} data.list
+     * @apiSuccess {int} data.list.current_page 目前頁碼
+     * @apiSuccess {Array} data.list.date
+     * @apiSuccess {int} data.list.date.id 流水號
+     * @apiSuccess {int} data.list.date.send_uid 送禮的用戶id
+     * @apiSuccess {int} data.list.date.rec_uid 收禮的用戶id
+     * @apiSuccess {int} data.list.date.gid 禮物id
+     * @apiSuccess {int} data.list.date.gnum 禮物數量
+     * @apiSuccess {String} data.list.date.created 送禮時間
+     * @apiSuccess {int} data.list.date.rid 主播id
+     * @apiSuccess {int} data.list.date.points 消費鑽石數
+     * @apiSuccess {int} data.list.date.rate 分成比例
+     * @apiSuccess {int} data.list.date.origin 用戶來源
+     * @apiSuccess {int} data.list.date.site_id 站點
+     * @apiSuccess {int} data.list.date.guard_id 守護id
+     * @apiSuccess {int} data.list.date.guard_days 守護天數
+     * @apiSuccess {String} data.list.date.name 禮物名稱
+     * @apiSuccess {int} data.list.date.price 禮物價格
+     * @apiSuccess {String} data.list.date.desc 禮物詳細資訊
+     * @apiSuccess {String} data.list.date.category_name 禮物種類名稱
+     * @apiSuccess {int} data.list.date.category 禮物類別
+     * @apiSuccess {int} data.list.date.unit_type 購買單位方式,1=計件;2=計時
+     * @apiSuccess {int} data.list.date.is_show 是否上架 （0=下架,1=上架)
+     * @apiSuccess {int} data.list.date.is_show 是否上禮物跑到 （0=不上,1=上)
+     * @apiSuccess {String} data.list.date.create_time 禮物上線時間
+     * @apiSuccess {int} data.list.date.sort_order 商品排序
+     * @apiSuccess {int} data.list.date.time
+     * @apiSuccess {String} data.list.date.playType
+     * @apiSuccess {String} data.list.date.type
+     * @apiSuccess {int} data.list.date.x x偏移
+     * @apiSuccess {int} data.list.date.y y偏移
+     * @apiSuccess {int} data.list.date.xScale x縮放
+     * @apiSuccess {int} data.list.date.yScale y縮放
+     *
+     * @apiSuccess {Int} data.list.first_page_url 第一頁url
+     * @apiSuccess {Int} data.list.from 從第幾頁換頁
+     * @apiSuccess {Int} data.list.last_page 最後一頁頁碼
+     * @apiSuccess {Int} data.list.last_page_url 最後一頁url
+     * @apiSuccess {Int} data.list.next_page_url 下一頁url
+     * @apiSuccess {Int} data.list.path
+     * @apiSuccess {Int} data.list.per_page 筆數
+     * @apiSuccess {Int} data.list.prev_page_url 前一頁url
+     * @apiSuccess {Int} data.list.to 跳轉到到第幾頁
+     * @apiSuccess {Int} data.list.total 總頁數
+     *
+     * @apiSuccessExample {json} 成功回應
+     * {
+    "status": 1,
+    "data": {
+    "list": {
+    "current_page": 3,
+    "data": [
     {
-        $uid = Auth::id();
-        /*      $data = MallList::with('goods')->where('send_uid', $uid)
-              ->where('gid', '>', 0)
-              ->orderBy('created', 'DESC')->paginate();*/
+    "id": 16780810,
+    "send_uid": 9493715,
+    "rec_uid": 9493607,
+    "gid": 120001,
+    "gnum": 1,
+    "created": "2020-03-13 16:23:52",
+    "rid": 9493607,
+    "points": 1,
+    "rate": 50,
+    "origin": 12,
+    "site_id": 1,
+    "guard_id": 3,
+    "guard_days": 30,
+    "name": "私人直升机（月）",
+    "price": 1500,
+    "desc": "坐骑",
+    "category_name": "坐骑",
+    "category": 1002,
+    "unit_type": 2,
+    "is_show": 1,
+    "is_cast": 0,
+    "create_time": "2016-06-02",
+    "sort_order": 1,
+    "time": 6,
+    "playType": "",
+    "type": "swf",
+    "x": -181,
+    "y": -198,
+    "xScale": 1,
+    "yScale": 1
+    }
+    ],
+    "first_page_url": "http:\/\/localhost\/api\/m\/consume?page=1",
+    "from": 31,
+    "last_page": 3,
+    "last_page_url": "http:\/\/localhost\/api\/m\/consume?page=3",
+    "next_page_url": null,
+    "path": "http:\/\/localhost\/api\/m\/consume",
+    "per_page": 15,
+    "prev_page_url": "http:\/\/localhost\/api\/m\/consume?page=2",
+    "to": 31,
+    "total": 31
+    }
+    },
+    "msg": ""
+    }
+     */
+    public function consume(Request $request)
+    {
+        $uxStart = strtotime($request->startTime);
+        $uxEnd = strtotime($request->endTime);
+
+        /* 開始時間處理 */
+        if (empty($uxStart)) {
+            $start = date('Y-m-d 00:00:00', strtotime('-1 month'));
+        } else {
+            $start = date('Y-m-d 00:00:00', $uxStart);
+        }
+
+        /* 結束時間處理 */
+        if (empty($uxEnd)) {
+            $end = date('Y-m-d 23:59:59');
+        } else {
+            $end = date('Y-m-d 23:59:59', $uxEnd);
+        }
+
+        /* 驗證時間區間 */
+        if ($uxStart > $uxEnd) {
+            return JsonResponse::create(
+                [
+                    'status' => 0,
+                    'msg' => __('messages.Roulette.getHistory.date_range_error')
+                ]
+            );
+        }
 
         $data = MallList::query()->leftJoin('video_goods', function ($leftJoin) {
             $leftJoin->on('video_goods.gid', '=', 'video_mall_list.gid');
         })
-            ->where('video_mall_list.send_uid', $uid)
+            ->when(!empty($start) && !empty($end), function ($query) use ($start, $end) {
+                $query->whereBetween('video_mall_list.created', [$start, $end]);
+            })
+            ->where('video_mall_list.send_uid', Auth::id())
             ->where('video_mall_list.gid', '>', 0)
             ->where('video_goods.category', '=', 1002)
             ->orderBy('video_mall_list.created', 'DESC')

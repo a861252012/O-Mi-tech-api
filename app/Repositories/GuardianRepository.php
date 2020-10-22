@@ -63,4 +63,12 @@ class GuardianRepository
 
         return $headimg;
     }
+
+    public function getHistory($uid, $start, $end)
+    {
+        return $this->guardian->where('uid', $uid)
+            ->whereBetween('created_at', [$start, $end])
+            ->orderBy('created_at', 'desc')
+            ->paginate();
+    }
 }
