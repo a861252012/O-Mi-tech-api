@@ -70,8 +70,13 @@ class GameController extends Controller
                 $this->setStatus(103, __('messages.Game.entry.connect_failed'));
                 return $this->jsonOutput();
             }
+            
+            $gameCode = (string)$request->game_code;
+            if ($gameCode == '_' || empty($gameCode)) {
+                $gameCode = '';
+            }
 
-            $result = $this->gameService->login($request->game_code);
+            $result = $this->gameService->login($gameCode);
             if (empty($result)) {
                 Log::error('執行遊戲失敗');
                 $this->setStatus(102, __('messages.Game.entry.connect_failed'));
