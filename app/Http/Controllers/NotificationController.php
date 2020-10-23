@@ -74,33 +74,7 @@ class NotificationController extends Controller
     public function show()
     {
         try {
-//            $result = $this->roomOneToMoreService->getShowInFiveMins();
-            
-            $result = array();
-            $result[] = [
-                'uid'      => 9492034,
-                'nickname' => 'Isaac3',
-                'price'    => 399,
-                'cover'    => '9492034_1573453712.jpg',
-                'time'     => 60,
-            ];
-
-            $result[] = [
-                'uid'      => 9491968,
-                'nickname' => '艾薩科超級長的暱稱補滿',
-                'price'    => 399,
-                'cover'    => '9491968_1588682045.jpeg',
-                'time'     => 30,
-            ];
-
-            $result[] = [
-                'uid'      => 9491878,
-                'nickname' => 'Ace',
-                'price'    => 399,
-                'cover'    => '9491878_1571217104.jpg',
-                'time'     => 10,
-            ];
-            
+            $result = $this->roomOneToMoreService->getShowInFiveMins();
             $this->setStatus(1, __('messages.success'));
             $this->setRootData('data', $result);
             return $this->jsonOutput();
