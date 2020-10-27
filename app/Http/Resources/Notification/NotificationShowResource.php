@@ -20,9 +20,9 @@ class NotificationShowResource extends JsonResource
     {
         return [
             'uid'      => $this->uid,
-            'nickname' => $this->user->nickname,
+            'nickname' => $this->userAll->nickname,
             'price'    => $this->points,
-            'cover'    => $this->user->cover,
+            'cover'    => $this->userAll->cover,
             'time'     => $this->countdown,
         ];
     }
