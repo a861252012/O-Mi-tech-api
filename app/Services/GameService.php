@@ -10,6 +10,7 @@ namespace App\Services;
 use App\Facades\SiteSer;
 use App\Repositories\SiteConfigsRepository;
 use App\Repositories\UserAccRepository;
+use App\Repositories\UsersRepository;
 use App\Traits\CurlAdapter;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
@@ -38,13 +39,16 @@ class GameService
 
     protected $userAccRepository;
     protected $siteConfigsRepository;
+    protected $usersRepository;
 
     public function __construct(
         UserAccRepository $userAccRepository,
-        SiteConfigsRepository $siteConfigsRepository
+        SiteConfigsRepository $siteConfigsRepository,
+        UsersRepository $usersRepository
     ) {
         $this->userAccRepository = $userAccRepository;
         $this->siteConfigsRepository = $siteConfigsRepository;
+        $this->usersRepository = $usersRepository;
     }
 
     /* 創建簽名 */
@@ -252,14 +256,20 @@ class GameService
     }
 
     /* 儲值 */
-    public function deposit(int $amount)
+    public function deposit(int $uid, int $amount)
     {
+        /* 檢查user */
+        if (!$this->usersRepository->getUserById($uid)) {
+            Log::error('查無user');
+            return false;
+        }
+        
         /* 取得遊戲對應帳密 */
-        $user = $this->userAccRepository->getByUid(auth()->id());
+        $user = $this->userAccRepository->getByUid($uid);
 
         /* 如查無對應帳號，則創建 */
         if ($user->isEmpty()) {
-            if (!$this->createAcc()) {
+            if (!$this->createAcc($uid)) {
                 return false;
             }
         } else {

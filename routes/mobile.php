@@ -278,9 +278,11 @@ Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopControl
 Route::prefix('game')->group(function () {
 	Route::get('game_list','GameController@gameList');
 	
+	/* 遊戲儲值 測試用 */
+    Route::post('deposit','GameController@deposit');
+	
 	Route::middleware(['login_auth:mobile'])->group(function () {
         Route::post('entry','GameController@entry');
-        Route::post('deposit','GameController@deposit');
     });
 });
 
@@ -312,6 +314,3 @@ Route::prefix('guardian')->group(function () {
 
 /* 測試用entry point */
 Route::any('omey', 'OmeyController@index');
-
-/* 測試hqt 遊戲紀錄 */
-Route::any('hqt/bet_record', 'GameController@betRecord');

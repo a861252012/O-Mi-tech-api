@@ -8,6 +8,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Game\GameDeposit;
 use App\Http\Requests\Game\GameEntry;
 use App\Services\GameListService;
 use App\Services\GameService;
@@ -118,9 +119,17 @@ class GameController extends Controller
      "data": []
      }
      */
-    public function deposit(Request $request)
+    public function deposit(GameDeposit $request)
     {
         try {
+            $now = time();
+            $chkIn10Sec = strtotime('-30 seconds', $now);
+            $ot = strtotime($request->ot);
+            if ($ot > $now || $ot < $chkIn10Sec) {
+                $this->setStatus(105, __('messages.Game.deposit.failed'));
+                return $this->jsonOutput();
+            }
+            
             if (!$this->gameService->checkSetting()) {
                 $this->setStatus(103, __('messages.Game.deposit.status_down'));
                 return $this->jsonOutput();
@@ -130,8 +139,8 @@ class GameController extends Controller
                 $this->setStatus(104, __('messages.Game.deposit.amount_required'));
                 return $this->jsonOutput();
             }
-
-            $result = $this->gameService->deposit($request->amount);
+            
+            $result = $this->gameService->deposit($request->uid, $request->amount);
             if (empty($result)) {
                 $this->setStatus(102, __('messages.Game.deposit.failed'));
                 return $this->jsonOutput();
