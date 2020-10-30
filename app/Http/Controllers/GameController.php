@@ -68,13 +68,19 @@ class GameController extends Controller
         try {
             if (!$this->gameService->checkSetting()) {
                 info('設置狀態為關閉');
-                $this->setStatus(103, __('messages.Game.entry.connect_failed'));
+                $this->setStatus(103, __('messages.Game.entry.closed'));
                 return $this->jsonOutput();
             }
-            
+
             $gameCode = (string)$request->game_code;
             if ($gameCode == '_' || empty($gameCode)) {
                 $gameCode = '';
+            } else {
+                if (!$this->gameService->checkGameCode($gameCode)) {
+                    info('遊戲狀態為關閉');
+                    $this->setStatus(103, __('messages.Game.entry.closed'));
+                    return $this->jsonOutput();
+                }
             }
 
             $result = $this->gameService->login($gameCode);

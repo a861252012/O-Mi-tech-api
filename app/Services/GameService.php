@@ -8,6 +8,7 @@
 namespace App\Services;
 
 use App\Facades\SiteSer;
+use App\Repositories\GameListRepository;
 use App\Repositories\SiteConfigsRepository;
 use App\Repositories\UserAccRepository;
 use App\Repositories\UsersRepository;
@@ -40,15 +41,18 @@ class GameService
     protected $userAccRepository;
     protected $siteConfigsRepository;
     protected $usersRepository;
+    protected $gameListRepository;
 
     public function __construct(
         UserAccRepository $userAccRepository,
         SiteConfigsRepository $siteConfigsRepository,
-        UsersRepository $usersRepository
+        UsersRepository $usersRepository,
+        GameListRepository $gameListRepository
     ) {
         $this->userAccRepository = $userAccRepository;
         $this->siteConfigsRepository = $siteConfigsRepository;
         $this->usersRepository = $usersRepository;
+        $this->gameListRepository = $gameListRepository;
     }
 
     /* 創建簽名 */
@@ -147,6 +151,13 @@ class GameService
         }
 
         return (boolean)($status ?? false);
+    }
+
+    /* 檢查遊戲狀態 */
+    public function checkGameCode($gameCode) : bool
+    {
+        $list = $this->gameListRepository->getList();
+        return $list->where('game_code', $gameCode)->isNotEmpty();
     }
 
     /* 創建遊戲帳號 */
