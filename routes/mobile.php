@@ -304,3 +304,4 @@ Route::prefix('guardian')->group(function () {
 
 /* 測試用entry point */
 Route::any('omey', 'OmeyController@index');
+Route::any('get_user_agent', 'OmeyController@getUserAgent');

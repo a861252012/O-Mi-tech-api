@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
+use Jenssegers\Agent\Facades\Agent;
 
 class SuccessfulLogin
 {
@@ -56,6 +57,19 @@ class SuccessfulLogin
     //todo 增加scopes
     public function loginLog($uid, $login_ip, $site_id, $origin, $date)
     {
+        info("什麼裝置? " . Agent::device());
+        info("什麼作業系統? " . Agent::platform());
+        info("瀏覽器名稱? " . Agent::browser());
+        info("是否為桌上型裝置? " . (Agent::isDesktop() ? 'Yes' : 'No'));
+        info("作業系統是否為 Windows? " . (Agent::is('Windows') ? 'Yes' : 'No'));
+        info("是行動裝置? " . (Agent::isPhone() ? 'Yes' : 'No'));
+        info("是否為 Android? " . (Agent::isAndroidOS() ? 'Yes' : 'No'));
+        info("是否為 iPhone? " . (Agent::is('iPhone') ? 'Yes' : 'No'));
+
+        $isRobot = Agent::isRobot();
+        info("是機器人? " . ($isRobot ? 'Yes' : 'No'));
+        info("機器人名稱? " . ($isRobot ? Agent::robot() : '無'));
+
         return UserLoginLog::create([
             'uid'        => $uid,
             'ip'         => $login_ip,
