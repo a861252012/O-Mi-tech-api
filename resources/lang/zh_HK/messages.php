@@ -146,6 +146,7 @@ return [
     'Charge.checkCharge.error' => '充提查詢介面出問題：  :errstr',
     'Charge.checkCharge.top_up_failed' => '訂單未成功支付!',
     'Charge.checkCharge.result' => '該訂單充值 :msg ！',
+    'Game.entry.closed' => '游戏关闭',
     'Game.entry.connect_failed' => '伺服器連線失敗',
     'Game.deposit.status_down' => '設定狀態為關閉',
     'Game.deposit.amount_required' => '無儲值金額',
