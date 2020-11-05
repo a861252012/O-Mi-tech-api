@@ -23,6 +23,7 @@ use App\Models\MallList;
 use App\Services\Message\MessageService;
 use Carbon\Carbon;
 use DB;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Auth;
@@ -497,15 +498,36 @@ class GuardianService
         return $this->userHostRepository->updateOrCreate(Auth::id(), ['cover' => $imgCode]);
     }
 
-    /* 主播海報檔案處理 */
-    public function getGuardianHistory()
+    /* 取得守護紀錄 */
+    public function getGuardianHistory($uid, $startTime, $endTime)
     {
-        $list = Auth::user()->guardian()->paginate()->toArray();
+        $uxStart = strtotime($startTime);
+        $uxEnd = strtotime($endTime);
 
-        foreach ($list['data'] as $k => $v) {
-            $list['data'][$k]['expire_date'] = Carbon::parse($v['expire_date'])->copy()->subDay()->toDateString();
+        /* 開始時間處理 */
+        if (empty($uxStart)) {
+            $start = date('Y-m-d 00:00:00', strtotime('-1 month'));
+        } else {
+            $start = date('Y-m-d 00:00:00', $uxStart);
         }
 
-        return $list;
+        /* 結束時間處理 */
+        if (empty($uxEnd)) {
+            $end = date('Y-m-d 23:59:59');
+        } else {
+            $end = date('Y-m-d 23:59:59', $uxEnd);
+        }
+
+        /* 驗證時間區間 */
+        if ($uxStart > $uxEnd) {
+            return JsonResponse::create(
+                [
+                    'status' => 0,
+                    'msg' => __('messages.Roulette.getHistory.date_range_error')
+                ]
+            );
+        }
+
+        return $this->guardianRepository->getHistory($uid, $start, $end);
     }
 }

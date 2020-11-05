@@ -5,8 +5,10 @@
  * @date 2019/11/12
  * @apiDefine Game 遊戲管理
  */
+
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Game\GameDeposit;
 use App\Http\Requests\Game\GameEntry;
 use App\Services\GameListService;
 use App\Services\GameService;
@@ -16,130 +18,149 @@ use Illuminate\Support\Facades\Redis;
 
 class GameController extends Controller
 {
-	protected $gameService;
-	protected $gameListService;
+    protected $gameService;
+    protected $gameListService;
 
-	public function __construct(
-		Request $request,
-		GameService $gameService,
+    public function __construct(
+        Request $request,
+        GameService $gameService,
         GameListService $gameListService
-	){
-		parent::__construct($request);
+    ) {
+        parent::__construct($request);
 
-		$this->gameService = $gameService;
-		$this->gameListService = $gameListService;
-	}
+        $this->gameService = $gameService;
+        $this->gameListService = $gameListService;
+    }
 
-	/**
-	 * @api {get} /game/entry 遊戲接入口
-	 * @apiDescription mobile版URL前綴: /api/m
-	 *
-	 * pc版URL前綴: /api
-	 * @apiGroup Game
-	 * @apiName HQT遊戲平台
-	 * @apiVersion 1.0.0
-	 *
-	 * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
-	 * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
+    /**
+     * @api {get} /game/entry 遊戲接入口
+     * @apiDescription mobile版URL前綴: /api/m
+     *
+     * pc版URL前綴: /api
+     * @apiGroup Game
+     * @apiName HQT遊戲平台
+     * @apiVersion 1.0.0
+     *
+     * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
+     * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
      *
      * @apiParam {String} gp_id 遊戲商ID
      * @apiParam {String} game_code 遊戲代碼
-	 *
+     *
      * @apiError (Error Status) 0 輸入參數相關錯誤
-	 * @apiError (Error Status) 102 執行遊戲失敗
-	 * @apiError (Error Status) 103 設置狀態為關閉
-	 * @apiError (Error Status) 999 API執行錯誤
-	 *
-	 * @apiSuccess {String} game_url 遊戲網址
-	 *
-	 * @apiSuccessExample 成功回應
-	 * {
-	"status": 1,
-	"msg": "成功",
-	"data": {
-	"game_url": "http:\/\/localhost\/index.html?uid=52280&loadbg=aaa&token=TOKEN_03b6aa3335fa29bdc091ec4cc6d34511"
-	}
-	}
-	 */
-	public function entry(GameEntry $request)
-	{
-		try {
-			if(!$this->gameService->checkSetting()) {
-				info('設置狀態為關閉');
-				$this->setStatus(103, __('messages.Game.entry.connect_failed'));
-				return $this->jsonOutput();
-			}
+     * @apiError (Error Status) 102 執行遊戲失敗
+     * @apiError (Error Status) 103 設置狀態為關閉
+     * @apiError (Error Status) 999 API執行錯誤
+     *
+     * @apiSuccess {String} game_url 遊戲網址
+     *
+     * @apiSuccessExample 成功回應
+     * {
+     "status": 1,
+     "msg": "成功",
+     "data": {
+     "game_url": "http:\/\/localhost\/index.html?uid=52280&loadbg=aaa&token=TOKEN_03b6aa3335fa29bdc091ec4cc6d34511"
+     }
+     }
+     */
+    public function entry(GameEntry $request)
+    {
+        try {
+            if (!$this->gameService->checkSetting()) {
+                info('設置狀態為關閉');
+                $this->setStatus(103, __('messages.Game.entry.closed'));
+                return $this->jsonOutput();
+            }
 
-			$result = $this->gameService->login($request->game_code);
-			if(empty($result)) {
-				Log::error('執行遊戲失敗');
-				$this->setStatus(102, __('messages.Game.entry.connect_failed'));
-				return $this->jsonOutput();
-			}
+            $gameCode = (string)$request->game_code;
+            if ($gameCode == '_' || empty($gameCode)) {
+                $gameCode = '';
+            } else {
+                if (!$this->gameService->checkGameCode($gameCode)) {
+                    info('遊戲狀態為關閉');
+                    $this->setStatus(103, __('messages.Game.entry.closed'));
+                    return $this->jsonOutput();
+                }
+            }
 
-			$this->setStatus(1, __('messages.success'));
-			$this->setData('game_url', $result['result']);
-			return $this->jsonOutput();
+            $result = $this->gameService->login($gameCode);
+            if (empty($result)) {
+                Log::error('執行遊戲失敗');
+                $this->setStatus(102, __('messages.Game.entry.connect_failed'));
+                return $this->jsonOutput();
+            }
 
-		} catch (\Exception $e) {
-			Log::error($e->getMessage());
-			$this->setStatus(999, __('messages.Game.entry.connect_failed'));
-			return $this->jsonOutput();
-		}
-	}
+            $this->setStatus(1, __('messages.success'));
+            $this->setData('game_url', $result['result']);
+            return $this->jsonOutput();
 
-	/**
-	 * @api {get} /game/deposit 儲值
-	 * @apiDescription mobile版URL前綴: /api/m
-	 *
-	 * pc版URL前綴: /api
-	 * @apiGroup Game
-	 * @apiName deposit
-	 * @apiVersion 1.0.0
-	 *
-	 * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
-	 * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
-	 *
-	 * @apiError (Error Status) 102 執行遊戲失敗
-	 * @apiError (Error Status) 103 設置狀態為關閉
-	 * @apiError (Error Status) 104 無儲值金額
-	 * @apiError (Error Status) 999 API執行錯誤
-	 *
-	 * @apiSuccessExample 成功回應
-	 * {
-	"status": 1,
-	"msg": "成功",
-	"data": []
-	}
-	 */
-	public function deposit(Request $request)
-	{
-		try {
-			if(!$this->gameService->checkSetting()) {
-				$this->setStatus(103, __('messages.Game.deposit.status_down'));
-				return $this->jsonOutput();
-			}
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            $this->setStatus(999, __('messages.Game.entry.connect_failed'));
+            return $this->jsonOutput();
+        }
+    }
 
-			if(!$request->get('amount')) {
-				$this->setStatus(104, __('messages.Game.deposit.amount_required'));
-				return $this->jsonOutput();
-			}
+    /**
+     * @api {get} /game/deposit 儲值
+     * @apiDescription mobile版URL前綴: /api/m
+     *
+     * pc版URL前綴: /api
+     * @apiGroup Game
+     * @apiName deposit
+     * @apiVersion 1.0.0
+     *
+     * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
+     * @apiHeader (Web Header) {String} Cookie Web 須帶入登入後的 SESSID
+     *
+     * @apiError (Error Status) 102 執行遊戲失敗
+     * @apiError (Error Status) 103 設置狀態為關閉
+     * @apiError (Error Status) 104 無儲值金額
+     * @apiError (Error Status) 999 API執行錯誤
+     *
+     * @apiSuccessExample 成功回應
+     * {
+     "status": 1,
+     "msg": "成功",
+     "data": []
+     }
+     */
+    public function deposit(GameDeposit $request)
+    {
+        try {
+            $now = time();
+            $chkIn10Sec = strtotime('-30 seconds', $now);
+            $ot = strtotime($request->ot);
+            if ($ot > $now || $ot < $chkIn10Sec) {
+                $this->setStatus(105, __('messages.Game.deposit.failed'));
+                return $this->jsonOutput();
+            }
+            
+            if (!$this->gameService->checkSetting()) {
+                $this->setStatus(103, __('messages.Game.deposit.status_down'));
+                return $this->jsonOutput();
+            }
 
-			$result = $this->gameService->deposit($request->amount);
-			if(empty($result)) {
-				$this->setStatus(102, __('messages.Game.deposit.failed'));
-				return $this->jsonOutput();
-			}
+            if (!$request->get('amount')) {
+                $this->setStatus(104, __('messages.Game.deposit.amount_required'));
+                return $this->jsonOutput();
+            }
+            
+            $result = $this->gameService->deposit($request->uid, $request->amount);
+            if (empty($result)) {
+                $this->setStatus(102, __('messages.Game.deposit.failed'));
+                return $this->jsonOutput();
+            }
 
-			$this->setStatus(1, __('messages.success'));
-			return $this->jsonOutput();
+            $this->setStatus(1, __('messages.success'));
+            return $this->jsonOutput();
 
-		} catch (\Exception $e) {
-			Log::error($e->getMessage());
-			$this->setStatus(999, __('messages.apiError'));
-			return $this->jsonOutput();
-		}
-	}
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            $this->setStatus(999, __('messages.apiError'));
+            return $this->jsonOutput();
+        }
+    }
 
     /**
      * @api {get} /game/game_list 遊戲列表
@@ -167,42 +188,42 @@ class GameController extends Controller
      *
      * @apiSuccessExample 成功回應
      * {
-    "status": 1,
-    "msg": "OK",
-    "data": {
-    "game_list": [
-    {
-    "id": 27,
-    "gp_id": "GPHQT",
-    "game_code": "bcbm",
-    "game_name": "奔驰宝马",
-    "game_icon": "http:\/\/10.2.121.240:9869\/43975bf54ad7b93c6b84a5ac8a42341a.jpg",
-    "sort": 14
-    },
-    {
-    "id": 21,
-    "gp_id": "GPHQT",
-    "game_code": "ebg",
-    "game_name": "二八杠",
-    "game_icon": "http:\/\/10.2.121.240:9869\/43975bf54ad7b93c6b84a5ac8a42341a.jpg",
-    "sort": 13
-    },
-    {
-    "id": 16,
-    "gp_id": "GPHQT",
-    "game_code": "qznn",
-    "game_name": "抢庄牛牛",
-    "game_icon": "http:\/\/10.2.121.240:9869\/43975bf54ad7b93c6b84a5ac8a42341a.jpg",
-    "sort": 12
-    }
-    ]
-    }
-    }
+     * "status": 1,
+     * "msg": "OK",
+     * "data": {
+     * "game_list": [
+     * {
+     * "id": 27,
+     * "gp_id": "GPHQT",
+     * "game_code": "bcbm",
+     * "game_name": "奔驰宝马",
+     * "game_icon": "http:\/\/10.2.121.240:9869\/43975bf54ad7b93c6b84a5ac8a42341a.jpg",
+     * "sort": 14
+     * },
+     * {
+     * "id": 21,
+     * "gp_id": "GPHQT",
+     * "game_code": "ebg",
+     * "game_name": "二八杠",
+     * "game_icon": "http:\/\/10.2.121.240:9869\/43975bf54ad7b93c6b84a5ac8a42341a.jpg",
+     * "sort": 13
+     * },
+     * {
+     * "id": 16,
+     * "gp_id": "GPHQT",
+     * "game_code": "qznn",
+     * "game_name": "抢庄牛牛",
+     * "game_icon": "http:\/\/10.2.121.240:9869\/43975bf54ad7b93c6b84a5ac8a42341a.jpg",
+     * "sort": 12
+     * }
+     * ]
+     * }
+     * }
      */
-	public function gameList()
+    public function gameList()
     {
         try {
-            if(!$this->gameService->checkSetting()) {
+            if (!$this->gameService->checkSetting()) {
                 info('設置狀態為關閉');
                 $this->setStatus(201, __('messages.Game.gameList.maintained'));
                 return $this->jsonOutput();
@@ -219,6 +240,26 @@ class GameController extends Controller
             return $this->jsonOutput();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
+            $this->setStatus(999, __('messages.apiError'));
+            return $this->jsonOutput();
+        }
+    }
+
+    /**
+     * HQT遊戲紀錄測試
+     */
+    public function betRecord(Request $request)
+    {
+        try {
+            if (!$this->gameService->checkSetting()) {
+                info('設置狀態為關閉');
+                $this->setStatus(103, __('messages.Game.entry.connect_failed'));
+                return $this->jsonOutput();
+            }
+
+            dd($this->gameService->betRecord($request->game_id ?? '', $request->start_time, $request->end_time, $request->page));
+        } catch (\Exception $e) {
+            report($e);
             $this->setStatus(999, __('messages.apiError'));
             return $this->jsonOutput();
         }

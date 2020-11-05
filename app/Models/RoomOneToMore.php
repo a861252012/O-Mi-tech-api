@@ -22,4 +22,9 @@ class RoomOneToMore extends \Illuminate\Database\Eloquent\Model
     {
         return $this->hasMany('App\Models\UserBuyOneToMore','onetomore','id');
     }
+
+    public function userAll()
+    {
+        return $this->hasOne('App\Models\Usersall','uid','uid');
+    }
 }

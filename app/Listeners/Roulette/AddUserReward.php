@@ -70,6 +70,7 @@ class AddUserReward
                             'item_id' => RouletteItem::ITEM_MAP[$type],
                             'uid'     => $event->user->uid,
                             'status'  => 0,
+                            'get_type'  => 2,
                         ];
                     }
 

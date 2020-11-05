@@ -146,6 +146,7 @@ return [
     'Charge.checkCharge.error' => 'There is a problem with the deposit and withdrawal query interface: :errstr',
     'Charge.checkCharge.top_up_failed' => 'The order was not successfully paid!',
     'Charge.checkCharge.result' => 'Order recharge :msg ！',
+    'Game.entry.closed' => 'Game closed',
     'Game.entry.connect_failed' => 'Server connection failed',
     'Game.deposit.status_down' => 'Status off',
     'Game.deposit.amount_required' => 'No recharge amount',

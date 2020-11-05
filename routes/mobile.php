@@ -50,6 +50,11 @@ Route::group(['prefix' => 'user'], function () {
 
 //移动端登录验证
 Route::group(['middleware' => ['login_auth:mobile']], function () {
+    Route::prefix('notification')->group(function () {
+        /*  主播開車提醒 */
+        Route::get('show', 'NotificationController@show');        
+    });
+    
     //app获取粉丝详情
     Route::get('OneToMore/getfans', ['as' => 'm_onetomorecreate','uses' => 'Mobile\MobileController@getFans']);
     //修改密码
@@ -270,10 +275,15 @@ Route::get('/contact/qr.png', ['name' => 'contactQR', 'uses' => 'PageController@
 Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopController@getGroupAll']);
 
 // 遊戲中心
-Route::prefix('game')->middleware(['login_auth:mobile'])->group(function () {
-	Route::post('entry','GameController@entry');
-	Route::post('deposit','GameController@deposit');
+Route::prefix('game')->group(function () {
 	Route::get('game_list','GameController@gameList');
+	
+	/* 遊戲儲值 測試用 */
+    Route::post('deposit','GameController@deposit');
+	
+	Route::middleware(['login_auth:mobile'])->group(function () {
+        Route::post('entry','GameController@entry');
+    });
 });
 
 /* 安裝資訊紀錄點 */

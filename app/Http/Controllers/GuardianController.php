@@ -10,6 +10,7 @@ namespace App\Http\Controllers;
 
 use App\Facades\SiteSer;
 use App\Http\Requests\Guardian\GuardianBuy;
+use App\Http\Requests\Guardian\GuardianHistory;
 use App\Models\Users;
 use App\Entities\Guardian;
 use App\Services\GuardianService;
@@ -326,6 +327,10 @@ class GuardianController extends Controller
      * @apiName history
      * @apiVersion 1.0.0
      *
+     * @apiParam {String} [startTime] 起日(不帶則預設一個月前) (Y-m-d)
+     * @apiParam {String} [endTime] 迄日(不帶則預設為當前時間) (Y-m-d)
+     * @apiParam {int} [page] 第幾頁 (不帶則預設第一頁)
+     *
      * @apiSuccessExample {json} 成功回應
      *{
      * "status": 1,
@@ -378,11 +383,18 @@ class GuardianController extends Controller
      * }
      * }
      */
-    public function history()
+    public function history(GuardianHistory $request)
     {
         try {
             $this->setStatus(1, __('messages.success'));
-            $this->setData('list', $this->guardianService->getGuardianHistory());
+            $this->setData(
+                'list',
+                $this->guardianService->getGuardianHistory(
+                    Auth::id(),
+                    $request->startTime,
+                    $request->endTime
+                )
+            );
             $this->setData('type', 'guardian');
             return $this->jsonOutput();
         } catch (\Exception $e) {
