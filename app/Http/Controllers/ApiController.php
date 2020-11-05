@@ -741,7 +741,12 @@ class ApiController extends Controller
 
         //偵測客戶端裝置 (11:pc/41:安卓H5/51:iosH5)
         if ($m === 1) {
-            $clientOrigin = Agent::isAndroidOS() ? 41 : 51;
+            if (Agent::isAndroidOS()) {
+                $clientOrigin = 41;
+            }
+            if (Agent::isPhone()) {
+                $clientOrigin = 51;
+            }
         } else {
             $clientOrigin = 11;
         }
