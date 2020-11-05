@@ -865,17 +865,17 @@ class ApiController extends Controller
             }
         }
         $time = date('Y-m-d H:i:s');
+        $userIp = $this->getIp();
+
         Users::where('uid', $this->userInfo['uid'])->update([
-            'last_ip' => $this->getIp(),
+            'last_ip' => $userIp,
             'logined' => $time
         ]);
 
-        $this->userInfo['logined'] = $time;
-
         //紀錄用戶登入log
         UserLoginLog::create([
-            'uid'        => $uid,
-            'ip'         => $this->getIp(),
+            'uid'        => $this->userInfo['uid'],
+            'ip'         => $userIp,
             'site_id'    => SiteSer::siteId(),
             'origin'     => $clientOrigin,
             'created_at' => $time,
