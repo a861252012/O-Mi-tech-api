@@ -788,8 +788,10 @@ class MemberController extends Controller
     public function attention(Request $request)
     {
         $page = $request->get('page', 1);
+        $amt = $request->get('amt', 15);
+        $amt = max(15, min(1000, $amt));
         $userServer = resolve(UserService::class);
-        $data = $userServer->getUserAttens(Auth::id(), $page, $fid = true, $perPage = 15)
+        $data = $userServer->getUserAttens(Auth::id(), $page, $fid = true, $perPage = $amt)
             ->setPath($request->getPathInfo());
         return JsonResponse::create(['data' => ['list' => $data]]);
     }
