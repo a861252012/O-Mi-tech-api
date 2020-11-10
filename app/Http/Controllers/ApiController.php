@@ -886,9 +886,13 @@ class ApiController extends Controller
         $m = $request->get("m");
         if ($m === '1') {
             $url = "/m/live/$room?httphost=". urlencode($httphost);
-        } else {
+        } elseif ($m === '-1') {
+            // flash 版 (將於 2020 年底廢除)
             $h5 = SiteSer::config('h5') ? "/h5" : "";
             $url = "/$room$h5?httphost=$httphost";
+        } else {
+            // 新 PC 直播間
+            $url = "/room/$room?httphost=". urlencode($httphost);
         }
         return RedirectResponse::create($url);
     }
