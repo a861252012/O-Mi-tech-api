@@ -26,6 +26,7 @@ class RoomOneToMoreRepository
         $after = date('Y-m-d H:i:s', strtotime('+5 minutes', $time));
         
         return $this->roomOneToMore->whereBetween('starttime', [$now, $after])
+                ->where('status', 0)
                 ->selectRaw('*, TIMESTAMPDIFF(SECOND, now(), starttime) as countdown')
                 ->get();
     }
