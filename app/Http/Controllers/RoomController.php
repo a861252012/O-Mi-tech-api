@@ -240,6 +240,11 @@ class RoomController extends Controller
             'qq_sideroom' => $qq_sideroom,
         ];
 
+        // 如果是主播進自己房間，回傳固定 roomOrigin 11
+        if ($this->isHost($rid)) {
+            $data['roomOrigin'] = 11;
+        }
+
         if ($h5 === 'h5') {
             unset($data['getRoomKey']);
             $httpStreaming = resolve(RtmpService::class)->setRoom($rid)->isHost(false)->getURL();
