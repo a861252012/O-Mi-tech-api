@@ -89,7 +89,6 @@ class RoomController extends Controller
             $logger->info('current_tid:' . $tid);
             switch ($tid) {
                 case 4:   //一对一房间
-//                    $handle = $user ? $pwd_cmd . 'room_one_to_one' : 'login';
                     $handle = $user ? 'room_one_to_one' : 'login';
                     if (!$roomService->checkCanIn()) {
                         $one2one = $roomService->extend_room;
@@ -119,7 +118,6 @@ class RoomController extends Controller
                     }
                     break;
                 case 6:   //时长房间
-//                    $handle = $user ? $pwd_cmd . 'timecost' : 'login';
                     $handle = $user ? 'timecost' : 'login';
                     if (!$roomService->checkDuration()) {
                         return JsonResponse::create([
@@ -140,20 +138,6 @@ class RoomController extends Controller
                         ]);
                     }
                     break;
-//                case 7:   //时长房间和密码房
-//                    $handle = $user ? $pwd_cmd.'timecost' : 'login';
-//                    if (!($roomService->checkDuration() && $roomService->checkPassword())) {
-//                        return JsonResponse::create([
-//                            'status' => 0, 'data' => [
-//                                'handle' => $handle,
-//                                'rid' => $rid,
-//                                'timecost' => $room['room_status'][6]['timecost'],
-//                                'discount' => $room['discount']['discount'],
-//                                'discountValue' => $room['discount']['discountValue'],
-//                            ],
-//                        ]);
-//                    }
-//                    break;
                 case 8: //一对多
                     // 直接用新欄位給「已購票人數」
                     $one2more = resolve('one2more')->getRunningData();
@@ -210,14 +194,6 @@ class RoomController extends Controller
                     ;
             }
 
-//            if ($pwd_cmd && !($roomService->checkPassword())) {
-//                $handle = $user ? $pwd_cmd : 'login';
-//                $data = [
-//                    'rid' => $rid,
-//                    'handle' => $handle,
-//                ];
-//                return JsonResponse::create(['status' => 0, 'data' => $data]);
-//            }
             /*经clack确认密码房间密码验证不需要5次错误增加验证码逻辑，直接在房间接口处理*/
             $pwd_cmd = $roomService->getPasswordRoom();
             //密码房的业务逻辑
