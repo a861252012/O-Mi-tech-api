@@ -22,6 +22,13 @@ class RedisCacheService
         Redis::expire($key, $ttl);
     }
 
+    public function resetTTLForPC($uid)
+    {
+        $key = self::SID_PREFIX . $uid;
+        $ttl = 7200; //2小時
+        Redis::expire($key, $ttl);
+    }
+
     public function setSidForMobile($uid, $val)
     {
         $key = self::SID_PREFIX . $uid;

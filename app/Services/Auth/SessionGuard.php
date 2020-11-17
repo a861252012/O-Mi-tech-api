@@ -94,6 +94,14 @@ class SessionGuard extends Guard
         $this->updateSid($id, $sid);
     }
 
+    public function extendSession()
+    {
+        $id = $this->id();
+        if ($id) {
+            resolve(RedisCacheService::class)->resetTTLForPC($id);
+        }
+    }
+
     public function getName()
     {
         return self::SEVER_SESS_ID;

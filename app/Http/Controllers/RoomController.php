@@ -84,6 +84,9 @@ class RoomController extends Controller
         $hplat_info = [];
         $hplat_user = [];
 
+        // 延長 session
+        Auth::extendSession();
+
         if (!$this->isHost($rid)) {   //不是主播自己进自己房间
             $tid = $roomService->getCurrentTimeRoomStatus();
             $logger->info('current_tid:' . $tid);
