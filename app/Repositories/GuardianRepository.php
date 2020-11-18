@@ -66,9 +66,11 @@ class GuardianRepository
 
     public function getHistory($uid, $start, $end)
     {
-        return $this->guardian->where('uid', $uid)
-            ->whereBetween('created_at', [$start, $end])
-            ->orderBy('created_at', 'desc')
+        return $this->guardian->join('video_guardian_setting as gs', 'gs.id', '=', 'video_guardian.guard_id')
+            ->where('video_guardian.uid', $uid)
+            ->whereBetween('video_guardian.created_at', [$start, $end])
+            ->orderBy('video_guardian.created_at', 'desc')
+            ->select('video_guardian.*', 'gs.name as guard_name')
             ->paginate();
     }
 }
