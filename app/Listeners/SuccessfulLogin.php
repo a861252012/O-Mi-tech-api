@@ -46,6 +46,7 @@ class SuccessfulLogin
         Users::query()->where('uid', $uid)->update([
             'last_ip' => $login_ip, // 最后登录ip TODO 大流量优化，目前没压力
             'logined' => date('Y-m-d H:i:s'),
+            'origin'  => $origin,
         ]);
 
         //记录登录日志

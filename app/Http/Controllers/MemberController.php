@@ -351,7 +351,8 @@ class MemberController extends Controller
                 'pay_type' => 7,
                 'pay_status' => 2,
                 'nickname' => $userTo['nickname'],
-                'site_id' => $userTo['site_id']
+                'site_id' => $userTo['site_id'],
+                'origin' => $userTo['origin'],
             ]);
 
             //发送成功消息给转帐人
