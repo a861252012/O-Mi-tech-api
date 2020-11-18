@@ -331,57 +331,80 @@ class GuardianController extends Controller
      * @apiParam {String} [endTime] 迄日(不帶則預設為當前時間) (Y-m-d)
      * @apiParam {int} [page] 第幾頁 (不帶則預設第一頁)
      *
+     * @apiError (Error Status) 999 API執行錯誤
+     *
+     * @apiSuccess {Array} data 消費紀錄列表
+     * @apiSuccess {Int} data.id 流水號
+     * @apiSuccess {Int} data.uid 用戶id
+     * @apiSuccess {Int} data.rid 主播id
+     * @apiSuccess {String} data.pay_date 開通/續費日
+     * @apiSuccess {Int} data.valid_day 開通天數(30天/90天/365天)
+     * @apiSuccess {Int} data.price 一般價格
+     * @apiSuccess {Int} data.sale 優惠價格
+     * @apiSuccess {Int} data.pay 消費鑽石
+     * @apiSuccess {String} data.expire_date 到期日
+     * @apiSuccess {Int} data.guard_id 守護id(等級)
+     * @apiSuccess {Int} data.pay_type 守護消費類型(1:開通/2:續費)
+     * @apiSuccess {String} data.created_at 新增時間
+     * @apiSuccess {String} data.updated_at 異動時間
+     * @apiSuccess {String} data.guard_name 守護名稱
+     *
      * @apiSuccessExample {json} 成功回應
      *{
-     * "status": 1,
-     * "msg": "OK",
-     * "data": {
-     * "list": {
-     * "current_page": 1,
-     * "data": [
-     * {
-     * "id": 54,
-     * "uid": 9493540,
-     * "pay_date": "2020-03-13",
-     * "valid_day": 30,
-     * "price": 100,
-     * "sale": 0,
-     * "pay": 100,
-     * "expire_date": "2020-04-13",
-     * "guard_id": 1,
-     * "pay_type": 1,
-     * "created_at": "2020-03-13 17:16:30",
-     * "updated_at": "2020-03-13 09:16:31"
-     * },
-     * {
-     * "id": 55,
-     * "uid": 9493540,
-     * "pay_date": "2020-03-14",
-     * "valid_day": 30,
-     * "price": 100,
-     * "sale": 0,
-     * "pay": 100,
-     * "expire_date": "2020-04-14",
-     * "guard_id": 2,
-     * "pay_type": 2,
-     * "created_at": "2020-03-13 17:17:05",
-     * "updated_at": "2020-03-13 09:17:05"
-     * }
-     * ],
-     * "first_page_url": "http:\/\/localhost\/api\/m\/guardian\/history?page=1",
-     * "from": 1,
-     * "last_page": 1,
-     * "last_page_url": "http:\/\/localhost\/api\/m\/guardian\/history?page=1",
-     * "next_page_url": null,
-     * "path": "http:\/\/localhost\/api\/m\/guardian\/history",
-     * "per_page": 15,
-     * "prev_page_url": null,
-     * "to": 2,
-     * "total": 2
-     * },
-     * "type": "guardian"
-     * }
-     * }
+    "status": 1,
+    "msg": "成功",
+    "data": {
+    "list": {
+    "current_page": 1,
+    "data": [
+    {
+    "id": 55,
+    "uid": 9493540,
+    "rid": 0,
+    "pay_date": "2020-03-14",
+    "valid_day": 30,
+    "price": 100,
+    "sale": 0,
+    "pay": 100,
+    "expire_date": "2020-04-14",
+    "guard_id": 2,
+    "pay_type": 2,
+    "created_at": "2020-11-17 17:17:05",
+    "updated_at": "2020-11-18 16:14:30",
+    "guard_name": "紫色守护"
+    },
+    {
+    "id": 54,
+    "uid": 9493540,
+    "rid": 0,
+    "pay_date": "2020-03-13",
+    "valid_day": 30,
+    "price": 100,
+    "sale": 0,
+    "pay": 100,
+    "expire_date": "2020-04-13",
+    "guard_id": 1,
+    "pay_type": 1,
+    "created_at": "2020-11-17 17:16:30",
+    "updated_at": "2020-11-18 16:14:25",
+    "guard_name": "黄色守护"
+    }
+    ],
+    "first_page_url": "http:\/\/localhost\/api\/m\/guardian\/history?page=1",
+    "from": 1,
+    "last_page": 1,
+    "last_page_url": "http:\/\/localhost\/api\/m\/guardian\/history?page=1",
+    "next_page_url": null,
+    "path": "http:\/\/localhost\/api\/m\/guardian\/history",
+    "per_page": 15,
+    "prev_page_url": null,
+    "to": 2,
+    "total": 2
+    },
+    "type": "guardian"
+    }
+    }
+     *
      */
     public function history(GuardianHistory $request)
     {
