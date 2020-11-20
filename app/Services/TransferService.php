@@ -26,7 +26,13 @@ class TransferService
 
     public function addFailedLog($data)
     {
-        return $this->platformTransferFailedRepository->insertLog($data);
+        return $this->platformTransferFailedRepository->insertLog([
+            'origin'   => (int)$data['origin'],
+            'username' => (string)$data['username'],
+            'points'   => (int)$data['points'],
+            'uuid'     => (int)$data['uuid'],
+            'order_id' => (string)$data['order_id'],
+        ]);
     }
 
     public function addSuccessLog($user, $data)
