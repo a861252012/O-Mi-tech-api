@@ -261,7 +261,11 @@ class SiteService
      */
     public function globalSiteConfig($name)
     {
-        return $this->siteConfig($name, $site_id = 0);
+        return Cache::get("sc:{$name}", function () use ($name) {
+            $data = $this->siteConfig($name, $site_id = 0);
+            Cache::add("sc:{$name}", $data, self::APCU_TTL);
+            return $data;
+        });
     }
 
     public function siteConfig($name, $site_id = null)
