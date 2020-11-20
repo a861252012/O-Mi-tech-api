@@ -70,6 +70,12 @@ return [
             'level' => 'debug',
             'days' => 7,
         ],
+        'csrf' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/csrf.log'),
+            'level' => 'debug',
+            'days' => 7,
+        ],
 
         'slack' => [
             'driver' => 'slack',
