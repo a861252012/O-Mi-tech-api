@@ -290,4 +290,35 @@ class OmeyController extends Controller
         }
         return$ip;
     }
+
+    public function Ltest()
+    {
+        // 需要簽名的欄位
+        $postParams = [
+            'points'    => 111,
+            'username'  => 'test200',
+            'uuid'      => '154037740',
+            'token'     => 'MzJmMFB2Zkp2eUxuL2c1T3l3KzM5VFFoSENQdFFmT0luUHZBUUVYM09ONXFIeXdhdzJLMHFDVy9mS3B5c3A0UUtJN2l5end3RlI1SXlTUVlUdkJ2cFVwcQ==',
+            'locale'    => 'zh',
+            'order_id'  => '1558935241367',
+            'origin'    => 61,
+            'timestamp' => time(),
+        ];
+
+        ksort($postParams);
+
+        // API Key
+        $apiKey = 'L!@LL01GEml,;lHID';
+
+        $dataString = implode('', $postParams) . $apiKey;
+
+        // 簽名
+        $sign = md5($dataString);
+        // c6d0b24b880456113954d30d7765bd98
+
+        $postParams['sign'] = $sign;
+
+        echo json_encode($postParams);
+
+    }
 }

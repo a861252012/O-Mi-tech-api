@@ -471,3 +471,12 @@ Route::any('omey/v2/diamondExpend', 'OmeyController@v2DiamondExpend');
 Route::group(['middleware' => 'login_auth'], function () {
     Route::any('omey/v2/{act?}', 'OmeyController@v2');
 });
+
+/* 測試L項目簽名範例 */
+Route::get('omey/l_test', 'OmeyController@Ltest');
+
+/* v1 */
+Route::prefix('v1')->namespace('v1')->group(function () {
+    /* 鑽石上分 */
+    Route::post('deposit', 'TransferController@deposit');
+});
