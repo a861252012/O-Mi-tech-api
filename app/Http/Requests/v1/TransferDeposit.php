@@ -15,7 +15,7 @@ class TransferDeposit extends VRequest
     public function rules()
     {
         return [
-            'points'    => 'required|integer|min:1',
+            'points'    => 'required|integer|min:1|max:9999',
             'username'  => 'required|string',
             'uuid'      => 'required|string',
             'token'     => 'string|nullable',
@@ -30,6 +30,9 @@ class TransferDeposit extends VRequest
     public function messages()
     {
         return [
+            'points.*'    => ':attribute 參數錯誤!',
+            'points.min'  => ':attribute 不得低於最小下限值!',
+            'points.max'  => ':attribute 超過最大上限值!',
             'username.*'  => ':attribute 參數錯誤!',
             'uuid.*'      => ':attribute 參數錯誤!',
             'token.*'     => ':attribute 參數錯誤!',

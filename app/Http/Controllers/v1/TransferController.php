@@ -35,7 +35,6 @@ class TransferController extends Controller
      */
     public function deposit(TransferDeposit $request)
     {
-//        dd(time());
         try {
 
             /* 設定合作站來源 */
