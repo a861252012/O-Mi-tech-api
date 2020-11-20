@@ -15,7 +15,11 @@ class VerifyCsrfToken extends Middleware
      * @var array
      */
     protected $except = [
-        //
+        // 內部調用
+        'api/omey/*',
+
+        // 合作平台後端調用
+        'api/v1/deposit',
     ];
 
     // 這是一個暫時的處理方式，可由後台先開關。
