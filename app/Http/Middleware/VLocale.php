@@ -34,10 +34,11 @@ class VLocale
             } else {
                 $uid = Auth::guard()->id();
             }
-
-            $userAttrService = resolve(UserAttrService::class);
-            $userLocale = $userAttrService->get($uid, 'locale');
-        } catch (\Exception $e){
+            if ($uid) {
+                $userAttrService = resolve(UserAttrService::class);
+                $userLocale = $userAttrService->get($uid, 'locale');
+            }
+        } catch (\Exception $e) {
             $userLocale = null;
         }
 
