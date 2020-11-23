@@ -79,7 +79,8 @@ class TransferController extends Controller
             }
 
             // 鑽石轉移
-            if (!UserSer::updateUserInfo($userInfo['uid'], ['points'=> $request->points])) {
+            $points = $userInfo['points'] + $request->points;
+            if (!UserSer::updateUserInfo($userInfo['uid'], ['points'=> $points])) {
                 $this->transferService->addFailedLog($request->except('sign'));
                 Log::error('鑽石轉移失敗');
                 $this->setStatus(106, '鑽石轉移失敗');
