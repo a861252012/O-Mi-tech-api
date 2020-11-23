@@ -67,7 +67,8 @@ class TransferController extends Controller
             }
 
             //驗證用戶
-            if (empty($this->vpubService->checkUser($request->username))) {
+            $userInfo = $this->vpubService->checkUser($request->username);
+            if (empty($userInfo)) {
                 $userInfo = $this->vpubService->registerUser($request->username, $request->uuid);
             }
 
