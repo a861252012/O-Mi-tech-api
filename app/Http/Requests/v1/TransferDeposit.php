@@ -17,7 +17,7 @@ class TransferDeposit extends VRequest
         return [
             'points'    => 'required|integer|min:1|max:9999',
             'username'  => 'required|string',
-            'uuid'      => 'required|string',
+            'uuid'      => 'required|numeric',
             'token'     => 'string|nullable',
             'locale'    => 'string|nullable',
             'order_id'  => 'required|string',
