@@ -14,6 +14,7 @@ use App\Services\VpubService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 
 class TransferController extends Controller
@@ -89,6 +90,10 @@ class TransferController extends Controller
 
             //成功寫入recharge紀錄
             $this->transferService->addSuccessLog($userInfo, $request->except('sign'));
+
+            // 通知java
+            Log::channel('daily')->info('user exchange', [" user id: {$userInfo['uid']}  origin:{$request->origin}  money:{$request->points} "]);
+            Redis::publish('p2j_refresh_points', json_encode(['uid' => $userInfo['uid']]));
 
             $this->setStatus(1, 'OK');
             return $this->jsonOutput();
