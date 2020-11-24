@@ -18,6 +18,12 @@ class VerifyCsrfToken extends Middleware
         // 內部調用
         'api/omey/*',
 
+        // 後台調用
+        'api/charge/checkKeepVip',
+
+        // 充值平台回調
+        'api/charge/notice*',
+
         // 合作平台後端調用
         'api/v1/deposit',
     ];
