@@ -24,7 +24,7 @@ class TransferService
         $this->rechargeRepository = $rechargeRepository;
     }
 
-    public function addFailedLog($data)
+    public function addFailedLog($status, $data)
     {
         return $this->platformTransferFailedRepository->insertLog([
             'origin'   => (int)$data['origin'],
@@ -32,6 +32,7 @@ class TransferService
             'points'   => (int)$data['points'],
             'uuid'     => (int)$data['uuid'],
             'order_id' => (string)$data['order_id'],
+            'status'   => (int)$status,
         ]);
     }
 

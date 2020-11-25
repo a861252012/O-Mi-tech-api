@@ -43,6 +43,7 @@ class TransferController extends Controller
             /* 設定合作站來源 */
             if (!$this->vpubService->setOrigin($request->origin)) {
                 Log::error('來源不正確');
+                $this->transferService->addFailedLog(101, $request->all());
                 $this->setStatus(101, '來源不正確');
                 return $this->jsonOutput();
             }
@@ -51,6 +52,7 @@ class TransferController extends Controller
             $ip = $this->getIp();
             if (!$this->vpubService->checkIp($ip)) {
                 Log::error('此ip無請求權限');
+                $this->transferService->addFailedLog(107, $request->all());
                 $this->setStatus(107, '此ip無請求權限');
                 return $this->jsonOutput();
             }
@@ -58,6 +60,7 @@ class TransferController extends Controller
             //驗證時間
             if (!$this->vpubService->checkTimestamp($request->timestamp)) {
                 Log::error('時間戳記不正確');
+                $this->transferService->addFailedLog(103, $request->all());
                 $this->setStatus(103, '時間戳記不正確');
                 return $this->jsonOutput();
             }
@@ -66,6 +69,7 @@ class TransferController extends Controller
             $apiKey = $this->vpubService->getApiKey();
             if (empty($apiKey)) {
                 Log::error('查無API Key或尚未設置');
+                $this->transferService->addFailedLog(102, $request->all());
                 $this->setStatus(102, '查無API Key或尚未設置');
                 return $this->jsonOutput();
             }
@@ -73,6 +77,7 @@ class TransferController extends Controller
             //驗證簽名
             if (!$this->vpubService->checkSignature($request->except('sign'), $request->sign, $apiKey)) {
                 Log::error('簽名不正確');
+                $this->transferService->addFailedLog(104, $request->all());
                 $this->setStatus(104, '簽名不正確');
                 return $this->jsonOutput();
             }
@@ -81,6 +86,7 @@ class TransferController extends Controller
             $orderId = $this->vpubService->genOrderId($request->order_id);
             if (!$this->vpubService->checkOrder($orderId)) {
                 Log::error('訂單重複');
+                $this->transferService->addFailedLog(108, $request->all());
                 $this->setStatus(108, '訂單重複');
                 return $this->jsonOutput();
             }
@@ -93,6 +99,7 @@ class TransferController extends Controller
 
             if (empty($userInfo)) {
                 Log::error('查無用戶資料或註冊失敗');
+                $this->transferService->addFailedLog(105, $request->all());
                 $this->setStatus(105, '查無用戶資料或註冊失敗');
                 return $this->jsonOutput();
             }
@@ -100,8 +107,8 @@ class TransferController extends Controller
             // 鑽石轉移
             $points = $userInfo['points'] + $request->points;
             if (!UserSer::updateUserInfo($userInfo['uid'], ['points'=> $points])) {
-                $this->transferService->addFailedLog($request->all());
                 Log::error('鑽石轉移失敗');
+                $this->transferService->addFailedLog(106, $request->all());
                 $this->setStatus(106, '鑽石轉移失敗');
                 return $this->jsonOutput();
             }
