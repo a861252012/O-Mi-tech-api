@@ -40,6 +40,14 @@ class TransferController extends Controller
     public function deposit(TransferDeposit $request)
     {
         try {
+            /* 設定合作站來源 */
+            if (!$this->vpubService->setOrigin($request->origin)) {
+                Log::error('來源不正確');
+                $this->transferService->addFailedLog(101, $request->all());
+                $this->setStatus(101, '來源不正確');
+                return $this->jsonOutput();
+            }
+
             //驗證API KEY
             $apiKey = $this->vpubService->getApiKey();
             if (empty($apiKey)) {
@@ -52,14 +60,6 @@ class TransferController extends Controller
             if (!$this->vpubService->checkSignature($request->except('sign'), $request->sign, $apiKey)) {
                 Log::error('簽名不正確');
                 $this->setStatus(104, '簽名不正確');
-                return $this->jsonOutput();
-            }
-
-            /* 設定合作站來源 */
-            if (!$this->vpubService->setOrigin($request->origin)) {
-                Log::error('來源不正確');
-                $this->transferService->addFailedLog(101, $request->all());
-                $this->setStatus(101, '來源不正確');
                 return $this->jsonOutput();
             }
 
