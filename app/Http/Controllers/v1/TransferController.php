@@ -44,7 +44,6 @@ class TransferController extends Controller
             $apiKey = $this->vpubService->getApiKey();
             if (empty($apiKey)) {
                 Log::error('查無API Key或尚未設置');
-                $this->transferService->addFailedLog(102, $request->all());
                 $this->setStatus(102, '查無API Key或尚未設置');
                 return $this->jsonOutput();
             }
