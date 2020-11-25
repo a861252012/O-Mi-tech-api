@@ -40,6 +40,13 @@ class TransferController extends Controller
     public function deposit(TransferDeposit $request)
     {
         try {
+            //驗證簽名
+            if (!$this->vpubService->checkSignature($request->except('sign'), $request->sign, $apiKey)) {
+                Log::error('簽名不正確');
+                $this->setStatus(104, '簽名不正確');
+                return $this->jsonOutput();
+            }
+
             /* 設定合作站來源 */
             if (!$this->vpubService->setOrigin($request->origin)) {
                 Log::error('來源不正確');
@@ -74,13 +81,7 @@ class TransferController extends Controller
                 return $this->jsonOutput();
             }
 
-            //驗證簽名
-            if (!$this->vpubService->checkSignature($request->except('sign'), $request->sign, $apiKey)) {
-                Log::error('簽名不正確');
-                $this->transferService->addFailedLog(104, $request->all());
-                $this->setStatus(104, '簽名不正確');
-                return $this->jsonOutput();
-            }
+
 
             // 檢查訂單是否重複
             $orderId = $this->vpubService->genOrderId($request->order_id);
