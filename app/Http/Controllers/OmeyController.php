@@ -300,7 +300,7 @@ class OmeyController extends Controller
             'uuid'      => '154037740',
             'token'     => 'MzJmMFB2Zkp2eUxuL2c1T3l3KzM5VFFoSENQdFFmT0luUHZBUUVYM09ONXFIeXdhdzJLMHFDVy9mS3B5c3A0UUtJN2l5end3RlI1SXlTUVlUdkJ2cFVwcQ==',
             'locale'    => 'zh',
-            'order_id'  => '1558935241370',
+            'order_id'  => '1558935241371',
             'origin'    => 61,
             'timestamp' => time(),
         ];

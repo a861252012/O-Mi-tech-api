@@ -40,18 +40,18 @@ class TransferController extends Controller
     public function deposit(TransferDeposit $request)
     {
         try {
-
-            /* 檢查是否在白名單內 */
-            if (!$this->vpubService->checkIp($this->getIp())) {
-                Log::error('此ip無請求權限');
-                $this->setStatus(107, '此ip無請求權限');
-                return $this->jsonOutput();
-            }
-
             /* 設定合作站來源 */
             if (!$this->vpubService->setOrigin($request->origin)) {
                 Log::error('來源不正確');
                 $this->setStatus(101, '來源不正確');
+                return $this->jsonOutput();
+            }
+
+            /* 檢查是否在白名單內 */
+            $ip = $this->getIp();
+            if (!$this->vpubService->checkIp($ip)) {
+                Log::error('此ip無請求權限');
+                $this->setStatus(107, '此ip無請求權限');
                 return $this->jsonOutput();
             }
 
@@ -106,7 +106,8 @@ class TransferController extends Controller
             }
 
             //成功寫入recharge紀錄
-            $this->transferService->addSuccessLog($userInfo, $request->except('sign'));
+            $orderId = $this->vpubService->genOrderId();
+            $this->transferService->addSuccessLog($userInfo, $request->except('sign'), $orderId, $ip);
 
             // 通知java
             Log::channel('daily')->info('user exchange', [" user id: {$userInfo['uid']}  origin:{$request->origin}  money:{$request->points} "]);

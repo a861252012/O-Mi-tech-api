@@ -49,10 +49,17 @@ class VpubService
         return (empty($this->platform)) ? false : true;
     }
 
+    /* 產生合作平台訂單號 */
+    public function genOrderId()
+    {
+        $timeArr = explode(' ', microtime());
+        return $this->platform['prefix'] . $timeArr[1];
+    }
+
     /* 檢查請求ip是否在白名單內 */
     public function checkIp($ip): bool
     {
-        $whiteList = explode(',', SiteSer::globalSiteConfig('vapi_wlist'));
+        $whiteList = explode(',', SiteSer::globalSiteConfig('vapi_wlist_' . $this->platform['origin']));
         if (in_array('*', $whiteList, true)) {
             return true;
         }

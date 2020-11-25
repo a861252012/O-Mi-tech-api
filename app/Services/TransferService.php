@@ -35,20 +35,22 @@ class TransferService
         ]);
     }
 
-    public function addSuccessLog($user, $data)
+    public function addSuccessLog($user, $data, $orderId, $ip = '')
     {
         $created = date('Y-m-d H:i:s');
         return $this->rechargeRepository->insertTransfer([
-            'uid'      => (int)$user['uid'],
-            'points'   => (int)$data['points'],
-            'created'  => $created,
-            'ttime'    => $created,
-            'order_id' => (string)$data['order_id'],
-            'pay_type' => 8,
-            'origin'   => (int)$data['origin'],
-            'nickname' => $user['nickname'],
-            'site_id'  => $user['site_id'],
-            'ip'       => '',
+            'uid'        => (int)$user['uid'],
+            'points'     => (int)$data['points'],
+            'created'    => $created,
+            'ttime'      => $created,
+            'order_id'   => $orderId,
+            'pay_id'     => (string)$data['order_id'],
+            'pay_type'   => 8,
+            'pay_status' => 2,
+            'origin'     => (int)$data['origin'],
+            'nickname'   => $user['nickname'],
+            'site_id'    => $user['site_id'],
+            'ip'         => $ip,
         ]);
     }
 }
