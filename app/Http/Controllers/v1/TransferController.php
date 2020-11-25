@@ -40,6 +40,15 @@ class TransferController extends Controller
     public function deposit(TransferDeposit $request)
     {
         try {
+            //驗證API KEY
+            $apiKey = $this->vpubService->getApiKey();
+            if (empty($apiKey)) {
+                Log::error('查無API Key或尚未設置');
+                $this->transferService->addFailedLog(102, $request->all());
+                $this->setStatus(102, '查無API Key或尚未設置');
+                return $this->jsonOutput();
+            }
+
             //驗證簽名
             if (!$this->vpubService->checkSignature($request->except('sign'), $request->sign, $apiKey)) {
                 Log::error('簽名不正確');
@@ -71,17 +80,6 @@ class TransferController extends Controller
                 $this->setStatus(103, '時間戳記不正確');
                 return $this->jsonOutput();
             }
-
-            //驗證API KEY
-            $apiKey = $this->vpubService->getApiKey();
-            if (empty($apiKey)) {
-                Log::error('查無API Key或尚未設置');
-                $this->transferService->addFailedLog(102, $request->all());
-                $this->setStatus(102, '查無API Key或尚未設置');
-                return $this->jsonOutput();
-            }
-
-
 
             // 檢查訂單是否重複
             $orderId = $this->vpubService->genOrderId($request->order_id);
