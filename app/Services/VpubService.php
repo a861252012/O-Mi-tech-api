@@ -49,11 +49,10 @@ class VpubService
         return (empty($this->platform)) ? false : true;
     }
 
-    /* 產生合作平台訂單號 */
-    public function genOrderId()
+    /* 產生合作平台訂單號 = 依來源取得平台前綴 + 合作平台訂單號 */
+    public function genOrderId($orderId)
     {
-        $timeArr = explode(' ', microtime());
-        return $this->platform['prefix'] . $timeArr[1];
+        return $this->platform['prefix'] . $orderId;
     }
 
     /* 檢查請求ip是否在白名單內 */

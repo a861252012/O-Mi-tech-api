@@ -78,7 +78,8 @@ class TransferController extends Controller
             }
 
             // 檢查訂單是否重複
-            if (!$this->vpubService->checkOrder($request->order_id)) {
+            $orderId = $this->vpubService->genOrderId($request->order_id);
+            if (!$this->vpubService->checkOrder($orderId)) {
                 Log::error('訂單重複');
                 $this->setStatus(108, '訂單重複');
                 return $this->jsonOutput();
@@ -106,7 +107,6 @@ class TransferController extends Controller
             }
 
             //成功寫入recharge紀錄
-            $orderId = $this->vpubService->genOrderId();
             $this->transferService->addSuccessLog($userInfo, $request->except('sign'), $orderId, $ip);
 
             // 通知java
