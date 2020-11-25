@@ -23,4 +23,9 @@ class RechargeRepository
     {
         return $this->recharge->insert($data);
     }
+
+    public function orderIdExist($orderId)
+    {
+        return $this->recharge->where('order_id', $orderId)->count();
+    }
 }

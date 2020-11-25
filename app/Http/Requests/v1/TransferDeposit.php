@@ -15,7 +15,7 @@ class TransferDeposit extends VRequest
     public function rules()
     {
         return [
-            'points'    => 'required|integer|min:1|max:9999',
+            'points'    => 'required|numeric|min:1|max:9999',
             'username'  => 'required|string',
             'uuid'      => 'required|numeric',
             'token'     => 'string|nullable',
@@ -30,17 +30,19 @@ class TransferDeposit extends VRequest
     public function messages()
     {
         return [
-            'points.*'    => ':attribute 參數錯誤!',
-            'points.min'  => ':attribute 不得低於最小下限值!',
-            'points.max'  => ':attribute 超過最大上限值!',
-            'username.*'  => ':attribute 參數錯誤!',
-            'uuid.*'      => ':attribute 參數錯誤!',
-            'token.*'     => ':attribute 參數錯誤!',
-            'locale.*'    => ':attribute 參數錯誤!',
-            'order_id.*'  => ':attribute 參數錯誤!',
-            'timestamp.*' => ':attribute 參數錯誤!',
-            'origin.*'    => ':attribute 參數錯誤!',
-            'sign.*'      => ':attribute 參數錯誤!',
+            'points.required'   => ':attribute 參數錯誤!',
+            'points.numeric'    => ':attribute 必須為數字!',
+            'points.min'        => ':attribute 不得低於最小下限值!',
+            'points.max'        => ':attribute 超過最大上限值!',
+            'username.*'        => ':attribute 參數錯誤!',
+            'uuid.*'            => ':attribute 參數錯誤!',
+            'token.*'           => ':attribute 參數錯誤!',
+            'locale.*'          => ':attribute 參數錯誤!',
+            'order_id.required' => ':attribute 參數錯誤!',
+            'order_id.string'   => ':attribute 必須為字串!',
+            'timestamp.*'       => ':attribute 參數錯誤!',
+            'origin.*'          => ':attribute 參數錯誤!',
+            'sign.*'            => ':attribute 參數錯誤!',
         ];
     }
 }

@@ -11,6 +11,7 @@ use App\Facades\UserSer;
 use App\Http\Requests\v1\TransferDeposit;
 use App\Services\TransferService;
 use App\Services\VpubService;
+use App\Traits\Commons;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
@@ -19,6 +20,8 @@ use Illuminate\Support\Str;
 
 class TransferController extends Controller
 {
+    use Commons;
+
     protected $vpubService;
     protected $transferService;
 
@@ -37,6 +40,13 @@ class TransferController extends Controller
     public function deposit(TransferDeposit $request)
     {
         try {
+
+            /* 檢查是否在白名單內 */
+            if (!$this->vpubService->checkIp($this->getIp())) {
+                Log::error('此ip無請求權限');
+                $this->setStatus(107, '此ip無請求權限');
+                return $this->jsonOutput();
+            }
 
             /* 設定合作站來源 */
             if (!$this->vpubService->setOrigin($request->origin)) {
@@ -67,6 +77,13 @@ class TransferController extends Controller
                 return $this->jsonOutput();
             }
 
+            // 檢查訂單是否重複
+            if (!$this->vpubService->checkOrder($request->order_id)) {
+                Log::error('訂單重複');
+                $this->setStatus(108, '訂單重複');
+                return $this->jsonOutput();
+            }
+
             //驗證用戶
             $userInfo = $this->vpubService->checkUser($request->username);
             if (empty($userInfo)) {
@@ -82,7 +99,7 @@ class TransferController extends Controller
             // 鑽石轉移
             $points = $userInfo['points'] + $request->points;
             if (!UserSer::updateUserInfo($userInfo['uid'], ['points'=> $points])) {
-                $this->transferService->addFailedLog($request->except('sign'));
+                $this->transferService->addFailedLog($request->all());
                 Log::error('鑽石轉移失敗');
                 $this->setStatus(106, '鑽石轉移失敗');
                 return $this->jsonOutput();

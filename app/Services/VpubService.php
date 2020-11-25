@@ -8,8 +8,10 @@
 namespace App\Services;
 
 
+use App\Facades\SiteSer;
 use App\Facades\UserSer;
 use App\Models\AgentsRelationship;
+use App\Repositories\RechargeRepository;
 use App\Repositories\UsersRepository;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -21,10 +23,14 @@ class VpubService
     protected $timeOutStr = '-1 minute';
 
     protected $usersRepository;
+    protected $rechargeRepository;
 
-    public function __construct(UsersRepository $usersRepository)
-    {
+    public function __construct(
+        UsersRepository $usersRepository,
+        RechargeRepository $rechargeRepository
+    ) {
         $this->usersRepository = $usersRepository;
+        $this->rechargeRepository = $rechargeRepository;
     }
 
     public function setTimeOutOfMin(int $minNum)
@@ -41,6 +47,17 @@ class VpubService
     {
         $this->platform = Redis::hgetall("hplatforms:$origin");
         return (empty($this->platform)) ? false : true;
+    }
+
+    /* 檢查請求ip是否在白名單內 */
+    public function checkIp($ip): bool
+    {
+        $whiteList = explode(',', SiteSer::globalSiteConfig('vapi_wlist'));
+        if (in_array('*', $whiteList, true)) {
+            return true;
+        }
+
+        return in_array($ip, $whiteList, true);
     }
 
     /* 取得api key */
@@ -67,13 +84,18 @@ class VpubService
     {
         $now = time();
         $before = strtotime($this->timeOutStr, $now);
-//        $after = strtotime('+1 minute', $now);
 
         if ($timestamp < $before || $timestamp > $now) {
             return false;
         }
 
         return true;
+    }
+
+    /* 檢查訂單 */
+    public function checkOrder($orderId): bool
+    {
+        return empty($this->rechargeRepository->orderIdExist($orderId));
     }
 
     /* 檢查合作平台用戶 */
