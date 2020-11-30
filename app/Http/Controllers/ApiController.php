@@ -582,6 +582,7 @@ class ApiController extends Controller
      */
     public function platExchange()
     {
+        return JsonResponse::create(['status' => 0, 'msg' => '無法兌換']);
 
         $uid = Auth::user()->uid;
         $origin = Auth::user()->origin;

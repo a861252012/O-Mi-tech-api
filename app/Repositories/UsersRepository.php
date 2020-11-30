@@ -22,4 +22,9 @@ class UsersRepository
     {
         return $this->users->find($id);
     }
+
+    public function deleteUserByUid($uid)
+    {
+        return $this->users->where('uid', $uid)->delete();
+    }
 }
