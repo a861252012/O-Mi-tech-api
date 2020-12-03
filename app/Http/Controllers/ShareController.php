@@ -10,7 +10,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Share\ShareInstallLog;
 use App\Services\ShareService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class ShareController extends Controller
 {
@@ -29,11 +28,13 @@ class ShareController extends Controller
      *
      * @apiParam {Int} origin 來源
      * @apiParam {Int} site_id 站別ID
+     * @apiParam {Int} [scode] 分享碼
      *
      * @apiParamExample {json} Request-Example:
      * {
     "origin":22,
-    "site_id":1
+    "site_id":1,
+    "scode":"0A614"
     }
      *
      * @apiError (Error Status) 999 API執行錯誤
@@ -47,10 +48,16 @@ class ShareController extends Controller
      */
     public function installLog(ShareInstallLog $request)
     {
-        try {
-            $this->shareService->addInstallLog($request->origin, $request->site_id);
+//        dd($this->shareService->genScodeForAgent(1556));
 
-            $this->setStatus('1',__('messages.success'));
+        try {
+            $scode = $request->scode ?? null;
+
+            if (isset($scode) && $this->shareService->decScode($scode)) {
+                $this->shareService->addInstallLog($request->origin, $request->site_id);
+            }
+
+            $this->setStatus(1, __('messages.success'));
             return $this->jsonOutput();
         } catch (\Exception $e) {
             report($e);
