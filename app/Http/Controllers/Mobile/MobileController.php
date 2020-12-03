@@ -655,11 +655,6 @@ class MobileController extends Controller
         return count($myfav);
     }
 
-    public function logintest()
-    {
-        return JsonResponse::create(['status' => Auth::check(), 'user' => Auth::user()]);
-    }
-
     /**
      *移动端轮播图获取
      */

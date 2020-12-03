@@ -440,8 +440,10 @@ Route::prefix('game')->middleware(['login_auth'])->group(function () {
     Route::get('game_list','GameController@gameList');
 });
 
-Route::prefix('v2')->namespace('v2')->group(function () {
-    Route::get('captcha/{cKey?}', 'CaptchaController@index');
+Route::prefix('v2')->middleware(['V2Auth'])->group(function () {
+    Route::namespace('v2')->group(function () {
+        Route::get('captcha/{cKey?}', 'CaptchaController@index');
+    });
 });
 
 /* 守護功能 */
