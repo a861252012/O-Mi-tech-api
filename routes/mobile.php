@@ -3,11 +3,11 @@
  * 移动端路由
  */
 
-
-
-Route::group(['middleware' => ['login_auth:mobile']], function () {
-    Route::get('/login/test', 'Mobile\MobileController@logintest');
+Route::prefix('v2')->middleware(['V2Auth'])->group(function () {
+    Route::post('login/{cKey?}', 'Mobile\MobileController@login')->name('m_login')->middleware('mobile.session');
+    Route::post('reg/{cKey?}', 'ApiController@reg')->name('m_reg')->middleware('mobile.session');
 });
+
 // reg
 Route::post('reg','ApiController@reg')->name('m_reg')->middleware('mobile.session');
 // reg suggest nickname
@@ -52,9 +52,9 @@ Route::group(['prefix' => 'user'], function () {
 Route::group(['middleware' => ['login_auth:mobile']], function () {
     Route::prefix('notification')->group(function () {
         /*  主播開車提醒 */
-        Route::get('show', 'NotificationController@show');        
+        Route::get('show', 'NotificationController@show');
     });
-    
+
     //app获取粉丝详情
     Route::get('OneToMore/getfans', ['as' => 'm_onetomorecreate','uses' => 'Mobile\MobileController@getFans']);
     //修改密码
@@ -277,10 +277,10 @@ Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopControl
 // 遊戲中心
 Route::prefix('game')->group(function () {
 	Route::get('game_list','GameController@gameList');
-	
+
 	/* 遊戲儲值 測試用 */
     Route::post('deposit','GameController@deposit');
-	
+
 	Route::middleware(['login_auth:mobile'])->group(function () {
         Route::post('entry','GameController@entry');
     });
