@@ -4193,7 +4193,7 @@ class MemberController extends Controller
      */
     public function getUserLevelInfo()
     {
-        $data = resolve(UserGroupService::class)->getUserChatLimit(Auth::user(), 'member');
+        $data = resolve(UserGroupService::class)->getUserChatLimit('member', Auth::user());
 
         $this->setStatus(1, 'OK');
         $this->setRootData('data', $data);

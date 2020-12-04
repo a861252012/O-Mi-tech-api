@@ -219,7 +219,7 @@ class UserGroupService extends Service
     }
 
     //取得用戶等級發言字數
-    public function getUserChatLimit($userInfo = [], $type)
+    public function getUserChatLimit($type, $userInfo = [])
     {
         $data['userLevelInfo'] = resolve(Controller::class)->getLevelByRole($userInfo);
         $data['userLevelInfo']['uid'] = (int)$userInfo->uid;
