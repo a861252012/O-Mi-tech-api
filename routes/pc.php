@@ -101,6 +101,9 @@ Route::group(['prefix' => 'member'], function () {
         Route::any('signin', 'MemberController@signin');
         // 主播房间暱称
         Route::any('roomInfo', 'MemberController@roomInfo');
+
+        // 用户中心 取得用戶等級發言字數
+        Route::get('userLevelInfo', 'MemberController@getUserLevelInfo');
     });
 });
 

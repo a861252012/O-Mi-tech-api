@@ -190,6 +190,9 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     // 主播房间暱称
     Route::any('member/roomInfo', 'MemberController@roomInfo');
 
+    // 用户中心 取得用戶等級發言字數
+    Route::get('member/userLevelInfo', 'MemberController@getUserLevelInfo');
+
     /* Socket相關 */
     Route::prefix('socket')->group(function () {
         Route::get('proxy_list', 'SocketController@proxyList');
