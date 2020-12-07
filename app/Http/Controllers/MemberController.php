@@ -4202,7 +4202,7 @@ class MemberController extends Controller
     }
 
     /**
-     * @api {get} /member/getAnchorLevelInfo 取得用戶等級資訊
+     * @api {get} /member/getAnchorLevelInfo 取得主播等級資訊
      *
      * @apiDescription mobile版URL前綴: /api/m
      *
