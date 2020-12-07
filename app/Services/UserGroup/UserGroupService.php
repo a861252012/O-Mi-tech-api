@@ -218,21 +218,23 @@ class UserGroupService extends Service
         return $group;
     }
 
-    //取得用戶等級發言字數
-    public function getUserChatLimit($type, $userInfo = [])
+    public function getUserChatLimit($type, $userInfo)
     {
         $data['userLevelInfo'] = resolve(Controller::class)->getLevelByRole($userInfo);
         $data['userLevelInfo']['uid'] = (int)$userInfo->uid;
 
-        //用戶如果是主播,則回傳經驗等級
-        if ($userInfo['roled'] == 3) {
-            $data['userLevelInfo']['lv_exp'] = (int)$userInfo->lv_exp;
-        } else {
-            //用戶如果不是主播,則回傳用戶等級資訊
-            $levelInfo = $this->userGroupRepository->getLevelInfoByType($type);
-            $data['userGroup'] = UserWordLimitResource::collection($levelInfo);
-            $data['userLevelInfo']['lv_rich'] = (int)$userInfo->lv_rich;
-        }
+        $levelInfo = $this->userGroupRepository->getLevelInfoByType($type);
+        $data['userGroup'] = UserWordLimitResource::collection($levelInfo);
+        $data['userLevelInfo']['lv_rich'] = (int)$userInfo->lv_rich;
+
+        return $data;
+    }
+
+    public function getAnchorLevelInfo($userInfo)
+    {
+        $data = resolve(Controller::class)->getLevelByRole($userInfo);
+        $data['uid'] = (int)$userInfo->uid;
+        $data['lv_exp'] = (int)$userInfo->lv_exp;
 
         return $data;
     }

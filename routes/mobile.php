@@ -193,6 +193,9 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     // 用户中心 取得用戶等級發言字數
     Route::get('member/getUserLevelInfo', 'MemberController@getUserLevelInfo');
 
+    // 用户中心 取得主播等級資訊
+    Route::get('member/getAnchorLevelInfo', 'MemberController@getAnchorLevelInfo');
+
     /* Socket相關 */
     Route::prefix('socket')->group(function () {
         Route::get('proxy_list', 'SocketController@proxyList');

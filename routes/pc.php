@@ -104,6 +104,9 @@ Route::group(['prefix' => 'member'], function () {
 
         // 用户中心 取得用戶等級發言字數
         Route::get('getUserLevelInfo', 'MemberController@getUserLevelInfo');
+
+        // 用户中心 取得主播等級資訊
+        Route::get('getAnchorLevelInfo', 'MemberController@getAnchorLevelInfo');
     });
 });
 
