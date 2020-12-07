@@ -103,7 +103,7 @@ Route::group(['prefix' => 'member'], function () {
         Route::any('roomInfo', 'MemberController@roomInfo');
 
         // 用户中心 取得用戶等級發言字數
-        Route::get('userLevelInfo', 'MemberController@getUserLevelInfo');
+        Route::get('getUserLevelInfo', 'MemberController@getUserLevelInfo');
     });
 });
 
