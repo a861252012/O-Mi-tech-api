@@ -3964,232 +3964,248 @@ class MemberController extends Controller
      * @apiSuccess {Object} data
      * @apiSuccess {Array} data.userLevelInfo 用戶等級資訊
      * @apiSuccess {Int} data.userLevelInfo.lv_sub 當前已獲得的經驗值
-     * @apiSuccess {Int} data.userLevelInfo.lv_next_exp 夏衣等級所需的經驗值
+     * @apiSuccess {Int} data.userLevelInfo.lv_next_exp 下一等級所需的經驗值
      * @apiSuccess {Int} data.userLevelInfo.lv_current_exp 當前等級所需的經驗值
      * @apiSuccess {Int} data.userLevelInfo.lv_percent 當前等級的經驗百分比
      * @apiSuccess {Int} data.userLevelInfo.uid 用戶uid
      * @apiSuccess {Int} data.userLevelInfo.lv_rich 用戶當前的財富等級
+     * @apiSuccess {Int} data.userLevelInfo.lv_exp 主播當前的經驗等級
      * @apiSuccess {Int} data.userGroup 用戶組資訊
      * @apiSuccess {Int} data.userGroup.gid 用戶組ID
      * @apiSuccess {Int} data.userGroup.level_id 等級ID
      * @apiSuccess {String} data.userGroup.level_name 等級名稱
      * @apiSuccess {Int} data.userGroup.chat_limit 聊天文字長度限制
      *
-     * @apiSuccessExample {json} 成功回應
-    {
-    "status": 1,
-    "msg": "OK",
-    "data": {
-    "userLevelInfo": {
-    "lv_sub": 38229,
-    "lv_next_exp": 113000,
-    "lv_current_exp": 63000,
-    "lv_percent": 76.458,
-    "uid": 9493715,
-    "lv_rich": 8
-    },
-    "userGroup": [
-    {
-    "gid": 2,
-    "level_id": 2,
-    "level_name": "屌丝",
-    "chat_limit": 1
-    },
-    {
-    "gid": 3,
-    "level_id": 3,
-    "level_name": "一富",
-    "chat_limit": 5
-    },
-    {
-    "gid": 4,
-    "level_id": 4,
-    "level_name": "二富",
-    "chat_limit": 5
-    },
-    {
-    "gid": 5,
-    "level_id": 5,
-    "level_name": "三富",
-    "chat_limit": 5
-    },
-    {
-    "gid": 6,
-    "level_id": 6,
-    "level_name": "四富",
-    "chat_limit": 5
-    },
-    {
-    "gid": 7,
-    "level_id": 7,
-    "level_name": "五富",
-    "chat_limit": 5
-    },
-    {
-    "gid": 8,
-    "level_id": 8,
-    "level_name": "六富",
-    "chat_limit": 5
-    },
-    {
-    "gid": 9,
-    "level_id": 9,
-    "level_name": "七富",
-    "chat_limit": 8
-    },
-    {
-    "gid": 10,
-    "level_id": 10,
-    "level_name": "八富",
-    "chat_limit": 8
-    },
-    {
-    "gid": 11,
-    "level_id": 11,
-    "level_name": "九富",
-    "chat_limit": 8
-    },
-    {
-    "gid": 12,
-    "level_id": 12,
-    "level_name": "十富",
-    "chat_limit": 8
-    },
-    {
-    "gid": 13,
-    "level_id": 13,
-    "level_name": "男爵",
-    "chat_limit": 10
-    },
-    {
-    "gid": 14,
-    "level_id": 14,
-    "level_name": "子爵",
-    "chat_limit": 10
-    },
-    {
-    "gid": 15,
-    "level_id": 15,
-    "level_name": "伯爵",
-    "chat_limit": 10
-    },
-    {
-    "gid": 16,
-    "level_id": 16,
-    "level_name": "候爵",
-    "chat_limit": 10
-    },
-    {
-    "gid": 17,
-    "level_id": 17,
-    "level_name": "公爵",
-    "chat_limit": 10
-    },
-    {
-    "gid": 18,
-    "level_id": 18,
-    "level_name": "郡公",
-    "chat_limit": 10
-    },
-    {
-    "gid": 19,
-    "level_id": 19,
-    "level_name": "国公",
-    "chat_limit": 10
-    },
-    {
-    "gid": 20,
-    "level_id": 20,
-    "level_name": "王爵",
-    "chat_limit": 10
-    },
-    {
-    "gid": 21,
-    "level_id": 21,
-    "level_name": "藩王",
-    "chat_limit": 15
-    },
-    {
-    "gid": 22,
-    "level_id": 22,
-    "level_name": "郡王",
-    "chat_limit": 15
-    },
-    {
-    "gid": 23,
-    "level_id": 23,
-    "level_name": "亲王",
-    "chat_limit": 15
-    },
-    {
-    "gid": 24,
-    "level_id": 24,
-    "level_name": "国王",
-    "chat_limit": 15
-    },
-    {
-    "gid": 25,
-    "level_id": 25,
-    "level_name": "帝王",
-    "chat_limit": 15
-    },
-    {
-    "gid": 26,
-    "level_id": 26,
-    "level_name": "皇帝",
-    "chat_limit": 15
-    },
-    {
-    "gid": 27,
-    "level_id": 27,
-    "level_name": "天君",
-    "chat_limit": 15
-    },
-    {
-    "gid": 28,
-    "level_id": 28,
-    "level_name": "帝君",
-    "chat_limit": 15
-    },
-    {
-    "gid": 29,
-    "level_id": 29,
-    "level_name": "圣君",
-    "chat_limit": 15
-    },
-    {
-    "gid": 41,
-    "level_id": 41,
-    "level_name": "天尊",
-    "chat_limit": 30
-    },
-    {
-    "gid": 42,
-    "level_id": 42,
-    "level_name": "地尊",
-    "chat_limit": 30
-    },
-    {
-    "gid": 43,
-    "level_id": 43,
-    "level_name": "圣尊",
-    "chat_limit": 30
-    },
-    {
-    "gid": 44,
-    "level_id": 44,
-    "level_name": "神皇",
-    "chat_limit": 30
-    },
-    {
-    "gid": 45,
-    "level_id": 45,
-    "level_name": "创世之神",
-    "chat_limit": 30
-    }
-    ]
-    }
-    }
+     * @apiSuccessExample {json} 用戶的成功回應
+     * {
+     * "status": 1,
+     * "msg": "OK",
+     * "data": {
+     * "userLevelInfo": {
+     * "lv_sub": 38229,
+     * "lv_next_exp": 113000,
+     * "lv_current_exp": 63000,
+     * "lv_percent": 76.458,
+     * "uid": 9493715,
+     * "lv_rich": 8
+     * },
+     * "userGroup": [
+     * {
+     * "gid": 2,
+     * "level_id": 2,
+     * "level_name": "屌丝",
+     * "chat_limit": 1
+     * },
+     * {
+     * "gid": 3,
+     * "level_id": 3,
+     * "level_name": "一富",
+     * "chat_limit": 5
+     * },
+     * {
+     * "gid": 4,
+     * "level_id": 4,
+     * "level_name": "二富",
+     * "chat_limit": 5
+     * },
+     * {
+     * "gid": 5,
+     * "level_id": 5,
+     * "level_name": "三富",
+     * "chat_limit": 5
+     * },
+     * {
+     * "gid": 6,
+     * "level_id": 6,
+     * "level_name": "四富",
+     * "chat_limit": 5
+     * },
+     * {
+     * "gid": 7,
+     * "level_id": 7,
+     * "level_name": "五富",
+     * "chat_limit": 5
+     * },
+     * {
+     * "gid": 8,
+     * "level_id": 8,
+     * "level_name": "六富",
+     * "chat_limit": 5
+     * },
+     * {
+     * "gid": 9,
+     * "level_id": 9,
+     * "level_name": "七富",
+     * "chat_limit": 8
+     * },
+     * {
+     * "gid": 10,
+     * "level_id": 10,
+     * "level_name": "八富",
+     * "chat_limit": 8
+     * },
+     * {
+     * "gid": 11,
+     * "level_id": 11,
+     * "level_name": "九富",
+     * "chat_limit": 8
+     * },
+     * {
+     * "gid": 12,
+     * "level_id": 12,
+     * "level_name": "十富",
+     * "chat_limit": 8
+     * },
+     * {
+     * "gid": 13,
+     * "level_id": 13,
+     * "level_name": "男爵",
+     * "chat_limit": 10
+     * },
+     * {
+     * "gid": 14,
+     * "level_id": 14,
+     * "level_name": "子爵",
+     * "chat_limit": 10
+     * },
+     * {
+     * "gid": 15,
+     * "level_id": 15,
+     * "level_name": "伯爵",
+     * "chat_limit": 10
+     * },
+     * {
+     * "gid": 16,
+     * "level_id": 16,
+     * "level_name": "候爵",
+     * "chat_limit": 10
+     * },
+     * {
+     * "gid": 17,
+     * "level_id": 17,
+     * "level_name": "公爵",
+     * "chat_limit": 10
+     * },
+     * {
+     * "gid": 18,
+     * "level_id": 18,
+     * "level_name": "郡公",
+     * "chat_limit": 10
+     * },
+     * {
+     * "gid": 19,
+     * "level_id": 19,
+     * "level_name": "国公",
+     * "chat_limit": 10
+     * },
+     * {
+     * "gid": 20,
+     * "level_id": 20,
+     * "level_name": "王爵",
+     * "chat_limit": 10
+     * },
+     * {
+     * "gid": 21,
+     * "level_id": 21,
+     * "level_name": "藩王",
+     * "chat_limit": 15
+     * },
+     * {
+     * "gid": 22,
+     * "level_id": 22,
+     * "level_name": "郡王",
+     * "chat_limit": 15
+     * },
+     * {
+     * "gid": 23,
+     * "level_id": 23,
+     * "level_name": "亲王",
+     * "chat_limit": 15
+     * },
+     * {
+     * "gid": 24,
+     * "level_id": 24,
+     * "level_name": "国王",
+     * "chat_limit": 15
+     * },
+     * {
+     * "gid": 25,
+     * "level_id": 25,
+     * "level_name": "帝王",
+     * "chat_limit": 15
+     * },
+     * {
+     * "gid": 26,
+     * "level_id": 26,
+     * "level_name": "皇帝",
+     * "chat_limit": 15
+     * },
+     * {
+     * "gid": 27,
+     * "level_id": 27,
+     * "level_name": "天君",
+     * "chat_limit": 15
+     * },
+     * {
+     * "gid": 28,
+     * "level_id": 28,
+     * "level_name": "帝君",
+     * "chat_limit": 15
+     * },
+     * {
+     * "gid": 29,
+     * "level_id": 29,
+     * "level_name": "圣君",
+     * "chat_limit": 15
+     * },
+     * {
+     * "gid": 41,
+     * "level_id": 41,
+     * "level_name": "天尊",
+     * "chat_limit": 30
+     * },
+     * {
+     * "gid": 42,
+     * "level_id": 42,
+     * "level_name": "地尊",
+     * "chat_limit": 30
+     * },
+     * {
+     * "gid": 43,
+     * "level_id": 43,
+     * "level_name": "圣尊",
+     * "chat_limit": 30
+     * },
+     * {
+     * "gid": 44,
+     * "level_id": 44,
+     * "level_name": "神皇",
+     * "chat_limit": 30
+     * },
+     * {
+     * "gid": 45,
+     * "level_id": 45,
+     * "level_name": "创世之神",
+     * "chat_limit": 30
+     * }
+     * ]
+     * }
+     * }
+     * * @apiSuccessExample {json} 主播的成功回應
+     * {
+     * "status": 1,
+     * "msg": "OK",
+     * "data": {
+     * "userLevelInfo": {
+     * "lv_sub": 15518,
+     * "lv_next_exp": 100000,
+     * "lv_current_exp": 60000,
+     * "lv_percent": 38.795,
+     * "uid": 9493607,
+     * "lv_exp": 4
+     * }
+     * }
+     * }
      */
     public function getUserLevelInfo()
     {

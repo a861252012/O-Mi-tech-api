@@ -223,11 +223,16 @@ class UserGroupService extends Service
     {
         $data['userLevelInfo'] = resolve(Controller::class)->getLevelByRole($userInfo);
         $data['userLevelInfo']['uid'] = (int)$userInfo->uid;
-        $data['userLevelInfo']['lv_rich'] = (int)$userInfo->lv_rich;
 
-        $levelInfo = $this->userGroupRepository->getLevelInfoByType($type);
-
-        $data['userGroup'] = UserWordLimitResource::collection($levelInfo);
+        //用戶如果是主播,則回傳經驗等級
+        if ($userInfo['roled'] == 3) {
+            $data['userLevelInfo']['lv_exp'] = (int)$userInfo->lv_exp;
+        } else {
+            //用戶如果不是主播,則回傳用戶等級資訊
+            $levelInfo = $this->userGroupRepository->getLevelInfoByType($type);
+            $data['userGroup'] = UserWordLimitResource::collection($levelInfo);
+            $data['userLevelInfo']['lv_rich'] = (int)$userInfo->lv_rich;
+        }
 
         return $data;
     }
