@@ -7,8 +7,10 @@ use App\Libraries\SuccessResponse;
 use App\Models\Agents;
 use App\Models\Domain;
 use App\Models\Faq;
+use App\Services\ShareService;
 use Core\Exceptions\NotFoundHttpException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use SimpleSoftwareIO\QrCode\BaconQrCodeGenerator;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -16,6 +18,12 @@ use App\Facades\SiteSer;
 
 class PageController extends Controller
 {
+    protected $shareService;
+
+    public function __construct(ShareService $shareService)
+    {
+        $this->shareService = $shareService;
+    }
 
     /**
      * 搜索页面
@@ -157,6 +165,38 @@ class PageController extends Controller
         }
 
         $img = QrCode::format('png')->size(200)->generate($qrcode_url);
+        $img = gzencode($img);
+        return Response::create($img)->header('Content-Type', 'image/png')
+            ->setMaxAge(300)
+            ->setSharedMaxAge(300)
+            ->header('Content-Encoding', 'gzip');
+    }
+
+    public function downloadQR2(Request $request)
+    {
+        $scode = $request->scode ?? '';
+        $landingUrl = "https://{$request->getHost()}/landing/1";
+
+        if (!empty($scode) && $this->shareService->decScode($scode) !== false) {
+            return $this->genQrCode($landingUrl . "?scode={$scode}");
+        }
+
+        $agent = $request->cookie('agent');
+        if (!empty($agent)) {
+            $agentId = Domain::where('url', $agent)->where('status', 0)->value('id');
+            $scode = $this->shareService->genScodeForAgent($agentId);
+            return $this->genQrCode($landingUrl . "?scode={$scode}");
+        }
+
+//        return response('test')->cookie('agent', 'desmond');
+
+        return $this->genQrCode($landingUrl);
+    }
+
+    /* 產生qr code下載 */
+    public function genQrCode($url)
+    {
+        $img = QrCode::format('png')->size(200)->generate($url);
         $img = gzencode($img);
         return Response::create($img)->header('Content-Type', 'image/png')
             ->setMaxAge(300)
