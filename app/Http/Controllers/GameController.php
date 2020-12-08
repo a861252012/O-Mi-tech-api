@@ -84,10 +84,16 @@ class GameController extends Controller
             }
 
             $result = $this->gameService->login($gameCode);
-            if (empty($result)) {
+            if (empty($result) || !isset($result['result'])) {
                 Log::error('執行遊戲失敗');
                 $this->setStatus(102, __('messages.Game.entry.connect_failed'));
                 return $this->jsonOutput();
+            }
+
+            $isJS = strpos($request->header('accept'), 'json') !== false;
+            $isPC = $request->route()->getName() == 'pc_game_entry';
+            if ($isPC && !$isJS) {
+                return redirect($result['result']);
             }
 
             $this->setStatus(1, __('messages.success'));
@@ -135,7 +141,7 @@ class GameController extends Controller
                 $this->setStatus(105, __('messages.Game.deposit.failed'));
                 return $this->jsonOutput();
             }
-            
+
             if (!$this->gameService->checkSetting()) {
                 $this->setStatus(103, __('messages.Game.deposit.status_down'));
                 return $this->jsonOutput();
@@ -145,7 +151,7 @@ class GameController extends Controller
                 $this->setStatus(104, __('messages.Game.deposit.amount_required'));
                 return $this->jsonOutput();
             }
-            
+
             $result = $this->gameService->deposit($request->uid, $request->amount);
             if (empty($result)) {
                 $this->setStatus(102, __('messages.Game.deposit.failed'));
