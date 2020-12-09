@@ -3947,13 +3947,13 @@ class MemberController extends Controller
     }
 
     /**
-     * @api {get} /member/getUserLevelInfo 取得用戶等級資訊
+     * @api {get} /member/userLevelInfo 取得用戶等級資訊
      *
      * @apiDescription mobile版URL前綴: /api/m
      *
      * pc版URL前綴: /api
      * @apiGroup Member
-     * @apiName getUserLevelInfo
+     * @apiName userLevelInfo
      * @apiVersion 1.0.0
      *
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token
@@ -4202,13 +4202,13 @@ class MemberController extends Controller
     }
 
     /**
-     * @api {get} /member/getAnchorLevelInfo 取得主播等級資訊
+     * @api {get} /member/anchorLevelInfo 取得主播等級資訊
      *
      * @apiDescription mobile版URL前綴: /api/m
      *
      * pc版URL前綴: /api
      * @apiGroup Member
-     * @apiName getAnchorLevelInfo
+     * @apiName anchorLevelInfo
      * @apiVersion 1.0.0
      *
      * @apiHeader (Mobile Header) {String} Authorization Mobile 須帶入 JWT Token

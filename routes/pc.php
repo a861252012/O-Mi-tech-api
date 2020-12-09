@@ -103,10 +103,10 @@ Route::group(['prefix' => 'member'], function () {
         Route::any('roomInfo', 'MemberController@roomInfo');
 
         // 用户中心 取得用戶等級發言字數
-        Route::get('getUserLevelInfo', 'MemberController@getUserLevelInfo');
+        Route::get('userLevelInfo', 'MemberController@getUserLevelInfo');
 
         // 用户中心 取得主播等級資訊
-        Route::get('getAnchorLevelInfo', 'MemberController@getAnchorLevelInfo');
+        Route::get('anchorLevelInfo', 'MemberController@getAnchorLevelInfo');
     });
 });
 
