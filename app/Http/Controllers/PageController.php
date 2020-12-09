@@ -103,21 +103,38 @@ class PageController extends Controller
      */
     public function download()
     {
+        $response = [
+            'PC'       => '',
+            'ANDROID'  => '',
+            'ANDROIDs' => '',
+            'IOS'      => '',
+            'QRCODE'   => '',
+        ];
 
-        $downloadUrl = $this->make('redis')->hget('hsite_config:'.SiteSer::siteId(), 'down_url');
+        $downloadUrl = $this->make('redis')->hget('hsite_config:' . SiteSer::siteId(), 'down_url');
         if (!empty($downloadUrl)) {
             $downloadUrl = json_decode($downloadUrl);
-        } else {
-            $downloadUrl = [
-                'PC' => '',
-                'ANDROID' => '',
-                'IOS' => '',
-                'QRCODE'=>'',
+            $response = [
+                'PC'       => $downloadUrl->PC,
+                'ANDROID'  => $downloadUrl->ANDROID,
+                'ANDROIDs' => [
+                    [
+                        'name' => urldecode($downloadUrl->ANDROID_NAME),
+                        'url'  => $downloadUrl->ANDROID,
+                    ],
+                    [
+                        'name' => urldecode($downloadUrl->ANDROID2_NAME),
+                        'url'  => $downloadUrl->ANDROID2,
+                    ],
+                ],
+                'IOS'      => $downloadUrl->IOS,
+                'QRCODE'   => $downloadUrl->QRCODE,
             ];
         }
 
-
-        return new JsonResponse(['data' => $downloadUrl]);
+        $this->setStatus(1, __('messages.success'));
+        $this->setRootData('data', $response);
+        return $this->jsonOutput();
     }
 
     public function downloadQR()
