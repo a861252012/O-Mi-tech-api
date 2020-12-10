@@ -7,7 +7,6 @@
  */
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Share\ShareInstallLog;
 use App\Services\ShareService;
 use Illuminate\Http\Request;
 
@@ -46,10 +45,8 @@ class ShareController extends Controller
     "data": {}
     }
      */
-    public function installLog(ShareInstallLog $request)
+    public function installLog(Request $request)
     {
-//        dd($this->shareService->genScodeForAgent(1556));
-
         try {
             $scode = $request->scode ?? null;
 
