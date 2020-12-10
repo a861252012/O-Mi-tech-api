@@ -113,23 +113,7 @@ class PageController extends Controller
 
         $downloadUrl = $this->make('redis')->hget('hsite_config:' . SiteSer::siteId(), 'down_url');
         if (!empty($downloadUrl)) {
-            $downloadUrl = json_decode($downloadUrl);
-            $response = [
-                'PC'       => $downloadUrl->PC,
-                'ANDROID'  => $downloadUrl->ANDROID,
-                'ANDROIDs' => [
-                    [
-                        'name' => urldecode($downloadUrl->ANDROID_NAME),
-                        'url'  => $downloadUrl->ANDROID,
-                    ],
-                    [
-                        'name' => urldecode($downloadUrl->ANDROID2_NAME),
-                        'url'  => $downloadUrl->ANDROID2,
-                    ],
-                ],
-                'IOS'      => $downloadUrl->IOS,
-                'QRCODE'   => $downloadUrl->QRCODE,
-            ];
+            $response = json_decode($downloadUrl);
         }
 
         $this->setStatus(1, __('messages.success'));
