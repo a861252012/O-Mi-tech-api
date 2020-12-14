@@ -66,6 +66,7 @@ class SuccessfulLogin
         $data['type'] = 'login';
         $data['dt'] = date('Y-m-d');
         $data['ts'] = time();
+        $data['ua'] = $this->request->server('HTTP_USER_AGENT');
         Log::channel('login')->info(null, $data);
     }
 }
