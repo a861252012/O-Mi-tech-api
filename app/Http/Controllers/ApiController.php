@@ -5,6 +5,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\ShareUser;
+use App\Models\UserLoginLog;
 use App\Services\RedisCacheService;
 use App\Services\ShareService;
 use App\Services\GuardianService;
@@ -49,6 +50,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Jenssegers\Agent\Facades\Agent;
 use Mews\Captcha\Facades\Captcha;
 use App\Models\Agents;
 use DB;
@@ -736,6 +738,15 @@ class ApiController extends Controller
         $sign = $request->get("sign");
         $httphost = $request->get("httphost", 0);
         $origin = $request->get("origin", 0);
+        $m = $request->get("m");
+
+        //偵測客戶端裝置 (11:pc/41:安卓H5/51:iosH5)
+        if ($m === '1') {
+            $clientOrigin = Agent::isAndroidOS() ? 41 : 51;
+        } else {
+            $clientOrigin = 11;
+        }
+
         if (!$this->make("redis")->exists("hplatforms:$origin")) {
             return new Response(__('messages.Api.platform.wrong_param', ['num' => 1001]));
 
@@ -855,11 +866,22 @@ class ApiController extends Controller
             }
         }
         $time = date('Y-m-d H:i:s');
+        $userIp = $this->getIp();
+
         Users::where('uid', $this->userInfo['uid'])->update([
-            'last_ip' => $this->getIp(),
+            'last_ip' => $userIp,
             'logined' => $time
         ]);
-        $this->userInfo['logined'] = $time;
+
+        //紀錄用戶登入log
+        UserLoginLog::create([
+            'uid'        => $this->userInfo['uid'],
+            'ip'         => $userIp,
+            'site_id'    => SiteSer::siteId(),
+            'origin'     => $clientOrigin,
+            'created_at' => $time,
+        ]);
+
         resolve(UserService::class)->getUserReset($this->userInfo['uid']);
 
         // 此时调用的是单实例登录的session 验证
@@ -884,7 +906,6 @@ class ApiController extends Controller
         Session::put('httphost', $httphost);
 
         // 判斷手機版或 PC 版
-        $m = $request->get("m");
         if ($m === '1') {
             $url = "/m/live/$room?httphost=". urlencode($httphost);
         } elseif ($m === '-1') {

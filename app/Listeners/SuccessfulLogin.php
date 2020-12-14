@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
+use Jenssegers\Agent\Facades\Agent;
 
 class SuccessfulLogin
 {
@@ -44,6 +45,7 @@ class SuccessfulLogin
         Users::query()->where('uid', $uid)->update([
             'last_ip' => $login_ip, // 最后登录ip TODO 大流量优化，目前没压力
             'logined' => date('Y-m-d H:i:s'),
+            'origin'  => $origin,
         ]);
 
         //记录登录日志

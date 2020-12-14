@@ -163,6 +163,8 @@ return [
 
         \App\Providers\SiteServiceProvider::class,
         \App\Providers\RoomServiceProvider::class,
+
+        \Jenssegers\Agent\AgentServiceProvider::class,
     ],
 
     /*
@@ -216,6 +218,8 @@ return [
         'SiteSer' =>\App\Facades\SiteSer::class,
         'UserSer'=>\App\Facades\UserSer::class,
         'Mobile'=>\App\Facades\Mobile::class,
+
+        'Agent' => Jenssegers\Agent\Facades\Agent::class,
 
     ],
 ];
