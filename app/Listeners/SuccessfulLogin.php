@@ -54,10 +54,10 @@ class SuccessfulLogin
     public function loginLog($uid, $login_ip, $site_id, $origin, $date)
     {
         $data = [
-            'uid'        => $uid,
+            'uid'        => (int)$uid,
             'ip'         => $login_ip,
-            'site_id'    => $site_id,
-            'origin'     => $origin,
+            'site_id'    => (int)$site_id,
+            'origin'     => (int)$origin,
             'created_at' => $date,
         ];
         UserLoginLog::create($data);
