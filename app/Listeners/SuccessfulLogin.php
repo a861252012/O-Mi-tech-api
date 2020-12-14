@@ -7,7 +7,6 @@ use App\Events\Login;
 use App\Models\UserLoginLog;
 use App\Models\Users;
 use App\Traits\Commons;
-//use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Request;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -49,19 +48,24 @@ class SuccessfulLogin
 
         //记录登录日志
         $this->loginLog($uid, $login_ip, $user->site_id, $origin, date('Y-m-d H:i:s'));
-
-        // Log::info("test event:".$user->toJson());
     }
 
     //todo 增加scopes
     public function loginLog($uid, $login_ip, $site_id, $origin, $date)
     {
-        return UserLoginLog::create([
+        $data = [
             'uid'        => $uid,
             'ip'         => $login_ip,
             'site_id'    => $site_id,
             'origin'     => $origin,
             'created_at' => $date,
-        ]);
+        ];
+        UserLoginLog::create($data);
+
+        unset($data['created_at']);
+        $data['type'] = 'login';
+        $data['dt'] = date('Y-m-d');
+        $data['ts'] = time();
+        Log::channel('login')->info(null, $data);
     }
 }
