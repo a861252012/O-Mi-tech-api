@@ -422,8 +422,8 @@ class ApiController extends Controller
 
         /* 解碼分享碼 */
         if (!empty($scode)) {
-            $shareUid = $shareService->decScode($scode);
-            info('分享碼解碼結果: ' . $shareUid);
+            $shareCode = $shareService->decScode($scode);
+            info('分享碼解碼結果: ' . $shareCode);
         }
 
         $newUser = [
@@ -438,17 +438,25 @@ class ApiController extends Controller
 
         //跳转过来的
         $newUser['aid'] = 0;
-        if ($agent) {
-            $domaid = Domain::where('url', $agent)->where('type', 0)->where('status', 0)->with("agent")->first();
-            if ($domaid->agent->id) {
-                $newUser['aid'] = $domaid->agent->id;
-            }
+//        if ($agent) {
+//            $domaid = Domain::where('url', $agent)->where('type', 0)->where('status', 0)->with("agent")->first();
+//            if ($domaid->agent->id) {
+//                $newUser['aid'] = $domaid->agent->id;
+//            }
+//        }
+        /* 如有推廣人則取得推廣人之aid */
+//        if (!empty($shareUid)) {
+//            $shareUser = Users::find($shareUid);
+//            $newUser['aid'] = $shareUser->agentRel->aid;
+//        }
+
+        if ($shareService->isAgent($scode)) {
+            $newUser['aid'] = $shareCode;
+            $newUser['did'] = $shareCode;
         }
 
-        /* 如有推廣人則取得推廣人之aid */
-        if (!empty($shareUid)) {
-            $shareUser = Users::find($shareUid);
-            $newUser['aid'] = $shareUser->agentRel->aid;
+        if ($shareService->isUser($scode)) {
+            $newUser['share_uid'] = $shareCode;
         }
 
         $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
@@ -466,21 +474,28 @@ class ApiController extends Controller
         $this->checkAgent($uid);
 
         /* 新增用戶推廣清單資訊 */
-        if (!empty($shareUid)) {
+        if ($shareService->isUser($scode)) {
             $shareId = $shareService->addUserShare(
                 $uid,
-                $shareUid,
+                $shareCode,
                 $newUser['aid'],
-                $shareUser->agentRel->agent->nickname,
+                '',
                 $request->get('client'),
                 $cc_mobile
             );
+
+            /* 全民代理推廣事件 */
+            if (!empty($cc_mobile) && !empty($shareCode) && !empty($user)) {
+                event(new ShareUser($user));
+            }
         }
 
         // 此时调用的是单实例登录的session 验证
         $guard = null;
-        if ($request->route()->getName() === 'm_reg' || $request->has('client') && in_array(strtolower($request->get('client')),
-                ['android', 'ios'])) {
+        if ($request->route()->getName() === 'm_reg'
+            || $request->has('client')
+            && in_array(strtolower($request->get('client')), ['android', 'ios'])
+        ) {
             /** @var JWTGuard $guard */
             $guard = Auth::guard('mobile');
             $guard->login($user);
@@ -515,11 +530,6 @@ class ApiController extends Controller
 
         //註冊成功時紀錄IP
         app('events')->dispatch(new \App\Events\Login($user, false, $origin));
-
-        /* 全民代理推廣事件 */
-        if (!empty($cc_mobile) && !empty($shareUser) && !empty($user)) {
-            event(new ShareUser($user));
-        }
 
         return JsonResponse::create($return);
     }

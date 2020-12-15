@@ -65,16 +65,28 @@ class ShareService
         return $this->scodeHandler($agentCode);
     }
 
+    /* 是否為代理 */
+    public function isAgent($scode)
+    {
+        $shareKey = substr($scode, 1, 1);
+        return 'A' === $shareKey;
+    }
+
+    /* 是否為用戶 */
+    public function isUser($scode)
+    {
+        $shareKey = substr($scode, 1, 1);
+        return 'U' === $shareKey;
+    }
+
     /* 用戶分享解碼取得UID */
     public function decScode($scode)
     {
-        $shareKey = substr($scode, 1, 1);
-
-        if ('U' === $shareKey) {
+        if ($this->isUser($scode)) {
             return $this->getUid($scode);
         }
 
-        if ('A' === $shareKey) {
+        if ($this->isAgent($scode)) {
             return $this->getAgentId($scode);
         }
 
