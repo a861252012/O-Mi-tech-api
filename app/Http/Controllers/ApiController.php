@@ -750,6 +750,9 @@ class ApiController extends Controller
         $origin = $request->get("origin", 0);
         $m = $request->get("m");
 
+        $request->session()->put('platformId', $origin);
+        $request->session()->save();
+
         //偵測客戶端裝置 (11:pc/41:安卓H5/51:iosH5)
         if ($m === '1') {
             $clientOrigin = Agent::isAndroidOS() ? 41 : 51;

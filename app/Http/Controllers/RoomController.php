@@ -80,6 +80,7 @@ class RoomController extends Controller
         if (!isset($user['origin'])) $user['origin'] = 12;
         if (!isset($user['created'])) $user['created'] = "";
         $origin = $user['origin'];
+        $platformId = session('platformId');
         $plat_backurl = [];
         $hplat_info = [];
         $hplat_user = [];
@@ -156,13 +157,16 @@ class RoomController extends Controller
                             ]);
                         }
 
-                        $hplat = $redis->exists("hplatforms:$origin") ? "plat_whitename_room" : "not_whitename_room";
-
+                        if ($redis->exists("hplatforms:$platformId")) {
+                            $hplat = "plat_whitename_room";
+                        } else {
+                            $hplat = "not_whitename_room";
+                        }
 
                         if ($hplat == 'plat_whitename_room') {
                             $uid = $user['uid'];
-                            $plat_backurl = $roomService->getPlatUrl($origin);
-                            $hplat_info = $redis->hgetall("hplatforms:$origin");
+                            $plat_backurl = $roomService->getPlatUrl($platformId);
+                            $hplat_info = $redis->hgetall("hplatforms:$platformId");
 
                             $logger->info("user exchange:  user id:$uid  origin:$origin ");
                             $hplat_user = $this->getMoney($uid, $rid, $origin);
@@ -218,7 +222,7 @@ class RoomController extends Controller
         $logger->info('in:' . $rid . ":" . Auth::id() . ':' . $channel_id);
         $qq_sideroom = $redis->hGet('hsite_config:' . SiteSer::siteId(), 'qq_sideroom');
 
-        $plat_backurl = $roomService->getPlatUrl($origin);
+        $plat_backurl = $roomService->getPlatUrl($platformId);
         //$httphost = $roomService->getPlatHost();
         $data = [
             'room' => &$room,
