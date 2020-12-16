@@ -164,9 +164,15 @@ class ShareService
     }
 
     /* 随機取得域名 */
-    public function randomDoamin()
+/*    public function randomDoamin()
     {
         $domains = collect(explode(PHP_EOL, SiteSer::siteConfig('vlanding_urls', SiteSer::siteId())));
         return $domains->random();
+    }*/
+
+    public function getDoamin()
+    {
+        $domain = request()->getHttpHost();
+        return "https://{$domain}/landing/1";
     }
 }
