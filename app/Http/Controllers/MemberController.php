@@ -716,14 +716,14 @@ class MemberController extends Controller
         try {
             /* 取得隨機網域 */
 //            $domain = $this->shareService->randomDoamin();
-            $domain = $this->shareService->getDoamin();
+            $landingUrl = $this->getUrl() . '/landing/1';
             /* 產生分享代碼 */
             $scode = $this->shareService->genScode(Auth::id());
 
             $title = SiteSer::siteConfig('name', SiteSer::siteId()) . '全球最大成人直播平台。';
 
             $this->setStatus(1, 'OK');
-            $this->setRootData('data', $domain . '?scode=' . $scode);
+            $this->setRootData('data', $landingUrl . '?scode=' . $scode);
             $this->setRootData('title', $title);
             return $this->jsonOutput();
         } catch (\Exception $e) {
