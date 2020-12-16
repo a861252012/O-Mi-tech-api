@@ -175,8 +175,8 @@ class PageController extends Controller
 
     public function downloadQR2(Request $request)
     {
-        $scode = $request->scode ?? '';
-        $landingUrl = "https://{$request->getHost()}/landing/1";
+        $scode = $request->cookie('scode');
+        $landingUrl = $this->getUrl() . '/landing/1';
 
         if (!empty($scode) && $this->shareService->decScode($scode) !== false) {
             return $this->genQrCode($landingUrl . "?scode={$scode}");
