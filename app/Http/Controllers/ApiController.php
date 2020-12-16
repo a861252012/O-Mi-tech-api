@@ -4,6 +4,7 @@
  */
 namespace App\Http\Controllers;
 
+use App\Events\Login;
 use App\Events\ShareUser;
 use App\Models\UserLoginLog;
 use App\Services\RedisCacheService;
@@ -36,7 +37,6 @@ use App\Services\User\RegService;
 use App\Services\User\UserService;
 use App\Services\UserAttrService;
 use App\Traits\Commons;
-use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -750,16 +750,6 @@ class ApiController extends Controller
         $origin = $request->get("origin", 0);
         $m = $request->get("m");
 
-        $request->session()->put('platformId', $origin);
-        $request->session()->save();
-
-        //偵測客戶端裝置 (11:pc/41:安卓H5/51:iosH5)
-        if ($m === '1') {
-            $clientOrigin = Agent::isAndroidOS() ? 41 : 51;
-        } else {
-            $clientOrigin = 11;
-        }
-
         if (!$this->make("redis")->exists("hplatforms:$origin")) {
             return new Response(__('messages.Api.platform.wrong_param', ['num' => 1001]));
 
@@ -878,22 +868,16 @@ class ApiController extends Controller
                 $this->userInfo['xtoken'] = $data['token'];
             }
         }
-        $time = date('Y-m-d H:i:s');
-        $userIp = $this->getIp();
 
-        Users::where('uid', $this->userInfo['uid'])->update([
-            'last_ip' => $userIp,
-            'logined' => $time
-        ]);
+        //偵測客戶端裝置 (11:pc/41:安卓H5/51:iosH5)
+        if ($m === '1') {
+            $clientOrigin = Agent::isAndroidOS() ? 41 : 51;
+        } else {
+            $clientOrigin = 11;
+        }
 
-        //紀錄用戶登入log
-        UserLoginLog::create([
-            'uid'        => $this->userInfo['uid'],
-            'ip'         => $userIp,
-            'site_id'    => SiteSer::siteId(),
-            'origin'     => $clientOrigin,
-            'created_at' => $time,
-        ]);
+        Session::put('platformId', $origin);
+        app('events')->dispatch(new \App\Events\Login($this->userInfo, true, $clientOrigin));
 
         resolve(UserService::class)->getUserReset($this->userInfo['uid']);
 
