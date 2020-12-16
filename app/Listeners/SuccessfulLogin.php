@@ -55,13 +55,11 @@ class SuccessfulLogin
     //todo 增加scopes
     public function loginLog($uid, $login_ip, $site_id, $origin, $date)
     {
-        $userOrigin = session('platformId') ?? $origin;
-
         $data = [
             'uid'        => (int)$uid,
             'ip'         => $login_ip,
             'site_id'    => (int)$site_id,
-            'origin'     => (int)$userOrigin,
+            'origin'     => (int)$origin,
             'created_at' => $date,
         ];
         UserLoginLog::create($data);
