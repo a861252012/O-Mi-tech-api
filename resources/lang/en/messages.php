@@ -382,6 +382,7 @@ return [
     'GameEntryRequest.game_code' => '輸入遊戲代碼不正確',
     'ShareInstallLogRequest.origin' => '輸入來源不正確',
     'ShareInstallLogRequest.site_id' => '輸入站點ID不正確',
+    'ShareInstallLogRequest.scode' => '输入分享码不正確',
     'UserSetLocaleRequest.loc' => 'Incorrect input language',
     'Api.platform.not_empty' => 'Can not be empty',
     'Api.platform.wrong_length' => 'The length (number) is incorrect',
