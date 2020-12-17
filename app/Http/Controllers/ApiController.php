@@ -4,7 +4,9 @@
  */
 namespace App\Http\Controllers;
 
+use App\Events\Login;
 use App\Events\ShareUser;
+use App\Models\UserLoginLog;
 use App\Services\RedisCacheService;
 use App\Services\ShareService;
 use App\Services\GuardianService;
@@ -35,7 +37,6 @@ use App\Services\User\RegService;
 use App\Services\User\UserService;
 use App\Services\UserAttrService;
 use App\Traits\Commons;
-use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -49,6 +50,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Jenssegers\Agent\Facades\Agent;
 use Mews\Captcha\Facades\Captcha;
 use App\Models\Agents;
 use DB;
@@ -420,8 +422,8 @@ class ApiController extends Controller
 
         /* 解碼分享碼 */
         if (!empty($scode)) {
-            $shareUid = $shareService->decScode($scode);
-            info('分享碼解碼結果: ' . $shareUid);
+            $shareCode = $shareService->decScode($scode);
+            info('分享碼解碼結果: ' . $shareCode);
         }
 
         $newUser = [
@@ -436,17 +438,25 @@ class ApiController extends Controller
 
         //跳转过来的
         $newUser['aid'] = 0;
-        if ($agent) {
-            $domaid = Domain::where('url', $agent)->where('type', 0)->where('status', 0)->with("agent")->first();
-            if ($domaid->agent->id) {
-                $newUser['aid'] = $domaid->agent->id;
-            }
+//        if ($agent) {
+//            $domaid = Domain::where('url', $agent)->where('type', 0)->where('status', 0)->with("agent")->first();
+//            if ($domaid->agent->id) {
+//                $newUser['aid'] = $domaid->agent->id;
+//            }
+//        }
+        /* 如有推廣人則取得推廣人之aid */
+//        if (!empty($shareUid)) {
+//            $shareUser = Users::find($shareUid);
+//            $newUser['aid'] = $shareUser->agentRel->aid;
+//        }
+
+        if ($shareService->isAgent($scode)) {
+            $newUser['aid'] = $shareCode;
+            $newUser['did'] = $shareCode;
         }
 
-        /* 如有推廣人則取得推廣人之aid */
-        if (!empty($shareUid)) {
-            $shareUser = Users::find($shareUid);
-            $newUser['aid'] = $shareUser->agentRel->aid;
+        if ($shareService->isUser($scode)) {
+            $newUser['share_uid'] = $shareCode;
         }
 
         $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
@@ -464,21 +474,28 @@ class ApiController extends Controller
         $this->checkAgent($uid);
 
         /* 新增用戶推廣清單資訊 */
-        if (!empty($shareUid)) {
+        if ($shareService->isUser($scode)) {
             $shareId = $shareService->addUserShare(
                 $uid,
-                $shareUid,
+                $shareCode,
                 $newUser['aid'],
-                $shareUser->agentRel->agent->nickname,
+                '',
                 $request->get('client'),
                 $cc_mobile
             );
+
+            /* 全民代理推廣事件 */
+            if (!empty($cc_mobile) && !empty($shareCode) && !empty($user)) {
+                event(new ShareUser($user));
+            }
         }
 
         // 此时调用的是单实例登录的session 验证
         $guard = null;
-        if ($request->route()->getName() === 'm_reg' || $request->has('client') && in_array(strtolower($request->get('client')),
-                ['android', 'ios'])) {
+        if ($request->route()->getName() === 'm_reg'
+            || $request->has('client')
+            && in_array(strtolower($request->get('client')), ['android', 'ios'])
+        ) {
             /** @var JWTGuard $guard */
             $guard = Auth::guard('mobile');
             $guard->login($user);
@@ -513,11 +530,6 @@ class ApiController extends Controller
 
         //註冊成功時紀錄IP
         app('events')->dispatch(new \App\Events\Login($user, false, $origin));
-
-        /* 全民代理推廣事件 */
-        if (!empty($cc_mobile) && !empty($shareUser) && !empty($user)) {
-            event(new ShareUser($user));
-        }
 
         return JsonResponse::create($return);
     }
@@ -736,6 +748,8 @@ class ApiController extends Controller
         $sign = $request->get("sign");
         $httphost = $request->get("httphost", 0);
         $origin = $request->get("origin", 0);
+        $m = $request->get("m");
+
         if (!$this->make("redis")->exists("hplatforms:$origin")) {
             return new Response(__('messages.Api.platform.wrong_param', ['num' => 1001]));
 
@@ -854,12 +868,17 @@ class ApiController extends Controller
                 $this->userInfo['xtoken'] = $data['token'];
             }
         }
-        $time = date('Y-m-d H:i:s');
-        Users::where('uid', $this->userInfo['uid'])->update([
-            'last_ip' => $this->getIp(),
-            'logined' => $time
-        ]);
-        $this->userInfo['logined'] = $time;
+
+        //偵測客戶端裝置 (11:pc/41:安卓H5/51:iosH5)
+        if ($m === '1') {
+            $clientOrigin = Agent::isAndroidOS() ? 41 : 51;
+        } else {
+            $clientOrigin = 11;
+        }
+
+        Session::put('platformId', $origin);
+        app('events')->dispatch(new \App\Events\Login($this->userInfo, true, $clientOrigin));
+
         resolve(UserService::class)->getUserReset($this->userInfo['uid']);
 
         // 此时调用的是单实例登录的session 验证
@@ -884,7 +903,6 @@ class ApiController extends Controller
         Session::put('httphost', $httphost);
 
         // 判斷手機版或 PC 版
-        $m = $request->get("m");
         if ($m === '1') {
             $url = "/m/live/$room?httphost=". urlencode($httphost);
         } elseif ($m === '-1') {

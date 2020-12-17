@@ -76,6 +76,13 @@ return [
             'level' => 'debug',
             'days' => 7,
         ],
+        'login' => [
+            'driver' => 'daily',
+            'tap' => [App\Services\Logging\PureJsonFormatter::class],
+            'path' => storage_path('logs/login.log'),
+            'level' => 'debug',
+            'days' => 7,
+        ],
 
         'slack' => [
             'driver' => 'slack',

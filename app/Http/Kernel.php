@@ -10,6 +10,7 @@ use App\Http\Middleware\Test;
 use App\Http\Middleware\ThrottleRoutes;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Http\Middleware\VLocale;
+use App\Http\Middleware\V2Auth;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -40,15 +41,6 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middlewareGroups = [
-//        'web' => [
-//            \App\Http\Middleware\EncryptCookies::class,
-//            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-//            \Illuminate\Session\Middleware\StartSession::class,
-//            // \Illuminate\Session\Middleware\AuthenticateSession::class,
-//            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-//            \App\Http\Middleware\VerifyCsrfToken::class,
-//            \Illuminate\Routing\Middleware\SubstituteBindings::class,
-//        ],
         'pc' => [
             \App\Http\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
@@ -59,11 +51,6 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             VLocale::class,
         ],
-
-//        'api' => [
-//            'throttle:60,1',
-//            'bindings',
-//        ],
     ];
 
     /**
@@ -87,5 +74,6 @@ class Kernel extends HttpKernel
         'charge' => Charge::class,
         'test' => Test::class,
         'mobile.session' => MobileSession::class,
+        'V2Auth' => V2Auth::class,
     ];
 }

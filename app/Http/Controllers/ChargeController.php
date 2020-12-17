@@ -734,11 +734,14 @@ class ChargeController extends Controller
 
             $points = (int)ceil($stmt['points']);
 
+            $userInfo = resolve(UserService::class)->getUserInfo($stmt['uid']);
+
             DB::table('video_recharge')->where('id', $stmt['id'])->update(array(
                 'paymoney' => $money,
                 'pay_status' => $chargeResult,
                 'ttime' => $complateTime,
-                'pay_id' => $paytradeno
+                'pay_id' => $paytradeno,
+                'origin' => $userInfo['origin'],
             ));
 
             $chargeStatus = false;//成功状态标记位
@@ -758,15 +761,14 @@ class ChargeController extends Controller
 
             //刷新redis钻石
             if ($chargeStatus) {
-                $userObj = DB::table('video_user')->where('uid', $stmt['uid'])->first();//Users::find($stmt['uid']);
-                $loginfo .= '增加的钱数: paymoney ' . $money . ' points:' . $points . ' 最终的钱数:' . $userObj->points;
+                $userPoints = (int)$userInfo['points'] + $points;
+
+                $loginfo .= '增加的钱数: paymoney ' . $money . ' points:' . $points . ' 最终的钱数:' . $userPoints;
                 resolve(UserService::class)->getUserReset($stmt['uid']);
             }
 
             // 充钱成功后 检测用户的贵族状态
-            $uinfo = Users::find($stmt['uid']);
-            resolve('userGroupServer')->checkUserVipStatus($uinfo);
-
+            resolve('userGroupServer')->checkUserVipStatus($userInfo);
         } catch (\Exception $e) {
             Log::channel('charge')->info("订单号：" . $tradeno . " 事务结果：" . $e->getMessage() . "\n");
             DB::rollback();

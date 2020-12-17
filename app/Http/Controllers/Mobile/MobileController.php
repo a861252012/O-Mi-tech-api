@@ -30,6 +30,7 @@ use App\Services\RedisCacheService;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
 use App\Services\User\UserService;
+use App\Services\Mobile\MobileService;
 use App\Services\UserAttrService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -51,11 +52,16 @@ class MobileController extends Controller
 
     protected $announcementService;
     protected $redisCacheService;
+    protected $mobileService;
 
-    public function __construct(AnnouncementService $announcementService, RedisCacheService $redisCacheService)
-    {
+    public function __construct(
+        AnnouncementService $announcementService,
+        RedisCacheService $redisCacheService,
+        MobileService $mobileService
+    ) {
         $this->announcementService = $announcementService;
         $this->redisCacheService = $redisCacheService;
+        $this->mobileService = $mobileService;
     }
 
     /**
@@ -151,7 +157,7 @@ class MobileController extends Controller
     /**
      * @api {get} /user/info 获取用户信息
      * @apiGroup Mobile
-     * @apiName 手機資訊
+     * @apiName user/info
      * @apiVersion 1.0.0
      *
      * @apiSuccess {Int} uid 用户id
@@ -182,6 +188,8 @@ class MobileController extends Controller
      * @apiSuccess {String} guard_end 守護到期日
      * @apiSuccess {Int} guard_vaild_day 守護剩餘天數
      * @apiSuccess {Int} guard_shot_border  頭像邊框(0:關/1:開)
+     * @apiSuccess {String} group_name  社群交流群名稱
+     * @apiSuccess {String} group_url  社群交流群連結
      *
      * @apiSuccessExample {json} 成功回應
      * {
@@ -214,7 +222,9 @@ class MobileController extends Controller
     "guard_name": "黄色守护",
     "guard_end": "2020-03-26",
     "guard_vaild_day": 29,
-    "guard_shot_border": 1
+    "guard_shot_border": 1,
+    "group_name": "火爆社群",
+    "group_url": "https:\/\/www.google.com\/"
     },
     "msg": ""
     }
@@ -233,6 +243,8 @@ class MobileController extends Controller
                 'data' => $remote_js_url,
             ]);
         }
+
+        $socialGroupInfo = $this->mobileService->getSocialGroupInfo((int)Auth::user()->lv_rich);
 
         $userfollow = $this->userFollowings();
         $hashtable = 'zuser_byattens:' . $uid;
@@ -256,7 +268,7 @@ class MobileController extends Controller
 
         /* 取得新消息數量 */
         $mails = resolve(MessageService::class)->getMessageNotReadCount($uid, $userinfo->lv_rich);
-
+        //TODO 修正並實做取得 group_name,group_url
         return JsonResponse::create([
             'status' => 1,
             'data'   => [
@@ -290,7 +302,9 @@ class MobileController extends Controller
                 'guard_name'        => __('messages.Guardian.name.' . $userinfo->guard_id) ?? '',
                 'guard_end'         => $userinfo->guard_end ?? '',
                 'guard_vaild_day'   => $guardVaildDay ?? 0,
-                'guard_shot_border' => $guardianInfo->shot_border
+                'guard_shot_border' => $guardianInfo->shot_border,
+                'group_name'        => $socialGroupInfo->group_name,
+                'group_url'         => $socialGroupInfo->group_url,
             ],
         ]);
     }
@@ -653,11 +667,6 @@ class MobileController extends Controller
             }
         }
         return count($myfav);
-    }
-
-    public function logintest()
-    {
-        return JsonResponse::create(['status' => Auth::check(), 'user' => Auth::user()]);
     }
 
     /**

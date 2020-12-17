@@ -7,11 +7,11 @@ use App\Events\Login;
 use App\Models\UserLoginLog;
 use App\Models\Users;
 use App\Traits\Commons;
-//use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Request;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
+use Jenssegers\Agent\Facades\Agent;
 
 class SuccessfulLogin
 {
@@ -45,23 +45,30 @@ class SuccessfulLogin
         Users::query()->where('uid', $uid)->update([
             'last_ip' => $login_ip, // 最后登录ip TODO 大流量优化，目前没压力
             'logined' => date('Y-m-d H:i:s'),
+            'origin'  => $origin,
         ]);
 
         //记录登录日志
         $this->loginLog($uid, $login_ip, $user->site_id, $origin, date('Y-m-d H:i:s'));
-
-        // Log::info("test event:".$user->toJson());
     }
 
     //todo 增加scopes
     public function loginLog($uid, $login_ip, $site_id, $origin, $date)
     {
-        return UserLoginLog::create([
-            'uid'        => $uid,
+        $data = [
+            'uid'        => (int)$uid,
             'ip'         => $login_ip,
-            'site_id'    => $site_id,
-            'origin'     => $origin,
+            'site_id'    => (int)$site_id,
+            'origin'     => (int)$origin,
             'created_at' => $date,
-        ]);
+        ];
+        UserLoginLog::create($data);
+
+        unset($data['created_at']);
+        $data['type'] = 'login';
+        $data['dt'] = date('Y-m-d');
+        $data['ts'] = time();
+        $data['ua'] = $this->request->server('HTTP_USER_AGENT');
+        Log::channel('login')->info(null, $data);
     }
 }

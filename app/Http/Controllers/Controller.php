@@ -1577,4 +1577,13 @@ class Controller extends BaseController
         // default
         return self::DEFAULT_LOCALE;
     }
+
+    protected function getUrl()
+    {
+        $r = request();
+        $port = $r->getPort();
+        return ($r->isSecure() ? 'https://' : 'http://') .
+            $r->getHost() .
+            (($port == 80 || $port = 443) ? '' : ':'.$port);
+    }
 }

@@ -103,6 +103,12 @@ Route::group(['prefix' => 'member'], function () {
         Route::any('signin', 'MemberController@signin');
         // 主播房间暱称
         Route::any('roomInfo', 'MemberController@roomInfo');
+
+        // 用户中心 取得用戶等級發言字數
+        Route::get('userLevelInfo', 'MemberController@getUserLevelInfo');
+
+        // 用户中心 取得主播等級資訊
+        Route::get('anchorLevelInfo', 'MemberController@getAnchorLevelInfo');
     });
 });
 
@@ -148,7 +154,8 @@ Route::post('/live/checked', ['name' => 'recvSskey', 'uses' => 'ApiController@pl
 
 //APP下载
 Route::get('/download', ['name' => 'download', 'uses' => 'PageController@download']);
-Route::get('/download/qr.png', ['name' => 'downloadQR', 'uses' => 'PageController@downloadQR']);
+//Route::get('/download/qr.png', ['name' => 'downloadQR', 'uses' => 'PageController@downloadQR']);
+Route::get('/download/qr.png', ['name' => 'downloadQR', 'uses' => 'PageController@downloadQR2']);
 Route::get('/contact/qr.png', ['name' => 'contactQR', 'uses' => 'PageController@contactQR']);
 
 // 首页房间数据json
@@ -483,8 +490,10 @@ Route::prefix('game')->middleware(['login_auth'])->group(function () {
     Route::get('game_list', 'GameController@gameList');
 });
 
-Route::prefix('v2')->namespace('v2')->group(function () {
-    Route::get('captcha/{cKey?}', 'CaptchaController@index');
+Route::prefix('v2')->middleware(['V2Auth'])->group(function () {
+    Route::namespace('v2')->group(function () {
+        Route::get('captcha/{cKey?}', 'CaptchaController@index');
+    });
 });
 
 /* 守護功能 */
