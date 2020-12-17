@@ -7,6 +7,7 @@
  */
 namespace App\Http\Controllers;
 
+use App\Facades\SiteSer;
 use App\Services\ShareService;
 use Illuminate\Http\Request;
 
@@ -50,8 +51,8 @@ class ShareController extends Controller
         try {
             $scode = $request->scode ?? null;
 
-            if (isset($scode) && $this->shareService->decScode($scode)) {
-                $this->shareService->addInstallLog($request->origin, $request->site_id);
+            if (isset($scode) && $this->shareService->decScode($scode) && $this->shareService->isUser($scode)) {
+                $this->shareService->addInstallLog($request->origin, SiteSer::SiteId());
             }
 
             $this->setStatus(1, __('messages.success'));

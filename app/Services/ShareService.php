@@ -38,6 +38,10 @@ class ShareService
     /* 新增安裝資訊紀錄 */
     public function addInstallLog($origin, $siteId)
     {
+        if (empty($origin)) {
+            return false;
+        }
+
         return $this->installLogRepository->insertLog([
             'origin'    => $origin,
             'site_id'   => $siteId,
