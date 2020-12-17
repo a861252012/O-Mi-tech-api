@@ -1,14 +1,7 @@
 <?php
-//Route::group(['prefix'=>'opcache'],function (){
-//   Route::get('status','OPcacheController@status');
-//   Route::get('config','OPcacheController@config');
-//   Route::get('flush','OPcacheController@flush');
-//});
+
 Route::match(['POST', 'GET'], '/login', ['name' => 'login', 'uses' => 'LoginController@login']);
 Route::get('/captcha', 'LoginController@captcha');
-//Route::get('test_recharge', function(){
-//    return view('test.recharge');
-//});
 
 // send SMS
 Route::post('/sms/send', 'SmsController@send')->name('sms_send');
@@ -20,8 +13,13 @@ Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopControl
 Route::get('room/{rid}/{h5?}', 'RoomController@index')
     ->where('rid', '[0-9]+')
     ->where('h5', '(h5|h5hls)');
+
 //房间中间页
-Route::get('/room/roommid/{roomid}/{rid}/{id?}', ['name' => 'room_roommid', 'uses' => 'RoomController@roommid'])->where('roomid', '[0-9]+')->where('rid', '[0-9]+')->where('id', '[0-9]+');
+Route::get('/room/roommid/{roomid}/{rid}/{id?}', ['name' => 'room_roommid', 'uses' => 'RoomController@roommid'])
+    ->where('roomid', '[0-9]+')
+    ->where('rid', '[0-9]+')
+    ->where('id', '[0-9]+');
+
 // 招募页面
 Route::post('/business/{act}', ['name' => 'shop_getgroupall', 'uses' => 'BusinessController@index']);
 
@@ -53,9 +51,13 @@ Route::group(['prefix' => 'member'], function () {
 
         // modify mobile
         Route::post('modifymobile/send', 'MemberController@modifyMobileSend')->name('member_modify_mobile_send');
-        Route::post('modifymobile/confirm', 'MemberController@modifyMobileConfirm')->name('member_modify_mobile_confirm');
+        Route::post('modifymobile/confirm', 'MemberController@modifyMobileConfirm')
+            ->name('member_modify_mobile_confirm');
 
-        Route::post('mail/verify/send', 'PasswordController@sendVerifyMail')->middleware('throttle.route:1,1')->name('mail_verify_send');
+        Route::post('mail/verify/send', 'PasswordController@sendVerifyMail')
+            ->middleware('throttle.route:1,1')
+            ->name('mail_verify_send');
+
         // 用户中心消息  type 是可有可无的 必须放到最后
         Route::get('message/{type?}', 'MemberController@msglist')->where('type', '[0-9]+')->name('member_msglist');
         Route::post('/member/domsg', ['uses' => 'MemberController@domsg']);
@@ -105,8 +107,14 @@ Route::group(['prefix' => 'member'], function () {
 });
 
 Route::group(['prefix' => 'user'], function () {
-    Route::post('pwdreset/by_mobile', 'PasswordController@pwdResetByMobile')->middleware('throttle.route:10,1')->name('pwdreset_by_mobile');
-    Route::post('pwdreset/submit', 'PasswordController@pwdResetSubmit')->middleware('throttle.route:10,1')->name('pwdreset_submit');
+    Route::post('pwdreset/by_mobile', 'PasswordController@pwdResetByMobile')
+        ->middleware('throttle.route:10,1')
+        ->name('pwdreset_by_mobile');
+
+    Route::post('pwdreset/submit', 'PasswordController@pwdResetSubmit')
+        ->middleware('throttle.route:10,1')
+        ->name('pwdreset_submit');
+
     Route::post('pwdreset/reset', 'PasswordController@pwdResetConfirm');
     Route::get('check', 'UserController@check')->name('user_check');    // 是否允許用戶停在直播間
     Route::group(['middleware' => 'login_auth'], function () {
@@ -184,7 +192,9 @@ Route::get('/rank_data', ['name' => 'rank_data', 'uses' => 'RankController@rankD
 // 关于 帮助 投诉
 Route::get('/about/{act}', ['uses' => 'PageController@index']);
 //首页帮助sort分类 num获取条数
-Route::get('/help/{sort}/{num}', ['uses' => 'IndexController@getHelp'])->where('sort', '[0-9]+')->where('num', '[0-9]+');
+Route::get('/help/{sort}/{num}', ['uses' => 'IndexController@getHelp'])
+    ->where('sort', '[0-9]+')
+    ->where('num', '[0-9]+');
 // 活动详情页面
 Route::get('/nac/{id}', ['name' => 'ac_info', 'uses' => 'ActivityController@info']);
 Route::match(['GET', 'POST'], '/majax/{action}', ['name' => 'majax', 'uses' => 'MemberController@ajax']);
@@ -196,7 +206,6 @@ Route::get('/extend/{url}', ['name' => 'business_extend', 'uses' => 'BusinessCon
 Route::get('/dal/{url}', ['name' => 'business_dal', 'uses' => 'BusinessController@extend']);
 Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
 
-
 // 开放平台
 Route::get('/api/downrtmp', 'ApiController@getDownRtmp')->name('downrtmp');
 
@@ -207,36 +216,33 @@ Route::get('/reg/nickname', 'RegController@nickname')->name('reg_nickname');
 // PageController
 Route::get('/search', ['name' => 'search', 'uses' => 'PageController@search']);
 
-
 Route::get('/find', 'ApiController@searchAnchor')->name('find');
 
 // 验证是否登录
 Route::group(['middleware' => ['login_auth']], function () {
 
-
 // PageController 招募页面
     Route::get('/join', ['name' => 'join', 'uses' => 'PageController@join']);
     Route::get('/cooperation', ['name' => 'join', 'uses' => 'PageController@cooperation']);
-//邀请注册数据临时处理过程
+    //邀请注册数据临时处理过程
     Route::get('/interface', ['name' => 'invitation', 'uses' => 'ApiController@Invitation']);
 
-//活动送礼接口
+    //活动送礼接口
     Route::get('/activity', ['name' => 'activity', 'uses' => 'ApiController@Activity']);
 
-
-//魅力之星活动排行榜
+    //魅力之星活动排行榜
     Route::get('/CharmStar', ['name' => 'charmstar', 'uses' => 'ActivityController@charmstar']);
 
-//列举最近20个充值的用户
+    //列举最近20个充值的用户
     Route::get('/activityShow', 'ApiController@getLastChargeUser')->name('activityShow');
 
-//下载扩充
+    //下载扩充
     Route::get('/download/[{filename:.+}]', ['name' => 'download', 'uses' => 'ApiController@download']);
 
-//获取桌面图标
+    //获取桌面图标
     Route::get('/shorturl', 'ApiController@shortUrl')->name('shorturl');
 
-//图片静态化
+    //图片静态化
     Route::get('/convertstaticimg', 'ApiController@imageStatic')->name('imagestatic');
 
     // 用户中心 vip 贵族体系
@@ -244,15 +250,17 @@ Route::group(['middleware' => ['login_auth']], function () {
     // 用户中心 viplist 贵族体系
     Route::get('/member/viplist', ['name' => 'member_viplist', 'uses' => 'MemberController@vip_list']);
 
-
     // 用户中心 邀请注册
     Route::get('/member/invite', ['name' => 'member_invite', 'uses' => 'MemberController@invite']);
     // 用户中心 我的关注
     Route::get('/member/attention', ['name' => 'member_attention', 'uses' => 'MemberController@attention']);
 
-
     //删除一对多
-    Route::get('/member/delRoomOne2Many', ['name' => 'member_roomDelOne2Many', 'uses' => 'MemberController@delRoomOne2Many']);
+    Route::get('/member/delRoomOne2Many', [
+        'name' => 'member_roomDelOne2Many',
+        'uses' => 'MemberController@delRoomOne2Many',
+    ]);
+
     //一对多记录详情-购买用户
     Route::get('/member/getBuyOneToMore', ['uses' => 'MemberController@getBuyOneToMore']);
     //pc创建一对多
@@ -260,47 +268,63 @@ Route::group(['middleware' => ['login_auth']], function () {
     //pc一对多补票
     Route::post('/member/makeUpOneToMore', ['name' => 'makeUpOneToMore', 'uses' => 'MemberController@makeUpOneToMore']);
     //pc删除一对多
-    Route::post('/member/delRoomOne2Many', ['name' => 'member_roomDelOne2Many', 'uses' => 'MemberController@delRoomOne2Many']);
-    //pc端添加一第一
-    Route::post('/member/roomSetDuration', ['name' => 'member_roomSetDuration', 'uses' => 'MemberController@roomSetDuration']);
-    //pc端预约一对一
-    Route::post('/member/doReservation', ['name' => 'member_doReservation', 'uses' => 'MemberController@doReservation']);
-    //pc端修改房间时长
-    Route::get('/member/roomUpdateDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@roomUpdateDuration']);
-    //pc端删除一对一
-    Route::post('/member/delRoomDuration', ['name' => 'member_roomUpdateDuration', 'uses' => 'MemberController@delRoomDuration']);
+    Route::post('/member/delRoomOne2Many', [
+        'name' => 'member_roomDelOne2Many',
+        'uses' => 'MemberController@delRoomOne2Many',
+    ]);
 
+    //pc端添加一第一
+    Route::post('/member/roomSetDuration', [
+        'name' => 'member_roomSetDuration',
+        'uses' => 'MemberController@roomSetDuration',
+    ]);
+
+    //pc端预约一对一
+    Route::post('/member/doReservation', [
+        'name' => 'member_doReservation',
+        'uses' => 'MemberController@doReservation',
+    ]);
+
+    //pc端修改房间时长
+    Route::get('/member/roomUpdateDuration', [
+        'name' => 'member_roomUpdateDuration',
+        'uses' => 'MemberController@roomUpdateDuration',
+    ]);
+
+    //pc端删除一对一
+    Route::post('/member/delRoomDuration', [
+        'name' => 'member_roomUpdateDuration',
+        'uses' => 'MemberController@delRoomDuration',
+    ]);
 
     // 用户中心 礼物统计
     Route::get('/member/income', ['name' => 'member_count', 'uses' => 'MemberController@income']);
     Route::get('/member/gift', ['name' => 'member_gift', 'uses' => 'MemberController@gift']);
 
     // 用户中心 房间设置
-    Route::match(['POST', 'GET'], '/member/roomset', ['name' => 'member_roomset', 'uses' => 'MemberController@roomset']);
+    Route::match(['POST', 'GET'], '/member/roomset', [
+        'name' => 'member_roomset',
+        'uses' => 'MemberController@roomset',
+    ]);
 
     // 用户中心 房间设置
-    Route::match(['POST', 'GET'], '/member/roomSetTimecost', ['name' => 'member_roomset', 'uses' => 'MemberController@roomSetTimecost']);
+    Route::match(['POST', 'GET'], '/member/roomSetTimecost', [
+        'name' => 'member_roomset',
+        'uses' => 'MemberController@roomSetTimecost',
+    ]);
 
     // 用户中心 代理数据
     Route::match(['POST', 'GET'], '/member/agents', ['name' => 'member_agents', 'uses' => 'MemberController@agents']);
 
-
     //隐身功能接口
     Route::get('/member/hidden/{status}', ['name' => 'hidden', 'uses' => 'MemberController@hidden']);
-
-
-    //私信接口  v2版本中去掉了
-//    Route::match(['POST', 'GET'], '/letter', ['name' => 'letter', 'uses' => 'ApiController@Letter']);
 
     //获取余额接口
     Route::get('/balance', ['name' => 'balance', 'uses' => 'ApiController@Balance']);
 
-
-
     // 房间管理员
     Route::get('/member/roomadmin', ['name' => 'roomadmin', 'uses' => 'MemberController@roomadmin']);
     Route::post('/member/roomadmindelete', ['name' => 'roomadmin', 'uses' => 'MemberController@roomadmindelete']);
-
 
     // 开通贵族
     Route::post('/openvip', ['name' => 'shop_openvip', 'uses' => 'MemberController@buyVip']);
@@ -311,10 +335,10 @@ Route::group(['middleware' => ['login_auth']], function () {
     // 主播空间
     Route::get('space', 'SpaceController@index')->name('space');
 
-
-    //Route::match(['POST', 'GET'], '/verfiyName', ['uses' => 'IndexController@checkUniqueName']);
-    Route::match(['POST', 'GET'], '/setinroomstat', ['name' => 'setinroomstat', 'uses' => 'IndexController@setInRoomStat']);
-
+    Route::match(['POST', 'GET'], '/setinroomstat', [
+        'name' => 'setinroomstat',
+        'uses' => 'IndexController@setInRoomStat',
+    ]);
 
     Route::get('/cliget/{act}', ['uses' => 'IndexController@cliGetRes']);
 
@@ -342,7 +366,10 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/getuser/{uid}', ['name' => 'getuser', 'uses' => 'ApiController@getUserByDes'])->where('uid', '[0-9]+');
 
     //邮箱验证
-    Route::match(['GET', 'POST'], 'sendVerifyMail', ['name' => 'sendVerifyMail', 'uses' => 'PasswordController@sendVerifyMail']);
+    Route::match(['GET', 'POST'], 'sendVerifyMail', [
+        'name' => 'sendVerifyMail',
+        'uses' => 'PasswordController@sendVerifyMail',
+    ]);
 
     // 关键字屏蔽
     Route::get('/kw', ['name' => 'json_kw', 'uses' => 'ApiController@kw']);
@@ -351,7 +378,10 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::post('plat_exchange', ['name' => 'plat_exchange', 'uses' => 'ApiController@platExchange']);
 
     //获取时长打折信处
-    Route::get('/getTimeCountRoomDiscountInfo', ['name' => 'roomdiscountinfo', 'uses' => 'ApiController@getTimeCountRoomDiscountInfo']);
+    Route::get('/getTimeCountRoomDiscountInfo', [
+        'name' => 'roomdiscountinfo',
+        'uses' => 'ApiController@getTimeCountRoomDiscountInfo',
+    ]);
 
     Route::get('/ajaxProxy', ['name' => 'ajaxProxy', 'uses' => 'ApiController@ajaxProxy']);
 
@@ -394,9 +424,21 @@ Route::post('charge/chongti', 'ChargeController@chongti')->name('chongti');
 //通知
 Route::group(['prefix' => 'charge', 'middleware' => ['charge']], function () {
     Route::match(['POST', 'GET'], 'notice2', ['name' => 'notice2', 'uses' => 'ChargeController@notice2']);
-    Route::match(['POST', 'GET'], 'notice/{pay_type?}/{one_pay_token?}', ['name' => 'charge_notice', 'uses' => 'ChargeController@notice'])->name('charge_notice');
-    Route::match(['POST', 'GET'], 'checkKeepVip', ['name' => 'checkKeepVip', 'uses' => 'ChargeController@checkKeepVip']);
-    Route::match(['POST', 'GET'], 'callFailOrder', ['name' => 'callFailOrder', 'uses' => 'ChargeController@callFailOrder']);
+    Route::match(['POST', 'GET'], 'notice/{pay_type?}/{one_pay_token?}', [
+        'name' => 'charge_notice',
+        'uses' => 'ChargeController@notice',
+    ])->name('charge_notice');
+
+    Route::match(['POST', 'GET'], 'checkKeepVip', [
+        'name' => 'checkKeepVip',
+        'uses' => 'ChargeController@checkKeepVip',
+    ]);
+
+    Route::match(['POST', 'GET'], 'callFailOrder', [
+        'name' => 'callFailOrder',
+        'uses' => 'ChargeController@callFailOrder',
+    ]);
+
     Route::post('moniCharge', ['name' => 'charge', 'uses' => 'ChargeController@moniCharge']);
     Route::match(['POST', 'GET'], 'moniHandler', ['name' => 'moniHandler', 'uses' => 'ChargeController@moniHandler']);
     Route::post('del', ['name' => 'charge', 'uses' => 'ChargeController@del']);
@@ -408,7 +450,10 @@ Route::get('/ping', ['name' => 'ping', 'uses' => 'ApiController@ping']);
 Route::post('login', 'LoginController@login')->name('login');
 Route::any('/logout', 'LoginController@logout');
 
-Route::match(['POST', 'GET'], '/get_lcertificate', ['name' => 'api_agents', 'uses' => 'ApiController@get_lcertificate']);
+Route::match(['POST', 'GET'], '/get_lcertificate', [
+    'name' => 'api_agents',
+    'uses' => 'ApiController@get_lcertificate',
+]);
 
 // 用户flash段调取sid的
 Route::get('/loadsid', ['name' => 'loadsid', 'uses' => 'ApiController@loadSid']);
@@ -417,8 +462,6 @@ Route::get('/islogin', ['name' => 'islogin', 'uses' => 'LoginController@isLogin'
 
 Route::get('/oort2bunny', ['name' => 'guanggao', 'uses' => 'AdsController@getAd']);//广告接口
 
-
-//Route::match(['POST', 'GET'], '/pay/g2p', ['name' => 'pay_g2p', 'uses' => 'Pay\PayController@index']);
 Route::match(['POST', 'GET'], 'log', ['name' => 'getss', 'uses' => 'ApiController@getLog']);
 
 //古都通知接口
@@ -436,9 +479,9 @@ Route::get('loginmsg', ['name' => 'loginmsg', 'uses' => 'Mobile\MobileController
 
 // 遊戲中心
 Route::prefix('game')->middleware(['login_auth'])->group(function () {
-	Route::post('entry','GameController@entry');
-	Route::post('deposit','GameController@deposit');
-    Route::get('game_list','GameController@gameList');
+    Route::any('entry', 'GameController@entry')->name('pc_game_entry');
+    Route::post('deposit', 'GameController@deposit');
+    Route::get('game_list', 'GameController@gameList');
 });
 
 Route::prefix('v2')->middleware(['V2Auth'])->group(function () {
@@ -466,7 +509,6 @@ Route::prefix('guardian')->group(function () {
         Route::get('history', 'GuardianController@history');
     });
 });
-
 
 Route::any('omey/v2/check', 'OmeyController@v2Check');
 Route::any('omey/v2/diamondGet', 'OmeyController@v2DiamondGet');
