@@ -30,6 +30,7 @@ use App\Services\RedisCacheService;
 use App\Services\Site\SiteService;
 use App\Services\Sms\SmsService;
 use App\Services\User\UserService;
+use App\Services\Mobile\MobileService;
 use App\Services\UserAttrService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -51,11 +52,16 @@ class MobileController extends Controller
 
     protected $announcementService;
     protected $redisCacheService;
+    protected $mobileService;
 
-    public function __construct(AnnouncementService $announcementService, RedisCacheService $redisCacheService)
-    {
+    public function __construct(
+        AnnouncementService $announcementService,
+        RedisCacheService $redisCacheService,
+        MobileService $mobileService
+    ) {
         $this->announcementService = $announcementService;
         $this->redisCacheService = $redisCacheService;
+        $this->mobileService = $mobileService;
     }
 
     /**
@@ -151,7 +157,7 @@ class MobileController extends Controller
     /**
      * @api {get} /user/info 获取用户信息
      * @apiGroup Mobile
-     * @apiName 手機資訊
+     * @apiName user/info
      * @apiVersion 1.0.0
      *
      * @apiSuccess {Int} uid 用户id
@@ -238,6 +244,8 @@ class MobileController extends Controller
             ]);
         }
 
+        $socialGroupInfo = $this->mobileService->getSocialGroupInfo((int)Auth::user()->lv_rich);
+
         $userfollow = $this->userFollowings();
         $hashtable = 'zuser_byattens:' . $uid;
         $by_atttennums = $this->make('redis')->zCount($hashtable, '-inf', '+inf');
@@ -295,8 +303,8 @@ class MobileController extends Controller
                 'guard_end'         => $userinfo->guard_end ?? '',
                 'guard_vaild_day'   => $guardVaildDay ?? 0,
                 'guard_shot_border' => $guardianInfo->shot_border,
-                'group_name'        => '火爆社群',
-                'group_url'         => 'https://www.google.com/',
+                'group_name'        => $socialGroupInfo->group_name,
+                'group_url'         => $socialGroupInfo->group_url,
             ],
         ]);
     }
