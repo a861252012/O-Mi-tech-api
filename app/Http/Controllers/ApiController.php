@@ -904,7 +904,7 @@ class ApiController extends Controller
 
         // 判斷手機版或 PC 版
         if ($m === '1') {
-            $url = "/m/live/$room?httphost=". urlencode($httphost);
+            $url = "/m/room/$room?httphost=". urlencode($httphost);
         } elseif ($m === '-1') {
             // flash 版 (將於 2020 年底廢除)
             $h5 = SiteSer::config('h5') ? "/h5" : "";
