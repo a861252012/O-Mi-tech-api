@@ -20,12 +20,6 @@ use Illuminate\Support\Facades\Redis;
 
 class UserGroupService extends Service
 {
-    protected $userGroupRepository;
-
-    public function __construct(UserGroupRepository $userGroupRepository)
-    {
-        $this->userGroupRepository = $userGroupRepository;
-    }
 
     /**
      * 根据类型type获取用户组
@@ -222,8 +216,8 @@ class UserGroupService extends Service
     {
         $data['userLevelInfo'] = resolve(Controller::class)->getLevelByRole($userInfo);
         $data['userLevelInfo']['uid'] = (int)$userInfo->uid;
-
-        $levelInfo = $this->userGroupRepository->getLevelInfoByType($type);
+        
+        $levelInfo = resolve(userGroupRepository::class)->getLevelInfoByType($type);
         $data['userGroup'] = UserWordLimitResource::collection($levelInfo);
         $data['userLevelInfo']['lv_rich'] = (int)$userInfo->lv_rich;
 
