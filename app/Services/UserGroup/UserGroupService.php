@@ -214,9 +214,9 @@ class UserGroupService extends Service
 
     public function getUserChatLimit($type, $userInfo)
     {
-        $data['userLevelInfo'] = resolve(Controller::class)->getLevelByRole($userInfo);
+        $data['userLevelInfo'] = resolve(Controller::class)->getLevelByRole($userInfo, true);
         $data['userLevelInfo']['uid'] = (int)$userInfo->uid;
-        
+
         $levelInfo = resolve(userGroupRepository::class)->getLevelInfoByType($type);
         $data['userGroup'] = UserWordLimitResource::collection($levelInfo);
         $data['userLevelInfo']['lv_rich'] = (int)$userInfo->lv_rich;
