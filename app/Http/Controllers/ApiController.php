@@ -451,12 +451,11 @@ class ApiController extends Controller
 //        }
 
         if ($shareService->isAgent($scode)) {
-            $newUser['aid'] = $shareCode;
-            $newUser['did'] = $shareCode;
-        }
-
-        if ($shareService->isUser($scode)) {
-            $newUser['share_uid'] = $shareCode;
+            $domain = Domain::find($shareCode);
+            if (!empty($domain)) {
+                $newUser['did'] = $domain->id;
+                $newUser['aid'] = $domain->agent->id;
+            }
         }
 
         $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
@@ -478,16 +477,11 @@ class ApiController extends Controller
             $shareId = $shareService->addUserShare(
                 $uid,
                 $shareCode,
-                $newUser['aid'],
+                0,
                 '',
                 $request->get('client'),
                 $cc_mobile
             );
-
-            /* 全民代理推廣事件 */
-            if (!empty($cc_mobile) && !empty($shareCode) && !empty($user)) {
-                event(new ShareUser($user));
-            }
         }
 
         // 此时调用的是单实例登录的session 验证
@@ -530,6 +524,15 @@ class ApiController extends Controller
 
         //註冊成功時紀錄IP
         app('events')->dispatch(new \App\Events\Login($user, false, $origin));
+
+        /* 全民代理推廣事件 */
+        if (!empty($cc_mobile)
+            && !empty($shareCode)
+            && !empty($user)
+            && $shareService->isUser($scode)
+        ) {
+            event(new ShareUser($user));
+        }
 
         return JsonResponse::create($return);
     }

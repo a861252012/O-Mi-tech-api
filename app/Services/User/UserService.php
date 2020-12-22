@@ -88,7 +88,6 @@ class UserService extends Service
             'origin',
             'sex',
             'site_id',
-            'share_uid',
         ]);
         $newUser['created'] = date('Y-m-d H:i:s');
         $newUser['logined'] = date('Y-m-d H:i:s');
