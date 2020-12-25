@@ -451,10 +451,10 @@ class ApiController extends Controller
 //        }
 
         if ($shareService->isAgent($scode)) {
-            $domain = Domain::find($shareCode);
-            if (!empty($domain)) {
-                $newUser['did'] = $domain->id;
-                $newUser['aid'] = $domain->agent->id;
+            $agent = Agents::find($shareCode);
+            if (!empty($agent)) {
+                $newUser['aid'] = $agent->id;
+                $newUser['did'] = $agent->domain->id;
             }
         }
 

@@ -10,6 +10,7 @@ namespace App\Services;
 
 
 use App\Facades\SiteSer;
+use App\Repositories\AgentsRepository;
 use App\Repositories\DomainRepository;
 use App\Repositories\InstallLogRepository;
 use App\Repositories\UserShareRepository;
@@ -20,19 +21,19 @@ class ShareService
     protected $installLogRepository;
     protected $usersRepository;
     protected $userShareRepository;
-    protected $domainRepository;
+    protected $agentsRepository;
 
 
     public function __construct(
         InstallLogRepository $installLogRepository,
         UsersRepository $usersRepository,
         UserShareRepository $userShareRepository,
-        DomainRepository $domainRepository
+        AgentsRepository $agentsRepository
     ) {
         $this->installLogRepository = $installLogRepository;
         $this->usersRepository = $usersRepository;
         $this->userShareRepository = $userShareRepository;
-        $this->domainRepository = $domainRepository;
+        $this->agentsRepository = $agentsRepository;
     }
 
     /* 新增安裝資訊紀錄 */
@@ -120,19 +121,19 @@ class ShareService
     private function getAgentId($scode)
     {
         $data = substr($scode, 2);
-        $dId = hexdec($data);
+        $aId = hexdec($data);
 
         /* 檢查域名是否狀態 */
-        $agent = $this->domainRepository->getDataById($dId);
+        $agent = $this->agentsRepository->getDataById($aId);
         if (empty($agent)) {
             return false;
         }
 
-        $scodeCheck = $this->genScodeForAgent($dId);
+        $scodeCheck = $this->genScodeForAgent($aId);
 
         /* 檢查分享碼是否有效 */
         if ($scodeCheck === $scode) {
-            return $dId;
+            return $aId;
         }
 
         return false;
