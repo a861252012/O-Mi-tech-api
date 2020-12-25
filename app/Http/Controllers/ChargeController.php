@@ -270,7 +270,7 @@ class ChargeController extends Controller
             return new JsonResponse(array('status' => 1, 'msg' => __('messages.Charge.block_msg')));
         }
 
-        $origin = $this->getClient();
+//        $origin = $this->getClient();
 
         /* 回傳資料處理動作 */
         $act = '1';
@@ -340,7 +340,7 @@ class ChargeController extends Controller
                 'nickname'   => Auth::user()['nickname'],
                 'channel'    => $channel,
                 'mode_type'  => $mode_type,
-                'origin'     => $origin,
+                'origin'     => Auth::user()['origin'],
                 'ip'         => $this->getIp(),
             )
         );
