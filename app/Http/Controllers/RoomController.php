@@ -168,8 +168,8 @@ class RoomController extends Controller
                             $plat_backurl = $roomService->getPlatUrl($platformId);
                             $hplat_info = $redis->hgetall("hplatforms:$platformId");
 
-                            $logger->info("user exchange:  user id:$uid  origin:$origin ");
-                            $hplat_user = $this->getMoney($uid, $rid, $origin);
+                            $logger->info("user exchange:  user id:$uid  platformId:$platformId ");
+                            $hplat_user = $this->getMoney($uid, $rid, $platformId);
                         }
 
                         return JsonResponse::create(['data' => [
@@ -415,7 +415,7 @@ class RoomController extends Controller
         return explode('|', $chatServer['host'], 2)[$isHost ? 0 : 1];
     }
 
-    public function getMoney($uid, $rid, $origin)
+    public function getMoney($uid, $rid, $platformId)
     {
         /**
          * @var \Redis $redis
@@ -424,12 +424,11 @@ class RoomController extends Controller
         $redis->del("hplat_user:$uid");
 
         /** 通知java获取*/
-        $redis->publish('plat_money',
-            json_encode([
-                'origin' => $origin,
-                'uid' => $uid,
-                'rid' => $rid,
-            ]));
+        $redis->publish('plat_money', json_encode([
+            'origin' => $platformId,
+            'uid' => $uid,
+            'rid' => $rid,
+        ]));
         /** 检查购买状态 */
         $timeout = microtime(true) + 3;
         while (true) {

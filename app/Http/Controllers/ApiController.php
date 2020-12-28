@@ -600,7 +600,7 @@ class ApiController extends Controller
 //        return JsonResponse::create(['status' => 0, 'msg' => '無法兌換']);
 
         $uid = Auth::user()->uid;
-        $origin = Auth::user()->origin;
+        $platformId = Session::get('platformId');
         $request = $this->make('request');
         $money = trim($request->get('money')) ? $request->get('money') : 0;
         $rid = trim($request->get('rid'));
@@ -608,18 +608,17 @@ class ApiController extends Controller
 
         $redis = $this->make('redis');
 
-        Log::channel('daily')->info('user exchange', [" user id:$uid  origin:$origin  money:$money "]);
+        Log::channel('daily')->info('user exchange', [" user id:$uid  platformId:$platformId  money:$money "]);
 
         /** 通知java获取*/
         $redis->del("hplat_user:$uid");
-        $redis->publish('plat_exchange',
-            json_encode([
-                'origin'  => $origin,
-                'uid'     => $uid,
-                'rid'     => $rid,
-                'money'   => $money,
-                'site_id' => $site_id,
-            ]));
+        $redis->publish('plat_exchange', json_encode([
+            'origin'  => $platformId,
+            'uid'     => $uid,
+            'rid'     => $rid,
+            'money'   => $money,
+            'site_id' => $site_id,
+        ]));
         /** 检查状态 */
         $timeout = microtime(true) + 10;
         while (true) {
