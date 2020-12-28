@@ -750,15 +750,15 @@ class ApiController extends Controller
         $callback = $request->get("callback");
         $sign = $request->get("sign");
         $httphost = $request->get("httphost", 0);
-        $origin = $request->get("origin", 0);
+        $platformId = $request->get("origin", 0);       // 改叫 platformId 避免混淆
         $m = $request->get("m");
 
-        if (!$this->make("redis")->exists("hplatforms:$origin")) {
+        if (!$this->make("redis")->exists("hplatforms:$platformId")) {
             return new Response(__('messages.Api.platform.wrong_param', ['num' => 1001]));
 
         }
 
-        $platforms = $this->make("redis")->hgetall("hplatforms:$origin");
+        $platforms = $this->make("redis")->hgetall("hplatforms:$platformId");
         $open = isset($platforms['open']) ? $platforms['open'] : 1;
         $plat_code = $platforms['code'];
         if (!$open) {
@@ -820,11 +820,17 @@ class ApiController extends Controller
             return new Response(__('messages.Api.platform.empty_nickname'));
         }
 
+        //偵測客戶端裝置 (11:pc/41:安卓H5/51:iosH5)
+        if ($m === '1') {
+            $clientOrigin = Agent::isAndroidOS() ? 41 : 51;
+        } else {
+            $clientOrigin = 11;
+        }
 
         //注册
         $prefix = $platforms['prefix'];
         $username = $prefix . '_' . $data['nickename'] . "@platform.com";
-        $users = UserSer::getUserByUsername($username);//Users::where('origin', $origin)->where('uuid', $data['uuid'])->first();
+        $users = UserSer::getUserByUsername($username);
         $password_key = "asdfwe";
         $password = $data['nickename'] . $password_key;
         if (empty($users)) {
@@ -835,7 +841,7 @@ class ApiController extends Controller
                 'uuid'     => $data['uuid'],
                 'password' => $password,
                 'xtoken'   => $data['token'],
-                'origin'   => $origin,
+                'origin'   => $clientOrigin,
             ];
 
             $uid = resolve(UserService::class)->register($user);
@@ -872,17 +878,11 @@ class ApiController extends Controller
             }
         }
 
-        //偵測客戶端裝置 (11:pc/41:安卓H5/51:iosH5)
-        if ($m === '1') {
-            $clientOrigin = Agent::isAndroidOS() ? 41 : 51;
-        } else {
-            $clientOrigin = 11;
-        }
-
-        Session::put('platformId', $origin);
         app('events')->dispatch(new \App\Events\Login($this->userInfo, true, $clientOrigin));
-
         resolve(UserService::class)->getUserReset($this->userInfo['uid']);
+
+        Session::put('platformId', $platformId); // for php
+        resolve(UserService::class)->cacheUserInfo($this->userInfo['uid'], ['platform_id' => $platformId]); // for java
 
         // 此时调用的是单实例登录的session 验证
         if (Auth::guest() || (Auth::check() && Auth::id() != $this->userInfo['uid'])) {
