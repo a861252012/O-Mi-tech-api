@@ -473,7 +473,7 @@ class ApiController extends Controller
         $this->checkAgent($uid);
 
         /* 新增用戶推廣清單資訊 */
-        if ($shareService->isUser($scode)) {
+        if ($shareService->isUser($scode) && !empty($shareCode)) {
             $shareId = $shareService->addUserShare(
                 $uid,
                 $shareCode,
