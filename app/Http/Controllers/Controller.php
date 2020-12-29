@@ -598,21 +598,20 @@ class Controller extends BaseController
      * 用户对应的值减去本级别对应的值就是分子
      * Author Orino
      * update by Young. 将运算放置到前端
+     * updated 由於需求需要取得主播的用戶等級資訊,故新增flag和相關判斷
      */
-    public function getLevelByRole($userinfo, $flag = false)
+    public function getLevelByRole($userinfo, $onlyGetUserInfo = false)
     {
         $cacheKey = 'keys_level_';//k->v
 
         //身份判断
-        if ($userinfo['roled'] == 3) {
-
+        if ($userinfo['roled'] == 3 && !$onlyGetUserInfo) {
             //主播身份
             //等级从1级开始
             $modle = new AnchorGroup();
             $levelid = $userinfo['lv_exp'];
             $cacheKey .= 'exp';
         } else {
-
             //用户身份
             $modle = new UserGroup();
             $levelid = $userinfo['lv_rich'];
@@ -641,7 +640,7 @@ class Controller extends BaseController
          * @author  dc
          * @version 20160325
          */
-        if(isset($levelid)) {
+        if (isset($levelid)) {
             $currentExp = isset($hashData[$levelid]) ? $hashData[$levelid]['level_value'] : 0;
             $nextExp = isset($hashData[$levelid + 1]) ? $hashData[$levelid + 1]['level_value'] : 0;
         } else {
@@ -689,7 +688,7 @@ class Controller extends BaseController
         //     }
         // }
         //todo 临时处理,需要判断为何出现非数字变量
-        if ($userinfo['roled'] == 3) {
+        if ($userinfo['roled'] == 3 && !$onlyGetUserInfo) {
             $subtract = intval($userinfo['exp']) - $currentExp;
         } else {
             $subtract = intval($userinfo['rich']) - $currentExp;
@@ -1576,5 +1575,14 @@ class Controller extends BaseController
 
         // default
         return self::DEFAULT_LOCALE;
+    }
+
+    protected function getUrl()
+    {
+        $r = request();
+        $port = $r->getPort();
+        return ($r->isSecure() ? 'https://' : 'http://') .
+            $r->getHost() .
+            (($port == 80 || $port = 443) ? '' : ':'.$port);
     }
 }

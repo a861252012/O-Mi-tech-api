@@ -4,7 +4,9 @@
  */
 namespace App\Http\Controllers;
 
+use App\Events\Login;
 use App\Events\ShareUser;
+use App\Models\UserLoginLog;
 use App\Services\RedisCacheService;
 use App\Services\ShareService;
 use App\Services\GuardianService;
@@ -35,7 +37,6 @@ use App\Services\User\RegService;
 use App\Services\User\UserService;
 use App\Services\UserAttrService;
 use App\Traits\Commons;
-use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -49,6 +50,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Jenssegers\Agent\Facades\Agent;
 use Mews\Captcha\Facades\Captcha;
 use App\Models\Agents;
 use DB;
@@ -420,8 +422,8 @@ class ApiController extends Controller
 
         /* 解碼分享碼 */
         if (!empty($scode)) {
-            $shareUid = $shareService->decScode($scode);
-            info('分享碼解碼結果: ' . $shareUid);
+            $shareCode = $shareService->decScode($scode);
+            info('分享碼解碼結果: ' . $shareCode);
         }
 
         $newUser = [
@@ -436,17 +438,24 @@ class ApiController extends Controller
 
         //跳转过来的
         $newUser['aid'] = 0;
-        if ($agent) {
-            $domaid = Domain::where('url', $agent)->where('type', 0)->where('status', 0)->with("agent")->first();
-            if ($domaid->agent->id) {
-                $newUser['aid'] = $domaid->agent->id;
-            }
-        }
-
+//        if ($agent) {
+//            $domaid = Domain::where('url', $agent)->where('type', 0)->where('status', 0)->with("agent")->first();
+//            if ($domaid->agent->id) {
+//                $newUser['aid'] = $domaid->agent->id;
+//            }
+//        }
         /* 如有推廣人則取得推廣人之aid */
-        if (!empty($shareUid)) {
-            $shareUser = Users::find($shareUid);
-            $newUser['aid'] = $shareUser->agentRel->aid;
+//        if (!empty($shareUid)) {
+//            $shareUser = Users::find($shareUid);
+//            $newUser['aid'] = $shareUser->agentRel->aid;
+//        }
+
+        if ($shareService->isAgent($scode)) {
+            $agent = Agents::find($shareCode);
+            if (!empty($agent)) {
+                $newUser['aid'] = $agent->id;
+                $newUser['did'] = $agent->domain->id;
+            }
         }
 
         $uid = resolve(UserService::class)->register($newUser, [], $newUser['aid']);
@@ -464,12 +473,12 @@ class ApiController extends Controller
         $this->checkAgent($uid);
 
         /* 新增用戶推廣清單資訊 */
-        if (!empty($shareUid)) {
+        if ($shareService->isUser($scode) && !empty($shareCode)) {
             $shareId = $shareService->addUserShare(
                 $uid,
-                $shareUid,
-                $newUser['aid'],
-                $shareUser->agentRel->agent->nickname,
+                $shareCode,
+                0,
+                '',
                 $request->get('client'),
                 $cc_mobile
             );
@@ -477,8 +486,10 @@ class ApiController extends Controller
 
         // 此时调用的是单实例登录的session 验证
         $guard = null;
-        if ($request->route()->getName() === 'm_reg' || $request->has('client') && in_array(strtolower($request->get('client')),
-                ['android', 'ios'])) {
+        if ($request->route()->getName() === 'm_reg'
+            || $request->has('client')
+            && in_array(strtolower($request->get('client')), ['android', 'ios'])
+        ) {
             /** @var JWTGuard $guard */
             $guard = Auth::guard('mobile');
             $guard->login($user);
@@ -515,7 +526,11 @@ class ApiController extends Controller
         app('events')->dispatch(new \App\Events\Login($user, false, $origin));
 
         /* 全民代理推廣事件 */
-        if (!empty($cc_mobile) && !empty($shareUser) && !empty($user)) {
+        if (!empty($cc_mobile)
+            && !empty($shareCode)
+            && !empty($user)
+            && $shareService->isUser($scode)
+        ) {
             event(new ShareUser($user));
         }
 
@@ -585,7 +600,7 @@ class ApiController extends Controller
 //        return JsonResponse::create(['status' => 0, 'msg' => '無法兌換']);
 
         $uid = Auth::user()->uid;
-        $origin = Auth::user()->origin;
+        $platformId = Session::get('platformId');
         $request = $this->make('request');
         $money = trim($request->get('money')) ? $request->get('money') : 0;
         $rid = trim($request->get('rid'));
@@ -593,18 +608,17 @@ class ApiController extends Controller
 
         $redis = $this->make('redis');
 
-        Log::channel('daily')->info('user exchange', [" user id:$uid  origin:$origin  money:$money "]);
+        Log::channel('daily')->info('user exchange', [" user id:$uid  platformId:$platformId  money:$money "]);
 
         /** 通知java获取*/
         $redis->del("hplat_user:$uid");
-        $redis->publish('plat_exchange',
-            json_encode([
-                'origin'  => $origin,
-                'uid'     => $uid,
-                'rid'     => $rid,
-                'money'   => $money,
-                'site_id' => $site_id,
-            ]));
+        $redis->publish('plat_exchange', json_encode([
+            'origin'  => $platformId,
+            'uid'     => $uid,
+            'rid'     => $rid,
+            'money'   => $money,
+            'site_id' => $site_id,
+        ]));
         /** 检查状态 */
         $timeout = microtime(true) + 10;
         while (true) {
@@ -735,13 +749,15 @@ class ApiController extends Controller
         $callback = $request->get("callback");
         $sign = $request->get("sign");
         $httphost = $request->get("httphost", 0);
-        $origin = $request->get("origin", 0);
-        if (!$this->make("redis")->exists("hplatforms:$origin")) {
+        $platformId = $request->get("origin", 0);       // 改叫 platformId 避免混淆
+        $m = $request->get("m");
+
+        if (!$this->make("redis")->exists("hplatforms:$platformId")) {
             return new Response(__('messages.Api.platform.wrong_param', ['num' => 1001]));
 
         }
 
-        $platforms = $this->make("redis")->hgetall("hplatforms:$origin");
+        $platforms = $this->make("redis")->hgetall("hplatforms:$platformId");
         $open = isset($platforms['open']) ? $platforms['open'] : 1;
         $plat_code = $platforms['code'];
         if (!$open) {
@@ -803,11 +819,17 @@ class ApiController extends Controller
             return new Response(__('messages.Api.platform.empty_nickname'));
         }
 
+        //偵測客戶端裝置 (11:pc/41:安卓H5/51:iosH5)
+        if ($m === '1') {
+            $clientOrigin = Agent::isAndroidOS() ? 41 : 51;
+        } else {
+            $clientOrigin = 11;
+        }
 
         //注册
         $prefix = $platforms['prefix'];
         $username = $prefix . '_' . $data['nickename'] . "@platform.com";
-        $users = UserSer::getUserByUsername($username);//Users::where('origin', $origin)->where('uuid', $data['uuid'])->first();
+        $users = UserSer::getUserByUsername($username);
         $password_key = "asdfwe";
         $password = $data['nickename'] . $password_key;
         if (empty($users)) {
@@ -818,7 +840,7 @@ class ApiController extends Controller
                 'uuid'     => $data['uuid'],
                 'password' => $password,
                 'xtoken'   => $data['token'],
-                'origin'   => $origin,
+                'origin'   => $clientOrigin,
             ];
 
             $uid = resolve(UserService::class)->register($user);
@@ -854,13 +876,12 @@ class ApiController extends Controller
                 $this->userInfo['xtoken'] = $data['token'];
             }
         }
-        $time = date('Y-m-d H:i:s');
-        Users::where('uid', $this->userInfo['uid'])->update([
-            'last_ip' => $this->getIp(),
-            'logined' => $time
-        ]);
-        $this->userInfo['logined'] = $time;
+
+        app('events')->dispatch(new \App\Events\Login($this->userInfo, true, $clientOrigin));
         resolve(UserService::class)->getUserReset($this->userInfo['uid']);
+
+        Session::put('platformId', $platformId); // for php
+        resolve(UserService::class)->cacheUserInfo($this->userInfo['uid'], ['platform_id' => $platformId]); // for java
 
         // 此时调用的是单实例登录的session 验证
         if (Auth::guest() || (Auth::check() && Auth::id() != $this->userInfo['uid'])) {
@@ -884,9 +905,8 @@ class ApiController extends Controller
         Session::put('httphost', $httphost);
 
         // 判斷手機版或 PC 版
-        $m = $request->get("m");
         if ($m === '1') {
-            $url = "/m/live/$room?httphost=". urlencode($httphost);
+            $url = "/m/room/$room?httphost=". urlencode($httphost);
         } elseif ($m === '-1') {
             // flash 版 (將於 2020 年底廢除)
             $h5 = SiteSer::config('h5') ? "/h5" : "";

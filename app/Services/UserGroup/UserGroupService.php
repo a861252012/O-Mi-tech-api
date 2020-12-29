@@ -2,6 +2,8 @@
 
 namespace App\Services\UserGroup;
 
+use App\Http\Controllers\Controller;
+use App\Http\Resources\Member\UserWordLimitResource;
 use App\Models\LevelRich;
 use App\Models\Messages;
 use App\Models\Recharge;
@@ -10,6 +12,7 @@ use App\Models\UserGroup;
 use App\Models\Users;
 use App\Models\VideoMail;
 use App\Models\VideoPack;
+use App\Repositories\UserGroupRepository;
 use App\Services\Service;
 use App\Services\User\UserService;
 use DB;
@@ -209,4 +212,24 @@ class UserGroupService extends Service
         return $group;
     }
 
+    public function getUserChatLimit($type, $userInfo)
+    {
+        $data['userLevelInfo'] = resolve(Controller::class)->getLevelByRole($userInfo, true);
+        $data['userLevelInfo']['uid'] = (int)$userInfo->uid;
+
+        $levelInfo = resolve(userGroupRepository::class)->getLevelInfoByType($type);
+        $data['userGroup'] = UserWordLimitResource::collection($levelInfo);
+        $data['userLevelInfo']['lv_rich'] = (int)$userInfo->lv_rich;
+
+        return $data;
+    }
+
+    public function getAnchorLevelInfo($userInfo)
+    {
+        $data = resolve(Controller::class)->getLevelByRole($userInfo);
+        $data['uid'] = (int)$userInfo->uid;
+        $data['lv_exp'] = (int)$userInfo->lv_exp;
+
+        return $data;
+    }
 }

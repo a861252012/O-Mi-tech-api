@@ -124,7 +124,9 @@ class VpubService
             'sex'      => 0,
             'uuid'     => $uuid,
             'password' => $password,
-            'origin'   => $this->platform['origin'],
+//            'origin'   => $this->platform['origin'],
+        //此為紀錄user裝置，合作平台自動註冊預設為11
+            'origin'   => 11,
         ];
 
         $uid = UserSer::register($user);

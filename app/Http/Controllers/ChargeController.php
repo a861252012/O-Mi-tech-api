@@ -270,7 +270,7 @@ class ChargeController extends Controller
             return new JsonResponse(array('status' => 1, 'msg' => __('messages.Charge.block_msg')));
         }
 
-        $origin = $this->getClient();
+//        $origin = $this->getClient();
 
         /* 回傳資料處理動作 */
         $act = '1';
@@ -340,7 +340,7 @@ class ChargeController extends Controller
                 'nickname'   => Auth::user()['nickname'],
                 'channel'    => $channel,
                 'mode_type'  => $mode_type,
-                'origin'     => $origin,
+                'origin'     => Auth::user()['origin'],
                 'ip'         => $this->getIp(),
             )
         );
@@ -734,11 +734,14 @@ class ChargeController extends Controller
 
             $points = (int)ceil($stmt['points']);
 
+            $userInfo = resolve(UserService::class)->getUserInfo($stmt['uid']);
+
             DB::table('video_recharge')->where('id', $stmt['id'])->update(array(
                 'paymoney' => $money,
                 'pay_status' => $chargeResult,
                 'ttime' => $complateTime,
-                'pay_id' => $paytradeno
+                'pay_id' => $paytradeno,
+                'origin' => $userInfo['origin'],
             ));
 
             $chargeStatus = false;//成功状态标记位
@@ -758,15 +761,14 @@ class ChargeController extends Controller
 
             //刷新redis钻石
             if ($chargeStatus) {
-                $userObj = DB::table('video_user')->where('uid', $stmt['uid'])->first();//Users::find($stmt['uid']);
-                $loginfo .= '增加的钱数: paymoney ' . $money . ' points:' . $points . ' 最终的钱数:' . $userObj->points;
+                $userPoints = (int)$userInfo['points'] + $points;
+
+                $loginfo .= '增加的钱数: paymoney ' . $money . ' points:' . $points . ' 最终的钱数:' . $userPoints;
                 resolve(UserService::class)->getUserReset($stmt['uid']);
             }
 
             // 充钱成功后 检测用户的贵族状态
-            $uinfo = Users::find($stmt['uid']);
-            resolve('userGroupServer')->checkUserVipStatus($uinfo);
-
+            resolve('userGroupServer')->checkUserVipStatus($userInfo);
         } catch (\Exception $e) {
             Log::channel('charge')->info("订单号：" . $tradeno . " 事务结果：" . $e->getMessage() . "\n");
             DB::rollback();

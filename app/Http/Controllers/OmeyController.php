@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Jenssegers\Agent\Facades\Agent;
 
 class OmeyController extends Controller
 {
@@ -336,5 +337,21 @@ class OmeyController extends Controller
 
         echo json_encode($postParams);
 
+    }
+
+    public function getUserAgent()
+    {
+        echo "什麼裝置? " . Agent::device() . "<br>";
+        echo "什麼作業系統? " . Agent::platform() . "<br>";
+        echo "瀏覽器名稱? " . Agent::browser() . "<br>";
+        echo "是否為桌上型裝置? " . (Agent::isDesktop() ? 'Yes' : 'No') . "<br>";
+        echo "作業系統是否為 Windows? " . (Agent::is('Windows') ? 'Yes' : 'No') . "<br>";
+        echo "是行動裝置? " . (Agent::isPhone() ? 'Yes' : 'No') . "<br>";
+        echo "是否為 Android? " . (Agent::isAndroidOS() ? 'Yes' : 'No') . "<br>";
+        echo "是否為 iPhone? " . (Agent::is('iPhone') ? 'Yes' : 'No') . "<br>";
+
+        $isRobot = Agent::isRobot();
+        echo "是機器人? " . ($isRobot ? 'Yes' : 'No') . "<br>";
+        echo "機器人名稱? " . ($isRobot ? Agent::robot() : '無') . "<br>";
     }
 }

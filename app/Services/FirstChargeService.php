@@ -113,6 +113,7 @@ class FirstChargeService
             'del'        => 0,
             'nickname'   => $user['nickname'],
             'site_id'    => (int)$user['site_id'],
+            'origin'     => (int)$user['origin'],
         ]);
 
         if (!$rechargeRecord) {

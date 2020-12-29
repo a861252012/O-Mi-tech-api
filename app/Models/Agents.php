@@ -7,4 +7,9 @@ class Agents extends \Illuminate\Database\Eloquent\Model
     protected $primaryKey = 'id';
     protected $guarded = [];
     public $timestamps= false;
+
+    public function domain()
+    {
+        return $this->hasOne('App\Models\Domain', 'id', 'did');
+    }
 }

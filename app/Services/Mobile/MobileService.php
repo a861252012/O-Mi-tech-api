@@ -24,6 +24,12 @@ class MobileService
     const ANDROID = 1002;
     const WEB = 1003;
     const APCU_TTL = 10;
+    const SOCIAL_GROUP_LV_LIST = [
+        0 => [1],
+        1 => [2, 3, 4, 5, 6, 7, 8],
+        2 => [9, 10, 11, 12, 13, 14],
+        3 => [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]
+    ];
 
     protected $appVersionRepository;
 
@@ -154,5 +160,17 @@ class MobileService
         }
 
         return 1;
+    }
+
+    public function getSocialGroupInfo($lvRich)
+    {
+        foreach (self::SOCIAL_GROUP_LV_LIST as $k => $v) {
+            if (in_array($lvRich, $v)) {
+                $socialGroupSetting = json_decode(SiteSer::globalSiteConfig('social_group_setting'));
+
+                return $socialGroupSetting[$k];
+            }
+        }
+        return [];
     }
 }

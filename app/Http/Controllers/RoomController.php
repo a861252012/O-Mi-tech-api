@@ -80,6 +80,7 @@ class RoomController extends Controller
         if (!isset($user['origin'])) $user['origin'] = 12;
         if (!isset($user['created'])) $user['created'] = "";
         $origin = $user['origin'];
+        $platformId = session('platformId');
         $plat_backurl = [];
         $hplat_info = [];
         $hplat_user = [];
@@ -156,16 +157,19 @@ class RoomController extends Controller
                             ]);
                         }
 
-                        $hplat = $redis->exists("hplatforms:$origin") ? "plat_whitename_room" : "not_whitename_room";
-
+                        if ($redis->exists("hplatforms:$platformId")) {
+                            $hplat = "plat_whitename_room";
+                        } else {
+                            $hplat = "not_whitename_room";
+                        }
 
                         if ($hplat == 'plat_whitename_room') {
                             $uid = $user['uid'];
-                            $plat_backurl = $roomService->getPlatUrl($origin);
-                            $hplat_info = $redis->hgetall("hplatforms:$origin");
+                            $plat_backurl = $roomService->getPlatUrl($platformId);
+                            $hplat_info = $redis->hgetall("hplatforms:$platformId");
 
-                            $logger->info("user exchange:  user id:$uid  origin:$origin ");
-                            $hplat_user = $this->getMoney($uid, $rid, $origin);
+                            $logger->info("user exchange:  user id:$uid  platformId:$platformId ");
+                            $hplat_user = $this->getMoney($uid, $rid, $platformId);
                         }
 
                         return JsonResponse::create(['data' => [
@@ -218,7 +222,7 @@ class RoomController extends Controller
         $logger->info('in:' . $rid . ":" . Auth::id() . ':' . $channel_id);
         $qq_sideroom = $redis->hGet('hsite_config:' . SiteSer::siteId(), 'qq_sideroom');
 
-        $plat_backurl = $roomService->getPlatUrl($origin);
+        $plat_backurl = $roomService->getPlatUrl($platformId);
         //$httphost = $roomService->getPlatHost();
         $data = [
             'room' => &$room,
@@ -411,7 +415,7 @@ class RoomController extends Controller
         return explode('|', $chatServer['host'], 2)[$isHost ? 0 : 1];
     }
 
-    public function getMoney($uid, $rid, $origin)
+    public function getMoney($uid, $rid, $platformId)
     {
         /**
          * @var \Redis $redis
@@ -420,12 +424,11 @@ class RoomController extends Controller
         $redis->del("hplat_user:$uid");
 
         /** 通知java获取*/
-        $redis->publish('plat_money',
-            json_encode([
-                'origin' => $origin,
-                'uid' => $uid,
-                'rid' => $rid,
-            ]));
+        $redis->publish('plat_money', json_encode([
+            'origin' => $platformId,
+            'uid' => $uid,
+            'rid' => $rid,
+        ]));
         /** 检查购买状态 */
         $timeout = microtime(true) + 3;
         while (true) {

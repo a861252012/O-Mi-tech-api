@@ -10,6 +10,8 @@ namespace App\Services;
 
 
 use App\Facades\SiteSer;
+use App\Repositories\AgentsRepository;
+use App\Repositories\DomainRepository;
 use App\Repositories\InstallLogRepository;
 use App\Repositories\UserShareRepository;
 use App\Repositories\UsersRepository;
@@ -19,21 +21,28 @@ class ShareService
     protected $installLogRepository;
     protected $usersRepository;
     protected $userShareRepository;
+    protected $agentsRepository;
 
 
     public function __construct(
         InstallLogRepository $installLogRepository,
         UsersRepository $usersRepository,
-        UserShareRepository $userShareRepository
+        UserShareRepository $userShareRepository,
+        AgentsRepository $agentsRepository
     ) {
         $this->installLogRepository = $installLogRepository;
         $this->usersRepository = $usersRepository;
         $this->userShareRepository = $userShareRepository;
+        $this->agentsRepository = $agentsRepository;
     }
 
     /* 新增安裝資訊紀錄 */
     public function addInstallLog($origin, $siteId)
     {
+        if (empty($origin)) {
+            return false;
+        }
+
         return $this->installLogRepository->insertLog([
             'origin'    => $origin,
             'site_id'   => $siteId,
@@ -41,21 +50,58 @@ class ShareService
         ]);
     }
 
-    /* 產生分享碼 */
+    private function scodeHandler($code)
+    {
+        $checkChar = strtoupper(substr(md5($code), 0, 1));
+        return $checkChar . $code;
+    }
+
+    /* 產生用戶分享碼 */
     public function genScode($id)
     {
         $hexId = 'U' . strtoupper(dechex($id));
-        $checkChar = strtoupper(substr(md5($hexId), 0, 1));
-        $scode = $checkChar . $hexId;
-        return $scode;
+        return $this->scodeHandler($hexId);
     }
 
-    /* 分享解碼取得UID */
+    /* 產生代理分享碼 */
+    public function genScodeForAgent($id)
+    {
+        $agentCode = 'A' . strtoupper(dechex($id));
+        return $this->scodeHandler($agentCode);
+    }
+
+    /* 是否為代理 */
+    public function isAgent($scode)
+    {
+        $shareKey = substr($scode, 1, 1);
+        return 'A' === $shareKey;
+    }
+
+    /* 是否為用戶 */
+    public function isUser($scode)
+    {
+        $shareKey = substr($scode, 1, 1);
+        return 'U' === $shareKey;
+    }
+
+    /* 用戶分享解碼取得UID */
     public function decScode($scode)
     {
-        $data = explode('U', $scode);
-        $uid = hexdec($data[1]);
+        if ($this->isUser($scode)) {
+            return $this->getUid($scode);
+        }
 
+        if ($this->isAgent($scode)) {
+            return $this->getAgentId($scode);
+        }
+
+        return false;
+    }
+
+    private function getUid($scode)
+    {
+        $data = substr($scode, 2);
+        $uid = hexdec($data);
         /* 檢查UID是否存在 */
         $user = $this->usersRepository->getUserById($uid);
         if (empty($user)) {
@@ -71,6 +117,28 @@ class ShareService
 
         return false;
     }
+
+    private function getAgentId($scode)
+    {
+        $data = substr($scode, 2);
+        $aId = hexdec($data);
+
+        /* 檢查域名是否狀態 */
+        $agent = $this->agentsRepository->getDataById($aId);
+        if (empty($agent)) {
+            return false;
+        }
+
+        $scodeCheck = $this->genScodeForAgent($aId);
+
+        /* 檢查分享碼是否有效 */
+        if ($scodeCheck === $scode) {
+            return $aId;
+        }
+
+        return false;
+    }
+
 
     /* 新增用戶推廣清單資訊 */
     public function addUserShare($uid, $shareUid, $aid = null, $agentName = null, $client = null, $ccMobile = null)
@@ -100,9 +168,9 @@ class ShareService
     }
 
     /* 随機取得域名 */
-    public function randomDoamin()
+/*    public function randomDoamin()
     {
         $domains = collect(explode(PHP_EOL, SiteSer::siteConfig('vlanding_urls', SiteSer::siteId())));
         return $domains->random();
-    }
+    }*/
 }

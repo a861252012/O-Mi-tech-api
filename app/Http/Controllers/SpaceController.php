@@ -72,7 +72,7 @@ class SpaceController extends Controller{
                     : $gm->getRepository('Video\ProjectBundle\Entity\VideoLevelRich')->findOneBy(array('levelId'=>$vars['user']['lv_rich']));
         */
 //        $dm = new \Video\ProjectBundle\Service\DataModel($this);
-        $level = $this->getLevelByRole($vars['user'],1);
+        $level = $this->getLevelByRole($vars['user']);
 
         //$vars['user']['nextlevel'] = $level['lv_nums'];
         $vars['user']['highlight'] =  $level['lv_percent'];

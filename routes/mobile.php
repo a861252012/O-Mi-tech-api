@@ -2,9 +2,12 @@
 /**
  * 移动端路由
  */
-Route::group(['middleware' => ['login_auth:mobile']], function () {
-    Route::get('/login/test', 'Mobile\MobileController@logintest');
+
+Route::prefix('v2')->middleware(['V2Auth'])->group(function () {
+    Route::post('login/{cKey?}', 'Mobile\MobileController@login')->name('m_login')->middleware('mobile.session');
+    Route::post('reg/{cKey?}', 'ApiController@reg')->name('m_reg')->middleware('mobile.session');
 });
+
 // reg
 Route::post('reg', 'ApiController@reg')->name('m_reg')->middleware('mobile.session');
 // reg suggest nickname
@@ -220,6 +223,12 @@ Route::group(['middleware' => ['login_auth:mobile']], function () {
     // 主播房间暱称
     Route::any('member/roomInfo', 'MemberController@roomInfo');
 
+    // 用户中心 取得用戶等級發言字數
+    Route::get('member/userLevelInfo', 'MemberController@getUserLevelInfo');
+
+    // 用户中心 取得主播等級資訊
+    Route::get('member/anchorLevelInfo', 'MemberController@getAnchorLevelInfo');
+
     /* Socket相關 */
     Route::prefix('socket')->group(function () {
         Route::get('proxy_list', 'SocketController@proxyList');
@@ -318,13 +327,13 @@ Route::get('/getgroupall', ['name' => 'shop_getgroupall', 'uses' => 'ShopControl
 
 // 遊戲中心
 Route::prefix('game')->group(function () {
-    Route::get('game_list', 'GameController@gameList');
+	Route::get('game_list','GameController@gameList');
 
-    /* 遊戲儲值 測試用 */
-    Route::post('deposit', 'GameController@deposit');
+	/* 遊戲儲值 測試用 */
+    Route::post('deposit','GameController@deposit');
 
-    Route::middleware(['login_auth:mobile'])->group(function () {
-        Route::post('entry', 'GameController@entry');
+	Route::middleware(['login_auth:mobile'])->group(function () {
+        Route::post('entry','GameController@entry');
     });
 });
 
@@ -354,3 +363,4 @@ Route::prefix('guardian')->group(function () {
 
 /* 測試用entry point */
 Route::any('omey', 'OmeyController@index');
+Route::any('get_user_agent', 'OmeyController@getUserAgent');

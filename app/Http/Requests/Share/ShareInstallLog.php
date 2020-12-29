@@ -17,6 +17,7 @@ class ShareInstallLog extends VRequest
         return [
             'origin'  => 'required|numeric',
             'site_id' => 'required|numeric',
+            'scode'   => 'string|nullable',
         ];
     }
 
@@ -25,6 +26,7 @@ class ShareInstallLog extends VRequest
         return [
             'origin.*'  => __('messages.ShareInstallLogRequest.origin'),
             'site_id.*' => __('messages.ShareInstallLogRequest.site_id'),
+            'scode.*'   => __('messages.ShareInstallLogRequest.scode'),
         ];
     }
 }
