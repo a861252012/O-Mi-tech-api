@@ -297,11 +297,11 @@ class RoomService extends Service
         return $xo_httphost;
     }
 
-    public function getPlatUrl($origin = 0)
+    public function getPlatUrl($platformId = 0)
     {
         $redis = $this->make('redis');
-        if ($redis->exists("hplatforms:$origin")) {
-            $hplatforms = $redis->hgetall("hplatforms:$origin");
+        if ($redis->exists("hplatforms:$platformId")) {
+            $hplatforms = $redis->hgetall("hplatforms:$platformId");
             $plat_backurl = $hplatforms['backurl'];
             $platBackurl = json_decode($plat_backurl, true);
             if (!empty($platBackurl) && is_array($platBackurl)) {
@@ -323,36 +323,6 @@ class RoomService extends Service
             $platBackurl = [];
         }
         return $platBackurl;
-//        $urlList = $this->getPlatBackUrl($origin);
-//        $host = $this->getPlatHost();
-//        $data = [];
-//        foreach ($urlList as $key => $url) {
-//            $data[$key] = $host . $url;
-//        }
-//        return $data;
-    }
-
-//    public function getPlatBackUrl($origin = 0)
-//    {
-//        $redis = $this->make('redis');
-//        $plat_backurl = "{}";
-//        if ($redis->exists("hplatforms:$origin")) {
-//            $hplatforms = $redis->hgetall("hplatforms:$origin");
-//            $plat_backurl = $hplatforms['backurl'];
-//        }
-//        return json_decode($plat_backurl, true);
-//    }
-
-//    public function getPlatHost()
-//    {
-//        $httphost = isset($_SESSION['httphost']) ? $_SESSION['httphost'] : null;
-//        if ($httphost) {
-//            if (!preg_match('/^https?:\/\//', $httphost)) {
-//                $httphost = 'http://' . $httphost;
-//            }
-//        }
-//        return $httphost;
-//    }
 
     /*
      * app和pc  添加一对多房间。
