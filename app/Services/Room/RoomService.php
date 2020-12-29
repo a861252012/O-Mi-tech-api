@@ -305,10 +305,9 @@ class RoomService extends Service
             $plat_backurl = $hplatforms['backurl'];
             $platBackurl = json_decode($plat_backurl, true);
             if (!empty($platBackurl) && is_array($platBackurl)) {
-
-                if(Session::has('httphost')) {
+                if (Session::has('httphost')) {
                     $httpHost = Session::get('httphost');
-                    if(!URL::isValidUrl($httpHost)) {
+                    if (!URL::isValidUrl($httpHost)) {
                         $httpHost = '//' . $httpHost;
                     }
 
@@ -323,6 +322,7 @@ class RoomService extends Service
             $platBackurl = [];
         }
         return $platBackurl;
+    }
 
     /*
      * app和pc  添加一对多房间。
