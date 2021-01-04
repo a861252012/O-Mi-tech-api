@@ -103,7 +103,6 @@ class RoomController extends Controller
                     $room['top'] = isset($roomInfo['top']) ? intval($roomInfo['top']) : 0;
                     $myres[] = $room;
                 }
-
             }
         }
         return $myres;
@@ -130,53 +129,6 @@ class RoomController extends Controller
         }
         return $list;
     }
-
-    /*/**
-     * 检查密码房密码(原方法)
-     * @return JsonResponse
-     */
-    /*public function checkPwd()
-    {
-        $password = $this->request()->get('password');
-        $rid = $this->request()->get('rid');
-        $type = $this->getAnchorRoomType($rid);
-        if ($type != 2) return new JsonResponse(['status' => 0, 'msg' => '密码房异常,请联系运营重新开启一下密码房间的开关']);
-        if (empty($rid)) return new JsonResponse(['status' => 0, 'msg' => '房间号错误!']);
-        if (empty($password)) {
-            return $this->geterrorsAction();
-        }
-//        $this->get('session')->start();
-        $sessionid = Session::getId();
-        //房间进入密码，超过五次就要输入验证码，这个五次是通过phpsessionid来判断的
-        $roomstatus = $this->getRoomStatus($rid, 2);
-        $keys_room = 'keys_room_passwd:' . $sessionid . ':' . $rid;
-        $times = $this->make('redis')->get($keys_room) ?: 0;
-        if ($times >= 5) {
-            $captcha = $request->get('captcha');
-            if (empty($captcha)) {
-                return new JsonResponse(['status' => 0, 'msg' => '请输入验证码!', 'data' => ['times' => $times, 'cmd' => 'showCaptcha']]);
-            }
-            if (!Captcha::check($captcha)) return new JsonResponse(['status' => 0, 'msg' => '验证码错误!', 'data' => ['times' => $times]]);;
-        }
-        if (strlen($password) < 6 || strlen($password) > 22 || !preg_match('/^\w{6,22}$/', $password)) {
-            $this->make('redis')->setex($keys_room, 3600, $times + 1);
-            return new JsonResponse([
-                'status' => 0,
-                'msg' => "密码格式错误!",
-                'data' => ['times' => $times + 1],
-            ]);
-        }
-        if ($password != $roomstatus['pwd']) {
-            $this->make('redis')->setex($keys_room, 3600, $times + 1);
-            return new JsonResponse([
-                'status' => 0,
-                'msg' => "密码错误!",
-                'data' => ['times' => $times + 1],
-            ]);
-        }
-        $this->make('redis')->hset('keys_room_passwd:' . $rid . ':' . $sessionid, 'status', 1);
-        return new JsonResponse(['status' => 1, 'msg' => '验证成功']);
-    }*/
 
     /**
      * 检查密码房密码
@@ -349,160 +301,164 @@ class RoomController extends Controller
      * @apiSuccess {String} port socket 連線資訊，挑出在線人數最少的 channel
      *
      * @apiSuccessExample {json} 成功回應
-     *{
-    "data": {
-    "room_name": "ted",
-    "header_pic": "a8193c14a4d0568096a920825defba39.jpg",
-    "room_pic": "9494029_1596703403.jpeg",
-    "live_status": "0",
-    "live_device_type": "11",
-    "tid": 1,
-    "is_password": 0,
-    "start_time": "2020-08-13 17:10:00",
-    "end_time": "2020-08-13 17:40:00",
-    "user_num": "0",
-    "room_price": "399",
-    "room_price_sale": 0,
-    "room_info": "",
-    "time_length": 0,
-    "room_id": "9493275",
-    "class_id": 0,
-    "authority_in": 1,
-    "host": "10.2.121.15,10.2.121.240",
-    "ip": "10.2.121.100",
-    "port": "1057"
-    },
-    "msg": "",
-    "status": 1
-    }
-     *
-     *
+     * {
+     *   "data": {
+     *     "room_name": "ted",
+     *     "header_pic": "a8193c14a4d0568096a920825defba39.jpg",
+     *     "room_pic": "9494029_1596703403.jpeg",
+     *     "live_status": "0",
+     *     "live_device_type": "11",
+     *     "tid": 1,
+     *     "is_password": 0,
+     *     "start_time": "2020-08-13 17:10:00",
+     *     "end_time": "2020-08-13 17:40:00",
+     *     "user_num": "0",
+     *     "room_price": "399",
+     *     "room_price_sale": 0,
+     *     "room_info": "",
+     *     "time_length": 0,
+     *     "room_id": "9493275",
+     *     "class_id": 0,
+     *     "authority_in": 1,
+     *     "host": "10.2.121.15,10.2.121.240",
+     *     "ip": "10.2.121.100",
+     *     "port": "1057"
+     *   },
+     *   "msg": "",
+     *   "status": 1
+     * }
      */
     public function getRoom($rid)
     {
-        try {
-            $roomService = resolve('roomService');
-            $room = $roomService->getRoom($rid, Auth::id());
-            $tid = $roomService->getCurrentTimeRoomStatus();
+        $uid = Auth::id();
+        $roomService = resolve('roomService');
+        $room = $roomService->getRoom($rid, $uid);
+        $tid = $roomService->getCurrentTimeRoomStatus();
+        $user = UserSer::getUserByUid($uid);
 
-            $user = UserSer::getUserByUid(Auth::id());
+        $roomInfo = [
+            'room_name'=>$room['user']['nickname'],
+            'header_pic'=>$room['user']['headimg'],
+            'room_pic'=>$room['user']['cover'],
+            'live_status'=>$room['status'],
+            'live_device_type'=>$room['origin']??-1,
+            'tid'=>$tid ?: 1,
+            'is_password'=>$roomService->getPasswordRoom()?1:0,
+        ];
 
-            $roomInfo = [
-                'room_name'=>$room['user']['nickname'],
-                'header_pic'=>$room['user']['headimg'],
-                'room_pic'=>$room['user']['cover'],
-                'live_status'=>$room['status'],
-                //add default -1
-                'live_device_type'=>$room['origin']??-1,
-                'tid'=>$tid ?: 1,
-                'is_password'=>$roomService->getPasswordRoom()?1:0,
-            ];
+        /* 取得房間資訊 */
+        $ancList = collect(UserSer::anchorlist())->firstWhere('rid', $rid);
 
-            if (!isset($room['origin'])) {
-                Log::info('origin is null');
-            }
+        $roomExtend = [
+            'start_time'=> null,
+            'end_time'=> null,
+            'user_num'=> $room['total'],
+            'room_price'=> 0,
+            'room_price_sale' => 0,
+            'room_info' => $ancList['room_info'] ?? '',
+            'time_length'=> 0,
+            'room_id'=> $rid,
+            'class_id'=> 0,
+        ];
 
-            /* 取得房間資訊 */
-            $ancList = collect(UserSer::anchorlist())->firstWhere('rid', $rid);
+        switch ($tid) {
+            case 8:
+                $one2more = resolve('one2more')->getRunningData();
+                $roomExtend['start_time'] = $one2more['starttime'];
+                $roomExtend['end_time'] = $one2more['endtime'];
+                $roomExtend['user_num'] = $one2more['nums'];
+                $roomExtend['room_price'] = $one2more['points'];
+                $roomExtend['class_id'] = $one2more['onetomore'];
+                break;
+            case 4:
+                $one2one = resolve('one2one')->getRunningData();
+                $roomExtend['start_time'] = $one2one['starttime'];
+                $roomExtend['end_time'] = date('Y-m-d H:i:s', strtotime($one2one['starttime']) + $one2one['duration']);
+                $roomExtend['user_num'] = $one2one['tickets'] ?: ($one2one['reuid'] ? 1 : 0);
+                $roomExtend['room_price'] = $one2one['points'];
+                $roomExtend['class_id'] = $one2one['id'];
+                break;
+            case 6:
+                $durRoom = $roomService->getDurationRoom();
+                $roomExtend['start_time'] = null;
+                $roomExtend['end_time'] = null;
+                $roomExtend['user_num'] = $room['total'];
+                $roomExtend['room_price'] = $durRoom['timecost'];
+                break;
+        }
 
-            $roomExtend = [
-                'start_time'=> null,
-                'end_time'=> null,
-                'user_num'=> $room['total'],
-                'room_price'=> 0,
-                'room_price_sale' => 0,
-                'room_info' => $ancList['room_info'] ?? '',
-                'time_length'=> 0,
-                'room_id'=> $rid,
-                'class_id'=> 0,
-            ];
+        /* 判斷是否守護身份與計算守護優惠價 */
+        if (!empty($user->guard_id) && time() < strtotime($user->guard_end)) {
+            $roomExtend['room_price_sale'] = $this->guardianService->calculRoomSale(
+                $roomExtend['room_price'],
+                $user->guardianInfo->show_discount
+            );
+        }
 
-            switch ($tid){
-                case 8 :
-                    $one2more = resolve('one2more')->getRunningData();
-                    $roomExtend['start_time'] = $one2more['starttime'];
-                    $roomExtend['end_time'] = $one2more['endtime'];
-                    $roomExtend['user_num'] = $one2more['nums'];
-                    $roomExtend['room_price'] = $one2more['points'];
-                    $roomExtend['class_id'] = $one2more['onetomore'];
-                    break;
-                case 4:
-                    $one2one = resolve('one2one')->getRunningData();
-                    $roomExtend['start_time'] = $one2one['starttime'];
-                    $roomExtend['end_time'] = date('Y-m-d H:i:s',strtotime($one2one['starttime']) + $one2one['duration']);
-                    $roomExtend['user_num'] = $one2one['tickets']?:($one2one['reuid'] ?1:0);
-                    $roomExtend['room_price'] = $one2one['points'];
-                    $roomExtend['class_id'] = $one2one['id'];
-                    break;
-                case 6 :
-                    $durRoom = $roomService->getDurationRoom();
-                    $roomExtend['start_time'] = null;
-                    $roomExtend['end_time'] = null;
-                    $roomExtend['user_num'] = $room['total'];
-                    $roomExtend['room_price'] = $durRoom['timecost'];
-                    break;
-                default:;
-            }
+        $roomExtend['time_length'] = strtotime($roomExtend['end_time'])-strtotime($roomExtend['start_time']);
 
-            /* 判斷是否守護身份與計算守護優惠價 */
-            if (!empty($user->guard_id) && time() < strtotime($user->guard_end)) {
-                $roomExtend['room_price_sale'] = $this->guardianService->calculRoomSale($roomExtend['room_price'], $user->guardianInfo->show_discount);
-            }
+        $room_user = [
+            'authority_in'=>1
+        ];
 
-            $roomExtend['time_length'] = strtotime($roomExtend['end_time'])-strtotime($roomExtend['start_time']);
-
-            $room_user = [
-                'authority_in'=>1
-            ];
-
-            if((in_array($tid,[8,4,6])|| $roomService->getPasswordRoom()) && Auth::guest() ){   //游客进特殊房间
-                $room_user['authority_in'] = 309;
-            }else{
-                    switch ($tid){
-                        case 8:
-                            if(!$roomService->whiteList())   $room_user['authority_in'] = 302;
-                            break;
-                        case 4:
-                            if(!$roomService->checkCanIn()){
-                                    $room_user['authority_in'] =  $roomExtend['user_num'] ? 304 : 303;
-                            }
-                            break;
-                        case 6:
-                            if($user['points'] < $roomExtend['room_price']
-                                || ($user['points'] < $roomExtend['room_price_sale'] && $roomExtend['room_price_sale'] != 0)
-                            ) {
-                                $room_user['authority_in'] = 305;
-                            }
-                            break;
+        if ((in_array($tid, [8,4,6]) || $roomService->getPasswordRoom()) && Auth::guest()) { //游客进特殊房间
+            $room_user['authority_in'] = 309;
+        } else {
+            switch ($tid) {
+                case 8:
+                    if (!$roomService->whiteList()) {
+                        $room_user['authority_in'] = 302;
                     }
+                    break;
 
-                   if($room_user['authority_in']==1 && $roomService->getPasswordRoom()){
-                            $room_user['authority_in'] = 306;
-                   }
+                case 4:
+                    if (!$roomService->checkCanIn()) {
+                        $room_user['authority_in'] =  $roomExtend['user_num'] ? 304 : 303;
+                    }
+                    break;
+
+                case 6:
+                    if ($user['points'] < $roomExtend['room_price']
+                        || ($user['points'] < $roomExtend['room_price_sale'] && $roomExtend['room_price_sale'] != 0)
+                    ) {
+                        $room_user['authority_in'] = 305;
+                    }
+                    break;
             }
 
+            if ($room_user['authority_in']==1 && $roomService->getPasswordRoom()) {
+                $room_user['authority_in'] = 306;
+            }
+        }
 
-           $socket = [];
-            /** @var SocketService $socketService */
-            $socketService = resolve(SocketService::class);
-            $chatServer = [];
-            $msg = "";
+        $socket = [];
+        $socketService = resolve(SocketService::class);
+        $chatServer = [];
+        $msg = "";
+
+        try {
             $chatServer = $socketService->getNextServerAvailable($this->isHost($rid));
-            $socket['host'] =  $chatServer['host'];
-            $socket['ip'] =  $chatServer['ip'];
-            $socket['port'] =  $chatServer['port'];
         } catch (NoSocketChannelException $e) {
             $msg = $e->getMessage();
-            $socket['host'] =  "";
-            $socket['ip'] =  "";
-            $socket['port'] =  "";
+            Log::info("手机直播间异常：". $msg);
+
+            $chatServer = [
+                'host' => '',
+                'ip' => '',
+                'port' => '',
+            ];
             $roomInfo = [];
             $roomExtend = [];
             $room_user = [];
-            Log::info("手机直播间异常：".$msg);
         }
-        return JsonResponse::create(['data' => array_merge($roomInfo,$roomExtend,$room_user,$socket),'msg'=>$msg]);
+        $socket['host'] =  $chatServer['host'];
+        $socket['ip'] =  $chatServer['ip'];
+        $socket['port'] =  $chatServer['port'];
+        $data = array_merge($roomInfo, $roomExtend, $room_user, $socket);
+
+        return JsonResponse::create(['data' => $data, 'msg' => $msg]);
     }
+
     /*
      * 手机端一对一接口
      */
@@ -588,9 +544,6 @@ class RoomController extends Controller
         }
         return JsonResponse::create(['data' => array_merge($roomInfo,$roomExtend,$room_user,$socket),'msg'=>$msg]);
     }
-
-
-
 
     /**
      * @param $rid
@@ -684,54 +637,6 @@ class RoomController extends Controller
         return JsonResponse::create($return);
     }
 
-//    public function getRoomAccess($rid)
-//    {
-//        $return = [];
-//        $redis = $this->make('redis');
-//        $now = time();
-//        $roomSer = resolve('roomService')->getRoom($rid,$this->userInfo['uid']);
-//
-//        /** 判断房间一对多 */
-//        if ($roomSer->checkOne2More()) {
-//            $room =  $roomSer->getExtendRoom();
-//            if($room){
-//                $return['onetomore'] = $room;
-//                $return['onetomore']['id'] = $room['id'];
-//                $return['onetomore']['access'] = 0;
-//                if (Auth::id()) {
-//                    /** 判断用户是否购买 */
-//                    $uids = array_merge(explode(',', $room['uids']), explode(',', isset($room['tickets']) ? $room['tickets'] : ''));
-//                    $uids = array_filter($uids);
-//                    if (in_array(Auth::id(), $uids)) {
-//                        $return['onetomore']['access'] = 1;
-//                    }
-//                }
-//            }
-//        }
-//
-//        /** 一对一 */
-//        if ($roomSer->checkOne2One()) {
-//            $room =  $roomSer->getExtendRoom();
-//            if($room){
-//                $return['ord'] = $room;
-//                $return['ord']['access'] = Auth::id() == $room['reuid'] ? 1 : 0;
-//            }
-//        }
-//        /** 时长房 */
-//        if ($roomSer->checkTimecost()) {
-//            $room =  $roomSer->getExtendRoom();
-//            $discount = $redis->hget('hgroups:special:' . $this->userInfo['vip'], 'discount') ?: 10;
-//            $timecost = $room['timecost'] ?? 0;
-//            $return['timecost'] = [
-//                'price' => $timecost,
-//                'discount' => $discount,
-//                'discountValue' => ceil($timecost * $discount / 10)
-//            ];
-//        }
-//        return JsonResponse::create($return);
-//    }
-
-
     /*
     *  一对多房间记录接口by desmond
     */
@@ -767,7 +672,6 @@ class RoomController extends Controller
         } else {
             return JsonResponse::create(['status' => 0, 'data' => '']);
         }
-
     }
 
     /*
@@ -824,8 +728,6 @@ class RoomController extends Controller
         $getinfo['list'] = $liveinfo;
         $getinfo['duration_total'] = $duration_total;
         return SuccessResponse::create($getinfo, $msg = __('messages.success'), $status = 1);
-
-
     }
 
     public function roomSetDuration(Request $request)
@@ -871,8 +773,5 @@ class RoomController extends Controller
 
 
         return JsonResponse::create(['status' => 1, 'data' => $result,'msg'=>__('messages.success')]);
-
-
     }
-
 }
