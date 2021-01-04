@@ -10,6 +10,7 @@ namespace App\Services;
 
 
 use App\Facades\SiteSer;
+use App\Facades\UserSer;
 use App\Repositories\AgentsRepository;
 use App\Repositories\DomainRepository;
 use App\Repositories\InstallLogRepository;
@@ -102,16 +103,16 @@ class ShareService
     {
         $data = substr($scode, 2);
         $uid = hexdec($data);
-        /* 檢查UID是否存在 */
-        $user = $this->usersRepository->getUserById($uid);
-        if (empty($user)) {
-            return false;
-        }
 
         $scodeCheck = $this->genScode($uid);
 
         /* 檢查分享碼是否有效 */
-        if ($scodeCheck === $scode) {
+        if ($scodeCheck !== $scode) {
+            return false;
+        }
+
+        /* 檢查UID是否存在 */
+        if (UserSer::getUserByUid($uid)) {
             return $uid;
         }
 
@@ -123,17 +124,17 @@ class ShareService
         $data = substr($scode, 2);
         $aId = hexdec($data);
 
+        $scodeCheck = $this->genScodeForAgent($aId);
+
+        /* 檢查分享碼是否有效 */
+        if ($scodeCheck !== $scode) {
+            return false;
+        }
+
         /* 檢查域名是否狀態 */
         $agent = $this->agentsRepository->getDataById($aId);
         if (empty($agent)) {
             return false;
-        }
-
-        $scodeCheck = $this->genScodeForAgent($aId);
-
-        /* 檢查分享碼是否有效 */
-        if ($scodeCheck === $scode) {
-            return $aId;
         }
 
         return false;
