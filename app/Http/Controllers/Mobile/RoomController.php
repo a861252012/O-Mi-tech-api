@@ -27,6 +27,7 @@ use App\Services\Room\NoSocketChannelException;
 use App\Services\Room\RoomService;
 use App\Services\Room\SocketService;
 use App\Services\Safe\SafeService;
+use App\Traits\Commons;
 use DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,6 +39,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class RoomController extends Controller
 {
+    use Commons;
+
     const FLAG_ONE_TO_ONE = 0b01;
     const FLAG_ONE_TO_MANY = 0b10;
     static $ORIGINS = [
@@ -335,6 +338,8 @@ class RoomController extends Controller
         $room = $roomService->getRoom($rid, $uid);
         $tid = $roomService->getCurrentTimeRoomStatus();
         $user = UserSer::getUserByUid($uid);
+        $login_ip = $this->getIp();
+        UserSer::updateLoginedDaily($uid, $login_ip);
 
         $roomInfo = [
             'room_name'=>$room['user']['nickname'],

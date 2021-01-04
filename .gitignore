@@ -11,3 +11,4 @@ yarn-error.log
 /.vscode
 .env.local
 /config/database.php.local
+rdpTest.php
