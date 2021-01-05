@@ -1167,4 +1167,32 @@ class UserService extends Service
         }
         return $result;
     }
+
+    public function updateLoginedDaily($uid, $login_ip)
+    {
+        if (!$uid) {
+            return;
+        }
+        if ($this->isTodayLogin($uid)) {
+            return;
+        }
+        $data = [
+            'logined' => date('Y-m-d H:i:s'),
+            'last_ip' => $login_ip,
+        ];
+        $this->updateUserInfo($uid, $data);
+        $this->markTodayLogin($uid);
+    }
+
+    public function markTodayLogin($uid)
+    {
+        $checkKey = 'logined:'. date('Ymd') .':'. $uid;
+        $this->redis->setex($checkKey, (24 - date('G')) * 3600, 1);
+    }
+
+    public function isTodayLogin($uid)
+    {
+        $checkKey = 'logined:'. date('Ymd') .':'. $uid;
+        return $this->redis->exists($checkKey);
+    }
 }

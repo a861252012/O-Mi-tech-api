@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\Active;
 use App\Events\Login;
+use App\Facades\UserSer;
 use App\Models\UserLoginLog;
 use App\Models\Users;
 use App\Traits\Commons;
@@ -47,6 +48,9 @@ class SuccessfulLogin
             'logined' => date('Y-m-d H:i:s'),
             'origin'  => $origin,
         ]);
+
+        //標記當天登入過 (之後手機用戶進入直播間就不會再更新)
+        UserSer::markTodayLogin($uid);
 
         //记录登录日志
         $this->loginLog($uid, $login_ip, $user->site_id, $origin, date('Y-m-d H:i:s'));
