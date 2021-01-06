@@ -132,9 +132,8 @@ class ShareService
         }
 
         /* 檢查域名是否狀態 */
-        $agent = $this->agentsRepository->getDataById($aId);
-        if (empty($agent)) {
-            return false;
+        if ($this->agentsRepository->getDataById($aId)) {
+            return $aId;
         }
 
         return false;

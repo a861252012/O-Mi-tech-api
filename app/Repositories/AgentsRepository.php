@@ -20,6 +20,6 @@ class AgentsRepository
 
     public function getDataById($id)
     {
-        return $this->agents->where('status', 0)->where('id', $id)->get();
+        return $this->agents->where('status', 0)->where('id', $id)->first();
     }
 }
