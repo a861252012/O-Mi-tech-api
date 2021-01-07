@@ -8,6 +8,7 @@ use App\Facades\SiteSer;
 use App\Models\RoomDuration;
 use App\Models\RoomOneToMore;
 use App\Models\Users;
+use App\Services\GuardianService;
 use App\Services\Room\NoSocketChannelException;
 use App\Services\Room\One2MoreRoomService;
 use App\Services\Room\One2OneRoomService;
@@ -172,6 +173,25 @@ class RoomController extends Controller
                             $hplat_user = $this->getMoney($uid, $rid, $platformId);
                         }
 
+                        //確認用戶有無守護看秀折扣
+                        $guardianService = resolve(GuardianService::class);
+
+                        if (time() < strtotime($user->guard_end) && !empty($user->guard_id)) {
+                            $showDiscount = (int)$guardianService->getRedisGuardianSetting(
+                                'show_discount',
+                                $user->guard_id
+                            );
+
+                            if ($showDiscount) {
+                                $ticketPrice = $guardianService->calculRoomSale(
+                                    $roomService->extend_room['points'],
+                                    $showDiscount
+                                );
+                            }
+                        } else {
+                            $ticketPrice = $roomService->extend_room['points'];
+                        }
+
                         return JsonResponse::create(['data' => [
                             //房间信息
                             'room' => &$room,
@@ -179,7 +199,7 @@ class RoomController extends Controller
                             //一对多房间数据
                             'id' => $roomService->extend_room['onetomore'],
                             'rid' => $rid,
-                            'points' => $roomService->extend_room['points'],
+                            'points' => $ticketPrice,
                             'start_time' => $roomService->extend_room['starttime'],
                             'end_time' => $roomService->extend_room['endtime'],
                             'duration' => strtotime($roomService->extend_room['endtime']) - strtotime($roomService->extend_room['starttime']),
