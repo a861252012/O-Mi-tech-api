@@ -715,8 +715,8 @@ class MemberController extends Controller
     {
         try {
             /* 取得隨機網域 */
-//            $domain = $this->shareService->randomDoamin();
-            $landingUrl = $this->getUrl() . '/landing/1';
+            $domain = $this->shareService->randomDoamin();
+            $landingUrl = rtrim($domain, '/') . '/landing/1';
             /* 產生分享代碼 */
             $scode = $this->shareService->genScode(Auth::id());
 
