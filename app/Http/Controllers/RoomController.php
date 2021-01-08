@@ -173,25 +173,6 @@ class RoomController extends Controller
                             $hplat_user = $this->getMoney($uid, $rid, $platformId);
                         }
 
-                        //確認用戶有無守護看秀折扣
-                        $guardianService = resolve(GuardianService::class);
-
-                        if (time() < strtotime($user->guard_end) && !empty($user->guard_id)) {
-                            $showDiscount = (int)$guardianService->getRedisGuardianSetting(
-                                'show_discount',
-                                $user->guard_id
-                            );
-
-                            if ($showDiscount) {
-                                $ticketPrice = $guardianService->calculRoomSale(
-                                    $roomService->extend_room['points'],
-                                    $showDiscount
-                                );
-                            }
-                        } else {
-                            $ticketPrice = $roomService->extend_room['points'];
-                        }
-
                         return JsonResponse::create(['data' => [
                             //房间信息
                             'room' => &$room,
@@ -199,7 +180,7 @@ class RoomController extends Controller
                             //一对多房间数据
                             'id' => $roomService->extend_room['onetomore'],
                             'rid' => $rid,
-                            'points' => $ticketPrice,
+                            'points' => $roomService->extend_room['points'],
                             'start_time' => $roomService->extend_room['starttime'],
                             'end_time' => $roomService->extend_room['endtime'],
                             'duration' => strtotime($roomService->extend_room['endtime']) - strtotime($roomService->extend_room['starttime']),
@@ -403,7 +384,24 @@ class RoomController extends Controller
                             ];
                             return JsonResponse::create(['status' => 1, 'data' => $data, 'msg' => __('messages.Room.roommid.one2many_you_had_been_reservation')]);
                         }
+
+                        //確認用戶有無守護的看秀折扣
+                        $guardianService = resolve(GuardianService::class);
+                        $user = Auth::user();
+                        if (time() < strtotime($user->guard_end) && !empty($user->guard_id)) {
+                            $showDiscount = (int)$guardianService->getRedisGuardianSetting(
+                                'show_discount',
+                                $user->guard_id
+                            );
+                            if ($showDiscount) {
+                                $ticketPrice = $guardianService->calculRoomSale($v['points'], $showDiscount);
+                            }
+                        } else {
+                            $ticketPrice = $v['points'];
+                        }
+
                         $v['rid'] = $roomid;
+                        $v['points'] = $ticketPrice;
                         $v['handle'] = 'room_one_to_many';
                         $origin = RoomOneToMore::query()->where('id', $id)->pluck('origin');
                         $v['origin'] = isset($origin[0]) ? $origin[0] : 12;
