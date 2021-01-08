@@ -388,11 +388,12 @@ class RoomController extends Controller
                         //確認用戶有無守護的看秀折扣
                         $guardianService = resolve(GuardianService::class);
                         $user = Auth::user();
-                        if (date('Y-m-d') > $user->guard_end && !empty($user->guard_id)) {
+                        if ($user->guard_end >= date('Y-m-d') && !empty($user->guard_id)) {
                             $showDiscount = (int)$guardianService->getRedisGuardianSetting(
                                 'show_discount',
                                 $user->guard_id
                             );
+
                             if ($showDiscount) {
                                 $ticketPrice = $guardianService->calculRoomSale($v['points'], $showDiscount);
                             }
