@@ -82,6 +82,7 @@ class RoomService extends Service
 
         $this->rid = $rid;
         $room = $redis->hgetAll($key);
+        unset($room['wechat']);
         $uid = $redis->hget($roomids, $rid);
         if (!$uid) {
             $uid = $rid;
