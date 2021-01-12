@@ -531,3 +531,5 @@ Route::prefix('v1')->namespace('v1')->group(function () {
     /* 鑽石上分 */
     Route::post('deposit', 'TransferController@deposit');
 });
+
+Route::get('test_log', 'OmeyController@testLog');

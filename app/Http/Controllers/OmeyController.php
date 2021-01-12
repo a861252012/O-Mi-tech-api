@@ -354,4 +354,15 @@ class OmeyController extends Controller
         echo "是機器人? " . ($isRobot ? 'Yes' : 'No') . "<br>";
         echo "機器人名稱? " . ($isRobot ? Agent::robot() : '無') . "<br>";
     }
+
+    public function testLog()
+    {
+        $arr = [
+            'name' => 'Weine',
+            'origin' => 32,
+            'site_id' => 1
+        ];
+
+        Log::channel('athena')->info('athena test log', $arr);
+    }
 }
