@@ -323,7 +323,7 @@ class ApiController extends Controller
             return $this->jsonOutput();
         }
 
-        $site_id = SiteSer::siteId();
+        $siteId = (int)SiteSer::siteId();
         $cc_mobile = '';
         if ($useMobile) {
             $cc = $request->post('cc', '');
@@ -421,6 +421,7 @@ class ApiController extends Controller
         }
 
         /* 解碼分享碼 */
+        $shareCode = false;
         if (!empty($scode)) {
             $shareCode = $shareService->decScode($scode);
             info('分享碼解碼結果: ' . $shareCode);
@@ -455,6 +456,22 @@ class ApiController extends Controller
             if (!empty($agent)) {
                 $newUser['aid'] = $agent->id;
                 $newUser['did'] = $agent->domain->id;
+            }
+        }
+
+        /* 自然註冊用戶設定預設代理 */
+        if (empty($shareCode) && $request->route()->getName() === 'm_reg') {
+            switch ($siteId) {
+                case 1:
+                    $newUser['aid'] = 244;
+                    break;
+                case 2:
+                    $newUser['aid'] = 527;
+                    break;
+                case 3:
+                    $newUser['aid'] = 23580;
+                    break;
+                default:
             }
         }
 
