@@ -530,4 +530,10 @@ class GuardianService
 
         return $this->guardianRepository->getHistory($uid, $start, $end);
     }
+
+    /* 取得redis守護設定的特定欄位 */
+    public function getRedisGuardianSetting($key, $guardId)
+    {
+        return Redis::hGet('hguardian_info:' . $guardId, $key);
+    }
 }
