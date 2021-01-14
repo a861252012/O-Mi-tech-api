@@ -526,6 +526,8 @@ Route::group(['middleware' => 'login_auth'], function () {
 /* 測試L項目簽名範例 */
 Route::get('omey/l_test', 'OmeyController@Ltest');
 
+Route::get('omey/z_svga', 'OmeyController@zimgSvgaCode');
+
 /* v1 */
 Route::prefix('v1')->namespace('v1')->group(function () {
     /* 鑽石上分 */
