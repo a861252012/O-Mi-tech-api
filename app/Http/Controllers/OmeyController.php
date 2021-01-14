@@ -354,4 +354,17 @@ class OmeyController extends Controller
         echo "是機器人? " . ($isRobot ? 'Yes' : 'No') . "<br>";
         echo "機器人名稱? " . ($isRobot ? Agent::robot() : '無') . "<br>";
     }
+
+    public function zimgSvgaCode()
+    {
+        $files = Storage::disk('public')->files('files');
+
+        $zMap = [];
+        foreach ($files as $key => $file) {
+            $name = str_replace('.svga', '', explode('/', $file)[1]);
+            $zMap[$name] = md5_file('/var/www/api/storage/app/public/' . $file);
+        }
+
+        return json_encode($zMap);
+    }
 }
