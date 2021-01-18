@@ -349,7 +349,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/cliget/{act}', ['uses' => 'IndexController@cliGetRes']);
 
     // 获取用户有多少钱
-    Route::post('/getmoney', ['name' => 'shop_getmoney', 'uses' => 'MemberController@getmoney']);
+//    Route::post('/getmoney', ['name' => 'shop_getmoney', 'uses' => 'MemberController@getmoney']);
     // 用户领取坐骑
     Route::post('/getvipmount', ['name' => 'shop_getvipmount', 'uses' => 'MemberController@getVipMount']);
 

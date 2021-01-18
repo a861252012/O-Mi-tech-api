@@ -363,6 +363,8 @@ class ChargeController extends Controller
 
     public function exchange(Request $request)
     {
+        return JsonResponse::create(['status' => 0, 'msg' => '無法兌換']);
+
         //修复注入漏洞
         $status = $request->input('status')??'';
         $orderid = $request->input('orderid')??'';
