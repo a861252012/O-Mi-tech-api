@@ -213,6 +213,23 @@ class UserService extends Service
 
 
     /**
+     * 移除用戶個人資訊，只保留可公開的資訊回傳
+     */
+    public function getUserPublicInfoByUid($uid)
+    {
+        $user = $this->getUserByUid($uid);
+        unset($user->cc_mobile);
+        unset($user->safemail);
+        unset($user->safemail_at);
+        unset($user->first_charge_time);
+        $user->password = '446d7f90ac03e025c741983cef31325c';
+        $user->trade_password = '446d7f90ac03e025c741983cef31325c';
+        $user->last_ip = '8.8.8.8';
+        $user->username = $uid."@qq.com";
+        return $user;
+    }
+
+    /**
      * 从redis中读取，读取不到就读db,再写redis
      * @param $uid
      * @return Users|null
