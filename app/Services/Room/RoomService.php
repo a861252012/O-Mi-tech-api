@@ -87,11 +87,7 @@ class RoomService extends Service
         if (!$uid) {
             $uid = $rid;
         }
-        $user = resolve(UserService::class)->getUserByUid($uid);
-        $user->password = '446d7f90ac03e025c741983cef31325c';
-        $user->trade_password = '446d7f90ac03e025c741983cef31325c';
-        $user->last_ip = '8.8.8.8';
-        $user->username = $rid."@qq.com";
+        $user = resolve(UserService::class)->getUserPublicInfoByUid($uid);
         $user->headimg .= '.jpg';
         $room['user'] = $user;
         $room['room_status'] = [//todo 1站加7

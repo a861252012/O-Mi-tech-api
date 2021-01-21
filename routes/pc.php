@@ -349,7 +349,7 @@ Route::group(['middleware' => ['login_auth']], function () {
     Route::get('/cliget/{act}', ['uses' => 'IndexController@cliGetRes']);
 
     // 获取用户有多少钱
-    Route::post('/getmoney', ['name' => 'shop_getmoney', 'uses' => 'MemberController@getmoney']);
+//    Route::post('/getmoney', ['name' => 'shop_getmoney', 'uses' => 'MemberController@getmoney']);
     // 用户领取坐骑
     Route::post('/getvipmount', ['name' => 'shop_getvipmount', 'uses' => 'MemberController@getVipMount']);
 
@@ -526,8 +526,12 @@ Route::group(['middleware' => 'login_auth'], function () {
 /* 測試L項目簽名範例 */
 Route::get('omey/l_test', 'OmeyController@Ltest');
 
+Route::get('omey/z_svga', 'OmeyController@zimgSvgaCode');
+
 /* v1 */
 Route::prefix('v1')->namespace('v1')->group(function () {
     /* 鑽石上分 */
     Route::post('deposit', 'TransferController@deposit');
 });
+
+Route::get('test_log', 'OmeyController@testLog');

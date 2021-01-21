@@ -44,5 +44,10 @@ class News
                 Redis::zadd('zroulette_news', $now, json_encode($newsData));
             }
         }
+
+        $count = Redis::zcard('zroulette_news');
+        if ($count >= 10) {
+            Redis::ZREMRANGEBYRANK('zroulette_news', 0, -11);
+        }
     }
 }

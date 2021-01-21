@@ -101,6 +101,13 @@ return [
             'driver' => 'errorlog',
             'level' => 'debug',
         ],
+
+        'athena' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/athena.log'),
+            'tap' => [App\Services\Logging\LogService::class],
+            'level' => 'debug',
+        ]
     ],
 
 ];
