@@ -182,10 +182,23 @@ class SafeService extends Service
         return $crytxt;
     }
 
+    public function padZero($data)
+    {
+        $len = 16;
+        if (strlen($data) % $len) {
+            $padLength = $len - strlen($data) % $len;
+            $data .= str_repeat("\0", $padLength);
+        }
+        return $data;
+    }
+
     public function AESEncrypt($data, $key = self::DEFAULT_AES_KEY)
     {
-        $iv = random_bytes(16);
-        $encrypted = mcrypt_encrypt(MCRYPT_RIJNDAEL_128, $key, $data, MCRYPT_MODE_CBC, $iv);
+        $ivsize = openssl_cipher_iv_length('AES-256-CBC');
+        $iv = openssl_random_pseudo_bytes($ivsize);
+
+        $options = OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING;
+        $encrypted = openssl_encrypt($this->padZero($data), 'AES-256-CBC', $key, $options, $iv);
         return [
             'base64_iv' => base64_encode($iv),
             'base64_encrypted' => base64_encode($encrypted),
@@ -196,7 +209,9 @@ class SafeService extends Service
     {
         $iv = base64_decode($base64_iv);
         $encrypted = base64_decode($base64_encrypted);
-        $data = mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $encrypted, MCRYPT_MODE_CBC, $iv);
+        $options = OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING;
+        $data = openssl_decrypt($encrypted, 'AES-256-CBC', $key, $options, $iv);
+        $data = rtrim($data, chr(0));
         return $data;
     }
 }

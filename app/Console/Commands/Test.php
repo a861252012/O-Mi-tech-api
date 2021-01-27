@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\Game\RouletteService;
+use App\Services\Safe\SafeService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Redis;
 
@@ -22,6 +23,8 @@ class Test extends Command
      */
     protected $description = 'CLI Test';
 
+    const ROOM_AES_KEY = '29292f7aae467dac83be04761a9d8f38'; // md5('OmeyRoom!!')
+
     /**
      * Create a new command instance.
      *
@@ -30,6 +33,9 @@ class Test extends Command
     public function __construct()
     {
         parent::__construct();
+
+        set_time_limit(0);
+        ini_set('assert.exception', 1);
     }
 
     /**
@@ -45,6 +51,26 @@ class Test extends Command
             exit;
         }
         echo 'Method not exists!';
+    }
+
+    private function aes()
+    {
+        $ss = resolve(SafeService::class);
+
+        $testcases = [
+            ['plain' => '123'],
+            ['plain' => '{"A":1,"B":22}'],
+            ['plain' => 'Hello world!'],
+            ['plain' => '~!@#$%^&*()_+'],
+        ];
+
+        foreach ($testcases as $t) {
+            $plain = $t['plain'];
+            $enc = $ss->AESEncrypt($plain, self::ROOM_AES_KEY);
+
+            $decoded = $ss->AESDecrypt($enc['base64_encrypted'], $enc['base64_iv'], self::ROOM_AES_KEY);
+            assert($plain == $decoded, "'{$plain}'!='{$decoded}' <===");
+        }
     }
 
     private function roulette()
