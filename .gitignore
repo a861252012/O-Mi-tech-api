@@ -2,6 +2,9 @@
 /public/hot
 /public/storage
 /storage/*.key
+/storage
+packages/
+/vendor
 /.idea
 /.vagrant
 Homestead.json
@@ -10,5 +13,5 @@ npm-debug.log
 yarn-error.log
 /.vscode
 .env.local
+.env
 /config/database.php.local
-rdpTest.php
